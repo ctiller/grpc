@@ -184,7 +184,7 @@ typedef struct grpc_metadata {
 
 typedef enum grpc_completion_type {
   GRPC_QUEUE_SHUTDOWN,       /* Shutting down */
-  GRPC_IOREQ,                /* grpc_call_ioreq completion */
+  GRPC_OP_COMPLETE,          /* operation completion */
   GRPC_READ,                 /* A read has completed */
   GRPC_WRITE_ACCEPTED,       /* A write has been accepted by
                                 flow control */
@@ -212,7 +212,7 @@ typedef struct grpc_event {
     grpc_op_error write_accepted;
     grpc_op_error finish_accepted;
     grpc_op_error invoke_accepted;
-    grpc_op_error ioreq;
+    grpc_op_error op_complete;
     struct {
       size_t count;
       grpc_metadata *elements;
@@ -253,7 +253,7 @@ typedef enum {
   GRPC_OP_SEND_CLOSE_FROM_CLIENT,
   GRPC_OP_SEND_STATUS_FROM_SERVER,
   GRPC_OP_RECV_INITIAL_METADATA,
-  GRPC_OP_RECV_MESSAGES,
+  GRPC_OP_RECV_MESSAGE,
   GRPC_OP_RECV_STATUS_ON_CLIENT,
   GRPC_OP_RECV_CLOSE_ON_SERVER
 } grpc_op_type;
