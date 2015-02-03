@@ -344,6 +344,7 @@ static void channel_op(grpc_channel_element *elem,
     case GRPC_ACCEPT_CALL:
       /* create a call */
       grpc_call_create(chand->channel,
+                       NULL,
                        op->data.accept_call.transport_server_data);
       break;
     case GRPC_TRANSPORT_CLOSED:

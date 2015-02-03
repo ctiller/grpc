@@ -190,6 +190,7 @@ static send_action choose_send_action(grpc_call *call);
 static void enact_send_action(grpc_call *call, send_action sa);
 
 grpc_call *grpc_call_create(grpc_channel *channel,
+                            grpc_completion_queue *cq,
                             const void *server_transport_data) {
   size_t i;
   grpc_channel_stack *channel_stack = grpc_channel_get_channel_stack(channel);
@@ -198,6 +199,7 @@ grpc_call *grpc_call_create(grpc_channel *channel,
   memset(call, 0, sizeof(grpc_call));
   gpr_mu_init(&call->mu);
   call->channel = channel;
+  call->cq = cq;
   call->is_client = server_transport_data == NULL;
   for (i = 0; i < GRPC_IOREQ_OP_COUNT; i++) {
     call->requests[i].set = REQSET_EMPTY;
