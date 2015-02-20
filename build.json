@@ -347,7 +347,6 @@
       "language": "c",
       "src": [
         "test/core/end2end/cq_verifier.c",
-        "test/core/end2end/data/prod_roots_certs.c",
         "test/core/end2end/data/server1_cert.c",
         "test/core/end2end/data/server1_key.c",
         "test/core/end2end/data/test_root_cert.c",
@@ -1248,6 +1247,20 @@
       "language": "c",
       "src": [
         "test/core/httpcli/httpcli_test.c"
+      ],
+      "deps": [
+        "grpc_test_util",
+        "grpc",
+        "gpr_test_util",
+        "gpr"
+      ]
+    },
+    {
+      "name": "interop_test",
+      "build": "test",
+      "language": "c",
+      "src": [
+        "test/cpp/interop/interop_test.c"
       ],
       "deps": [
         "grpc_test_util",
