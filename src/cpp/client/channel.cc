@@ -78,4 +78,8 @@ void Channel::PerformOpsOnCall(CallOpBuffer* buf, Call* call) {
              grpc_call_start_batch(call->call(), ops, nops, buf));
 }
 
+void *Channel::RegisterMethod(const char *method) {
+  return grpc_channel_register_call(c_channel_, method, target_.c_str());
+}
+
 }  // namespace grpc
