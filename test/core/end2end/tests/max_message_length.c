@@ -119,6 +119,8 @@ static void test_max_message_length(grpc_end2end_test_config config) {
   size_t details_capacity = 0;
   int was_cancelled = 2;
 
+  memset(ops, 0, sizeof(ops));
+
   server_arg.key = GRPC_ARG_MAX_MESSAGE_LENGTH;
   server_arg.type = GRPC_ARG_INTEGER;
   server_arg.value.integer = 5;

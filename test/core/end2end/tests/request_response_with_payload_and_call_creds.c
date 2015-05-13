@@ -159,6 +159,8 @@ static void request_response_with_payload_and_call_creds(
   int was_cancelled = 2;
   grpc_credentials *creds = NULL;
 
+  memset(ops, 0, sizeof(ops));
+
   c = grpc_channel_create_call(f.client, f.client_cq, "/foo",
                                "foo.test.google.fr", deadline);
   GPR_ASSERT(c);

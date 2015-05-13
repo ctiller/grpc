@@ -32,6 +32,9 @@
  */
 
 #include <grpc/grpc.h>
+
+#include <string.h>
+
 #include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
 #include "test/core/end2end/cq_verifier.h"
@@ -51,6 +54,8 @@ int main(int argc, char **argv) {
   grpc_status_code status;
   char *details = NULL;
   size_t details_capacity = 0;
+
+  memset(ops, 0, sizeof(ops));
 
   grpc_test_init(argc, argv);
   grpc_init();

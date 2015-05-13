@@ -114,6 +114,8 @@ static void simple_request_body(grpc_end2end_test_fixture f) {
   size_t details_capacity = 0;
   int was_cancelled = 2;
 
+  memset(ops, 0, sizeof(ops));
+
   c = grpc_channel_create_call(f.client, f.client_cq, "/foo",
                                "foo.test.google.fr:1234", deadline);
   GPR_ASSERT(c);
@@ -214,6 +216,8 @@ static void test_max_concurrent_streams(grpc_end2end_test_config config) {
   grpc_op ops[6];
   grpc_op *op;
   int was_cancelled;
+
+  memset(ops, 0, sizeof(ops));
 
   server_arg.key = GRPC_ARG_MAX_CONCURRENT_STREAMS;
   server_arg.type = GRPC_ARG_INTEGER;

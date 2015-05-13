@@ -113,6 +113,8 @@ static void simple_request_body(grpc_end2end_test_fixture f) {
   char *details = NULL;
   size_t details_capacity = 0;
 
+  memset(ops, 0, sizeof(ops));
+
   c = grpc_channel_create_call(f.client, f.client_cq, "/foo",
                                "slartibartfast.local", deadline);
   GPR_ASSERT(c);

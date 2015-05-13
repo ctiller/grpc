@@ -1197,6 +1197,8 @@ grpc_call_error grpc_call_start_batch(grpc_call *call, const grpc_op *ops,
   /* rewrite batch ops into ioreq ops */
   for (in = 0, out = 0; in < nops; in++) {
     op = &ops[in];
+    if (op->reserved != NULL) return GRPC_CALL_ERROR_INVALID_ARGUMENT;
+    if (op->flags != 0) return GRPC_CALL_ERROR_INVALID_FLAGS;
     switch (op->op) {
       case GRPC_OP_SEND_INITIAL_METADATA:
         req = &reqs[out++];

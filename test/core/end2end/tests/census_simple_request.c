@@ -111,6 +111,8 @@ static void test_body(grpc_end2end_test_fixture f) {
   size_t details_capacity = 0;
   int was_cancelled = 2;
 
+  memset(ops, 0, sizeof(ops));
+
   c = grpc_channel_create_call(f.client, f.client_cq, "/foo",
                                "foo.test.google.fr:1234", deadline);
   GPR_ASSERT(c);

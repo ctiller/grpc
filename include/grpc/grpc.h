@@ -141,6 +141,8 @@ typedef enum grpc_call_error {
   GRPC_CALL_ERROR_TOO_MANY_OPERATIONS,
   /* the flags value was illegal for this call */
   GRPC_CALL_ERROR_INVALID_FLAGS,
+  /* some argument was invalid for this call */
+  GRPC_CALL_ERROR_INVALID_ARGUMENT,
   /* invalid metadata was passed to this call */
   GRPC_CALL_ERROR_INVALID_METADATA
 } grpc_call_error;
@@ -257,7 +259,12 @@ typedef enum {
    no arguments) */
 typedef struct grpc_op {
   grpc_op_type op;
+  gpr_uint32 flags; /* must be 0 */
+  void *reserved; /* must be NULL */
   union {
+    struct {
+      void *reserved_words[8];
+    } reserved;
     struct {
       size_t count;
       grpc_metadata *metadata;

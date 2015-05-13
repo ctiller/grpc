@@ -121,6 +121,8 @@ static void test_cancel_after_invoke(grpc_end2end_test_config config,
   grpc_byte_buffer *request_payload =
       grpc_byte_buffer_create(&request_payload_slice, 1);
 
+  memset(ops, 0, sizeof(ops));
+
   c = grpc_channel_create_call(f.client, f.client_cq, "/foo",
                                "foo.test.google.fr", deadline);
   GPR_ASSERT(c);

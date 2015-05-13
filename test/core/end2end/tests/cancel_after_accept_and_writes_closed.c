@@ -126,6 +126,8 @@ static void test_cancel_after_accept_and_writes_closed(
       grpc_byte_buffer_create(&response_payload_slice, 1);
   int was_cancelled = 2;
 
+  memset(ops, 0, sizeof(ops));
+
   c = grpc_channel_create_call(f.client, f.client_cq, "/foo",
                                "foo.test.google.fr", deadline);
   GPR_ASSERT(c);

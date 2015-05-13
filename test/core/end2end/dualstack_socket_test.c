@@ -81,6 +81,8 @@ void test_connect(const char *server_host, const char *client_host, int port,
   int was_cancelled = 2;
   grpc_call_details call_details;
 
+  memset(ops, 0, sizeof(ops));
+
   if (port == 0) {
     port = grpc_pick_unused_port_or_die();
   }

@@ -108,6 +108,8 @@ static void simple_delayed_request_body(grpc_end2end_test_config config,
 
   config.init_client(f, client_args);
 
+  memset(ops, 0, sizeof(ops));
+
   c = grpc_channel_create_call(f->client, f->client_cq, "/foo",
                                "foo.test.google.fr", deadline);
   GPR_ASSERT(c);
