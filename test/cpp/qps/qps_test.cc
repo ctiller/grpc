@@ -48,16 +48,16 @@ static void RunQPS() {
   gpr_log(GPR_INFO, "Running QPS test");
 
   ClientConfig client_config;
-  client_config.set_client_type(ASYNC_CLIENT);
+  client_config.set_client_type(SYNCHRONOUS_CLIENT);
   client_config.set_enable_ssl(false);
-  client_config.set_outstanding_rpcs_per_channel(1000);
-  client_config.set_client_channels(8);
+  client_config.set_outstanding_rpcs_per_channel(100);
+  client_config.set_client_channels(1);
   client_config.set_payload_size(1);
   client_config.set_async_client_threads(8);
   client_config.set_rpc_type(UNARY);
 
   ServerConfig server_config;
-  server_config.set_server_type(ASYNC_SERVER);
+  server_config.set_server_type(SYNCHRONOUS_SERVER);
   server_config.set_enable_ssl(false);
   server_config.set_threads(4);
 

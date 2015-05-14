@@ -307,11 +307,11 @@ gpr_uint32 grpc_fd_begin_poll(grpc_fd *fd, grpc_pollset *pollset,
   grpc_fd_ref(fd);
 
   gpr_mu_lock(&fd->watcher_mu);
-  if (!fd->read_watcher && gpr_atm_acq_load(&fd->readst) != READY) {
+  if (!fd->read_watcher && gpr_atm_acq_load(&fd->readst) > READY) {
     fd->read_watcher = watcher;
     mask |= read_mask;
   }
-  if (!fd->write_watcher && gpr_atm_acq_load(&fd->writest) != READY) {
+  if (!fd->write_watcher && gpr_atm_acq_load(&fd->writest) > READY) {
     fd->write_watcher = watcher;
     mask |= write_mask;
   }
@@ -327,7 +327,7 @@ gpr_uint32 grpc_fd_begin_poll(grpc_fd *fd, grpc_pollset *pollset,
   return mask;
 }
 
-void grpc_fd_end_poll(grpc_fd_watcher *watcher) {
+void grpc_fd_end_poll(grpc_fd_watcher *watcher, int got_read, int got_write) {
   int was_polling = 0;
   int kick = 0;
   grpc_fd *fd = watcher->fd;
@@ -335,12 +335,12 @@ void grpc_fd_end_poll(grpc_fd_watcher *watcher) {
   gpr_mu_lock(&fd->watcher_mu);
   if (watcher == fd->read_watcher) {
     was_polling = 1;
-    kick |= gpr_atm_acq_load(&fd->readst) != READY;
-    fd->read_watcher = 0;
+    kick |= !got_read;
+    fd->read_watcher = NULL;
   }
   if (watcher == fd->write_watcher) {
     was_polling = 1;
-    kick |= gpr_atm_acq_load(&fd->writest) != READY;
+    kick |= !got_write;
     fd->write_watcher = NULL;
   }
   if (!was_polling) {

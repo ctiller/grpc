@@ -413,7 +413,7 @@ static int unary_poll_pollset_maybe_work(grpc_pollset *pollset,
   r = poll(pfd, GPR_ARRAY_SIZE(pfd) - (pfd[1].events == 0), timeout);
   GRPC_TIMER_MARK(GRPC_PTAG_POLL_FINISHED, r);
 
-  grpc_fd_end_poll(&fd_watcher);
+  grpc_fd_end_poll(&fd_watcher, pfd[1].revents & POLLIN, pfd[1].revents & POLLOUT);
 
   if (r < 0) {
     if (errno != EINTR) {
