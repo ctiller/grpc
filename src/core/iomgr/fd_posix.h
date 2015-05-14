@@ -68,6 +68,8 @@ struct grpc_fd {
 
   gpr_mu watcher_mu;
   grpc_fd_watcher watcher_root;
+  grpc_fd_watcher *read_watcher;
+  grpc_fd_watcher *write_watcher;
 
   gpr_atm readst;
   gpr_atm writest;
