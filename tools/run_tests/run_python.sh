@@ -37,4 +37,4 @@ root=`pwd`
 export LD_LIBRARY_PATH=$root/libs/$CONFIG
 export DYLD_LIBRARY_PATH=$root/libs/$CONFIG
 source python2.7_virtual_environment/bin/activate
-python2.7 -B $*
+strace python2.7 -B $*
