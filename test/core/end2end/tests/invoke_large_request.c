@@ -102,7 +102,8 @@ static gpr_slice large_slice(void) {
 }
 
 static void test_invoke_large_request(grpc_end2end_test_config config) {
-  grpc_end2end_test_fixture f = begin_test(config, "test_invoke_large_request", NULL, NULL);
+  grpc_end2end_test_fixture f =
+      begin_test(config, "test_invoke_large_request", NULL, NULL);
 
   gpr_slice request_payload_slice = large_slice();
   gpr_slice response_payload_slice = large_slice();

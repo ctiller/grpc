@@ -199,7 +199,8 @@ static void test_invoke_simple_request(grpc_end2end_test_config config) {
 
 static void test_invoke_10_simple_requests(grpc_end2end_test_config config) {
   int i;
-  grpc_end2end_test_fixture f = begin_test(config, "test_invoke_10_simple_requests", NULL, NULL);
+  grpc_end2end_test_fixture f =
+      begin_test(config, "test_invoke_10_simple_requests", NULL, NULL);
   for (i = 0; i < 10; i++) {
     simple_request_body(f);
     gpr_log(GPR_INFO, "Passed simple request %d", i);

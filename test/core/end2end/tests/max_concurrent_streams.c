@@ -309,7 +309,7 @@ static void test_max_concurrent_streams(grpc_end2end_test_config config) {
   /* The /alpha or /beta calls started above could be invoked (but NOT both);
    * check this here */
   /* We'll get tag 303 or 403, we want 300, 400 */
-  live_call = ((int)(gpr_intptr)ev.tag) - 1;
+  live_call = ((int)(gpr_intptr) ev.tag) - 1;
 
   op = ops;
   op->op = GRPC_OP_SEND_INITIAL_METADATA;

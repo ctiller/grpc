@@ -188,7 +188,8 @@ static void simple_request_body(grpc_end2end_test_fixture f) {
   cq_verifier_destroy(v_server);
 }
 
-static void test_invoke_10_simple_requests(grpc_end2end_test_config config, int initial_sequence_number) {
+static void test_invoke_10_simple_requests(grpc_end2end_test_config config,
+                                           int initial_sequence_number) {
   int i;
   grpc_end2end_test_fixture f;
   grpc_arg client_arg;

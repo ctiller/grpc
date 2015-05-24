@@ -51,11 +51,7 @@ static const char iam_selector[] = "selector";
 static const char overridden_iam_token[] = "overridden_token";
 static const char overridden_iam_selector[] = "overridden_selector";
 
-typedef enum {
-  NONE,
-  OVERRIDE,
-  DESTROY
-} override_mode;
+typedef enum { NONE, OVERRIDE, DESTROY } override_mode;
 
 enum { TIMEOUT = 200000 };
 
@@ -114,7 +110,8 @@ static void end_test(grpc_end2end_test_fixture *f) {
 static void test_call_creds_failure(grpc_end2end_test_config config) {
   grpc_call *c;
   grpc_credentials *creds = NULL;
-  grpc_end2end_test_fixture f = begin_test(config, "test_call_creds_failure", NULL, NULL);
+  grpc_end2end_test_fixture f =
+      begin_test(config, "test_call_creds_failure", NULL, NULL);
   gpr_timespec deadline = five_seconds_time();
   c = grpc_channel_create_call(f.client, f.client_cq, "/foo",
                                "foo.test.google.fr", deadline);
@@ -211,11 +208,10 @@ static void request_response_with_payload_and_call_creds(
   op++;
   GPR_ASSERT(GRPC_CALL_OK == grpc_call_start_batch(c, ops, op - ops, tag(1)));
 
-  GPR_ASSERT(GRPC_CALL_OK == grpc_server_request_call(f.server, &s,
-                                                      &call_details,
-                                                      &request_metadata_recv,
-                                                      f.server_cq, f.server_cq, 
-                                                      tag(101)));
+  GPR_ASSERT(GRPC_CALL_OK ==
+             grpc_server_request_call(f.server, &s, &call_details,
+                                      &request_metadata_recv, f.server_cq,
+                                      f.server_cq, tag(101)));
   cq_expect_completion(v_server, tag(101), 1);
   cq_verify(v_server);
 
@@ -318,17 +314,22 @@ static void request_response_with_payload_and_call_creds(
 
 void test_request_response_with_payload_and_call_creds(
     grpc_end2end_test_config config) {
-  request_response_with_payload_and_call_creds("test_request_response_with_payload_and_call_creds", config, NONE);
+  request_response_with_payload_and_call_creds(
+      "test_request_response_with_payload_and_call_creds", config, NONE);
 }
 
 void test_request_response_with_payload_and_overridden_call_creds(
     grpc_end2end_test_config config) {
-  request_response_with_payload_and_call_creds("test_request_response_with_payload_and_overridden_call_creds", config, OVERRIDE);
+  request_response_with_payload_and_call_creds(
+      "test_request_response_with_payload_and_overridden_call_creds", config,
+      OVERRIDE);
 }
 
 void test_request_response_with_payload_and_deleted_call_creds(
     grpc_end2end_test_config config) {
-  request_response_with_payload_and_call_creds("test_request_response_with_payload_and_deleted_call_creds", config, DESTROY);
+  request_response_with_payload_and_call_creds(
+      "test_request_response_with_payload_and_deleted_call_creds", config,
+      DESTROY);
 }
 
 void grpc_end2end_tests(grpc_end2end_test_config config) {
@@ -339,4 +340,3 @@ void grpc_end2end_tests(grpc_end2end_test_config config) {
     test_request_response_with_payload_and_deleted_call_creds(config);
   }
 }
-

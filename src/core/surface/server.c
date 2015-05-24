@@ -594,9 +594,9 @@ static void destroy_channel_elem(grpc_channel_element *elem) {
 }
 
 static const grpc_channel_filter server_surface_filter = {
-    server_start_transport_op, channel_op, sizeof(call_data), init_call_elem,
-    destroy_call_elem, sizeof(channel_data), init_channel_elem,
-    destroy_channel_elem, "server",
+    server_start_transport_op, channel_op,           sizeof(call_data),
+    init_call_elem,            destroy_call_elem,    sizeof(channel_data),
+    init_channel_elem,         destroy_channel_elem, "server",
 };
 
 void grpc_server_register_completion_queue(grpc_server *server,
@@ -665,7 +665,8 @@ void *grpc_server_register_method(grpc_server *server, const char *method,
                                   const char *host) {
   registered_method *m;
   if (!method) {
-    gpr_log(GPR_ERROR, "grpc_server_register_method method string cannot be NULL");
+    gpr_log(GPR_ERROR,
+            "grpc_server_register_method method string cannot be NULL");
     return NULL;
   }
   for (m = server->registered_methods; m; m = m->next) {
@@ -735,8 +736,7 @@ grpc_transport_setup_result grpc_server_setup_transport(
   channel = grpc_channel_create_from_filters(filters, num_filters,
                                              s->channel_args, mdctx, 0);
   chand = (channel_data *)grpc_channel_stack_element(
-              grpc_channel_get_channel_stack(channel), 0)
-              ->channel_data;
+              grpc_channel_get_channel_stack(channel), 0)->channel_data;
   chand->server = s;
   server_ref(s);
   chand->channel = channel;
@@ -757,7 +757,7 @@ grpc_transport_setup_result grpc_server_setup_transport(
       method = grpc_mdstr_from_string(mdctx, rm->method);
       hash = GRPC_MDSTR_KV_HASH(host ? host->hash : 0, method->hash);
       for (probes = 0; chand->registered_methods[(hash + probes) % slots]
-                           .server_registered_method != NULL;
+                               .server_registered_method != NULL;
            probes++)
         ;
       if (probes > max_probes) max_probes = probes;

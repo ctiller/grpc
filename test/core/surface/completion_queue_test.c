@@ -171,7 +171,7 @@ static void producer_thread(void *arg) {
 
   gpr_log(GPR_INFO, "producer %d phase 2", opt->id);
   for (i = 0; i < TEST_THREAD_EVENTS; i++) {
-    grpc_cq_end_op(opt->cc, (void *)(gpr_intptr)1, NULL, 1);
+    grpc_cq_end_op(opt->cc, (void *)(gpr_intptr) 1, NULL, 1);
     opt->events_triggered++;
   }
 
@@ -222,8 +222,8 @@ static void test_threading(int producers, int consumers) {
   int total_consumed = 0;
   static int optid = 101;
 
-  gpr_log(GPR_INFO, "%s: %d producers, %d consumers", "test_threading", producers,
-          consumers);
+  gpr_log(GPR_INFO, "%s: %d producers, %d consumers", "test_threading",
+          producers, consumers);
 
   grpc_completion_queue_dont_poll_test_only(cc);
 
