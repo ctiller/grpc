@@ -693,6 +693,7 @@ pubsub_client: $(BINDIR)/$(CONFIG)/pubsub_client
 pubsub_publisher_test: $(BINDIR)/$(CONFIG)/pubsub_publisher_test
 pubsub_subscriber_test: $(BINDIR)/$(CONFIG)/pubsub_subscriber_test
 qps_driver: $(BINDIR)/$(CONFIG)/qps_driver
+qps_per_core_sweep: $(BINDIR)/$(CONFIG)/qps_per_core_sweep
 qps_test: $(BINDIR)/$(CONFIG)/qps_test
 qps_worker: $(BINDIR)/$(CONFIG)/qps_worker
 server_crash_test: $(BINDIR)/$(CONFIG)/server_crash_test
@@ -2364,7 +2365,7 @@ test_python: static_c
 
 tools: privatelibs $(BINDIR)/$(CONFIG)/gen_hpack_tables $(BINDIR)/$(CONFIG)/grpc_create_jwt $(BINDIR)/$(CONFIG)/grpc_fetch_oauth2 $(BINDIR)/$(CONFIG)/grpc_print_google_default_creds_token
 
-buildbenchmarks: privatelibs $(BINDIR)/$(CONFIG)/low_level_ping_pong_benchmark $(BINDIR)/$(CONFIG)/qps_driver $(BINDIR)/$(CONFIG)/qps_test $(BINDIR)/$(CONFIG)/qps_worker
+buildbenchmarks: privatelibs $(BINDIR)/$(CONFIG)/low_level_ping_pong_benchmark $(BINDIR)/$(CONFIG)/qps_driver $(BINDIR)/$(CONFIG)/qps_per_core_sweep $(BINDIR)/$(CONFIG)/qps_test $(BINDIR)/$(CONFIG)/qps_worker
 
 benchmarks: buildbenchmarks
 
@@ -8381,6 +8382,46 @@ deps_qps_driver: $(QPS_DRIVER_OBJS:.o=.dep)
 ifneq ($(NO_SECURE),true)
 ifneq ($(NO_DEPS),true)
 -include $(QPS_DRIVER_OBJS:.o=.dep)
+endif
+endif
+
+
+QPS_PER_CORE_SWEEP_SRC = \
+    test/cpp/qps/qps_per_core_sweep.cc \
+
+QPS_PER_CORE_SWEEP_OBJS = $(addprefix $(OBJDIR)/$(CONFIG)/, $(addsuffix .o, $(basename $(QPS_PER_CORE_SWEEP_SRC))))
+ifeq ($(NO_SECURE),true)
+
+# You can't build secure targets if you don't have OpenSSL with ALPN.
+
+$(BINDIR)/$(CONFIG)/qps_per_core_sweep: openssl_dep_error
+
+else
+
+
+ifeq ($(NO_PROTOBUF),true)
+
+# You can't build the protoc plugins or protobuf-enabled targets if you don't have protobuf 3.0.0+.
+
+$(BINDIR)/$(CONFIG)/qps_per_core_sweep: protobuf_dep_error
+
+else
+
+$(BINDIR)/$(CONFIG)/qps_per_core_sweep: $(PROTOBUF_DEP) $(QPS_PER_CORE_SWEEP_OBJS) $(LIBDIR)/$(CONFIG)/libqps.a $(LIBDIR)/$(CONFIG)/libgrpc++_test_util.a $(LIBDIR)/$(CONFIG)/libgrpc++_benchmark_config.a $(LIBDIR)/$(CONFIG)/libgrpc_test_util.a $(LIBDIR)/$(CONFIG)/libgrpc++.a $(LIBDIR)/$(CONFIG)/libgrpc.a $(LIBDIR)/$(CONFIG)/libgpr_test_util.a $(LIBDIR)/$(CONFIG)/libgpr.a $(LIBDIR)/$(CONFIG)/libgrpc++_test_config.a
+	$(E) "[LD]      Linking $@"
+	$(Q) mkdir -p `dirname $@`
+	$(Q) $(LDXX) $(LDFLAGS) $(QPS_PER_CORE_SWEEP_OBJS) $(LIBDIR)/$(CONFIG)/libqps.a $(LIBDIR)/$(CONFIG)/libgrpc++_test_util.a $(LIBDIR)/$(CONFIG)/libgrpc++_benchmark_config.a $(LIBDIR)/$(CONFIG)/libgrpc_test_util.a $(LIBDIR)/$(CONFIG)/libgrpc++.a $(LIBDIR)/$(CONFIG)/libgrpc.a $(LIBDIR)/$(CONFIG)/libgpr_test_util.a $(LIBDIR)/$(CONFIG)/libgpr.a $(LIBDIR)/$(CONFIG)/libgrpc++_test_config.a $(LDLIBSXX) $(LDLIBS_PROTOBUF) $(LDLIBS) $(LDLIBS_SECURE) $(GTEST_LIB) -o $(BINDIR)/$(CONFIG)/qps_per_core_sweep
+
+endif
+
+endif
+
+$(OBJDIR)/$(CONFIG)/test/cpp/qps/qps_per_core_sweep.o:  $(LIBDIR)/$(CONFIG)/libqps.a $(LIBDIR)/$(CONFIG)/libgrpc++_test_util.a $(LIBDIR)/$(CONFIG)/libgrpc++_benchmark_config.a $(LIBDIR)/$(CONFIG)/libgrpc_test_util.a $(LIBDIR)/$(CONFIG)/libgrpc++.a $(LIBDIR)/$(CONFIG)/libgrpc.a $(LIBDIR)/$(CONFIG)/libgpr_test_util.a $(LIBDIR)/$(CONFIG)/libgpr.a $(LIBDIR)/$(CONFIG)/libgrpc++_test_config.a
+deps_qps_per_core_sweep: $(QPS_PER_CORE_SWEEP_OBJS:.o=.dep)
+
+ifneq ($(NO_SECURE),true)
+ifneq ($(NO_DEPS),true)
+-include $(QPS_PER_CORE_SWEEP_OBJS:.o=.dep)
 endif
 endif
 

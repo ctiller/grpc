@@ -2212,6 +2212,25 @@
       ]
     },
     {
+      "name": "qps_per_core_sweep",
+      "build": "benchmark",
+      "language": "c++",
+      "src": [
+        "test/cpp/qps/qps_per_core_sweep.cc"
+      ],
+      "deps": [
+        "qps",
+        "grpc++_test_util",
+        "grpc++_benchmark_config",
+        "grpc_test_util",
+        "grpc++",
+        "grpc",
+        "gpr_test_util",
+        "gpr",
+        "grpc++_test_config"
+      ]
+    },
+    {
       "name": "qps_test",
       "build": "benchmark",
       "language": "c++",
