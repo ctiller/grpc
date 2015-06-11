@@ -74,7 +74,8 @@ static void drain_cq(grpc_completion_queue *cq) {
 
 static void shutdown_server(grpc_end2end_test_fixture *f) {
   if (!f->server) return;
-  grpc_server_shutdown(f->server);
+  grpc_server_shutdown_and_notify(f->server, f->server_cq, tag(1000));
+  GPR_ASSERT(grpc_completion_queue_pluck(f->server_cq, tag(1000), GRPC_TIMEOUT_SECONDS_TO_DEADLINE(5)).type == GRPC_OP_COMPLETE);
   grpc_server_destroy(f->server);
   f->server = NULL;
 }
@@ -165,8 +166,8 @@ static void test_pingpong_streaming(grpc_end2end_test_config config,
   GPR_ASSERT(GRPC_CALL_OK == grpc_call_start_batch(s, ops, op - ops, tag(101)));
 
   for (i = 0; i < messages; i++) {
-    request_payload = grpc_byte_buffer_create(&request_payload_slice, 1);
-    response_payload = grpc_byte_buffer_create(&response_payload_slice, 1);
+    request_payload = grpc_raw_byte_buffer_create(&request_payload_slice, 1);
+    response_payload = grpc_raw_byte_buffer_create(&response_payload_slice, 1);
 
     op = ops;
     op->op = GRPC_OP_SEND_MESSAGE;

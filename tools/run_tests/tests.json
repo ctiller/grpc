@@ -351,6 +351,15 @@
   {
     "flaky": false, 
     "language": "c", 
+    "name": "httpcli_test", 
+    "platforms": [
+      "windows", 
+      "posix"
+    ]
+  }, 
+  {
+    "flaky": false, 
+    "language": "c", 
     "name": "json_rewrite_test", 
     "platforms": [
       "windows", 
@@ -627,6 +636,24 @@
     "flaky": false, 
     "language": "c++", 
     "name": "mock_test", 
+    "platforms": [
+      "windows", 
+      "posix"
+    ]
+  }, 
+  {
+    "flaky": false, 
+    "language": "c++", 
+    "name": "qps_test", 
+    "platforms": [
+      "windows", 
+      "posix"
+    ]
+  }, 
+  {
+    "flaky": false, 
+    "language": "c++", 
+    "name": "qps_test_openloop", 
     "platforms": [
       "windows", 
       "posix"
@@ -4669,6 +4696,15 @@
     "flaky": false, 
     "language": "c", 
     "name": "connection_prefix_bad_client_test", 
+    "platforms": [
+      "windows", 
+      "posix"
+    ]
+  }, 
+  {
+    "flaky": false, 
+    "language": "c", 
+    "name": "initial_settings_frame_bad_client_test", 
     "platforms": [
       "windows", 
       "posix"

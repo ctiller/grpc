@@ -40,6 +40,7 @@
 #include <grpc/support/alloc.h>
 #include <grpc/support/slice.h>
 #include <grpc/support/time.h>
+#include <grpc/support/log.h>
 
 #include "grpc/_adapter/_c/types.h"
 
@@ -122,7 +123,8 @@ PyObject *pygrpc_consume_event(grpc_event event) {
           event.success ? Py_True : Py_False);
     } else {
       result = Py_BuildValue("iOOONO", GRPC_OP_COMPLETE, tag->user_tag,
-          tag->call, Py_None, pygrpc_consume_ops(tag->ops, tag->nops),
+          tag->call ? tag->call : Py_None, Py_None,
+          pygrpc_consume_ops(tag->ops, tag->nops),
           event.success ? Py_True : Py_False);
     }
     break;
@@ -179,7 +181,7 @@ int pygrpc_produce_op(PyObject *op, grpc_op *result) {
     PyString_AsStringAndSize(
         PyTuple_GET_ITEM(op, MESSAGE_INDEX), &message, &message_size);
     message_slice = gpr_slice_from_copied_buffer(message, message_size);
-    c_op.data.send_message = grpc_byte_buffer_create(&message_slice, 1);
+    c_op.data.send_message = grpc_raw_byte_buffer_create(&message_slice, 1);
     gpr_slice_unref(message_slice);
     break;
   case GRPC_OP_SEND_CLOSE_FROM_CLIENT:
