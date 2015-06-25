@@ -37,11 +37,14 @@
 #include <string.h>
 
 #include <grpc/byte_buffer.h>
+#include <grpc/byte_buffer_reader.h>
 #include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
 #include <grpc/support/time.h>
 #include <grpc/support/useful.h>
+
 #include "test/core/end2end/cq_verifier.h"
+#include "src/core/channel/channel_args.h"
 
 enum { TIMEOUT = 200000 };
 
@@ -63,10 +66,12 @@ static gpr_timespec n_seconds_time(int n) {
   return GRPC_TIMEOUT_SECONDS_TO_DEADLINE(n);
 }
 
+static gpr_timespec five_seconds_time(void) { return n_seconds_time(5); }
+
 static void drain_cq(grpc_completion_queue *cq) {
   grpc_event ev;
   do {
-    ev = grpc_completion_queue_next(cq, n_seconds_time(5));
+    ev = grpc_completion_queue_next(cq, five_seconds_time());
   } while (ev.type != GRPC_QUEUE_SHUTDOWN);
 }
 
@@ -95,41 +100,46 @@ static void end_test(grpc_end2end_test_fixture *f) {
   grpc_completion_queue_destroy(f->cq);
 }
 
-static gpr_slice large_slice(void) {
-  gpr_slice slice = gpr_slice_malloc(1000000);
-  memset(GPR_SLICE_START_PTR(slice), 0xab, GPR_SLICE_LENGTH(slice));
-  return slice;
-}
-
-static void test_invoke_large_request(grpc_end2end_test_config config) {
-  grpc_end2end_test_fixture f =
-      begin_test(config, "test_invoke_large_request", NULL, NULL);
-
-  gpr_slice request_payload_slice = large_slice();
-  gpr_slice response_payload_slice = large_slice();
+static void request_with_payload_template(
+    grpc_end2end_test_config config, const char *test_name,
+    gpr_uint32 send_flags_bitmask,
+    grpc_compression_level requested_compression_level,
+    grpc_compression_algorithm expected_compression_algorithm) {
   grpc_call *c;
   grpc_call *s;
-  grpc_byte_buffer *request_payload =
-      grpc_raw_byte_buffer_create(&request_payload_slice, 1);
-  grpc_byte_buffer *response_payload =
-      grpc_raw_byte_buffer_create(&response_payload_slice, 1);
-  gpr_timespec deadline = n_seconds_time(30);
-  cq_verifier *cqv = cq_verifier_create(f.cq);
+  gpr_slice request_payload_slice;
+  grpc_byte_buffer *request_payload;
+  gpr_timespec deadline = five_seconds_time();
+  grpc_channel_args *client_args;
+  grpc_channel_args *server_args;
+  grpc_end2end_test_fixture f;
   grpc_op ops[6];
   grpc_op *op;
   grpc_metadata_array initial_metadata_recv;
   grpc_metadata_array trailing_metadata_recv;
   grpc_metadata_array request_metadata_recv;
   grpc_byte_buffer *request_payload_recv = NULL;
-  grpc_byte_buffer *response_payload_recv = NULL;
   grpc_call_details call_details;
   grpc_status_code status;
   char *details = NULL;
   size_t details_capacity = 0;
   int was_cancelled = 2;
+  cq_verifier *cqv;
 
-  c = grpc_channel_create_call(f.client, f.cq, "/foo", "foo.test.google.fr",
-                               deadline);
+  char str[1024]; memset(&str[0], 1023, 'x'); str[1023] = '\0';
+  request_payload_slice = gpr_slice_from_copied_string(str);
+  request_payload = grpc_raw_byte_buffer_create(&request_payload_slice, 1);
+
+  client_args = grpc_channel_args_set_compression_level(
+      NULL, requested_compression_level);
+  server_args = grpc_channel_args_set_compression_level(
+      NULL, requested_compression_level);
+
+  f = begin_test(config, test_name, client_args, server_args);
+  cqv = cq_verifier_create(f.cq);
+
+  c = grpc_channel_create_call(f.client, f.cq, "/foo",
+                               "foo.test.google.fr", deadline);
   GPR_ASSERT(c);
 
   grpc_metadata_array_init(&initial_metadata_recv);
@@ -144,17 +154,13 @@ static void test_invoke_large_request(grpc_end2end_test_config config) {
   op++;
   op->op = GRPC_OP_SEND_MESSAGE;
   op->data.send_message = request_payload;
-  op->flags = 0;
+  op->flags = send_flags_bitmask;
   op++;
   op->op = GRPC_OP_SEND_CLOSE_FROM_CLIENT;
   op->flags = 0;
   op++;
   op->op = GRPC_OP_RECV_INITIAL_METADATA;
   op->data.recv_initial_metadata = &initial_metadata_recv;
-  op->flags = 0;
-  op++;
-  op->op = GRPC_OP_RECV_MESSAGE;
-  op->data.recv_message = &response_payload_recv;
   op->flags = 0;
   op++;
   op->op = GRPC_OP_RECV_STATUS_ON_CLIENT;
@@ -166,9 +172,10 @@ static void test_invoke_large_request(grpc_end2end_test_config config) {
   op++;
   GPR_ASSERT(GRPC_CALL_OK == grpc_call_start_batch(c, ops, op - ops, tag(1)));
 
-  GPR_ASSERT(GRPC_CALL_OK == grpc_server_request_call(
-                                 f.server, &s, &call_details,
-                                 &request_metadata_recv, f.cq, f.cq, tag(101)));
+  GPR_ASSERT(GRPC_CALL_OK ==
+             grpc_server_request_call(f.server, &s, &call_details,
+                                      &request_metadata_recv, f.cq,
+                                      f.cq, tag(101)));
   cq_expect_completion(cqv, tag(101), 1);
   cq_verify(cqv);
 
@@ -191,13 +198,9 @@ static void test_invoke_large_request(grpc_end2end_test_config config) {
   op->data.recv_close_on_server.cancelled = &was_cancelled;
   op->flags = 0;
   op++;
-  op->op = GRPC_OP_SEND_MESSAGE;
-  op->data.send_message = response_payload;
-  op->flags = 0;
-  op++;
   op->op = GRPC_OP_SEND_STATUS_FROM_SERVER;
   op->data.send_status_from_server.trailing_metadata_count = 0;
-  op->data.send_status_from_server.status = GRPC_STATUS_UNIMPLEMENTED;
+  op->data.send_status_from_server.status = GRPC_STATUS_OK;
   op->data.send_status_from_server.status_details = "xyz";
   op->flags = 0;
   op++;
@@ -207,11 +210,17 @@ static void test_invoke_large_request(grpc_end2end_test_config config) {
   cq_expect_completion(cqv, tag(1), 1);
   cq_verify(cqv);
 
-  GPR_ASSERT(status == GRPC_STATUS_UNIMPLEMENTED);
+  GPR_ASSERT(status == GRPC_STATUS_OK);
   GPR_ASSERT(0 == strcmp(details, "xyz"));
   GPR_ASSERT(0 == strcmp(call_details.method, "/foo"));
   GPR_ASSERT(0 == strcmp(call_details.host, "foo.test.google.fr"));
-  GPR_ASSERT(was_cancelled == 1);
+  GPR_ASSERT(was_cancelled == 0);
+
+  GPR_ASSERT(request_payload_recv->type == GRPC_BB_RAW);
+  GPR_ASSERT(request_payload_recv->data.raw.compression ==
+             expected_compression_algorithm);
+
+  GPR_ASSERT(byte_buffer_eq_string(request_payload_recv, str));
 
   gpr_free(details);
   grpc_metadata_array_destroy(&initial_metadata_recv);
@@ -225,15 +234,40 @@ static void test_invoke_large_request(grpc_end2end_test_config config) {
   cq_verifier_destroy(cqv);
 
   grpc_byte_buffer_destroy(request_payload);
-  grpc_byte_buffer_destroy(response_payload);
   grpc_byte_buffer_destroy(request_payload_recv);
-  grpc_byte_buffer_destroy(response_payload_recv);
-  gpr_slice_unref(response_payload_slice);
+
+  grpc_channel_args_destroy(client_args);
+  grpc_channel_args_destroy(server_args);
 
   end_test(&f);
   config.tear_down_data(&f);
 }
 
+static void test_invoke_request_with_exceptionally_uncompressed_payload(
+    grpc_end2end_test_config config) {
+  request_with_payload_template(
+      config, "test_invoke_request_with_exceptionally_uncompressed_payload",
+      GRPC_WRITE_NO_COMPRESS, GRPC_COMPRESS_LEVEL_HIGH, GRPC_COMPRESS_NONE);
+}
+
+static void test_invoke_request_with_compressed_payload(
+    grpc_end2end_test_config config) {
+  request_with_payload_template(
+      config, "test_invoke_request_with_compressed_payload", 0,
+      GRPC_COMPRESS_LEVEL_HIGH,
+      grpc_compression_algorithm_for_level(GRPC_COMPRESS_LEVEL_HIGH));
+}
+
+static void test_invoke_request_with_uncompressed_payload(
+    grpc_end2end_test_config config) {
+  request_with_payload_template(
+      config, "test_invoke_request_with_uncompressed_payload", 0,
+      GRPC_COMPRESS_LEVEL_NONE,
+      grpc_compression_algorithm_for_level(GRPC_COMPRESS_LEVEL_NONE));
+}
+
 void grpc_end2end_tests(grpc_end2end_test_config config) {
-  test_invoke_large_request(config);
+  test_invoke_request_with_exceptionally_uncompressed_payload(config);
+  test_invoke_request_with_uncompressed_payload(config);
+  test_invoke_request_with_compressed_payload(config);
 }
