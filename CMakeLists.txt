@@ -1,0 +1,7776 @@
+cmake_minimum_required (VERSION 2.6)
+project (gRPC)
+
+include_directories("${PROJECT_SOURCE_DIR}")
+include_directories("${PROJECT_SOURCE_DIR}/include")
+
+add_library(
+  gpr
+  src/core/support/alloc.c
+  src/core/support/cancellable.c
+  src/core/support/cmdline.c
+  src/core/support/cpu_iphone.c
+  src/core/support/cpu_linux.c
+  src/core/support/cpu_posix.c
+  src/core/support/cpu_windows.c
+  src/core/support/env_linux.c
+  src/core/support/env_posix.c
+  src/core/support/env_win32.c
+  src/core/support/file.c
+  src/core/support/file_posix.c
+  src/core/support/file_win32.c
+  src/core/support/histogram.c
+  src/core/support/host_port.c
+  src/core/support/log.c
+  src/core/support/log_android.c
+  src/core/support/log_linux.c
+  src/core/support/log_posix.c
+  src/core/support/log_win32.c
+  src/core/support/murmur_hash.c
+  src/core/support/slice.c
+  src/core/support/slice_buffer.c
+  src/core/support/string.c
+  src/core/support/string_posix.c
+  src/core/support/string_win32.c
+  src/core/support/subprocess_posix.c
+  src/core/support/sync.c
+  src/core/support/sync_posix.c
+  src/core/support/sync_win32.c
+  src/core/support/thd.c
+  src/core/support/thd_posix.c
+  src/core/support/thd_win32.c
+  src/core/support/time.c
+  src/core/support/time_posix.c
+  src/core/support/time_win32.c
+  src/core/support/tls_pthread.c
+  )
+add_library(
+  gpr_test_util
+  test/core/util/test_config.c
+  )
+add_library(
+  grpc
+  src/core/httpcli/format_request.c
+  src/core/httpcli/httpcli.c
+  src/core/httpcli/httpcli_security_connector.c
+  src/core/httpcli/parser.c
+  src/core/security/base64.c
+  src/core/security/client_auth_filter.c
+  src/core/security/credentials.c
+  src/core/security/credentials_metadata.c
+  src/core/security/credentials_posix.c
+  src/core/security/credentials_win32.c
+  src/core/security/google_default_credentials.c
+  src/core/security/json_token.c
+  src/core/security/secure_endpoint.c
+  src/core/security/secure_transport_setup.c
+  src/core/security/security_connector.c
+  src/core/security/security_context.c
+  src/core/security/server_auth_filter.c
+  src/core/security/server_secure_chttp2.c
+  src/core/surface/init_secure.c
+  src/core/surface/secure_channel_create.c
+  src/core/tsi/fake_transport_security.c
+  src/core/tsi/ssl_transport_security.c
+  src/core/tsi/transport_security.c
+  src/core/census/grpc_context.c
+  src/core/channel/channel_args.c
+  src/core/channel/channel_stack.c
+  src/core/channel/child_channel.c
+  src/core/channel/client_channel.c
+  src/core/channel/client_setup.c
+  src/core/channel/connected_channel.c
+  src/core/channel/http_client_filter.c
+  src/core/channel/http_server_filter.c
+  src/core/channel/noop_filter.c
+  src/core/compression/algorithm.c
+  src/core/compression/message_compress.c
+  src/core/debug/trace.c
+  src/core/iomgr/alarm.c
+  src/core/iomgr/alarm_heap.c
+  src/core/iomgr/endpoint.c
+  src/core/iomgr/endpoint_pair_posix.c
+  src/core/iomgr/endpoint_pair_windows.c
+  src/core/iomgr/fd_posix.c
+  src/core/iomgr/iocp_windows.c
+  src/core/iomgr/iomgr.c
+  src/core/iomgr/iomgr_posix.c
+  src/core/iomgr/iomgr_windows.c
+  src/core/iomgr/pollset_kick_posix.c
+  src/core/iomgr/pollset_multipoller_with_epoll.c
+  src/core/iomgr/pollset_multipoller_with_poll_posix.c
+  src/core/iomgr/pollset_posix.c
+  src/core/iomgr/pollset_set_posix.c
+  src/core/iomgr/pollset_set_windows.c
+  src/core/iomgr/pollset_windows.c
+  src/core/iomgr/resolve_address_posix.c
+  src/core/iomgr/resolve_address_windows.c
+  src/core/iomgr/sockaddr_utils.c
+  src/core/iomgr/socket_utils_common_posix.c
+  src/core/iomgr/socket_utils_linux.c
+  src/core/iomgr/socket_utils_posix.c
+  src/core/iomgr/socket_windows.c
+  src/core/iomgr/tcp_client_posix.c
+  src/core/iomgr/tcp_client_windows.c
+  src/core/iomgr/tcp_posix.c
+  src/core/iomgr/tcp_server_posix.c
+  src/core/iomgr/tcp_server_windows.c
+  src/core/iomgr/tcp_windows.c
+  src/core/iomgr/time_averaged_stats.c
+  src/core/iomgr/wakeup_fd_eventfd.c
+  src/core/iomgr/wakeup_fd_nospecial.c
+  src/core/iomgr/wakeup_fd_pipe.c
+  src/core/iomgr/wakeup_fd_posix.c
+  src/core/json/json.c
+  src/core/json/json_reader.c
+  src/core/json/json_string.c
+  src/core/json/json_writer.c
+  src/core/profiling/basic_timers.c
+  src/core/profiling/stap_timers.c
+  src/core/surface/byte_buffer.c
+  src/core/surface/byte_buffer_queue.c
+  src/core/surface/byte_buffer_reader.c
+  src/core/surface/call.c
+  src/core/surface/call_details.c
+  src/core/surface/call_log_batch.c
+  src/core/surface/channel.c
+  src/core/surface/channel_create.c
+  src/core/surface/client.c
+  src/core/surface/completion_queue.c
+  src/core/surface/event_string.c
+  src/core/surface/init.c
+  src/core/surface/lame_client.c
+  src/core/surface/metadata_array.c
+  src/core/surface/server.c
+  src/core/surface/server_chttp2.c
+  src/core/surface/server_create.c
+  src/core/surface/surface_trace.c
+  src/core/transport/chttp2/alpn.c
+  src/core/transport/chttp2/bin_encoder.c
+  src/core/transport/chttp2/frame_data.c
+  src/core/transport/chttp2/frame_goaway.c
+  src/core/transport/chttp2/frame_ping.c
+  src/core/transport/chttp2/frame_rst_stream.c
+  src/core/transport/chttp2/frame_settings.c
+  src/core/transport/chttp2/frame_window_update.c
+  src/core/transport/chttp2/hpack_parser.c
+  src/core/transport/chttp2/hpack_table.c
+  src/core/transport/chttp2/huffsyms.c
+  src/core/transport/chttp2/incoming_metadata.c
+  src/core/transport/chttp2/parsing.c
+  src/core/transport/chttp2/status_conversion.c
+  src/core/transport/chttp2/stream_encoder.c
+  src/core/transport/chttp2/stream_lists.c
+  src/core/transport/chttp2/stream_map.c
+  src/core/transport/chttp2/timeout_encoding.c
+  src/core/transport/chttp2/varint.c
+  src/core/transport/chttp2/writing.c
+  src/core/transport/chttp2_transport.c
+  src/core/transport/metadata.c
+  src/core/transport/stream_op.c
+  src/core/transport/transport.c
+  src/core/transport/transport_op_string.c
+  src/core/census/context.c
+  src/core/census/initialize.c
+  )
+add_library(
+  grpc_test_util
+  test/core/end2end/data/server1_cert.c
+  test/core/end2end/data/server1_key.c
+  test/core/end2end/data/test_root_cert.c
+  test/core/end2end/cq_verifier.c
+  test/core/iomgr/endpoint_tests.c
+  test/core/util/grpc_profiler.c
+  test/core/util/parse_hexstring.c
+  test/core/util/port_posix.c
+  test/core/util/port_windows.c
+  test/core/util/slice_splitter.c
+  )
+add_library(
+  grpc_test_util_unsecure
+  test/core/end2end/cq_verifier.c
+  test/core/iomgr/endpoint_tests.c
+  test/core/util/grpc_profiler.c
+  test/core/util/parse_hexstring.c
+  test/core/util/port_posix.c
+  test/core/util/port_windows.c
+  test/core/util/slice_splitter.c
+  )
+add_library(
+  grpc_unsecure
+  src/core/surface/init_unsecure.c
+  src/core/census/grpc_context.c
+  src/core/channel/channel_args.c
+  src/core/channel/channel_stack.c
+  src/core/channel/child_channel.c
+  src/core/channel/client_channel.c
+  src/core/channel/client_setup.c
+  src/core/channel/connected_channel.c
+  src/core/channel/http_client_filter.c
+  src/core/channel/http_server_filter.c
+  src/core/channel/noop_filter.c
+  src/core/compression/algorithm.c
+  src/core/compression/message_compress.c
+  src/core/debug/trace.c
+  src/core/iomgr/alarm.c
+  src/core/iomgr/alarm_heap.c
+  src/core/iomgr/endpoint.c
+  src/core/iomgr/endpoint_pair_posix.c
+  src/core/iomgr/endpoint_pair_windows.c
+  src/core/iomgr/fd_posix.c
+  src/core/iomgr/iocp_windows.c
+  src/core/iomgr/iomgr.c
+  src/core/iomgr/iomgr_posix.c
+  src/core/iomgr/iomgr_windows.c
+  src/core/iomgr/pollset_kick_posix.c
+  src/core/iomgr/pollset_multipoller_with_epoll.c
+  src/core/iomgr/pollset_multipoller_with_poll_posix.c
+  src/core/iomgr/pollset_posix.c
+  src/core/iomgr/pollset_set_posix.c
+  src/core/iomgr/pollset_set_windows.c
+  src/core/iomgr/pollset_windows.c
+  src/core/iomgr/resolve_address_posix.c
+  src/core/iomgr/resolve_address_windows.c
+  src/core/iomgr/sockaddr_utils.c
+  src/core/iomgr/socket_utils_common_posix.c
+  src/core/iomgr/socket_utils_linux.c
+  src/core/iomgr/socket_utils_posix.c
+  src/core/iomgr/socket_windows.c
+  src/core/iomgr/tcp_client_posix.c
+  src/core/iomgr/tcp_client_windows.c
+  src/core/iomgr/tcp_posix.c
+  src/core/iomgr/tcp_server_posix.c
+  src/core/iomgr/tcp_server_windows.c
+  src/core/iomgr/tcp_windows.c
+  src/core/iomgr/time_averaged_stats.c
+  src/core/iomgr/wakeup_fd_eventfd.c
+  src/core/iomgr/wakeup_fd_nospecial.c
+  src/core/iomgr/wakeup_fd_pipe.c
+  src/core/iomgr/wakeup_fd_posix.c
+  src/core/json/json.c
+  src/core/json/json_reader.c
+  src/core/json/json_string.c
+  src/core/json/json_writer.c
+  src/core/profiling/basic_timers.c
+  src/core/profiling/stap_timers.c
+  src/core/surface/byte_buffer.c
+  src/core/surface/byte_buffer_queue.c
+  src/core/surface/byte_buffer_reader.c
+  src/core/surface/call.c
+  src/core/surface/call_details.c
+  src/core/surface/call_log_batch.c
+  src/core/surface/channel.c
+  src/core/surface/channel_create.c
+  src/core/surface/client.c
+  src/core/surface/completion_queue.c
+  src/core/surface/event_string.c
+  src/core/surface/init.c
+  src/core/surface/lame_client.c
+  src/core/surface/metadata_array.c
+  src/core/surface/server.c
+  src/core/surface/server_chttp2.c
+  src/core/surface/server_create.c
+  src/core/surface/surface_trace.c
+  src/core/transport/chttp2/alpn.c
+  src/core/transport/chttp2/bin_encoder.c
+  src/core/transport/chttp2/frame_data.c
+  src/core/transport/chttp2/frame_goaway.c
+  src/core/transport/chttp2/frame_ping.c
+  src/core/transport/chttp2/frame_rst_stream.c
+  src/core/transport/chttp2/frame_settings.c
+  src/core/transport/chttp2/frame_window_update.c
+  src/core/transport/chttp2/hpack_parser.c
+  src/core/transport/chttp2/hpack_table.c
+  src/core/transport/chttp2/huffsyms.c
+  src/core/transport/chttp2/incoming_metadata.c
+  src/core/transport/chttp2/parsing.c
+  src/core/transport/chttp2/status_conversion.c
+  src/core/transport/chttp2/stream_encoder.c
+  src/core/transport/chttp2/stream_lists.c
+  src/core/transport/chttp2/stream_map.c
+  src/core/transport/chttp2/timeout_encoding.c
+  src/core/transport/chttp2/varint.c
+  src/core/transport/chttp2/writing.c
+  src/core/transport/chttp2_transport.c
+  src/core/transport/metadata.c
+  src/core/transport/stream_op.c
+  src/core/transport/transport.c
+  src/core/transport/transport_op_string.c
+  src/core/census/context.c
+  src/core/census/initialize.c
+  )
+add_library(
+  end2end_fixture_chttp2_fake_security
+  test/core/end2end/fixtures/chttp2_fake_security.c
+  )
+add_library(
+  end2end_fixture_chttp2_fullstack
+  test/core/end2end/fixtures/chttp2_fullstack.c
+  )
+add_library(
+  end2end_fixture_chttp2_fullstack_uds_posix
+  test/core/end2end/fixtures/chttp2_fullstack_uds_posix.c
+  )
+add_library(
+  end2end_fixture_chttp2_fullstack_with_poll
+  test/core/end2end/fixtures/chttp2_fullstack_with_poll.c
+  )
+add_library(
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  test/core/end2end/fixtures/chttp2_simple_ssl_fullstack.c
+  )
+add_library(
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  test/core/end2end/fixtures/chttp2_simple_ssl_fullstack_with_poll.c
+  )
+add_library(
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  test/core/end2end/fixtures/chttp2_simple_ssl_with_oauth2_fullstack.c
+  )
+add_library(
+  end2end_fixture_chttp2_socket_pair
+  test/core/end2end/fixtures/chttp2_socket_pair.c
+  )
+add_library(
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  test/core/end2end/fixtures/chttp2_socket_pair_one_byte_at_a_time.c
+  )
+add_library(
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  test/core/end2end/fixtures/chttp2_socket_pair_with_grpc_trace.c
+  )
+add_library(
+  end2end_test_bad_hostname
+  test/core/end2end/tests/bad_hostname.c
+  )
+add_library(
+  end2end_test_cancel_after_accept
+  test/core/end2end/tests/cancel_after_accept.c
+  )
+add_library(
+  end2end_test_cancel_after_accept_and_writes_closed
+  test/core/end2end/tests/cancel_after_accept_and_writes_closed.c
+  )
+add_library(
+  end2end_test_cancel_after_invoke
+  test/core/end2end/tests/cancel_after_invoke.c
+  )
+add_library(
+  end2end_test_cancel_before_invoke
+  test/core/end2end/tests/cancel_before_invoke.c
+  )
+add_library(
+  end2end_test_cancel_in_a_vacuum
+  test/core/end2end/tests/cancel_in_a_vacuum.c
+  )
+add_library(
+  end2end_test_census_simple_request
+  test/core/end2end/tests/census_simple_request.c
+  )
+add_library(
+  end2end_test_disappearing_server
+  test/core/end2end/tests/disappearing_server.c
+  )
+add_library(
+  end2end_test_early_server_shutdown_finishes_inflight_calls
+  test/core/end2end/tests/early_server_shutdown_finishes_inflight_calls.c
+  )
+add_library(
+  end2end_test_early_server_shutdown_finishes_tags
+  test/core/end2end/tests/early_server_shutdown_finishes_tags.c
+  )
+add_library(
+  end2end_test_empty_batch
+  test/core/end2end/tests/empty_batch.c
+  )
+add_library(
+  end2end_test_graceful_server_shutdown
+  test/core/end2end/tests/graceful_server_shutdown.c
+  )
+add_library(
+  end2end_test_invoke_large_request
+  test/core/end2end/tests/invoke_large_request.c
+  )
+add_library(
+  end2end_test_max_concurrent_streams
+  test/core/end2end/tests/max_concurrent_streams.c
+  )
+add_library(
+  end2end_test_max_message_length
+  test/core/end2end/tests/max_message_length.c
+  )
+add_library(
+  end2end_test_no_op
+  test/core/end2end/tests/no_op.c
+  )
+add_library(
+  end2end_test_ping_pong_streaming
+  test/core/end2end/tests/ping_pong_streaming.c
+  )
+add_library(
+  end2end_test_registered_call
+  test/core/end2end/tests/registered_call.c
+  )
+add_library(
+  end2end_test_request_response_with_binary_metadata_and_payload
+  test/core/end2end/tests/request_response_with_binary_metadata_and_payload.c
+  )
+add_library(
+  end2end_test_request_response_with_metadata_and_payload
+  test/core/end2end/tests/request_response_with_metadata_and_payload.c
+  )
+add_library(
+  end2end_test_request_response_with_payload
+  test/core/end2end/tests/request_response_with_payload.c
+  )
+add_library(
+  end2end_test_request_response_with_payload_and_call_creds
+  test/core/end2end/tests/request_response_with_payload_and_call_creds.c
+  )
+add_library(
+  end2end_test_request_response_with_trailing_metadata_and_payload
+  test/core/end2end/tests/request_response_with_trailing_metadata_and_payload.c
+  )
+add_library(
+  end2end_test_request_with_flags
+  test/core/end2end/tests/request_with_flags.c
+  )
+add_library(
+  end2end_test_request_with_large_metadata
+  test/core/end2end/tests/request_with_large_metadata.c
+  )
+add_library(
+  end2end_test_request_with_payload
+  test/core/end2end/tests/request_with_payload.c
+  )
+add_library(
+  end2end_test_server_finishes_request
+  test/core/end2end/tests/server_finishes_request.c
+  )
+add_library(
+  end2end_test_simple_delayed_request
+  test/core/end2end/tests/simple_delayed_request.c
+  )
+add_library(
+  end2end_test_simple_request
+  test/core/end2end/tests/simple_request.c
+  )
+add_library(
+  end2end_test_simple_request_with_high_initial_sequence_number
+  test/core/end2end/tests/simple_request_with_high_initial_sequence_number.c
+  )
+add_library(
+  end2end_certs
+  test/core/end2end/data/test_root_cert.c
+  test/core/end2end/data/server1_cert.c
+  test/core/end2end/data/server1_key.c
+  )
+add_library(
+  bad_client_test
+  test/core/bad_client/bad_client.c
+  )
+
+add_executable(
+	alarm_heap_test
+	tools/buildgen/dummy.c
+  test/core/iomgr/alarm_heap_test.c
+	)
+target_link_libraries(
+  alarm_heap_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	alarm_list_test
+	tools/buildgen/dummy.c
+  test/core/iomgr/alarm_list_test.c
+	)
+target_link_libraries(
+  alarm_list_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	alarm_test
+	tools/buildgen/dummy.c
+  test/core/iomgr/alarm_test.c
+	)
+target_link_libraries(
+  alarm_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	alpn_test
+	tools/buildgen/dummy.c
+  test/core/transport/chttp2/alpn_test.c
+	)
+target_link_libraries(
+  alpn_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	bin_encoder_test
+	tools/buildgen/dummy.c
+  test/core/transport/chttp2/bin_encoder_test.c
+	)
+target_link_libraries(
+  bin_encoder_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_status_conversion_test
+	tools/buildgen/dummy.c
+  test/core/transport/chttp2/status_conversion_test.c
+	)
+target_link_libraries(
+  chttp2_status_conversion_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_stream_encoder_test
+	tools/buildgen/dummy.c
+  test/core/transport/chttp2/stream_encoder_test.c
+	)
+target_link_libraries(
+  chttp2_stream_encoder_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_stream_map_test
+	tools/buildgen/dummy.c
+  test/core/transport/chttp2/stream_map_test.c
+	)
+target_link_libraries(
+  chttp2_stream_map_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	dualstack_socket_test
+	tools/buildgen/dummy.c
+  test/core/end2end/dualstack_socket_test.c
+	)
+target_link_libraries(
+  dualstack_socket_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	fd_conservation_posix_test
+	tools/buildgen/dummy.c
+  test/core/iomgr/fd_conservation_posix_test.c
+	)
+target_link_libraries(
+  fd_conservation_posix_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	fd_posix_test
+	tools/buildgen/dummy.c
+  test/core/iomgr/fd_posix_test.c
+	)
+target_link_libraries(
+  fd_posix_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	fling_client
+	tools/buildgen/dummy.c
+  test/core/fling/client.c
+	)
+target_link_libraries(
+  fling_client
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	fling_server
+	tools/buildgen/dummy.c
+  test/core/fling/server.c
+	)
+target_link_libraries(
+  fling_server
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	fling_stream_test
+	tools/buildgen/dummy.c
+  test/core/fling/fling_stream_test.c
+	)
+target_link_libraries(
+  fling_stream_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	fling_test
+	tools/buildgen/dummy.c
+  test/core/fling/fling_test.c
+	)
+target_link_libraries(
+  fling_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	gen_hpack_tables
+	tools/buildgen/dummy.c
+  tools/codegen/core/gen_hpack_tables.c
+	)
+target_link_libraries(
+  gen_hpack_tables
+  gpr
+  grpc
+  )
+add_executable(
+	gpr_cancellable_test
+	tools/buildgen/dummy.c
+  test/core/support/cancellable_test.c
+	)
+target_link_libraries(
+  gpr_cancellable_test
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	gpr_cmdline_test
+	tools/buildgen/dummy.c
+  test/core/support/cmdline_test.c
+	)
+target_link_libraries(
+  gpr_cmdline_test
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	gpr_env_test
+	tools/buildgen/dummy.c
+  test/core/support/env_test.c
+	)
+target_link_libraries(
+  gpr_env_test
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	gpr_file_test
+	tools/buildgen/dummy.c
+  test/core/support/file_test.c
+	)
+target_link_libraries(
+  gpr_file_test
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	gpr_histogram_test
+	tools/buildgen/dummy.c
+  test/core/support/histogram_test.c
+	)
+target_link_libraries(
+  gpr_histogram_test
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	gpr_host_port_test
+	tools/buildgen/dummy.c
+  test/core/support/host_port_test.c
+	)
+target_link_libraries(
+  gpr_host_port_test
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	gpr_log_test
+	tools/buildgen/dummy.c
+  test/core/support/log_test.c
+	)
+target_link_libraries(
+  gpr_log_test
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	gpr_slice_buffer_test
+	tools/buildgen/dummy.c
+  test/core/support/slice_buffer_test.c
+	)
+target_link_libraries(
+  gpr_slice_buffer_test
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	gpr_slice_test
+	tools/buildgen/dummy.c
+  test/core/support/slice_test.c
+	)
+target_link_libraries(
+  gpr_slice_test
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	gpr_string_test
+	tools/buildgen/dummy.c
+  test/core/support/string_test.c
+	)
+target_link_libraries(
+  gpr_string_test
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	gpr_sync_test
+	tools/buildgen/dummy.c
+  test/core/support/sync_test.c
+	)
+target_link_libraries(
+  gpr_sync_test
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	gpr_thd_test
+	tools/buildgen/dummy.c
+  test/core/support/thd_test.c
+	)
+target_link_libraries(
+  gpr_thd_test
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	gpr_time_test
+	tools/buildgen/dummy.c
+  test/core/support/time_test.c
+	)
+target_link_libraries(
+  gpr_time_test
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	gpr_tls_test
+	tools/buildgen/dummy.c
+  test/core/support/tls_test.c
+	)
+target_link_libraries(
+  gpr_tls_test
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	gpr_useful_test
+	tools/buildgen/dummy.c
+  test/core/support/useful_test.c
+	)
+target_link_libraries(
+  gpr_useful_test
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	grpc_auth_context_test
+	tools/buildgen/dummy.c
+  test/core/security/auth_context_test.c
+	)
+target_link_libraries(
+  grpc_auth_context_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	grpc_base64_test
+	tools/buildgen/dummy.c
+  test/core/security/base64_test.c
+	)
+target_link_libraries(
+  grpc_base64_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	grpc_byte_buffer_reader_test
+	tools/buildgen/dummy.c
+  test/core/surface/byte_buffer_reader_test.c
+	)
+target_link_libraries(
+  grpc_byte_buffer_reader_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	grpc_channel_stack_test
+	tools/buildgen/dummy.c
+  test/core/channel/channel_stack_test.c
+	)
+target_link_libraries(
+  grpc_channel_stack_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	grpc_completion_queue_test
+	tools/buildgen/dummy.c
+  test/core/surface/completion_queue_test.c
+	)
+target_link_libraries(
+  grpc_completion_queue_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	grpc_create_jwt
+	tools/buildgen/dummy.c
+  test/core/security/create_jwt.c
+	)
+target_link_libraries(
+  grpc_create_jwt
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	grpc_credentials_test
+	tools/buildgen/dummy.c
+  test/core/security/credentials_test.c
+	)
+target_link_libraries(
+  grpc_credentials_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	grpc_fetch_oauth2
+	tools/buildgen/dummy.c
+  test/core/security/fetch_oauth2.c
+	)
+target_link_libraries(
+  grpc_fetch_oauth2
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	grpc_json_token_test
+	tools/buildgen/dummy.c
+  test/core/security/json_token_test.c
+	)
+target_link_libraries(
+  grpc_json_token_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	grpc_print_google_default_creds_token
+	tools/buildgen/dummy.c
+  test/core/security/print_google_default_creds_token.c
+	)
+target_link_libraries(
+  grpc_print_google_default_creds_token
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	grpc_security_connector_test
+	tools/buildgen/dummy.c
+  test/core/security/security_connector_test.c
+	)
+target_link_libraries(
+  grpc_security_connector_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	grpc_stream_op_test
+	tools/buildgen/dummy.c
+  test/core/transport/stream_op_test.c
+	)
+target_link_libraries(
+  grpc_stream_op_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	hpack_parser_test
+	tools/buildgen/dummy.c
+  test/core/transport/chttp2/hpack_parser_test.c
+	)
+target_link_libraries(
+  hpack_parser_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	hpack_table_test
+	tools/buildgen/dummy.c
+  test/core/transport/chttp2/hpack_table_test.c
+	)
+target_link_libraries(
+  hpack_table_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	httpcli_format_request_test
+	tools/buildgen/dummy.c
+  test/core/httpcli/format_request_test.c
+	)
+target_link_libraries(
+  httpcli_format_request_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	httpcli_parser_test
+	tools/buildgen/dummy.c
+  test/core/httpcli/parser_test.c
+	)
+target_link_libraries(
+  httpcli_parser_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	httpcli_test
+	tools/buildgen/dummy.c
+  test/core/httpcli/httpcli_test.c
+	)
+target_link_libraries(
+  httpcli_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	json_rewrite
+	tools/buildgen/dummy.c
+  test/core/json/json_rewrite.c
+	)
+target_link_libraries(
+  json_rewrite
+  grpc
+  gpr
+  )
+add_executable(
+	json_rewrite_test
+	tools/buildgen/dummy.c
+  test/core/json/json_rewrite_test.c
+	)
+target_link_libraries(
+  json_rewrite_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	json_test
+	tools/buildgen/dummy.c
+  test/core/json/json_test.c
+	)
+target_link_libraries(
+  json_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	lame_client_test
+	tools/buildgen/dummy.c
+  test/core/surface/lame_client_test.c
+	)
+target_link_libraries(
+  lame_client_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	low_level_ping_pong_benchmark
+	tools/buildgen/dummy.c
+  test/core/network_benchmarks/low_level_ping_pong.c
+	)
+target_link_libraries(
+  low_level_ping_pong_benchmark
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	message_compress_test
+	tools/buildgen/dummy.c
+  test/core/compression/message_compress_test.c
+	)
+target_link_libraries(
+  message_compress_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	multi_init_test
+	tools/buildgen/dummy.c
+  test/core/surface/multi_init_test.c
+	)
+target_link_libraries(
+  multi_init_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	multiple_server_queues_test
+	tools/buildgen/dummy.c
+  test/core/end2end/multiple_server_queues_test.c
+	)
+target_link_libraries(
+  multiple_server_queues_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	murmur_hash_test
+	tools/buildgen/dummy.c
+  test/core/support/murmur_hash_test.c
+	)
+target_link_libraries(
+  murmur_hash_test
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	no_server_test
+	tools/buildgen/dummy.c
+  test/core/end2end/no_server_test.c
+	)
+target_link_libraries(
+  no_server_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	poll_kick_posix_test
+	tools/buildgen/dummy.c
+  test/core/iomgr/poll_kick_posix_test.c
+	)
+target_link_libraries(
+  poll_kick_posix_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	resolve_address_test
+	tools/buildgen/dummy.c
+  test/core/iomgr/resolve_address_test.c
+	)
+target_link_libraries(
+  resolve_address_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	secure_endpoint_test
+	tools/buildgen/dummy.c
+  test/core/security/secure_endpoint_test.c
+	)
+target_link_libraries(
+  secure_endpoint_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	sockaddr_utils_test
+	tools/buildgen/dummy.c
+  test/core/iomgr/sockaddr_utils_test.c
+	)
+target_link_libraries(
+  sockaddr_utils_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	tcp_client_posix_test
+	tools/buildgen/dummy.c
+  test/core/iomgr/tcp_client_posix_test.c
+	)
+target_link_libraries(
+  tcp_client_posix_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	tcp_posix_test
+	tools/buildgen/dummy.c
+  test/core/iomgr/tcp_posix_test.c
+	)
+target_link_libraries(
+  tcp_posix_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	tcp_server_posix_test
+	tools/buildgen/dummy.c
+  test/core/iomgr/tcp_server_posix_test.c
+	)
+target_link_libraries(
+  tcp_server_posix_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	time_averaged_stats_test
+	tools/buildgen/dummy.c
+  test/core/iomgr/time_averaged_stats_test.c
+	)
+target_link_libraries(
+  time_averaged_stats_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	time_test
+	tools/buildgen/dummy.c
+  test/core/support/time_test.c
+	)
+target_link_libraries(
+  time_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	timeout_encoding_test
+	tools/buildgen/dummy.c
+  test/core/transport/chttp2/timeout_encoding_test.c
+	)
+target_link_libraries(
+  timeout_encoding_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	timers_test
+	tools/buildgen/dummy.c
+  test/core/profiling/timers_test.c
+	)
+target_link_libraries(
+  timers_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	transport_metadata_test
+	tools/buildgen/dummy.c
+  test/core/transport/metadata_test.c
+	)
+target_link_libraries(
+  transport_metadata_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	transport_security_test
+	tools/buildgen/dummy.c
+  test/core/tsi/transport_security_test.c
+	)
+target_link_libraries(
+  transport_security_test
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_bad_hostname_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_bad_hostname_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_bad_hostname
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_cancel_after_accept_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_cancel_after_accept_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_cancel_after_accept
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_cancel_after_accept_and_writes_closed_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_cancel_after_accept_and_writes_closed_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_cancel_after_accept_and_writes_closed
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_cancel_after_invoke_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_cancel_after_invoke_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_cancel_after_invoke
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_cancel_before_invoke_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_cancel_before_invoke_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_cancel_before_invoke
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_cancel_in_a_vacuum_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_cancel_in_a_vacuum_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_cancel_in_a_vacuum
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_census_simple_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_census_simple_request_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_census_simple_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_disappearing_server_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_disappearing_server_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_disappearing_server
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_early_server_shutdown_finishes_inflight_calls_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_early_server_shutdown_finishes_inflight_calls_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_early_server_shutdown_finishes_inflight_calls
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_early_server_shutdown_finishes_tags_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_early_server_shutdown_finishes_tags_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_early_server_shutdown_finishes_tags
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_empty_batch_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_empty_batch_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_empty_batch
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_graceful_server_shutdown_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_graceful_server_shutdown_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_graceful_server_shutdown
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_invoke_large_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_invoke_large_request_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_invoke_large_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_max_concurrent_streams_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_max_concurrent_streams_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_max_concurrent_streams
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_max_message_length_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_max_message_length_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_max_message_length
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_no_op_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_no_op_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_no_op
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_ping_pong_streaming_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_ping_pong_streaming_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_ping_pong_streaming
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_registered_call_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_registered_call_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_registered_call
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_request_response_with_binary_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_request_response_with_binary_metadata_and_payload_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_request_response_with_binary_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_request_response_with_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_request_response_with_metadata_and_payload_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_request_response_with_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_request_response_with_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_request_response_with_payload_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_request_response_with_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_request_response_with_payload_and_call_creds_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_request_response_with_payload_and_call_creds_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_request_response_with_payload_and_call_creds
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_request_response_with_trailing_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_request_response_with_trailing_metadata_and_payload_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_request_response_with_trailing_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_request_with_flags_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_request_with_flags_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_request_with_flags
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_request_with_large_metadata_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_request_with_large_metadata_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_request_with_large_metadata
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_request_with_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_request_with_payload_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_request_with_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_server_finishes_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_server_finishes_request_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_server_finishes_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_simple_delayed_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_simple_delayed_request_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_simple_delayed_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_simple_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_simple_request_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_simple_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fake_security_simple_request_with_high_initial_sequence_number_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fake_security_simple_request_with_high_initial_sequence_number_test
+  end2end_fixture_chttp2_fake_security
+  end2end_test_simple_request_with_high_initial_sequence_number
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_bad_hostname_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_bad_hostname_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_bad_hostname
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_cancel_after_accept_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_cancel_after_accept_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_cancel_after_accept
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_cancel_after_accept_and_writes_closed_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_cancel_after_accept_and_writes_closed_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_cancel_after_accept_and_writes_closed
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_cancel_after_invoke_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_cancel_after_invoke_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_cancel_after_invoke
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_cancel_before_invoke_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_cancel_before_invoke_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_cancel_before_invoke
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_cancel_in_a_vacuum_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_cancel_in_a_vacuum_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_cancel_in_a_vacuum
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_census_simple_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_census_simple_request_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_census_simple_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_disappearing_server_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_disappearing_server_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_disappearing_server
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_early_server_shutdown_finishes_inflight_calls_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_early_server_shutdown_finishes_inflight_calls_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_early_server_shutdown_finishes_inflight_calls
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_early_server_shutdown_finishes_tags_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_early_server_shutdown_finishes_tags_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_early_server_shutdown_finishes_tags
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_empty_batch_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_empty_batch_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_empty_batch
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_graceful_server_shutdown_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_graceful_server_shutdown_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_graceful_server_shutdown
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_invoke_large_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_invoke_large_request_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_invoke_large_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_max_concurrent_streams_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_max_concurrent_streams_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_max_concurrent_streams
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_max_message_length_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_max_message_length_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_max_message_length
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_no_op_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_no_op_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_no_op
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_ping_pong_streaming_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_ping_pong_streaming_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_ping_pong_streaming
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_registered_call_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_registered_call_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_registered_call
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_request_response_with_binary_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_request_response_with_binary_metadata_and_payload_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_request_response_with_binary_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_request_response_with_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_request_response_with_metadata_and_payload_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_request_response_with_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_request_response_with_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_request_response_with_payload_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_request_response_with_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_request_response_with_payload_and_call_creds_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_request_response_with_payload_and_call_creds_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_request_response_with_payload_and_call_creds
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_request_response_with_trailing_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_request_response_with_trailing_metadata_and_payload_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_request_response_with_trailing_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_request_with_flags_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_request_with_flags_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_request_with_flags
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_request_with_large_metadata_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_request_with_large_metadata_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_request_with_large_metadata
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_request_with_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_request_with_payload_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_request_with_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_server_finishes_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_server_finishes_request_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_server_finishes_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_simple_delayed_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_simple_delayed_request_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_simple_delayed_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_simple_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_simple_request_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_simple_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_simple_request_with_high_initial_sequence_number_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_simple_request_with_high_initial_sequence_number_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_simple_request_with_high_initial_sequence_number
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_bad_hostname_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_bad_hostname_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_bad_hostname
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_cancel_after_accept_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_cancel_after_accept_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_cancel_after_accept
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_cancel_after_accept_and_writes_closed_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_cancel_after_accept_and_writes_closed_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_cancel_after_accept_and_writes_closed
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_cancel_after_invoke_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_cancel_after_invoke_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_cancel_after_invoke
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_cancel_before_invoke_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_cancel_before_invoke_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_cancel_before_invoke
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_cancel_in_a_vacuum_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_cancel_in_a_vacuum_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_cancel_in_a_vacuum
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_census_simple_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_census_simple_request_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_census_simple_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_disappearing_server_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_disappearing_server_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_disappearing_server
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_early_server_shutdown_finishes_inflight_calls_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_early_server_shutdown_finishes_inflight_calls_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_early_server_shutdown_finishes_inflight_calls
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_early_server_shutdown_finishes_tags_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_early_server_shutdown_finishes_tags_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_early_server_shutdown_finishes_tags
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_empty_batch_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_empty_batch_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_empty_batch
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_graceful_server_shutdown_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_graceful_server_shutdown_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_graceful_server_shutdown
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_invoke_large_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_invoke_large_request_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_invoke_large_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_max_concurrent_streams_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_max_concurrent_streams_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_max_concurrent_streams
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_max_message_length_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_max_message_length_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_max_message_length
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_no_op_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_no_op_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_no_op
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_ping_pong_streaming_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_ping_pong_streaming_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_ping_pong_streaming
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_registered_call_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_registered_call_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_registered_call
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_request_response_with_binary_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_request_response_with_binary_metadata_and_payload_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_request_response_with_binary_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_request_response_with_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_request_response_with_metadata_and_payload_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_request_response_with_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_request_response_with_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_request_response_with_payload_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_request_response_with_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_request_response_with_payload_and_call_creds_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_request_response_with_payload_and_call_creds_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_request_response_with_payload_and_call_creds
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_request_response_with_trailing_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_request_response_with_trailing_metadata_and_payload_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_request_response_with_trailing_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_request_with_flags_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_request_with_flags_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_request_with_flags
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_request_with_large_metadata_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_request_with_large_metadata_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_request_with_large_metadata
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_request_with_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_request_with_payload_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_request_with_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_server_finishes_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_server_finishes_request_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_server_finishes_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_simple_delayed_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_simple_delayed_request_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_simple_delayed_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_simple_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_simple_request_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_simple_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_simple_request_with_high_initial_sequence_number_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_simple_request_with_high_initial_sequence_number_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_simple_request_with_high_initial_sequence_number
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_bad_hostname_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_bad_hostname_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_bad_hostname
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_cancel_after_accept_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_cancel_after_accept_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_cancel_after_accept
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_cancel_after_accept_and_writes_closed_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_cancel_after_accept_and_writes_closed_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_cancel_after_accept_and_writes_closed
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_cancel_after_invoke_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_cancel_after_invoke_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_cancel_after_invoke
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_cancel_before_invoke_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_cancel_before_invoke_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_cancel_before_invoke
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_cancel_in_a_vacuum_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_cancel_in_a_vacuum_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_cancel_in_a_vacuum
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_census_simple_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_census_simple_request_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_census_simple_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_disappearing_server_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_disappearing_server_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_disappearing_server
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_early_server_shutdown_finishes_inflight_calls_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_early_server_shutdown_finishes_inflight_calls_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_early_server_shutdown_finishes_inflight_calls
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_early_server_shutdown_finishes_tags_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_early_server_shutdown_finishes_tags_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_early_server_shutdown_finishes_tags
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_empty_batch_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_empty_batch_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_empty_batch
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_graceful_server_shutdown_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_graceful_server_shutdown_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_graceful_server_shutdown
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_invoke_large_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_invoke_large_request_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_invoke_large_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_max_concurrent_streams_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_max_concurrent_streams_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_max_concurrent_streams
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_max_message_length_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_max_message_length_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_max_message_length
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_no_op_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_no_op_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_no_op
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_ping_pong_streaming_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_ping_pong_streaming_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_ping_pong_streaming
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_registered_call_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_registered_call_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_registered_call
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_request_response_with_binary_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_request_response_with_binary_metadata_and_payload_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_request_response_with_binary_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_request_response_with_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_request_response_with_metadata_and_payload_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_request_response_with_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_request_response_with_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_request_response_with_payload_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_request_response_with_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_request_response_with_payload_and_call_creds_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_request_response_with_payload_and_call_creds_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_request_response_with_payload_and_call_creds
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_request_response_with_trailing_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_request_response_with_trailing_metadata_and_payload_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_request_response_with_trailing_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_request_with_flags_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_request_with_flags_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_request_with_flags
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_request_with_large_metadata_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_request_with_large_metadata_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_request_with_large_metadata
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_request_with_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_request_with_payload_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_request_with_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_server_finishes_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_server_finishes_request_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_server_finishes_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_simple_delayed_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_simple_delayed_request_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_simple_delayed_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_simple_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_simple_request_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_simple_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_simple_request_with_high_initial_sequence_number_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_simple_request_with_high_initial_sequence_number_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_simple_request_with_high_initial_sequence_number
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_bad_hostname_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_bad_hostname_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_bad_hostname
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_cancel_after_accept_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_cancel_after_accept_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_cancel_after_accept
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_cancel_after_accept_and_writes_closed_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_cancel_after_accept_and_writes_closed_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_cancel_after_accept_and_writes_closed
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_cancel_after_invoke_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_cancel_after_invoke_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_cancel_after_invoke
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_cancel_before_invoke_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_cancel_before_invoke_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_cancel_before_invoke
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_cancel_in_a_vacuum_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_cancel_in_a_vacuum_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_cancel_in_a_vacuum
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_census_simple_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_census_simple_request_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_census_simple_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_disappearing_server_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_disappearing_server_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_disappearing_server
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_early_server_shutdown_finishes_inflight_calls_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_early_server_shutdown_finishes_inflight_calls_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_early_server_shutdown_finishes_inflight_calls
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_early_server_shutdown_finishes_tags_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_early_server_shutdown_finishes_tags_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_early_server_shutdown_finishes_tags
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_empty_batch_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_empty_batch_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_empty_batch
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_graceful_server_shutdown_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_graceful_server_shutdown_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_graceful_server_shutdown
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_invoke_large_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_invoke_large_request_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_invoke_large_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_max_concurrent_streams_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_max_concurrent_streams_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_max_concurrent_streams
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_max_message_length_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_max_message_length_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_max_message_length
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_no_op_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_no_op_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_no_op
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_ping_pong_streaming_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_ping_pong_streaming_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_ping_pong_streaming
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_registered_call_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_registered_call_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_registered_call
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_request_response_with_binary_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_request_response_with_binary_metadata_and_payload_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_request_response_with_binary_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_request_response_with_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_request_response_with_metadata_and_payload_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_request_response_with_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_request_response_with_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_request_response_with_payload_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_request_response_with_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_request_response_with_payload_and_call_creds_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_request_response_with_payload_and_call_creds_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_request_response_with_payload_and_call_creds
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_request_response_with_trailing_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_request_response_with_trailing_metadata_and_payload_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_request_response_with_trailing_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_request_with_flags_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_request_with_flags_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_request_with_flags
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_request_with_large_metadata_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_request_with_large_metadata_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_request_with_large_metadata
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_request_with_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_request_with_payload_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_request_with_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_server_finishes_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_server_finishes_request_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_server_finishes_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_simple_delayed_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_simple_delayed_request_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_simple_delayed_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_simple_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_simple_request_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_simple_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_simple_request_with_high_initial_sequence_number_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_simple_request_with_high_initial_sequence_number_test
+  end2end_fixture_chttp2_simple_ssl_fullstack
+  end2end_test_simple_request_with_high_initial_sequence_number
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_bad_hostname_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_bad_hostname_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_bad_hostname
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_cancel_after_accept_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_cancel_after_accept_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_cancel_after_accept
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_cancel_after_accept_and_writes_closed_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_cancel_after_accept_and_writes_closed_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_cancel_after_accept_and_writes_closed
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_cancel_after_invoke_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_cancel_after_invoke_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_cancel_after_invoke
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_cancel_before_invoke_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_cancel_before_invoke_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_cancel_before_invoke
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_cancel_in_a_vacuum_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_cancel_in_a_vacuum_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_cancel_in_a_vacuum
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_census_simple_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_census_simple_request_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_census_simple_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_disappearing_server_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_disappearing_server_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_disappearing_server
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_early_server_shutdown_finishes_inflight_calls_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_early_server_shutdown_finishes_inflight_calls_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_early_server_shutdown_finishes_inflight_calls
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_early_server_shutdown_finishes_tags_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_early_server_shutdown_finishes_tags_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_early_server_shutdown_finishes_tags
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_empty_batch_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_empty_batch_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_empty_batch
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_graceful_server_shutdown_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_graceful_server_shutdown_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_graceful_server_shutdown
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_invoke_large_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_invoke_large_request_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_invoke_large_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_max_concurrent_streams_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_max_concurrent_streams_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_max_concurrent_streams
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_max_message_length_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_max_message_length_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_max_message_length
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_no_op_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_no_op_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_no_op
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_ping_pong_streaming_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_ping_pong_streaming_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_ping_pong_streaming
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_registered_call_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_registered_call_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_registered_call
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_request_response_with_binary_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_request_response_with_binary_metadata_and_payload_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_request_response_with_binary_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_request_response_with_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_request_response_with_metadata_and_payload_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_request_response_with_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_request_response_with_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_request_response_with_payload_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_request_response_with_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_request_response_with_payload_and_call_creds_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_request_response_with_payload_and_call_creds_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_request_response_with_payload_and_call_creds
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_request_response_with_trailing_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_request_response_with_trailing_metadata_and_payload_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_request_response_with_trailing_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_request_with_flags_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_request_with_flags_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_request_with_flags
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_request_with_large_metadata_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_request_with_large_metadata_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_request_with_large_metadata
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_request_with_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_request_with_payload_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_request_with_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_server_finishes_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_server_finishes_request_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_server_finishes_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_simple_delayed_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_simple_delayed_request_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_simple_delayed_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_simple_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_simple_request_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_simple_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_fullstack_with_poll_simple_request_with_high_initial_sequence_number_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_fullstack_with_poll_simple_request_with_high_initial_sequence_number_test
+  end2end_fixture_chttp2_simple_ssl_fullstack_with_poll
+  end2end_test_simple_request_with_high_initial_sequence_number
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_bad_hostname_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_bad_hostname_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_bad_hostname
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_cancel_after_accept_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_cancel_after_accept_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_cancel_after_accept
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_cancel_after_accept_and_writes_closed_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_cancel_after_accept_and_writes_closed_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_cancel_after_accept_and_writes_closed
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_cancel_after_invoke_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_cancel_after_invoke_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_cancel_after_invoke
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_cancel_before_invoke_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_cancel_before_invoke_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_cancel_before_invoke
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_cancel_in_a_vacuum_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_cancel_in_a_vacuum_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_cancel_in_a_vacuum
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_census_simple_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_census_simple_request_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_census_simple_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_disappearing_server_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_disappearing_server_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_disappearing_server
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_early_server_shutdown_finishes_inflight_calls_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_early_server_shutdown_finishes_inflight_calls_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_early_server_shutdown_finishes_inflight_calls
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_early_server_shutdown_finishes_tags_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_early_server_shutdown_finishes_tags_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_early_server_shutdown_finishes_tags
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_empty_batch_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_empty_batch_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_empty_batch
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_graceful_server_shutdown_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_graceful_server_shutdown_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_graceful_server_shutdown
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_invoke_large_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_invoke_large_request_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_invoke_large_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_max_concurrent_streams_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_max_concurrent_streams_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_max_concurrent_streams
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_max_message_length_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_max_message_length_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_max_message_length
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_no_op_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_no_op_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_no_op
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_ping_pong_streaming_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_ping_pong_streaming_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_ping_pong_streaming
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_registered_call_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_registered_call_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_registered_call
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_request_response_with_binary_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_request_response_with_binary_metadata_and_payload_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_request_response_with_binary_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_request_response_with_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_request_response_with_metadata_and_payload_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_request_response_with_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_request_response_with_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_request_response_with_payload_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_request_response_with_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_request_response_with_payload_and_call_creds_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_request_response_with_payload_and_call_creds_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_request_response_with_payload_and_call_creds
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_request_response_with_trailing_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_request_response_with_trailing_metadata_and_payload_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_request_response_with_trailing_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_request_with_flags_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_request_with_flags_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_request_with_flags
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_request_with_large_metadata_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_request_with_large_metadata_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_request_with_large_metadata
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_request_with_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_request_with_payload_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_request_with_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_server_finishes_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_server_finishes_request_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_server_finishes_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_simple_delayed_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_simple_delayed_request_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_simple_delayed_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_simple_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_simple_request_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_simple_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_simple_ssl_with_oauth2_fullstack_simple_request_with_high_initial_sequence_number_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_simple_ssl_with_oauth2_fullstack_simple_request_with_high_initial_sequence_number_test
+  end2end_fixture_chttp2_simple_ssl_with_oauth2_fullstack
+  end2end_test_simple_request_with_high_initial_sequence_number
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_bad_hostname_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_bad_hostname_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_bad_hostname
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_cancel_after_accept_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_cancel_after_accept_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_cancel_after_accept
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_cancel_after_accept_and_writes_closed_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_cancel_after_accept_and_writes_closed_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_cancel_after_accept_and_writes_closed
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_cancel_after_invoke_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_cancel_after_invoke_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_cancel_after_invoke
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_cancel_before_invoke_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_cancel_before_invoke_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_cancel_before_invoke
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_cancel_in_a_vacuum_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_cancel_in_a_vacuum_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_cancel_in_a_vacuum
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_census_simple_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_census_simple_request_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_census_simple_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_disappearing_server_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_disappearing_server_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_disappearing_server
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_early_server_shutdown_finishes_inflight_calls_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_early_server_shutdown_finishes_inflight_calls_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_early_server_shutdown_finishes_inflight_calls
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_early_server_shutdown_finishes_tags_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_early_server_shutdown_finishes_tags_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_early_server_shutdown_finishes_tags
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_empty_batch_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_empty_batch_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_empty_batch
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_graceful_server_shutdown_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_graceful_server_shutdown_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_graceful_server_shutdown
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_invoke_large_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_invoke_large_request_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_invoke_large_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_max_concurrent_streams_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_max_concurrent_streams_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_max_concurrent_streams
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_max_message_length_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_max_message_length_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_max_message_length
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_no_op_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_no_op_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_no_op
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_ping_pong_streaming_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_ping_pong_streaming_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_ping_pong_streaming
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_registered_call_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_registered_call_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_registered_call
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_request_response_with_binary_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_request_response_with_binary_metadata_and_payload_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_request_response_with_binary_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_request_response_with_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_request_response_with_metadata_and_payload_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_request_response_with_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_request_response_with_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_request_response_with_payload_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_request_response_with_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_request_response_with_payload_and_call_creds_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_request_response_with_payload_and_call_creds_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_request_response_with_payload_and_call_creds
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_request_response_with_trailing_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_request_response_with_trailing_metadata_and_payload_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_request_response_with_trailing_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_request_with_flags_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_request_with_flags_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_request_with_flags
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_request_with_large_metadata_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_request_with_large_metadata_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_request_with_large_metadata
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_request_with_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_request_with_payload_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_request_with_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_server_finishes_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_server_finishes_request_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_server_finishes_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_simple_delayed_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_simple_delayed_request_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_simple_delayed_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_simple_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_simple_request_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_simple_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_simple_request_with_high_initial_sequence_number_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_simple_request_with_high_initial_sequence_number_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_simple_request_with_high_initial_sequence_number
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_bad_hostname_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_bad_hostname_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_bad_hostname
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_cancel_after_accept_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_cancel_after_accept_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_cancel_after_accept
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_cancel_after_accept_and_writes_closed_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_cancel_after_accept_and_writes_closed_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_cancel_after_accept_and_writes_closed
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_cancel_after_invoke_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_cancel_after_invoke_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_cancel_after_invoke
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_cancel_before_invoke_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_cancel_before_invoke_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_cancel_before_invoke
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_cancel_in_a_vacuum_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_cancel_in_a_vacuum_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_cancel_in_a_vacuum
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_census_simple_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_census_simple_request_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_census_simple_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_disappearing_server_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_disappearing_server_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_disappearing_server
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_early_server_shutdown_finishes_inflight_calls_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_early_server_shutdown_finishes_inflight_calls_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_early_server_shutdown_finishes_inflight_calls
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_early_server_shutdown_finishes_tags_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_early_server_shutdown_finishes_tags_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_early_server_shutdown_finishes_tags
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_empty_batch_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_empty_batch_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_empty_batch
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_graceful_server_shutdown_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_graceful_server_shutdown_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_graceful_server_shutdown
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_invoke_large_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_invoke_large_request_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_invoke_large_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_max_concurrent_streams_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_max_concurrent_streams_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_max_concurrent_streams
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_max_message_length_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_max_message_length_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_max_message_length
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_no_op_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_no_op_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_no_op
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_ping_pong_streaming_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_ping_pong_streaming_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_ping_pong_streaming
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_registered_call_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_registered_call_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_registered_call
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_request_response_with_binary_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_request_response_with_binary_metadata_and_payload_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_request_response_with_binary_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_request_response_with_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_request_response_with_metadata_and_payload_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_request_response_with_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_request_response_with_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_request_response_with_payload_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_request_response_with_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_request_response_with_payload_and_call_creds_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_request_response_with_payload_and_call_creds_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_request_response_with_payload_and_call_creds
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_request_response_with_trailing_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_request_response_with_trailing_metadata_and_payload_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_request_response_with_trailing_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_request_with_flags_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_request_with_flags_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_request_with_flags
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_request_with_large_metadata_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_request_with_large_metadata_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_request_with_large_metadata
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_request_with_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_request_with_payload_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_request_with_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_server_finishes_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_server_finishes_request_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_server_finishes_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_simple_delayed_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_simple_delayed_request_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_simple_delayed_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_simple_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_simple_request_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_simple_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_simple_request_with_high_initial_sequence_number_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_simple_request_with_high_initial_sequence_number_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_simple_request_with_high_initial_sequence_number
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_bad_hostname_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_bad_hostname_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_bad_hostname
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_cancel_after_accept_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_cancel_after_accept_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_cancel_after_accept
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_cancel_after_accept_and_writes_closed_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_cancel_after_accept_and_writes_closed_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_cancel_after_accept_and_writes_closed
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_cancel_after_invoke_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_cancel_after_invoke_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_cancel_after_invoke
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_cancel_before_invoke_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_cancel_before_invoke_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_cancel_before_invoke
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_cancel_in_a_vacuum_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_cancel_in_a_vacuum_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_cancel_in_a_vacuum
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_census_simple_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_census_simple_request_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_census_simple_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_disappearing_server_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_disappearing_server_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_disappearing_server
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_early_server_shutdown_finishes_inflight_calls_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_early_server_shutdown_finishes_inflight_calls_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_early_server_shutdown_finishes_inflight_calls
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_early_server_shutdown_finishes_tags_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_early_server_shutdown_finishes_tags_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_early_server_shutdown_finishes_tags
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_empty_batch_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_empty_batch_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_empty_batch
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_graceful_server_shutdown_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_graceful_server_shutdown_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_graceful_server_shutdown
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_invoke_large_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_invoke_large_request_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_invoke_large_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_max_concurrent_streams_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_max_concurrent_streams_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_max_concurrent_streams
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_max_message_length_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_max_message_length_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_max_message_length
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_no_op_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_no_op_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_no_op
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_ping_pong_streaming_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_ping_pong_streaming_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_ping_pong_streaming
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_registered_call_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_registered_call_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_registered_call
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_request_response_with_binary_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_request_response_with_binary_metadata_and_payload_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_request_response_with_binary_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_request_response_with_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_request_response_with_metadata_and_payload_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_request_response_with_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_request_response_with_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_request_response_with_payload_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_request_response_with_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_request_response_with_payload_and_call_creds_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_request_response_with_payload_and_call_creds_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_request_response_with_payload_and_call_creds
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_request_response_with_trailing_metadata_and_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_request_response_with_trailing_metadata_and_payload_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_request_response_with_trailing_metadata_and_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_request_with_flags_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_request_with_flags_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_request_with_flags
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_request_with_large_metadata_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_request_with_large_metadata_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_request_with_large_metadata
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_request_with_payload_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_request_with_payload_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_request_with_payload
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_server_finishes_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_server_finishes_request_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_server_finishes_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_simple_delayed_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_simple_delayed_request_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_simple_delayed_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_simple_request_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_simple_request_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_simple_request
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_simple_request_with_high_initial_sequence_number_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_simple_request_with_high_initial_sequence_number_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_simple_request_with_high_initial_sequence_number
+  end2end_certs
+  grpc_test_util
+  grpc
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_bad_hostname_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_bad_hostname_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_bad_hostname
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_cancel_after_accept_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_cancel_after_accept_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_cancel_after_accept
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_cancel_after_accept_and_writes_closed_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_cancel_after_accept_and_writes_closed_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_cancel_after_accept_and_writes_closed
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_cancel_after_invoke_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_cancel_after_invoke_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_cancel_after_invoke
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_cancel_before_invoke_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_cancel_before_invoke_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_cancel_before_invoke
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_cancel_in_a_vacuum_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_cancel_in_a_vacuum_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_cancel_in_a_vacuum
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_census_simple_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_census_simple_request_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_census_simple_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_disappearing_server_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_disappearing_server_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_disappearing_server
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_early_server_shutdown_finishes_inflight_calls_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_early_server_shutdown_finishes_inflight_calls_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_early_server_shutdown_finishes_inflight_calls
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_early_server_shutdown_finishes_tags_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_early_server_shutdown_finishes_tags_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_early_server_shutdown_finishes_tags
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_empty_batch_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_empty_batch_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_empty_batch
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_graceful_server_shutdown_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_graceful_server_shutdown_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_graceful_server_shutdown
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_invoke_large_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_invoke_large_request_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_invoke_large_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_max_concurrent_streams_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_max_concurrent_streams_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_max_concurrent_streams
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_max_message_length_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_max_message_length_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_max_message_length
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_no_op_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_no_op_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_no_op
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_ping_pong_streaming_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_ping_pong_streaming_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_ping_pong_streaming
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_registered_call_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_registered_call_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_registered_call
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_request_response_with_binary_metadata_and_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_request_response_with_binary_metadata_and_payload_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_request_response_with_binary_metadata_and_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_request_response_with_metadata_and_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_request_response_with_metadata_and_payload_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_request_response_with_metadata_and_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_request_response_with_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_request_response_with_payload_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_request_response_with_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_request_response_with_trailing_metadata_and_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_request_response_with_trailing_metadata_and_payload_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_request_response_with_trailing_metadata_and_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_request_with_flags_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_request_with_flags_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_request_with_flags
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_request_with_large_metadata_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_request_with_large_metadata_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_request_with_large_metadata
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_request_with_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_request_with_payload_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_request_with_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_server_finishes_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_server_finishes_request_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_server_finishes_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_simple_delayed_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_simple_delayed_request_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_simple_delayed_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_simple_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_simple_request_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_simple_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_simple_request_with_high_initial_sequence_number_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_simple_request_with_high_initial_sequence_number_unsecure_test
+  end2end_fixture_chttp2_fullstack
+  end2end_test_simple_request_with_high_initial_sequence_number
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_bad_hostname_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_bad_hostname_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_bad_hostname
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_cancel_after_accept_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_cancel_after_accept_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_cancel_after_accept
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_cancel_after_accept_and_writes_closed_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_cancel_after_accept_and_writes_closed_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_cancel_after_accept_and_writes_closed
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_cancel_after_invoke_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_cancel_after_invoke_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_cancel_after_invoke
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_cancel_before_invoke_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_cancel_before_invoke_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_cancel_before_invoke
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_cancel_in_a_vacuum_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_cancel_in_a_vacuum_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_cancel_in_a_vacuum
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_census_simple_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_census_simple_request_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_census_simple_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_disappearing_server_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_disappearing_server_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_disappearing_server
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_early_server_shutdown_finishes_inflight_calls_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_early_server_shutdown_finishes_inflight_calls_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_early_server_shutdown_finishes_inflight_calls
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_early_server_shutdown_finishes_tags_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_early_server_shutdown_finishes_tags_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_early_server_shutdown_finishes_tags
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_empty_batch_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_empty_batch_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_empty_batch
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_graceful_server_shutdown_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_graceful_server_shutdown_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_graceful_server_shutdown
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_invoke_large_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_invoke_large_request_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_invoke_large_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_max_concurrent_streams_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_max_concurrent_streams_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_max_concurrent_streams
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_max_message_length_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_max_message_length_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_max_message_length
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_no_op_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_no_op_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_no_op
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_ping_pong_streaming_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_ping_pong_streaming_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_ping_pong_streaming
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_registered_call_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_registered_call_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_registered_call
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_request_response_with_binary_metadata_and_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_request_response_with_binary_metadata_and_payload_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_request_response_with_binary_metadata_and_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_request_response_with_metadata_and_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_request_response_with_metadata_and_payload_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_request_response_with_metadata_and_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_request_response_with_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_request_response_with_payload_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_request_response_with_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_request_response_with_trailing_metadata_and_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_request_response_with_trailing_metadata_and_payload_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_request_response_with_trailing_metadata_and_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_request_with_flags_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_request_with_flags_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_request_with_flags
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_request_with_large_metadata_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_request_with_large_metadata_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_request_with_large_metadata
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_request_with_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_request_with_payload_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_request_with_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_server_finishes_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_server_finishes_request_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_server_finishes_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_simple_delayed_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_simple_delayed_request_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_simple_delayed_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_simple_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_simple_request_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_simple_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_uds_posix_simple_request_with_high_initial_sequence_number_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_uds_posix_simple_request_with_high_initial_sequence_number_unsecure_test
+  end2end_fixture_chttp2_fullstack_uds_posix
+  end2end_test_simple_request_with_high_initial_sequence_number
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_bad_hostname_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_bad_hostname_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_bad_hostname
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_cancel_after_accept_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_cancel_after_accept_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_cancel_after_accept
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_cancel_after_accept_and_writes_closed_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_cancel_after_accept_and_writes_closed_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_cancel_after_accept_and_writes_closed
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_cancel_after_invoke_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_cancel_after_invoke_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_cancel_after_invoke
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_cancel_before_invoke_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_cancel_before_invoke_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_cancel_before_invoke
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_cancel_in_a_vacuum_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_cancel_in_a_vacuum_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_cancel_in_a_vacuum
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_census_simple_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_census_simple_request_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_census_simple_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_disappearing_server_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_disappearing_server_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_disappearing_server
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_early_server_shutdown_finishes_inflight_calls_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_early_server_shutdown_finishes_inflight_calls_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_early_server_shutdown_finishes_inflight_calls
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_early_server_shutdown_finishes_tags_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_early_server_shutdown_finishes_tags_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_early_server_shutdown_finishes_tags
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_empty_batch_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_empty_batch_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_empty_batch
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_graceful_server_shutdown_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_graceful_server_shutdown_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_graceful_server_shutdown
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_invoke_large_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_invoke_large_request_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_invoke_large_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_max_concurrent_streams_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_max_concurrent_streams_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_max_concurrent_streams
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_max_message_length_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_max_message_length_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_max_message_length
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_no_op_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_no_op_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_no_op
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_ping_pong_streaming_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_ping_pong_streaming_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_ping_pong_streaming
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_registered_call_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_registered_call_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_registered_call
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_request_response_with_binary_metadata_and_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_request_response_with_binary_metadata_and_payload_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_request_response_with_binary_metadata_and_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_request_response_with_metadata_and_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_request_response_with_metadata_and_payload_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_request_response_with_metadata_and_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_request_response_with_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_request_response_with_payload_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_request_response_with_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_request_response_with_trailing_metadata_and_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_request_response_with_trailing_metadata_and_payload_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_request_response_with_trailing_metadata_and_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_request_with_flags_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_request_with_flags_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_request_with_flags
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_request_with_large_metadata_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_request_with_large_metadata_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_request_with_large_metadata
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_request_with_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_request_with_payload_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_request_with_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_server_finishes_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_server_finishes_request_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_server_finishes_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_simple_delayed_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_simple_delayed_request_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_simple_delayed_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_simple_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_simple_request_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_simple_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_fullstack_with_poll_simple_request_with_high_initial_sequence_number_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_fullstack_with_poll_simple_request_with_high_initial_sequence_number_unsecure_test
+  end2end_fixture_chttp2_fullstack_with_poll
+  end2end_test_simple_request_with_high_initial_sequence_number
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_bad_hostname_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_bad_hostname_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_bad_hostname
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_cancel_after_accept_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_cancel_after_accept_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_cancel_after_accept
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_cancel_after_accept_and_writes_closed_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_cancel_after_accept_and_writes_closed_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_cancel_after_accept_and_writes_closed
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_cancel_after_invoke_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_cancel_after_invoke_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_cancel_after_invoke
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_cancel_before_invoke_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_cancel_before_invoke_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_cancel_before_invoke
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_cancel_in_a_vacuum_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_cancel_in_a_vacuum_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_cancel_in_a_vacuum
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_census_simple_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_census_simple_request_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_census_simple_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_disappearing_server_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_disappearing_server_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_disappearing_server
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_early_server_shutdown_finishes_inflight_calls_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_early_server_shutdown_finishes_inflight_calls_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_early_server_shutdown_finishes_inflight_calls
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_early_server_shutdown_finishes_tags_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_early_server_shutdown_finishes_tags_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_early_server_shutdown_finishes_tags
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_empty_batch_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_empty_batch_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_empty_batch
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_graceful_server_shutdown_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_graceful_server_shutdown_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_graceful_server_shutdown
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_invoke_large_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_invoke_large_request_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_invoke_large_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_max_concurrent_streams_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_max_concurrent_streams_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_max_concurrent_streams
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_max_message_length_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_max_message_length_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_max_message_length
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_no_op_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_no_op_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_no_op
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_ping_pong_streaming_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_ping_pong_streaming_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_ping_pong_streaming
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_registered_call_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_registered_call_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_registered_call
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_request_response_with_binary_metadata_and_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_request_response_with_binary_metadata_and_payload_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_request_response_with_binary_metadata_and_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_request_response_with_metadata_and_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_request_response_with_metadata_and_payload_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_request_response_with_metadata_and_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_request_response_with_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_request_response_with_payload_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_request_response_with_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_request_response_with_trailing_metadata_and_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_request_response_with_trailing_metadata_and_payload_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_request_response_with_trailing_metadata_and_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_request_with_flags_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_request_with_flags_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_request_with_flags
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_request_with_large_metadata_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_request_with_large_metadata_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_request_with_large_metadata
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_request_with_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_request_with_payload_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_request_with_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_server_finishes_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_server_finishes_request_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_server_finishes_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_simple_delayed_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_simple_delayed_request_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_simple_delayed_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_simple_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_simple_request_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_simple_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_simple_request_with_high_initial_sequence_number_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_simple_request_with_high_initial_sequence_number_unsecure_test
+  end2end_fixture_chttp2_socket_pair
+  end2end_test_simple_request_with_high_initial_sequence_number
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_bad_hostname_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_bad_hostname_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_bad_hostname
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_cancel_after_accept_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_cancel_after_accept_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_cancel_after_accept
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_cancel_after_accept_and_writes_closed_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_cancel_after_accept_and_writes_closed_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_cancel_after_accept_and_writes_closed
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_cancel_after_invoke_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_cancel_after_invoke_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_cancel_after_invoke
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_cancel_before_invoke_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_cancel_before_invoke_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_cancel_before_invoke
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_cancel_in_a_vacuum_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_cancel_in_a_vacuum_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_cancel_in_a_vacuum
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_census_simple_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_census_simple_request_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_census_simple_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_disappearing_server_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_disappearing_server_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_disappearing_server
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_early_server_shutdown_finishes_inflight_calls_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_early_server_shutdown_finishes_inflight_calls_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_early_server_shutdown_finishes_inflight_calls
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_early_server_shutdown_finishes_tags_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_early_server_shutdown_finishes_tags_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_early_server_shutdown_finishes_tags
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_empty_batch_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_empty_batch_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_empty_batch
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_graceful_server_shutdown_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_graceful_server_shutdown_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_graceful_server_shutdown
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_invoke_large_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_invoke_large_request_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_invoke_large_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_max_concurrent_streams_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_max_concurrent_streams_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_max_concurrent_streams
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_max_message_length_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_max_message_length_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_max_message_length
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_no_op_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_no_op_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_no_op
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_ping_pong_streaming_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_ping_pong_streaming_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_ping_pong_streaming
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_registered_call_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_registered_call_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_registered_call
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_request_response_with_binary_metadata_and_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_request_response_with_binary_metadata_and_payload_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_request_response_with_binary_metadata_and_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_request_response_with_metadata_and_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_request_response_with_metadata_and_payload_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_request_response_with_metadata_and_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_request_response_with_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_request_response_with_payload_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_request_response_with_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_request_response_with_trailing_metadata_and_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_request_response_with_trailing_metadata_and_payload_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_request_response_with_trailing_metadata_and_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_request_with_flags_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_request_with_flags_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_request_with_flags
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_request_with_large_metadata_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_request_with_large_metadata_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_request_with_large_metadata
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_request_with_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_request_with_payload_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_request_with_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_server_finishes_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_server_finishes_request_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_server_finishes_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_simple_delayed_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_simple_delayed_request_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_simple_delayed_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_simple_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_simple_request_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_simple_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_one_byte_at_a_time_simple_request_with_high_initial_sequence_number_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_one_byte_at_a_time_simple_request_with_high_initial_sequence_number_unsecure_test
+  end2end_fixture_chttp2_socket_pair_one_byte_at_a_time
+  end2end_test_simple_request_with_high_initial_sequence_number
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_bad_hostname_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_bad_hostname_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_bad_hostname
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_cancel_after_accept_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_cancel_after_accept_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_cancel_after_accept
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_cancel_after_accept_and_writes_closed_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_cancel_after_accept_and_writes_closed_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_cancel_after_accept_and_writes_closed
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_cancel_after_invoke_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_cancel_after_invoke_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_cancel_after_invoke
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_cancel_before_invoke_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_cancel_before_invoke_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_cancel_before_invoke
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_cancel_in_a_vacuum_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_cancel_in_a_vacuum_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_cancel_in_a_vacuum
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_census_simple_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_census_simple_request_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_census_simple_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_disappearing_server_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_disappearing_server_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_disappearing_server
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_early_server_shutdown_finishes_inflight_calls_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_early_server_shutdown_finishes_inflight_calls_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_early_server_shutdown_finishes_inflight_calls
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_early_server_shutdown_finishes_tags_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_early_server_shutdown_finishes_tags_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_early_server_shutdown_finishes_tags
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_empty_batch_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_empty_batch_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_empty_batch
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_graceful_server_shutdown_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_graceful_server_shutdown_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_graceful_server_shutdown
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_invoke_large_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_invoke_large_request_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_invoke_large_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_max_concurrent_streams_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_max_concurrent_streams_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_max_concurrent_streams
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_max_message_length_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_max_message_length_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_max_message_length
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_no_op_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_no_op_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_no_op
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_ping_pong_streaming_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_ping_pong_streaming_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_ping_pong_streaming
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_registered_call_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_registered_call_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_registered_call
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_request_response_with_binary_metadata_and_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_request_response_with_binary_metadata_and_payload_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_request_response_with_binary_metadata_and_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_request_response_with_metadata_and_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_request_response_with_metadata_and_payload_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_request_response_with_metadata_and_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_request_response_with_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_request_response_with_payload_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_request_response_with_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_request_response_with_trailing_metadata_and_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_request_response_with_trailing_metadata_and_payload_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_request_response_with_trailing_metadata_and_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_request_with_flags_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_request_with_flags_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_request_with_flags
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_request_with_large_metadata_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_request_with_large_metadata_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_request_with_large_metadata
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_request_with_payload_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_request_with_payload_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_request_with_payload
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_server_finishes_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_server_finishes_request_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_server_finishes_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_simple_delayed_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_simple_delayed_request_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_simple_delayed_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_simple_request_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_simple_request_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_simple_request
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	chttp2_socket_pair_with_grpc_trace_simple_request_with_high_initial_sequence_number_unsecure_test
+	tools/buildgen/dummy.c
+	)
+target_link_libraries(
+  chttp2_socket_pair_with_grpc_trace_simple_request_with_high_initial_sequence_number_unsecure_test
+  end2end_fixture_chttp2_socket_pair_with_grpc_trace
+  end2end_test_simple_request_with_high_initial_sequence_number
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	connection_prefix_bad_client_test
+	tools/buildgen/dummy.c
+  test/core/bad_client/tests/connection_prefix.c
+	)
+target_link_libraries(
+  connection_prefix_bad_client_test
+  bad_client_test
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )
+add_executable(
+	initial_settings_frame_bad_client_test
+	tools/buildgen/dummy.c
+  test/core/bad_client/tests/initial_settings_frame.c
+	)
+target_link_libraries(
+  initial_settings_frame_bad_client_test
+  bad_client_test
+  grpc_test_util_unsecure
+  grpc_unsecure
+  gpr_test_util
+  gpr
+  )

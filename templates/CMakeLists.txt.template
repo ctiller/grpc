@@ -1,0 +1,34 @@
+cmake_minimum_required (VERSION 2.6)
+project (gRPC)
+
+include_directories("${"${PROJECT_SOURCE_DIR}"}")
+include_directories("${"${PROJECT_SOURCE_DIR}"}/include")
+
+% for lib in libs:
+%  if lib.language == 'c':
+add_library(
+  ${lib.name}
+%   for src in lib.src:
+  ${src}
+%   endfor
+  )
+%  endif
+% endfor
+
+% for target in targets:
+%  if target.language == 'c':
+add_executable(
+	${target.name}
+	tools/buildgen/dummy.c
+%   for src in target.src:
+  ${src}
+%   endfor
+	)
+target_link_libraries(
+  ${target.name}
+%   for dep in target.deps:
+  ${dep}
+%   endfor
+  )
+%  endif
+% endfor
