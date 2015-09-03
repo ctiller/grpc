@@ -9,7 +9,7 @@ var searchData=
   ['gpr_5fint64',['gpr_int64',['../port__platform_8h.html#a71edab4bc3421f129764e5cb342f7181',1,'port_platform.h']]],
   ['gpr_5fintmax',['gpr_intmax',['../port__platform_8h.html#a3ecb17ae580dbde63199ac206a732139',1,'port_platform.h']]],
   ['gpr_5fintptr',['gpr_intptr',['../port__platform_8h.html#a72d9d0d00bd576cfc8eab61aaea76db2',1,'port_platform.h']]],
-  ['gpr_5flog_5ffunc',['gpr_log_func',['../log_8h.html#a23f29195676c33c61ff08a7f0a3e69b0',1,'log.h']]],
+  ['gpr_5flog_5ffunc',['gpr_log_func',['../log_8h.html#a3bba35ee3180d11d8ff5a71cc2ee2a05',1,'log.h']]],
   ['gpr_5flog_5fseverity',['gpr_log_severity',['../log_8h.html#ad49303346a78cf4881129958214fde8d',1,'log.h']]],
   ['gpr_5fmu',['gpr_mu',['../sync__posix_8h.html#aa66fb6a11304ef6759d76f84a34ee28f',1,'sync_posix.h']]],
   ['gpr_5fonce',['gpr_once',['../sync__posix_8h.html#a28731dc17a4158343f58f453a4d5e37f',1,'gpr_once():&#160;sync_posix.h'],['../sync__win32_8h.html#a6a752a459fe345c616c26b5a556ccc13',1,'gpr_once():&#160;sync_win32.h']]],
@@ -34,10 +34,12 @@ var searchData=
   ['grpc_5fchannel',['grpc_channel',['../grpc_8h.html#a432bfa6b9f6603643cdf9de8804c254e',1,'grpc.h']]],
   ['grpc_5fcompletion_5fqueue',['grpc_completion_queue',['../grpc_8h.html#a895faab0e6035445750e43482651ba2f',1,'grpc.h']]],
   ['grpc_5fcompletion_5ftype',['grpc_completion_type',['../grpc_8h.html#a70454b2958c92c1cd8feeaa45f157b74',1,'grpc.h']]],
+  ['grpc_5fcompression_5foptions',['grpc_compression_options',['../compression_8h.html#a074a1aa6fb56901a795fe53c2adeefde',1,'compression.h']]],
   ['grpc_5fcredentials',['grpc_credentials',['../grpc__security_8h.html#a17768c857575e4500cdd12bb94d3f33e',1,'grpc_security.h']]],
   ['grpc_5fevent',['grpc_event',['../grpc_8h.html#a07990645ca218f6965fd83edf3f421b7',1,'grpc.h']]],
   ['grpc_5fmetadata',['grpc_metadata',['../grpc_8h.html#a1da84eaead787d991c5a0c87aed7c30b',1,'grpc.h']]],
   ['grpc_5fop',['grpc_op',['../grpc_8h.html#a6556a58ca45ad5132b89c770cf875215',1,'grpc.h']]],
+  ['grpc_5fprocess_5fauth_5fmetadata_5fdone_5fcb',['grpc_process_auth_metadata_done_cb',['../grpc__security_8h.html#a34b93b8c1e0dbdaae9dc11bbce706cb4',1,'grpc_security.h']]],
   ['grpc_5fserver',['grpc_server',['../grpc_8h.html#a2bbbaad8f7a806f6c834b68c5dd916d8',1,'grpc.h']]],
   ['grpc_5fserver_5fcredentials',['grpc_server_credentials',['../grpc__security_8h.html#aa724192e56fdc03827846f16752deccc',1,'grpc_security.h']]]
 ];
