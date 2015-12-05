@@ -33,7 +33,7 @@
 
 #include <grpc/support/port_platform.h>
 
-#ifdef GPR_LINUX_MULTIPOLL_WITH_EPOLL
+#ifdef GPR_HAS_EPOLL
 
 #include <errno.h>
 #include <poll.h>
@@ -275,4 +275,4 @@ static void epoll_become_multipoller(grpc_exec_ctx *exec_ctx,
 grpc_platform_become_multipoller_type grpc_platform_become_multipoller =
     epoll_become_multipoller;
 
-#endif /* GPR_LINUX_MULTIPOLL_WITH_EPOLL */
+#endif /* GPR_HAS_EPOLL */
