@@ -60,6 +60,7 @@ GPR_TLS_DECL(g_current_thread_worker);
 /** Default poll() function - a pointer so that it can be overridden by some
  *  tests */
 grpc_poll_function_type grpc_poll_function = poll;
+int grpc_force_using_poll = 0;
 
 static void (*platform_pollset_init)(grpc_pollset *pollset);
 
@@ -174,7 +175,8 @@ void grpc_pollset_global_init(void) {
   gpr_tls_init(&g_current_thread_poller);
   gpr_tls_init(&g_current_thread_worker);
   grpc_wakeup_fd_global_init();
-  if (0) {
+  if (grpc_force_using_poll) {
+    platform_pollset_init = grpc_poll_pollset_init;
 #ifdef GPR_HAS_EPOLL
   } else if (grpc_epoll_is_available()) {
     platform_pollset_init = grpc_epoll_pollset_init;

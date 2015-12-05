@@ -163,7 +163,7 @@ int main(int argc, char **argv) {
   size_t roots_size = strlen(test_root_cert);
   char *roots_filename;
 
-  grpc_platform_become_multipoller = grpc_poll_become_multipoller;
+  grpc_force_using_poll = 1;
 
   grpc_test_init(argc, argv);
 

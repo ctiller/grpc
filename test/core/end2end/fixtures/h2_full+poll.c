@@ -103,7 +103,7 @@ static grpc_end2end_test_config configs[] = {
 int main(int argc, char **argv) {
   size_t i;
 
-  grpc_platform_become_multipoller = grpc_poll_become_multipoller;
+  grpc_force_using_poll = 1;
 
   grpc_test_init(argc, argv);
   grpc_init();

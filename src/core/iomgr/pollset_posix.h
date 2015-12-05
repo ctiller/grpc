@@ -141,8 +141,10 @@ typedef int (*grpc_poll_function_type)(struct pollfd *, nfds_t, int);
 extern grpc_poll_function_type grpc_poll_function;
 extern grpc_wakeup_fd grpc_global_wakeup_fd;
 
+extern int grpc_force_using_poll;
+
 #ifdef GPR_HAS_EPOLL
-int grpc_epoll_is_available();
+int grpc_epoll_is_available(void);
 void grpc_epoll_pollset_init(grpc_pollset *pollset);
 #endif
 

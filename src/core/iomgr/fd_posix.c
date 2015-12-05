@@ -95,6 +95,9 @@ static grpc_fd *alloc_fd(int fd) {
   r->read_closure = CLOSURE_NOT_READY;
   r->write_closure = CLOSURE_NOT_READY;
   r->fd = fd;
+#ifdef GPR_HAS_EPOLL
+  fd->epoll_set = -1;
+#endif
   r->inactive_watcher_root.next = r->inactive_watcher_root.prev =
       &r->inactive_watcher_root;
   r->freelist_next = NULL;
@@ -102,6 +105,15 @@ static grpc_fd *alloc_fd(int fd) {
   r->on_done_closure = NULL;
   r->closed = 0;
   return r;
+}
+
+static void close_fd(grpc_fd *fd) {
+  close(fd->fd);
+#ifdef GPR_HAS_EPOLL
+  if (fd->epoll_set != -1) {
+    close(fd->epoll_set);
+  }
+#endif
 }
 
 static void destroy(grpc_fd *fd) {
@@ -224,7 +236,7 @@ void grpc_fd_orphan(grpc_exec_ctx *exec_ctx, grpc_fd *fd, grpc_closure *on_done,
   if (!has_watchers(fd)) {
     fd->closed = 1;
     if (!fd->released) {
-      close(fd->fd);
+      close_fd(fd);
     }
     grpc_exec_ctx_enqueue(exec_ctx, fd->on_done_closure, 1);
   } else {
@@ -418,7 +430,7 @@ void grpc_fd_end_poll(grpc_exec_ctx *exec_ctx, grpc_fd_watcher *watcher,
   if (grpc_fd_is_orphaned(fd) && !has_watchers(fd) && !fd->closed) {
     fd->closed = 1;
     if (!fd->released) {
-      close(fd->fd);
+      close_fd(fd);
     }
     grpc_exec_ctx_enqueue(exec_ctx, fd->on_done_closure, 1);
   }

@@ -272,7 +272,13 @@ static void epoll_become_multipoller(grpc_exec_ctx *exec_ctx,
   }
 }
 
-grpc_platform_become_multipoller_type grpc_platform_become_multipoller =
-    epoll_become_multipoller;
+int grpc_pollset_epoll_is_available(void) {
+  int fd = epoll_create1(EPOLL_CLOEXEC);
+  if (fd < 0) {
+    return 0;
+  }
+  close(fd);
+  return 1;
+}
 
 #endif /* GPR_HAS_EPOLL */

@@ -52,6 +52,10 @@ typedef struct grpc_fd_watcher {
 
 struct grpc_fd {
   int fd;
+#if GPR_HAS_EPOLL
+  /* set by polling code; closed() by fd code */
+  int epoll_set;
+#endif
   /* refst format:
      bit0:   1=active/0=orphaned
      bit1-n: refcount
