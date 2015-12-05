@@ -464,9 +464,9 @@
     </ClCompile>
     <ClCompile Include="..\..\..\src\core\iomgr\iomgr_windows.c">
     </ClCompile>
-    <ClCompile Include="..\..\..\src\core\iomgr\pollset_multipoller_with_epoll.c">
+    <ClCompile Include="..\..\..\src\core\iomgr\pollset_epoll.c">
     </ClCompile>
-    <ClCompile Include="..\..\..\src\core\iomgr\pollset_multipoller_with_poll_posix.c">
+    <ClCompile Include="..\..\..\src\core\iomgr\pollset_poll_posix.c">
     </ClCompile>
     <ClCompile Include="..\..\..\src\core\iomgr\pollset_posix.c">
     </ClCompile>
