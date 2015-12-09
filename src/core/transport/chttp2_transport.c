@@ -521,9 +521,7 @@ static void destroy_stream(grpc_exec_ctx *exec_ctx, grpc_transport *gt,
 
   for (i = 0; i < STREAM_LIST_COUNT; i++) {
     if (s->included[i]) {
-      gpr_log(GPR_ERROR, "%s stream %d still included in list %d",
-              t->global.is_client ? "client" : "server", s->global.id, i);
-      abort();
+      GPR_UNREACHABLE_CODE(continue);
     }
   }
 
