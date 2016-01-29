@@ -55,6 +55,8 @@
  */
 struct grpc_exec_ctx {
   grpc_closure_list closure_list;
+  bool (*offload_func)(void *arg);
+  void *offload_arg;
 };
 
 /** A workqueue represents a list of work to be executed asynchronously.
@@ -62,8 +64,15 @@ struct grpc_exec_ctx {
 struct grpc_workqueue;
 typedef struct grpc_workqueue grpc_workqueue;
 
-#define GRPC_EXEC_CTX_INIT \
-  { GRPC_CLOSURE_LIST_INIT }
+#define GRPC_EXEC_CTX_INIT_WITH_OFFLOAD(need_to_offload_func, need_to_offload_arg) \
+  { .closure_list = GRPC_CLOSURE_LIST_INIT, \
+    .offload_func = need_to_offload_func, \
+    .offload_arg = need_to_offload_arg }
+
+bool grpc_always_offload(void *ignored);
+bool grpc_never_offload(void *ignored);
+
+#define GRPC_EXEC_CTX_INIT GRPC_EXEC_CTX_INIT_WITH_OFFLOAD(grpc_never_offload, NULL)
 
 /** Flush any work that has been enqueued onto this grpc_exec_ctx.
  *  Caller must guarantee that no interfering locks are held.

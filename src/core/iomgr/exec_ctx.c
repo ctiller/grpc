@@ -37,6 +37,14 @@
 
 #include "src/core/profiling/timers.h"
 
+bool grpc_always_offload(void *ignored) {
+  return true;
+}
+
+bool grpc_never_offload(void *ignored) {
+  return false;
+}
+
 bool grpc_exec_ctx_flush(grpc_exec_ctx *exec_ctx) {
   bool did_something = 0;
   GPR_TIMER_BEGIN("grpc_exec_ctx_flush", 0);
@@ -58,6 +66,7 @@ bool grpc_exec_ctx_flush(grpc_exec_ctx *exec_ctx) {
 }
 
 void grpc_exec_ctx_finish(grpc_exec_ctx *exec_ctx) {
+  exec_ctx->offload_func = grpc_always_offload;
   grpc_exec_ctx_flush(exec_ctx);
 }
 

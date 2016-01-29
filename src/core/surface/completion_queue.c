@@ -272,13 +272,38 @@ void grpc_cq_end_op(grpc_exec_ctx *exec_ctx, grpc_completion_queue *cc,
   GPR_TIMER_END("grpc_cq_end_op", 0);
 }
 
+typedef struct {
+  grpc_cq_completion *stolen_completion;
+  grpc_completion_queue *completion_queue;
+  void *tag;  
+} exec_ctx_completion_state;
+
+static bool finished_next(void *arg) {
+  exec_ctx_completion_state *cs = arg;
+  if (cs->stolen_completion == NULL) {
+    grpc_completion_queue *cc = cs->completion_queue;
+    gpr_mu_lock(GRPC_POLLSET_MU(&cc->pollset));
+    if (cc->completed_tail != &cc->completed_head) {
+      grpc_cq_completion *c = (grpc_cq_completion *)cc->completed_head.next;
+      cc->completed_head.next = c->next & ~(uintptr_t)1;
+      if (c == cc->completed_tail) {
+        cc->completed_tail = &cc->completed_head;
+      }
+      cs->stolen_completion = c;
+    }
+    gpr_mu_unlock(GRPC_POLLSET_MU(&cc->pollset));
+  }
+  return cs->stolen_completion != NULL;
+}
+
 grpc_event grpc_completion_queue_next(grpc_completion_queue *cc,
                                       gpr_timespec deadline, void *reserved) {
   grpc_event ret;
   grpc_pollset_worker worker;
   int first_loop = 1;
   gpr_timespec now;
-  grpc_exec_ctx exec_ctx = GRPC_EXEC_CTX_INIT;
+  exec_ctx_completion_state exec_ctx_cs = {NULL, cc, NULL};
+  grpc_exec_ctx exec_ctx = GRPC_EXEC_CTX_INIT_WITH_OFFLOAD(finished_next, &exec_ctx_cs);
 
   GPR_TIMER_BEGIN("grpc_completion_queue_next", 0);
 
@@ -323,7 +348,16 @@ grpc_event grpc_completion_queue_next(grpc_completion_queue *cc,
       break;
     }
     first_loop = 0;
+    GPR_ASSERT(exec_ctx_cs.stolen_completion == NULL);
     grpc_pollset_work(&exec_ctx, &cc->pollset, &worker, now, deadline);
+    if (exec_ctx_cs.stolen_completion != NULL) {
+      gpr_mu_unlock(GRPC_POLLSET_MU(&cc->pollset));
+      grpc_cq_completion *c = exec_ctx_cs.stolen_completion;
+      ret.type = GRPC_OP_COMPLETE;
+      ret.success = c->next & 1u;
+      ret.tag = c->tag;
+      return ret;
+    }
   }
   GRPC_SURFACE_TRACE_RETURNED_EVENT(cc, &ret);
   GRPC_CQ_INTERNAL_UNREF(cc, "next");
