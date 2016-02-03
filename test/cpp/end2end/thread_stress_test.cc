@@ -227,6 +227,100 @@ TEST_F(End2endTest, ThreadStress) {
   }
 }
 
+class AsyncClientEnd2endTest : public End2endTest {
+ protected:
+  AsyncClientEnd2endTest() : rpcs_outstanding_(0) {}
+
+  void TearDown() GRPC_OVERRIDE {
+    void* ignored_tag;
+    bool ignored_ok;
+    while (cq_.Next(&ignored_tag, &ignored_ok))
+      ;
+    End2endTest::TearDown();
+  }
+
+  void Wait() {
+    std::unique_lock<std::mutex> l(mu_);
+    while (rpcs_outstanding_ != 0) {
+      cv_.wait(l);
+    }
+
+    cq_.Shutdown();
+  }
+
+  struct AsyncClientCall {
+    EchoResponse response;
+    ClientContext context;
+    Status status;
+    std::unique_ptr<ClientAsyncResponseReader<EchoResponse>> response_reader;
+  };
+
+  void AsyncSendRpc(int num_rpcs) {
+    for (int i = 0; i < num_rpcs; ++i) {
+      AsyncClientCall* call = new AsyncClientCall;
+      EchoRequest request;
+      request.set_message("Hello");
+      call->response_reader = stub_->AsyncEcho(&call->context, request, &cq_);
+      call->response_reader->Finish(&call->response, &call->status,
+                                    (void*)call);
+
+      std::unique_lock<std::mutex> l(mu_);
+      rpcs_outstanding_++;
+    }
+  }
+
+  void AsyncCompleteRpc() {
+    while (true) {
+      void* got_tag;
+      bool ok = false;
+      if (!cq_.Next(&got_tag, &ok)) break;
+      Call* call = static_cast<Call*>(got_tag);
+      GPR_ASSERT(ok);
+      delete call;
+
+      bool notify;
+      {
+        std::unique_lock<std::mutex> l(mu_);
+        rpcs_outstanding_--;
+        notify = (rpcs_outstanding_ == 0);
+      }
+      if (notify) {
+        cv_.notify_all();
+      }
+    }
+  }
+
+  CompletionQueue cq_;
+  std::mutex mu_;
+  std::condition_variable cv_;
+  int rpcs_outstanding_;
+};
+
+TEST_F(AsyncClientEnd2endTest, ThreadStress) {
+  ResetStub();
+  std::vector<std::thread*> threads;
+  for (int i = 0; i < 100; ++i) {
+    threads.push_back(new std::thread(
+        &AsyncClientEnd2endTest_ThreadStress_Test::AsyncSendRpc, this, 1000));
+  }
+  for (int i = 0; i < 100; ++i) {
+    threads[i]->join();
+    delete threads[i];
+  }
+
+  threads.clear();
+
+  for (int i = 0; i < 100; ++i) {
+    threads.push_back(new std::thread(
+        &AsyncClientEnd2endTest_ThreadStress_Test::AsyncCompleteRpc, this));
+  }
+  Wait();
+  for (int i = 0; i < 100; ++i) {
+    threads[i]->join();
+    delete threads[i];
+  }
+}
+
 }  // namespace testing
 }  // namespace grpc
 
