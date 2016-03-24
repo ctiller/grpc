@@ -33,7 +33,10 @@
 
 #include "src/core/iomgr/timer.h"
 
+#include <stdio.h>
 #include <string.h>
+
+#ifdef GRPC_EXECUTION_CONTEXT_SANITIZER
 
 #include <grpc/support/log.h>
 #include "test/core/util/test_config.h"
@@ -81,9 +84,8 @@ static void add_test(void) {
   }
 
   GPR_ASSERT(!grpc_timer_check(
-                 &exec_ctx,
-                 gpr_time_add(start, gpr_time_from_millis(600, GPR_TIMESPAN)),
-                 NULL));
+      &exec_ctx, gpr_time_add(start, gpr_time_from_millis(600, GPR_TIMESPAN)),
+      NULL));
   grpc_exec_ctx_finish(&exec_ctx);
   for (i = 0; i < 30; i++) {
     GPR_ASSERT(cb_called[i][1] == (i < 10));
@@ -101,9 +103,8 @@ static void add_test(void) {
   }
 
   GPR_ASSERT(!grpc_timer_check(
-                 &exec_ctx,
-                 gpr_time_add(start, gpr_time_from_millis(1600, GPR_TIMESPAN)),
-                 NULL));
+      &exec_ctx, gpr_time_add(start, gpr_time_from_millis(1600, GPR_TIMESPAN)),
+      NULL));
   for (i = 0; i < 30; i++) {
     GPR_ASSERT(cb_called[i][1] == (i < 20));
     GPR_ASSERT(cb_called[i][0] == 0);
@@ -158,3 +159,13 @@ int main(int argc, char **argv) {
   destruction_test();
   return 0;
 }
+
+#else
+
+int main(void) {
+  fprintf(stderr,
+          "timer_list_test not supported with execution context sanitizer");
+  return 0;
+}
+
+#endif

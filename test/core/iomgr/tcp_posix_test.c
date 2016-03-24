@@ -385,8 +385,8 @@ static void write_test(size_t num_bytes, size_t slice_size) {
 }
 
 void on_fd_released(grpc_exec_ctx *exec_ctx, void *arg, bool success) {
-  int *done = arg;
-  *done = 1;
+  gpr_atm *done = arg;
+  gpr_atm_rel_store(done, 1);
   grpc_pollset_kick(g_pollset, NULL);
 }
 
@@ -401,7 +401,8 @@ static void release_fd_test(size_t num_bytes, size_t slice_size) {
   gpr_timespec deadline = GRPC_TIMEOUT_SECONDS_TO_DEADLINE(20);
   grpc_exec_ctx exec_ctx = GRPC_EXEC_CTX_INIT;
   grpc_closure fd_released_cb;
-  int fd_released_done = 0;
+  gpr_atm fd_released_done;
+  gpr_atm_rel_store(&fd_released_done, 0);
   grpc_closure_init(&fd_released_cb, &on_fd_released, &fd_released_done);
 
   gpr_log(GPR_INFO, "Release fd read_test of size %d, slice size %d", num_bytes,
@@ -439,7 +440,7 @@ static void release_fd_test(size_t num_bytes, size_t slice_size) {
   gpr_slice_buffer_destroy(&state.incoming);
   grpc_tcp_destroy_and_release_fd(&exec_ctx, ep, &fd, &fd_released_cb);
   gpr_mu_lock(g_mu);
-  while (!fd_released_done) {
+  while (!gpr_atm_acq_load(&fd_released_done)) {
     grpc_pollset_worker *worker = NULL;
     grpc_pollset_work(&exec_ctx, g_pollset, &worker,
                       gpr_now(GPR_CLOCK_MONOTONIC), deadline);

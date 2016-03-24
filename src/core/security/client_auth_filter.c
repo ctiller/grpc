@@ -60,7 +60,6 @@ typedef struct {
      progress */
   grpc_pollset *pollset;
   grpc_transport_stream_op op;
-  uint8_t security_context_set;
   grpc_linked_mdelem md_links[MAX_CREDENTIALS_METADATA_COUNT];
   grpc_auth_metadata_context auth_md_context;
 } call_data;
@@ -220,9 +219,7 @@ static void auth_start_transport_op(grpc_exec_ctx *exec_ctx,
   grpc_linked_mdelem *l;
   grpc_client_security_context *sec_ctx = NULL;
 
-  if (calld->security_context_set == 0 &&
-      op->cancel_with_status == GRPC_STATUS_OK) {
-    calld->security_context_set = 1;
+  if (op->send_initial_metadata != NULL) {
     GPR_ASSERT(op->context);
     if (op->context[GRPC_CONTEXT_SECURITY].value == NULL) {
       op->context[GRPC_CONTEXT_SECURITY].value =
@@ -331,6 +328,6 @@ static void destroy_channel_elem(grpc_exec_ctx *exec_ctx,
 
 const grpc_channel_filter grpc_client_auth_filter = {
     auth_start_transport_op, grpc_channel_next_op, sizeof(call_data),
-    init_call_elem, set_pollset, destroy_call_elem, sizeof(channel_data),
-    init_channel_elem, destroy_channel_elem, grpc_call_next_get_peer,
-    "client-auth"};
+    init_call_elem,          set_pollset,          destroy_call_elem,
+    sizeof(channel_data),    init_channel_elem,    destroy_channel_elem,
+    grpc_call_next_get_peer, "client-auth"};

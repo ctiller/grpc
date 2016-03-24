@@ -172,6 +172,9 @@ static void note_deadline_change(shard_type *shard) {
 void grpc_timer_init(grpc_exec_ctx *exec_ctx, grpc_timer *timer,
                      gpr_timespec deadline, grpc_iomgr_cb_func timer_cb,
                      void *timer_cb_arg, gpr_timespec now) {
+  gpr_log(GPR_DEBUG, "sched: %d.%09d @ %d.%09d", deadline.tv_sec,
+          deadline.tv_nsec, now.tv_sec, now.tv_nsec);
+
   int is_first_timer = 0;
   shard_type *shard = &g_shards[shard_idx(timer)];
   GPR_ASSERT(deadline.clock_type == g_clock_type);
@@ -289,6 +292,8 @@ static size_t pop_timers(grpc_exec_ctx *exec_ctx, shard_type *shard,
   grpc_timer *timer;
   gpr_mu_lock(&shard->mu);
   while ((timer = pop_one(shard, now))) {
+    gpr_log(GPR_DEBUG, "GOT: %d.%09d @ %d.%09d", timer->deadline.tv_sec,
+            timer->deadline.tv_nsec, now.tv_sec, now.tv_nsec);
     grpc_exec_ctx_enqueue(exec_ctx, &timer->closure, success, NULL);
     n++;
   }
