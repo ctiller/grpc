@@ -70,8 +70,7 @@ static void on_oauth2_response(grpc_exec_ctx *exec_ctx, void *user_data,
   gpr_mu_lock(request->mu);
   request->is_done = 1;
   request->token = token;
-  grpc_pollset_kick(request->pollset, NULL);
-  gpr_mu_unlock(request->mu);
+  grpc_pollset_kick_and_unlock(request->pollset, NULL);
 }
 
 static void do_nothing(grpc_exec_ctx *exec_ctx, void *unused, bool success) {}
@@ -102,9 +101,9 @@ char *grpc_test_fetch_oauth2_token_with_credentials(
                       gpr_now(GPR_CLOCK_MONOTONIC),
                       gpr_inf_future(GPR_CLOCK_MONOTONIC));
   }
-  gpr_mu_unlock(request.mu);
+  grpc_pollset_shutdown_and_unlock(&exec_ctx, request.pollset,
+                                   &do_nothing_closure);
 
-  grpc_pollset_shutdown(&exec_ctx, request.pollset, &do_nothing_closure);
   grpc_exec_ctx_finish(&exec_ctx);
   grpc_pollset_destroy(request.pollset);
   gpr_free(request.pollset);

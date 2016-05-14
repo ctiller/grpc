@@ -67,8 +67,7 @@ static void freed_port_from_server(grpc_exec_ctx *exec_ctx, void *arg,
   freereq *pr = arg;
   gpr_mu_lock(pr->mu);
   pr->done = 1;
-  grpc_pollset_kick(pr->pollset, NULL);
-  gpr_mu_unlock(pr->mu);
+  grpc_pollset_kick_and_unlock(pr->pollset, NULL);
 }
 
 void grpc_free_port_using_server(char *server, int port) {
@@ -104,12 +103,10 @@ void grpc_free_port_using_server(char *server, int port) {
                       gpr_now(GPR_CLOCK_MONOTONIC),
                       GRPC_TIMEOUT_SECONDS_TO_DEADLINE(1));
   }
-  gpr_mu_unlock(pr.mu);
+  grpc_pollset_shutdown_and_unlock(&exec_ctx, pr.pollset, shutdown_closure);
 
+  grpc_exec_ctx_finish(&exec_ctx);
   grpc_httpcli_context_destroy(&context);
-  grpc_exec_ctx_finish(&exec_ctx);
-  grpc_pollset_shutdown(&exec_ctx, pr.pollset, shutdown_closure);
-  grpc_exec_ctx_finish(&exec_ctx);
   gpr_free(path);
 }
 
@@ -165,8 +162,7 @@ static void got_port_from_server(grpc_exec_ctx *exec_ctx, void *arg,
   GPR_ASSERT(port > 1024);
   gpr_mu_lock(pr->mu);
   pr->port = port;
-  grpc_pollset_kick(pr->pollset, NULL);
-  gpr_mu_unlock(pr->mu);
+  grpc_pollset_kick_and_unlock(pr->pollset, NULL);
 }
 
 int grpc_pick_port_using_server(char *server) {
@@ -203,11 +199,10 @@ int grpc_pick_port_using_server(char *server) {
                       gpr_now(GPR_CLOCK_MONOTONIC),
                       GRPC_TIMEOUT_SECONDS_TO_DEADLINE(1));
   }
-  gpr_mu_unlock(pr.mu);
+  grpc_pollset_shutdown_and_unlock(&exec_ctx, pr.pollset, shutdown_closure);
+  grpc_exec_ctx_finish(&exec_ctx);
 
   grpc_httpcli_context_destroy(&context);
-  grpc_pollset_shutdown(&exec_ctx, pr.pollset, shutdown_closure);
-  grpc_exec_ctx_finish(&exec_ctx);
 
   return pr.port;
 }

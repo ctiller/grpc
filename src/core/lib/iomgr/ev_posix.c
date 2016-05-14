@@ -169,9 +169,10 @@ void grpc_pollset_init(grpc_pollset *pollset, gpr_mu **mu) {
   g_event_engine->pollset_init(pollset, mu);
 }
 
-void grpc_pollset_shutdown(grpc_exec_ctx *exec_ctx, grpc_pollset *pollset,
-                           grpc_closure *closure) {
-  g_event_engine->pollset_shutdown(exec_ctx, pollset, closure);
+void grpc_pollset_shutdown_and_unlock(grpc_exec_ctx *exec_ctx,
+                                      grpc_pollset *pollset,
+                                      grpc_closure *closure) {
+  g_event_engine->pollset_shutdown_and_unlock(exec_ctx, pollset, closure);
 }
 
 void grpc_pollset_reset(grpc_pollset *pollset) {
@@ -188,9 +189,9 @@ void grpc_pollset_work(grpc_exec_ctx *exec_ctx, grpc_pollset *pollset,
   g_event_engine->pollset_work(exec_ctx, pollset, worker, now, deadline);
 }
 
-void grpc_pollset_kick(grpc_pollset *pollset,
-                       grpc_pollset_worker *specific_worker) {
-  g_event_engine->pollset_kick(pollset, specific_worker);
+void grpc_pollset_kick_and_unlock(grpc_pollset *pollset,
+                                  grpc_pollset_worker *specific_worker) {
+  g_event_engine->pollset_kick_and_unlock(pollset, specific_worker);
 }
 
 void grpc_pollset_add_fd(grpc_exec_ctx *exec_ctx, grpc_pollset *pollset,

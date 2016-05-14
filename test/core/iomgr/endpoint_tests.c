@@ -137,8 +137,7 @@ static void read_and_write_test_read_handler(grpc_exec_ctx *exec_ctx,
     gpr_log(GPR_INFO, "Read handler done");
     gpr_mu_lock(g_mu);
     state->read_done = 1 + success;
-    grpc_pollset_kick(g_pollset, NULL);
-    gpr_mu_unlock(g_mu);
+    grpc_pollset_kick_and_unlock(g_pollset, NULL);
   } else if (success) {
     grpc_endpoint_read(exec_ctx, state->read_ep, &state->incoming,
                        &state->done_read);
@@ -172,8 +171,7 @@ static void read_and_write_test_write_handler(grpc_exec_ctx *exec_ctx,
   gpr_log(GPR_INFO, "Write handler done");
   gpr_mu_lock(g_mu);
   state->write_done = 1 + success;
-  grpc_pollset_kick(g_pollset, NULL);
-  gpr_mu_unlock(g_mu);
+  grpc_pollset_kick_and_unlock(g_pollset, NULL);
 }
 
 /* Do both reading and writing using the grpc_endpoint API.

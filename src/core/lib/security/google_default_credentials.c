@@ -84,8 +84,7 @@ static void on_compute_engine_detection_http_response(
   }
   gpr_mu_lock(g_polling_mu);
   detector->is_done = 1;
-  grpc_pollset_kick(detector->pollset, NULL);
-  gpr_mu_unlock(g_polling_mu);
+  grpc_pollset_kick_and_unlock(detector->pollset, NULL);
 }
 
 static void destroy_pollset(grpc_exec_ctx *exec_ctx, void *p, bool s) {
@@ -130,12 +129,12 @@ static int is_stack_running_on_compute_engine(void) {
                       gpr_now(GPR_CLOCK_MONOTONIC),
                       gpr_inf_future(GPR_CLOCK_MONOTONIC));
   }
-  gpr_mu_unlock(g_polling_mu);
-
-  grpc_httpcli_context_destroy(&context);
   grpc_closure_init(&destroy_closure, destroy_pollset, detector.pollset);
-  grpc_pollset_shutdown(&exec_ctx, detector.pollset, &destroy_closure);
+  grpc_pollset_shutdown_and_unlock(&exec_ctx, detector.pollset,
+                                   &destroy_closure);
+
   grpc_exec_ctx_finish(&exec_ctx);
+  grpc_httpcli_context_destroy(&context);
   g_polling_mu = NULL;
 
   gpr_free(detector.pollset);

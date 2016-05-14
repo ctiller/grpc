@@ -263,8 +263,7 @@ void grpc_cq_end_op(grpc_exec_ctx *exec_ctx, grpc_completion_queue *cc,
         break;
       }
     }
-    grpc_pollset_kick(POLLSET_FROM_CQ(cc), pluck_worker);
-    gpr_mu_unlock(cc->mu);
+    grpc_pollset_kick_and_unlock(POLLSET_FROM_CQ(cc), pluck_worker);
   } else {
     cc->completed_tail->next =
         ((uintptr_t)storage) | (1u & (uintptr_t)cc->completed_tail->next);
@@ -272,9 +271,8 @@ void grpc_cq_end_op(grpc_exec_ctx *exec_ctx, grpc_completion_queue *cc,
     GPR_ASSERT(!cc->shutdown);
     GPR_ASSERT(cc->shutdown_called);
     cc->shutdown = 1;
-    grpc_pollset_shutdown(exec_ctx, POLLSET_FROM_CQ(cc),
-                          &cc->pollset_shutdown_done);
-    gpr_mu_unlock(cc->mu);
+    grpc_pollset_shutdown_and_unlock(exec_ctx, POLLSET_FROM_CQ(cc),
+                                     &cc->pollset_shutdown_done);
   }
 
   GPR_TIMER_END("grpc_cq_end_op", 0);
@@ -491,8 +489,8 @@ void grpc_completion_queue_shutdown(grpc_completion_queue *cc) {
   if (gpr_unref(&cc->pending_events)) {
     GPR_ASSERT(!cc->shutdown);
     cc->shutdown = 1;
-    grpc_pollset_shutdown(&exec_ctx, POLLSET_FROM_CQ(cc),
-                          &cc->pollset_shutdown_done);
+    grpc_pollset_shutdown_and_unlock(&exec_ctx, POLLSET_FROM_CQ(cc),
+                                     &cc->pollset_shutdown_done);
   }
   gpr_mu_unlock(cc->mu);
   grpc_exec_ctx_finish(&exec_ctx);

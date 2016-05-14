@@ -56,8 +56,9 @@ size_t grpc_pollset_size(void);
 void grpc_pollset_init(grpc_pollset *pollset, gpr_mu **mu);
 /* Begin shutting down the pollset, and call closure when done.
  * pollset's mutex must be held */
-void grpc_pollset_shutdown(grpc_exec_ctx *exec_ctx, grpc_pollset *pollset,
-                           grpc_closure *closure);
+void grpc_pollset_shutdown_and_unlock(grpc_exec_ctx *exec_ctx,
+                                      grpc_pollset *pollset,
+                                      grpc_closure *closure);
 /** Reset the pollset to its initial state (perhaps with some cached objects);
  *  must have been previously shutdown */
 void grpc_pollset_reset(grpc_pollset *pollset);
@@ -79,16 +80,17 @@ void grpc_pollset_destroy(grpc_pollset *pollset);
 
    Tries not to block past deadline.
    May call grpc_closure_list_run on grpc_closure_list, without holding the
-   pollset
-   lock */
+   pollset lock */
 void grpc_pollset_work(grpc_exec_ctx *exec_ctx, grpc_pollset *pollset,
                        grpc_pollset_worker **worker, gpr_timespec now,
                        gpr_timespec deadline);
 
 /* Break one polling thread out of polling work for this pollset.
    If specific_worker is GRPC_POLLSET_KICK_BROADCAST, kick ALL the workers.
-   Otherwise, if specific_worker is non-NULL, then kick that worker. */
-void grpc_pollset_kick(grpc_pollset *pollset,
-                       grpc_pollset_worker *specific_worker);
+   Otherwise, if specific_worker is non-NULL, then kick that worker.
+
+   Requires pollset's mutex locked. Will unlock the mutex. */
+void grpc_pollset_kick_and_unlock(grpc_pollset *pollset,
+                                  grpc_pollset_worker *specific_worker);
 
 #endif /* GRPC_CORE_LIB_IOMGR_POLLSET_H */
