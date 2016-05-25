@@ -93,7 +93,25 @@ class AsyncQpsServerTest : public Server {
       gpr_log(GPR_INFO, "Sizing async server to %d threads", num_threads);
     }
 
-    for (int i = 0; i < num_threads; i++) {
+    int threads_per_completion_queue = config.threads_per_completion_queue();
+    if (threads_per_completion_queue == 0) {
+      threads_per_completion_queue = 1;
+    }
+
+    if (num_threads % threads_per_completion_queue != 0) {
+      num_threads -= num_threads % threads_per_completion_queue;
+      if (num_threads == 0) {
+        num_threads = threads_per_completion_queue;
+      }
+      gpr_log(GPR_INFO,
+              "Setting threads to %d due to %d threads per completion queue",
+              num_threads, threads_per_completion_queue);
+    }
+
+    int num_completion_queues = num_threads / threads_per_completion_queue;
+    threads_per_completion_queue_ = threads_per_completion_queue;
+
+    for (int i = 0; i < num_completion_queues; i++) {
       srv_cqs_.emplace_back(builder.AddCompletionQueue());
     }
 
@@ -109,14 +127,14 @@ class AsyncQpsServerTest : public Server {
         if (request_unary_function) {
           auto request_unary =
               std::bind(request_unary_function, &async_service_, _1, _2, _3,
-                        srv_cqs_[j].get(), srv_cqs_[j].get(), _4);
+                        cq_for_thread(j), cq_for_thread(j), _4);
           contexts_.push_front(
               new ServerRpcContextUnaryImpl(request_unary, process_rpc_bound));
         }
         if (request_streaming_function) {
           auto request_streaming =
               std::bind(request_streaming_function, &async_service_, _1, _2,
-                        srv_cqs_[j].get(), srv_cqs_[j].get(), _3);
+                        cq_for_thread(j), cq_for_thread(j), _3);
           contexts_.push_front(new ServerRpcContextStreamingImpl(
               request_streaming, process_rpc_bound));
         }
@@ -156,7 +174,7 @@ class AsyncQpsServerTest : public Server {
     // Wait until work is available or we are shutting down
     bool ok;
     void *got_tag;
-    while (srv_cqs_[rank]->Next(&got_tag, &ok)) {
+    while (cq_for_thread(rank)->Next(&got_tag, &ok)) {
       ServerRpcContext *ctx = detag(got_tag);
       // The tag is a pointer to an RPC context to invoke
       const bool still_going = ctx->RunNextState(ok);
@@ -317,6 +335,10 @@ class AsyncQpsServerTest : public Server {
     }
     bool finish_done(bool ok) { return false; /* reset the context */ }
 
+    grpc::ServerCompletionQueue *cq_for_thread(int thread) {
+      return srv_cqs_[thread / threads_per_completion_queue_].get();
+    }
+
     std::unique_ptr<ServerContextType> srv_ctx_;
     RequestType req_;
     bool (ServerRpcContextStreamingImpl::*next_state_)(bool);
@@ -332,6 +354,7 @@ class AsyncQpsServerTest : public Server {
   std::vector<std::thread> threads_;
   std::unique_ptr<grpc::Server> server_;
   std::vector<std::unique_ptr<grpc::ServerCompletionQueue>> srv_cqs_;
+  int threads_per_completion_queue_;
   ServiceType async_service_;
   std::forward_list<ServerRpcContext *> contexts_;
 
