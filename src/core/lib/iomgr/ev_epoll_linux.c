@@ -1317,52 +1317,45 @@ static void pollset_work_and_unlock(grpc_exec_ctx *exec_ctx,
   PI_ADD_REF(pi, "ps_work");
   gpr_mu_unlock(&pollset->mu);
 
-  do {
-    ep_rv = epoll_pwait(epoll_fd, ep_ev, GRPC_EPOLL_MAX_EVENTS, timeout_ms,
-                        sig_mask);
-    if (ep_rv < 0) {
-      if (errno != EINTR) {
-        gpr_asprintf(&err_msg,
-                     "epoll_wait() epoll fd: %d failed with error: %d (%s)",
-                     epoll_fd, errno, strerror(errno));
-        append_error(error, GRPC_OS_ERROR(errno, err_msg), err_desc);
-      } else {
-        /* We were interrupted. Save an interation by doing a zero timeout
-           epoll_wait to see if there are any other events of interest */
-        ep_rv = epoll_wait(epoll_fd, ep_ev, GRPC_EPOLL_MAX_EVENTS, 0);
-      }
+  ep_rv =
+      epoll_pwait(epoll_fd, ep_ev, GRPC_EPOLL_MAX_EVENTS, timeout_ms, sig_mask);
+  if (ep_rv < 0) {
+    if (errno != EINTR) {
+      gpr_asprintf(&err_msg,
+                   "epoll_wait() epoll fd: %d failed with error: %d (%s)",
+                   epoll_fd, errno, strerror(errno));
+      append_error(error, GRPC_OS_ERROR(errno, err_msg), err_desc);
     }
+  }
 
 #ifdef GRPC_TSAN
-    /* See the definition of g_poll_sync for more details */
-    gpr_atm_acq_load(&g_epoll_sync);
+  /* See the definition of g_poll_sync for more details */
+  gpr_atm_acq_load(&g_epoll_sync);
 #endif /* defined(GRPC_TSAN) */
 
-    for (int i = 0; i < ep_rv; ++i) {
-      void *data_ptr = ep_ev[i].data.ptr;
-      if (data_ptr == &grpc_global_wakeup_fd) {
-        append_error(error,
-                     grpc_wakeup_fd_consume_wakeup(&grpc_global_wakeup_fd),
-                     err_desc);
-      } else if (data_ptr == &polling_island_wakeup_fd) {
-        /* This means that our polling island is merged with a different
-           island. We do not have to do anything here since the subsequent call
-           to the function pollset_work_and_unlock() will pick up the correct
-           epoll_fd */
-      } else {
-        grpc_fd *fd = data_ptr;
-        int cancel = ep_ev[i].events & (EPOLLERR | EPOLLHUP);
-        int read_ev = ep_ev[i].events & (EPOLLIN | EPOLLPRI);
-        int write_ev = ep_ev[i].events & EPOLLOUT;
-        if (read_ev || cancel) {
-          fd_become_readable(exec_ctx, fd, pollset);
-        }
-        if (write_ev || cancel) {
-          fd_become_writable(exec_ctx, fd);
-        }
+  for (int i = 0; i < ep_rv; ++i) {
+    void *data_ptr = ep_ev[i].data.ptr;
+    if (data_ptr == &grpc_global_wakeup_fd) {
+      append_error(error, grpc_wakeup_fd_consume_wakeup(&grpc_global_wakeup_fd),
+                   err_desc);
+    } else if (data_ptr == &polling_island_wakeup_fd) {
+      /* This means that our polling island is merged with a different
+         island. We do not have to do anything here since the subsequent call
+         to the function pollset_work_and_unlock() will pick up the correct
+         epoll_fd */
+    } else {
+      grpc_fd *fd = data_ptr;
+      int cancel = ep_ev[i].events & (EPOLLERR | EPOLLHUP);
+      int read_ev = ep_ev[i].events & (EPOLLIN | EPOLLPRI);
+      int write_ev = ep_ev[i].events & EPOLLOUT;
+      if (read_ev || cancel) {
+        fd_become_readable(exec_ctx, fd, pollset);
+      }
+      if (write_ev || cancel) {
+        fd_become_writable(exec_ctx, fd);
       }
     }
-  } while (ep_rv == GRPC_EPOLL_MAX_EVENTS);
+  }
 
   GPR_ASSERT(pi != NULL);
 
