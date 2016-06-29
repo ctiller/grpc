@@ -65,9 +65,16 @@ grpc_channel *grpc_insecure_channel_create_from_fd(
   int flags = fcntl(fd, F_GETFL, 0);
   GPR_ASSERT(fcntl(fd, F_SETFL, flags | O_NONBLOCK) == 0);
 
+  grpc_fd *fdobj = NULL;
+  grpc_error *error = grpc_fd_create(&exec_ctx, fd, 0, "client", &fdobj);
+  if (!GRPC_LOG_IF_ERROR("fd_create", error)) {
+    return grpc_lame_client_channel_create(
+        target, GRPC_STATUS_INTERNAL,
+        "Failed to create client channel fd wrapper");
+  }
+
   grpc_endpoint *client =
-      grpc_tcp_create(grpc_fd_create(fd, "client"),
-                      GRPC_TCP_DEFAULT_READ_SLICE_SIZE, "fd-client");
+      grpc_tcp_create(fdobj, GRPC_TCP_DEFAULT_READ_SLICE_SIZE, "fd-client");
 
   grpc_transport *transport =
       grpc_create_chttp2_transport(&exec_ctx, final_args, client, 1);

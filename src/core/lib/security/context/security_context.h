@@ -90,7 +90,7 @@ typedef struct {
 } grpc_client_security_context;
 
 grpc_client_security_context *grpc_client_security_context_create(void);
-void grpc_client_security_context_destroy(void *ctx);
+void grpc_client_security_context_destroy(grpc_exec_ctx *exec_ctx, void *ctx);
 
 /* --- grpc_server_security_context ---
 
@@ -101,7 +101,7 @@ typedef struct {
 } grpc_server_security_context;
 
 grpc_server_security_context *grpc_server_security_context_create(void);
-void grpc_server_security_context_destroy(void *ctx);
+void grpc_server_security_context_destroy(grpc_exec_ctx *exec_ctx, void *ctx);
 
 /* --- Channel args for auth context --- */
 #define GRPC_AUTH_CONTEXT_ARG "grpc.auth_context"

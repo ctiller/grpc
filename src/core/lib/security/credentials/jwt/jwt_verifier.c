@@ -851,7 +851,8 @@ grpc_jwt_verifier *grpc_jwt_verifier_create(
 void grpc_jwt_verifier_destroy(grpc_jwt_verifier *v) {
   size_t i;
   if (v == NULL) return;
-  grpc_httpcli_context_destroy(&v->http_ctx);
+  grpc_exec_ctx exec_ctx = GRPC_EXEC_CTX_INIT;
+  grpc_httpcli_context_destroy(&exec_ctx, &v->http_ctx);
   if (v->mappings != NULL) {
     for (i = 0; i < v->num_mappings; i++) {
       gpr_free(v->mappings[i].email_domain);
@@ -859,5 +860,6 @@ void grpc_jwt_verifier_destroy(grpc_jwt_verifier *v) {
     }
     gpr_free(v->mappings);
   }
+  grpc_exec_ctx_finish(&exec_ctx);
   gpr_free(v);
 }

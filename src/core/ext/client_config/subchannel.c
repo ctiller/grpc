@@ -208,7 +208,7 @@ static void subchannel_destroy(grpc_exec_ctx *exec_ctx, void *arg,
   gpr_slice_unref(c->initial_connect_string);
   grpc_connectivity_state_destroy(exec_ctx, &c->state_tracker);
   grpc_connector_unref(exec_ctx, c->connector);
-  grpc_pollset_set_destroy(c->pollset_set);
+  grpc_pollset_set_destroy(exec_ctx, c->pollset_set);
   grpc_subchannel_key_destroy(exec_ctx, c->key);
   gpr_free(c);
 }

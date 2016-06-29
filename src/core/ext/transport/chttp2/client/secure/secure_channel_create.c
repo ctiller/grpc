@@ -205,7 +205,7 @@ static void client_channel_factory_unref(
     grpc_exec_ctx *exec_ctx, grpc_client_channel_factory *cc_factory) {
   client_channel_factory *f = (client_channel_factory *)cc_factory;
   if (gpr_unref(&f->refs)) {
-    GRPC_SECURITY_CONNECTOR_UNREF(&f->security_connector->base,
+    GRPC_SECURITY_CONNECTOR_UNREF(exec_ctx, &f->security_connector->base,
                                   "client_channel_factory");
     if (f->master != NULL) {
       GRPC_CHANNEL_INTERNAL_UNREF(exec_ctx, f->master,
@@ -258,7 +258,7 @@ static grpc_channel *client_channel_factory_create_channel(
     channel = NULL;
   }
 
-  GRPC_SECURITY_CONNECTOR_UNREF(&f->security_connector->base,
+  GRPC_SECURITY_CONNECTOR_UNREF(exec_ctx, &f->security_connector->base,
                                 "client_channel_factory_create_channel");
   return channel;
 }
@@ -298,8 +298,8 @@ grpc_channel *grpc_secure_channel_create(grpc_channel_credentials *creds,
   }
 
   if (grpc_channel_credentials_create_security_connector(
-          creds, target, args, &security_connector, &new_args_from_connector) !=
-      GRPC_SECURITY_OK) {
+          &exec_ctx, creds, target, args, &security_connector,
+          &new_args_from_connector) != GRPC_SECURITY_OK) {
     grpc_exec_ctx_finish(&exec_ctx);
     return grpc_lame_client_channel_create(
         target, GRPC_STATUS_INTERNAL, "Failed to create security connector.");

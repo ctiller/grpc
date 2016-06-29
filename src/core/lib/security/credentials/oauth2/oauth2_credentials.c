@@ -118,12 +118,13 @@ void grpc_auth_refresh_token_destruct(grpc_auth_refresh_token *refresh_token) {
 // Oauth2 Token Fetcher credentials.
 //
 
-static void oauth2_token_fetcher_destruct(grpc_call_credentials *creds) {
+static void oauth2_token_fetcher_destruct(grpc_exec_ctx *exec_ctx,
+                                          grpc_call_credentials *creds) {
   grpc_oauth2_token_fetcher_credentials *c =
       (grpc_oauth2_token_fetcher_credentials *)creds;
   grpc_credentials_md_store_unref(c->access_token_md);
   gpr_mu_destroy(&c->mu);
-  grpc_httpcli_context_destroy(&c->httpcli_context);
+  grpc_httpcli_context_destroy(exec_ctx, &c->httpcli_context);
 }
 
 grpc_credentials_status
@@ -242,7 +243,7 @@ static void on_oauth2_token_fetcher_http_response(grpc_exec_ctx *exec_ctx,
           "Error occured when fetching oauth2 token.");
   }
   gpr_mu_unlock(&c->mu);
-  grpc_credentials_metadata_request_destroy(r);
+  grpc_credentials_metadata_request_destroy(exec_ctx, r);
 }
 
 static void oauth2_token_fetcher_get_request_metadata(
@@ -328,11 +329,12 @@ grpc_call_credentials *grpc_google_compute_engine_credentials_create(
 // Google Refresh Token credentials.
 //
 
-static void refresh_token_destruct(grpc_call_credentials *creds) {
+static void refresh_token_destruct(grpc_exec_ctx *exec_ctx,
+                                   grpc_call_credentials *creds) {
   grpc_google_refresh_token_credentials *c =
       (grpc_google_refresh_token_credentials *)creds;
   grpc_auth_refresh_token_destruct(&c->refresh_token);
-  oauth2_token_fetcher_destruct(&c->base.base);
+  oauth2_token_fetcher_destruct(exec_ctx, &c->base.base);
 }
 
 static grpc_call_credentials_vtable refresh_token_vtable = {
@@ -395,7 +397,8 @@ grpc_call_credentials *grpc_google_refresh_token_credentials_create(
 // Oauth2 Access Token credentials.
 //
 
-static void access_token_destruct(grpc_call_credentials *creds) {
+static void access_token_destruct(grpc_exec_ctx *exec_ctx,
+                                  grpc_call_credentials *creds) {
   grpc_access_token_credentials *c = (grpc_access_token_credentials *)creds;
   grpc_credentials_md_store_unref(c->access_token_md);
 }

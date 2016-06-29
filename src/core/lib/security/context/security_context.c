@@ -47,11 +47,13 @@
 
 grpc_call_error grpc_call_set_credentials(grpc_call *call,
                                           grpc_call_credentials *creds) {
+  grpc_exec_ctx exec_ctx = GRPC_EXEC_CTX_INIT;
   grpc_client_security_context *ctx = NULL;
   GRPC_API_TRACE("grpc_call_set_credentials(call=%p, creds=%p)", 2,
                  (call, creds));
   if (!grpc_call_is_client(call)) {
     gpr_log(GPR_ERROR, "Method is client-side only.");
+    grpc_exec_ctx_finish(&exec_ctx);
     return GRPC_CALL_ERROR_NOT_ON_SERVER;
   }
   ctx = (grpc_client_security_context *)grpc_call_context_get(
@@ -59,12 +61,13 @@ grpc_call_error grpc_call_set_credentials(grpc_call *call,
   if (ctx == NULL) {
     ctx = grpc_client_security_context_create();
     ctx->creds = grpc_call_credentials_ref(creds);
-    grpc_call_context_set(call, GRPC_CONTEXT_SECURITY, ctx,
+    grpc_call_context_set(&exec_ctx, call, GRPC_CONTEXT_SECURITY, ctx,
                           grpc_client_security_context_destroy);
   } else {
-    grpc_call_credentials_unref(ctx->creds);
+    grpc_call_credentials_unref(&exec_ctx, ctx->creds);
     ctx->creds = grpc_call_credentials_ref(creds);
   }
+  grpc_exec_ctx_finish(&exec_ctx);
   return GRPC_CALL_OK;
 }
 
@@ -95,9 +98,9 @@ grpc_client_security_context *grpc_client_security_context_create(void) {
   return ctx;
 }
 
-void grpc_client_security_context_destroy(void *ctx) {
+void grpc_client_security_context_destroy(grpc_exec_ctx *exec_ctx, void *ctx) {
   grpc_client_security_context *c = (grpc_client_security_context *)ctx;
-  grpc_call_credentials_unref(c->creds);
+  grpc_call_credentials_unref(exec_ctx, c->creds);
   GRPC_AUTH_CONTEXT_UNREF(c->auth_context, "client_security_context");
   gpr_free(ctx);
 }
@@ -111,7 +114,7 @@ grpc_server_security_context *grpc_server_security_context_create(void) {
   return ctx;
 }
 
-void grpc_server_security_context_destroy(void *ctx) {
+void grpc_server_security_context_destroy(grpc_exec_ctx *exec_ctx, void *ctx) {
   grpc_server_security_context *c = (grpc_server_security_context *)ctx;
   GRPC_AUTH_CONTEXT_UNREF(c->auth_context, "server_security_context");
   gpr_free(ctx);

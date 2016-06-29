@@ -486,7 +486,7 @@ static void destroy_channel_elem(grpc_exec_ctx *exec_ctx,
     GRPC_LB_POLICY_UNREF(exec_ctx, chand->lb_policy, "channel");
   }
   grpc_connectivity_state_destroy(exec_ctx, &chand->state_tracker);
-  grpc_pollset_set_destroy(chand->interested_parties);
+  grpc_pollset_set_destroy(exec_ctx, chand->interested_parties);
   gpr_mu_destroy(&chand->mu_config);
 }
 

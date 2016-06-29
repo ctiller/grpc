@@ -72,14 +72,14 @@ typedef struct server_secure_connect {
 
 static void state_ref(server_secure_state *state) { gpr_ref(&state->refcount); }
 
-static void state_unref(server_secure_state *state) {
+static void state_unref(grpc_exec_ctx *exec_ctx, server_secure_state *state) {
   if (gpr_unref(&state->refcount)) {
     /* ensure all threads have unlocked */
     gpr_mu_lock(&state->mu);
     gpr_mu_unlock(&state->mu);
     /* clean up */
-    GRPC_SECURITY_CONNECTOR_UNREF(&state->sc->base, "server");
-    grpc_server_credentials_unref(state->creds);
+    GRPC_SECURITY_CONNECTOR_UNREF(exec_ctx, &state->sc->base, "server");
+    grpc_server_credentials_unref(exec_ctx, state->creds);
     gpr_free(state);
   }
 }
@@ -118,7 +118,7 @@ static void on_secure_handshake_done(grpc_exec_ctx *exec_ctx, void *statep,
   } else {
     gpr_log(GPR_ERROR, "Secure transport failed with error %d", status);
   }
-  state_unref(state->state);
+  state_unref(exec_ctx, state->state);
   gpr_free(state);
 }
 
@@ -152,7 +152,7 @@ static void destroy_done(grpc_exec_ctx *exec_ctx, void *statep,
                                 GRPC_ERROR_REF(error));
   }
   grpc_server_security_connector_shutdown(exec_ctx, state->sc);
-  state_unref(state);
+  state_unref(exec_ctx, state);
 }
 
 /* Server callback: destroy the tcp listener (so we don't generate further
@@ -195,7 +195,8 @@ int grpc_server_add_secure_http2_port(grpc_server *server, const char *addr,
         "No credentials specified for secure server port (creds==NULL)");
     goto error;
   }
-  status = grpc_server_credentials_create_security_connector(creds, &sc);
+  status =
+      grpc_server_credentials_create_security_connector(&exec_ctx, creds, &sc);
   if (status != GRPC_SECURITY_OK) {
     char *msg;
     gpr_asprintf(&msg,
@@ -233,7 +234,7 @@ int grpc_server_add_secure_http2_port(grpc_server *server, const char *addr,
   errors = gpr_malloc(sizeof(*errors) * resolved->naddrs);
   for (i = 0; i < resolved->naddrs; i++) {
     errors[i] = grpc_tcp_server_add_port(
-        tcp, (struct sockaddr *)&resolved->addrs[i].addr,
+        &exec_ctx, tcp, (struct sockaddr *)&resolved->addrs[i].addr,
         resolved->addrs[i].len, &port_temp);
     if (errors[i] == GRPC_ERROR_NONE) {
       if (port_num == -1) {
@@ -294,7 +295,7 @@ error:
     grpc_tcp_server_unref(&exec_ctx, tcp);
   } else {
     if (sc) {
-      GRPC_SECURITY_CONNECTOR_UNREF(&sc->base, "server");
+      GRPC_SECURITY_CONNECTOR_UNREF(&exec_ctx, &sc->base, "server");
     }
     if (state) {
       gpr_free(state);

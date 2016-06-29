@@ -272,7 +272,11 @@ static void tcp_client_connect_impl(grpc_exec_ctx *exec_ctx,
   addr_str = grpc_sockaddr_to_uri(addr);
   gpr_asprintf(&name, "tcp-client:%s", addr_str);
 
-  fdobj = grpc_fd_create(fd, name);
+  error = grpc_fd_create(exec_ctx, fd, 0, name, &fdobj);
+  if (error != GRPC_ERROR_NONE) {
+    grpc_exec_ctx_sched(exec_ctx, closure, error, NULL);
+    return;
+  }
 
   if (err >= 0) {
     *ep = grpc_tcp_create(fdobj, GRPC_TCP_DEFAULT_READ_SLICE_SIZE, addr_str);

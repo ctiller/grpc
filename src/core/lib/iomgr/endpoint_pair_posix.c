@@ -51,33 +51,67 @@
 #include "src/core/lib/iomgr/tcp_posix.h"
 #include "src/core/lib/support/string.h"
 
-static void create_sockets(int sv[2]) {
+static grpc_error *create_sockets(int sv[2]) {
   int flags;
-  grpc_create_socketpair_if_unix(sv);
+  grpc_error *error = grpc_create_socketpair_if_unix(sv);
+  if (error != GRPC_ERROR_NONE) {
+    return error;
+  }
   flags = fcntl(sv[0], F_GETFL, 0);
-  GPR_ASSERT(fcntl(sv[0], F_SETFL, flags | O_NONBLOCK) == 0);
+  if (fcntl(sv[0], F_SETFL, flags | O_NONBLOCK) != 0) {
+    return GRPC_ERROR_CREATE("Failed to set socket non-blocking");
+  }
   flags = fcntl(sv[1], F_GETFL, 0);
-  GPR_ASSERT(fcntl(sv[1], F_SETFL, flags | O_NONBLOCK) == 0);
-  GPR_ASSERT(grpc_set_socket_no_sigpipe_if_possible(sv[0]) == GRPC_ERROR_NONE);
-  GPR_ASSERT(grpc_set_socket_no_sigpipe_if_possible(sv[1]) == GRPC_ERROR_NONE);
+  if (fcntl(sv[1], F_SETFL, flags | O_NONBLOCK) == 0) {
+    return GRPC_ERROR_CREATE("Failed to verify socket non-blocking");
+  }
+  error = grpc_set_socket_no_sigpipe_if_possible(sv[0]);
+  if (error != GRPC_ERROR_NONE) {
+    return error;
+  }
+  error = grpc_set_socket_no_sigpipe_if_possible(sv[1]);
+  if (error != GRPC_ERROR_NONE) {
+    return error;
+  }
+  return GRPC_ERROR_NONE;
 }
 
-grpc_endpoint_pair grpc_iomgr_create_endpoint_pair(const char *name,
-                                                   size_t read_slice_size) {
+grpc_error *grpc_iomgr_create_endpoint_pair(grpc_exec_ctx *exec_ctx,
+                                            const char *name,
+                                            size_t read_slice_size,
+                                            grpc_endpoint_pair *endpoint_pair) {
   int sv[2];
-  grpc_endpoint_pair p;
   char *final_name;
-  create_sockets(sv);
+  grpc_error *error = create_sockets(sv);
+  if (error != GRPC_ERROR_NONE) {
+    return error;
+  }
 
   gpr_asprintf(&final_name, "%s:client", name);
-  p.client = grpc_tcp_create(grpc_fd_create(sv[1], final_name), read_slice_size,
-                             "socketpair-server");
+  grpc_fd *fd;
+  error = grpc_fd_create(exec_ctx, sv[1], 0, final_name, &fd);
   gpr_free(final_name);
+  if (error != GRPC_ERROR_NONE) {
+    close(sv[0]);
+    close(sv[1]);
+    return error;
+  }
+  endpoint_pair->client =
+      grpc_tcp_create(fd, read_slice_size, "socketpair-server");
+
   gpr_asprintf(&final_name, "%s:server", name);
-  p.server = grpc_tcp_create(grpc_fd_create(sv[0], final_name), read_slice_size,
-                             "socketpair-client");
+  error = grpc_fd_create(exec_ctx, sv[0], 0, final_name, &fd);
   gpr_free(final_name);
-  return p;
+  if (error != GRPC_ERROR_NONE) {
+    grpc_endpoint_destroy(exec_ctx, endpoint_pair->client);
+    close(sv[0]);
+    close(sv[1]);
+    return error;
+  }
+  endpoint_pair->server =
+      grpc_tcp_create(fd, read_slice_size, "socketpair-client");
+
+  return GRPC_ERROR_NONE;
 }
 
 #endif

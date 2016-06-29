@@ -58,7 +58,7 @@ typedef struct freereq {
 static void destroy_pops_and_shutdown(grpc_exec_ctx *exec_ctx, void *p,
                                       grpc_error *error) {
   grpc_pollset *pollset = grpc_polling_entity_pollset(p);
-  grpc_pollset_destroy(pollset);
+  grpc_pollset_destroy(exec_ctx, pollset);
   gpr_free(pollset);
   grpc_shutdown();
 }
@@ -115,8 +115,8 @@ void grpc_free_port_using_server(char *server, int port) {
   }
   gpr_mu_unlock(pr.mu);
 
-  grpc_httpcli_context_destroy(&context);
-  grpc_exec_ctx_finish(&exec_ctx);
+  grpc_httpcli_context_destroy(&exec_ctx, &context);
+  grpc_exec_ctx_flush(&exec_ctx);
   grpc_pollset_shutdown(&exec_ctx, grpc_polling_entity_pollset(&pr.pops),
                         shutdown_closure);
   grpc_exec_ctx_finish(&exec_ctx);
@@ -229,7 +229,7 @@ int grpc_pick_port_using_server(char *server) {
   gpr_mu_unlock(pr.mu);
 
   grpc_http_response_destroy(&pr.response);
-  grpc_httpcli_context_destroy(&context);
+  grpc_httpcli_context_destroy(&exec_ctx, &context);
   grpc_pollset_shutdown(&exec_ctx, grpc_polling_entity_pollset(&pr.pops),
                         shutdown_closure);
   grpc_exec_ctx_finish(&exec_ctx);

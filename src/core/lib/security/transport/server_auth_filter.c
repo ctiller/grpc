@@ -212,7 +212,7 @@ static void init_call_elem(grpc_exec_ctx *exec_ctx, grpc_call_element *elem,
 
   if (args->context[GRPC_CONTEXT_SECURITY].value != NULL) {
     args->context[GRPC_CONTEXT_SECURITY].destroy(
-        args->context[GRPC_CONTEXT_SECURITY].value);
+        exec_ctx, args->context[GRPC_CONTEXT_SECURITY].value);
   }
 
   server_ctx = grpc_server_security_context_create();
@@ -255,7 +255,7 @@ static void destroy_channel_elem(grpc_exec_ctx *exec_ctx,
   /* grab pointers to our data from the channel element */
   channel_data *chand = elem->channel_data;
   GRPC_AUTH_CONTEXT_UNREF(chand->auth_context, "server_auth_filter");
-  grpc_server_credentials_unref(chand->creds);
+  grpc_server_credentials_unref(exec_ctx, chand->creds);
 }
 
 const grpc_channel_filter grpc_server_auth_filter = {

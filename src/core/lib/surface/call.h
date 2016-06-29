@@ -95,8 +95,10 @@ void grpc_call_log_batch(char *file, int line, gpr_log_severity severity,
 
 /* Set a context pointer.
    No thread safety guarantees are made wrt this value. */
-void grpc_call_context_set(grpc_call *call, grpc_context_index elem,
-                           void *value, void (*destroy)(void *value));
+void grpc_call_context_set(grpc_exec_ctx *exec_ctx, grpc_call *call,
+                           grpc_context_index elem, void *value,
+                           void (*destroy)(grpc_exec_ctx *exec_ctx,
+                                           void *value));
 /* Get a context pointer. */
 void *grpc_call_context_get(grpc_call *call, grpc_context_index elem);
 

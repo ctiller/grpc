@@ -54,11 +54,12 @@ typedef struct {
   grpc_credentials_metadata_cb cb;
 } grpc_composite_call_credentials_metadata_context;
 
-static void composite_call_destruct(grpc_call_credentials *creds) {
+static void composite_call_destruct(grpc_exec_ctx *exec_ctx,
+                                    grpc_call_credentials *creds) {
   grpc_composite_call_credentials *c = (grpc_composite_call_credentials *)creds;
   size_t i;
   for (i = 0; i < c->inner.num_creds; i++) {
-    grpc_call_credentials_unref(c->inner.creds_array[i]);
+    grpc_call_credentials_unref(exec_ctx, c->inner.creds_array[i]);
   }
   gpr_free(c->inner.creds_array);
 }
@@ -209,17 +210,19 @@ grpc_call_credentials *grpc_credentials_contains_type(
 
 /* -- Composite channel credentials. -- */
 
-static void composite_channel_destruct(grpc_channel_credentials *creds) {
+static void composite_channel_destruct(grpc_exec_ctx *exec_ctx,
+                                       grpc_channel_credentials *creds) {
   grpc_composite_channel_credentials *c =
       (grpc_composite_channel_credentials *)creds;
-  grpc_channel_credentials_unref(c->inner_creds);
-  grpc_call_credentials_unref(c->call_creds);
+  grpc_channel_credentials_unref(exec_ctx, c->inner_creds);
+  grpc_call_credentials_unref(exec_ctx, c->call_creds);
 }
 
 static grpc_security_status composite_channel_create_security_connector(
-    grpc_channel_credentials *creds, grpc_call_credentials *call_creds,
-    const char *target, const grpc_channel_args *args,
-    grpc_channel_security_connector **sc, grpc_channel_args **new_args) {
+    grpc_exec_ctx *exec_ctx, grpc_channel_credentials *creds,
+    grpc_call_credentials *call_creds, const char *target,
+    const grpc_channel_args *args, grpc_channel_security_connector **sc,
+    grpc_channel_args **new_args) {
   grpc_composite_channel_credentials *c =
       (grpc_composite_channel_credentials *)creds;
   grpc_security_status status = GRPC_SECURITY_ERROR;
@@ -233,11 +236,12 @@ static grpc_security_status composite_channel_create_security_connector(
     grpc_call_credentials *composite_call_creds =
         grpc_composite_call_credentials_create(c->call_creds, call_creds, NULL);
     status = c->inner_creds->vtable->create_security_connector(
-        c->inner_creds, composite_call_creds, target, args, sc, new_args);
-    grpc_call_credentials_unref(composite_call_creds);
+        exec_ctx, c->inner_creds, composite_call_creds, target, args, sc,
+        new_args);
+    grpc_call_credentials_unref(exec_ctx, composite_call_creds);
   } else {
     status = c->inner_creds->vtable->create_security_connector(
-        c->inner_creds, c->call_creds, target, args, sc, new_args);
+        exec_ctx, c->inner_creds, c->call_creds, target, args, sc, new_args);
   }
   return status;
 }

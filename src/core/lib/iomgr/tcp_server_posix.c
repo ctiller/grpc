@@ -403,10 +403,17 @@ static void on_read(grpc_exec_ctx *exec_ctx, void *arg, grpc_error *err) {
       gpr_log(GPR_DEBUG, "SERVER_CONNECT: incoming connection: %s", addr_str);
     }
 
-    fdobj = grpc_fd_create(fd, name);
+    grpc_error *error = grpc_fd_create(exec_ctx, fd, 0, name, &fdobj);
+    if (GRPC_LOG_IF_ERROR("fd_create", error)) {
+      gpr_free(name);
+      gpr_free(addr_str);
+      goto error;
+    }
 
     if (read_notifier_pollset == NULL) {
       gpr_log(GPR_ERROR, "Read notifier pollset is not set on the fd");
+      gpr_free(name);
+      gpr_free(addr_str);
       goto error;
     }
 
@@ -433,7 +440,8 @@ error:
   }
 }
 
-static grpc_error *add_socket_to_server(grpc_tcp_server *s, int fd,
+static grpc_error *add_socket_to_server(grpc_exec_ctx *exec_ctx,
+                                        grpc_tcp_server *s, int fd,
                                         const struct sockaddr *addr,
                                         size_t addr_len, unsigned port_index,
                                         unsigned fd_index,
@@ -461,7 +469,7 @@ static grpc_error *add_socket_to_server(grpc_tcp_server *s, int fd,
     s->tail = sp;
     sp->server = s;
     sp->fd = fd;
-    sp->emfd = grpc_fd_create(fd, name);
+    err = grpc_fd_create(exec_ctx, fd, 0, name, &sp->emfd);
     memcpy(sp->addr.untyped, addr, addr_len);
     sp->addr_len = addr_len;
     sp->port = port;
@@ -479,7 +487,8 @@ static grpc_error *add_socket_to_server(grpc_tcp_server *s, int fd,
   return err;
 }
 
-static grpc_error *clone_port(grpc_tcp_listener *listener, unsigned count) {
+static grpc_error *clone_port(grpc_exec_ctx *exec_ctx,
+                              grpc_tcp_listener *listener, unsigned count) {
   grpc_tcp_listener *sp = NULL;
   char *addr_str;
   char *name;
@@ -506,7 +515,8 @@ static grpc_error *clone_port(grpc_tcp_listener *listener, unsigned count) {
     listener->next = sp;
     sp->server = listener->server;
     sp->fd = fd;
-    sp->emfd = grpc_fd_create(fd, name);
+    err = grpc_fd_create(exec_ctx, fd, 0, name, &sp->emfd);
+    if (err != GRPC_ERROR_NONE) return err;
     memcpy(sp->addr.untyped, listener->addr.untyped, listener->addr_len);
     sp->addr_len = listener->addr_len;
     sp->port = port;
@@ -525,7 +535,8 @@ static grpc_error *clone_port(grpc_tcp_listener *listener, unsigned count) {
   return GRPC_ERROR_NONE;
 }
 
-grpc_error *grpc_tcp_server_add_port(grpc_tcp_server *s, const void *addr,
+grpc_error *grpc_tcp_server_add_port(grpc_exec_ctx *exec_ctx,
+                                     grpc_tcp_server *s, const void *addr,
                                      size_t addr_len, int *out_port) {
   grpc_tcp_listener *sp;
   grpc_tcp_listener *sp2 = NULL;
@@ -582,8 +593,8 @@ grpc_error *grpc_tcp_server_add_port(grpc_tcp_server *s, const void *addr,
     addr_len = sizeof(wild6);
     errs[0] = grpc_create_dualstack_socket(addr, SOCK_STREAM, 0, &dsmode, &fd);
     if (errs[0] == GRPC_ERROR_NONE) {
-      errs[0] = add_socket_to_server(s, fd, addr, addr_len, port_index,
-                                     fd_index, &sp);
+      errs[0] = add_socket_to_server(exec_ctx, s, fd, addr, addr_len,
+                                     port_index, fd_index, &sp);
       if (fd >= 0 && dsmode == GRPC_DSMODE_DUALSTACK) {
         goto done;
       }
@@ -607,8 +618,8 @@ grpc_error *grpc_tcp_server_add_port(grpc_tcp_server *s, const void *addr,
       addr_len = sizeof(addr4_copy);
     }
     sp2 = sp;
-    errs[1] =
-        add_socket_to_server(s, fd, addr, addr_len, port_index, fd_index, &sp);
+    errs[1] = add_socket_to_server(exec_ctx, s, fd, addr, addr_len, port_index,
+                                   fd_index, &sp);
     if (sp2 != NULL && sp != NULL) {
       sp2->sibling = sp;
       sp->is_sibling = 1;
@@ -685,7 +696,8 @@ void grpc_tcp_server_start(grpc_exec_ctx *exec_ctx, grpc_tcp_server *s,
   while (sp != NULL) {
     if (s->so_reuseport && pollset_count > 1) {
       GPR_ASSERT(GRPC_LOG_IF_ERROR(
-          "clone_port", clone_port(sp, (unsigned)(pollset_count - 1))));
+          "clone_port",
+          clone_port(exec_ctx, sp, (unsigned)(pollset_count - 1))));
       for (i = 0; i < pollset_count; i++) {
         grpc_pollset_add_fd(exec_ctx, pollsets[i], sp->emfd);
         sp->read_closure.cb = on_read;

@@ -42,9 +42,11 @@ void grpc_census_call_set_context(grpc_call *call, census_context *context) {
   if (census_enabled() == CENSUS_FEATURE_NONE) {
     return;
   }
+  grpc_exec_ctx exec_ctx = GRPC_EXEC_CTX_INIT;
   if (context != NULL) {
-    grpc_call_context_set(call, GRPC_CONTEXT_TRACING, context, NULL);
+    grpc_call_context_set(&exec_ctx, call, GRPC_CONTEXT_TRACING, context, NULL);
   }
+  grpc_exec_ctx_finish(&exec_ctx);
 }
 
 census_context *grpc_census_call_get_context(grpc_call *call) {

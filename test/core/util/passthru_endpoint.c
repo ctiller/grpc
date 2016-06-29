@@ -34,6 +34,7 @@
 #include "test/core/util/passthru_endpoint.h"
 
 #include <grpc/support/alloc.h>
+#include <grpc/support/log.h>
 #include <grpc/support/string_util.h>
 
 typedef struct passthru_endpoint passthru_endpoint;
@@ -52,6 +53,7 @@ struct passthru_endpoint {
   bool shutdown;
   half client;
   half server;
+  grpc_workqueue *wq;
 };
 
 static void me_read(grpc_exec_ctx *exec_ctx, grpc_endpoint *ep,
@@ -130,10 +132,16 @@ static void me_destroy(grpc_exec_ctx *exec_ctx, grpc_endpoint *ep) {
     gpr_mu_destroy(&p->mu);
     gpr_slice_buffer_destroy(&p->client.read_buffer);
     gpr_slice_buffer_destroy(&p->server.read_buffer);
+    GRPC_WORKQUEUE_UNREF(exec_ctx, p->wq, "passthru_endpoint");
     gpr_free(p);
   } else {
     gpr_mu_unlock(&p->mu);
   }
+}
+
+static grpc_workqueue *me_workqueue(grpc_endpoint *ep) {
+  passthru_endpoint *p = ((half *)ep)->parent;
+  return GRPC_WORKQUEUE_REF(p->wq, "me_workqueue");
 }
 
 static char *me_get_peer(grpc_endpoint *ep) {
@@ -142,7 +150,7 @@ static char *me_get_peer(grpc_endpoint *ep) {
 
 static const grpc_endpoint_vtable vtable = {
     me_read,     me_write,   me_add_to_pollset, me_add_to_pollset_set,
-    me_shutdown, me_destroy, me_get_peer,
+    me_shutdown, me_destroy, me_workqueue,      me_get_peer,
 };
 
 static void half_init(half *m, passthru_endpoint *parent) {
@@ -152,7 +160,8 @@ static void half_init(half *m, passthru_endpoint *parent) {
   m->on_read = NULL;
 }
 
-void grpc_passthru_endpoint_create(grpc_endpoint **client,
+void grpc_passthru_endpoint_create(grpc_exec_ctx *exec_ctx,
+                                   grpc_endpoint **client,
                                    grpc_endpoint **server) {
   passthru_endpoint *m = gpr_malloc(sizeof(*m));
   m->halves = 2;
@@ -160,6 +169,8 @@ void grpc_passthru_endpoint_create(grpc_endpoint **client,
   half_init(&m->client, m);
   half_init(&m->server, m);
   gpr_mu_init(&m->mu);
+  GPR_ASSERT(GRPC_LOG_IF_ERROR("workqueue_create",
+                               grpc_workqueue_create(exec_ctx, &m->wq)));
   *client = &m->client.base;
   *server = &m->server.base;
 }

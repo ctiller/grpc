@@ -300,7 +300,7 @@ grpc_call *grpc_call_create(
      * call. */
     if (propagation_mask & GRPC_PROPAGATE_CENSUS_TRACING_CONTEXT) {
       GPR_ASSERT(propagation_mask & GRPC_PROPAGATE_CENSUS_STATS_CONTEXT);
-      grpc_call_context_set(call, GRPC_CONTEXT_TRACING,
+      grpc_call_context_set(&exec_ctx, call, GRPC_CONTEXT_TRACING,
                             parent_call->context[GRPC_CONTEXT_TRACING].value,
                             NULL);
     } else {
@@ -384,11 +384,11 @@ static void destroy_call(grpc_exec_ctx *exec_ctx, void *call,
   }
   for (i = 0; i < GRPC_CONTEXT_COUNT; i++) {
     if (c->context[i].destroy) {
-      c->context[i].destroy(c->context[i].value);
+      c->context[i].destroy(exec_ctx, c->context[i].value);
     }
   }
   if (c->cq) {
-    GRPC_CQ_INTERNAL_UNREF(c->cq, "bind");
+    GRPC_CQ_INTERNAL_UNREF(exec_ctx, c->cq, "bind");
   }
   grpc_channel *channel = c->channel;
   grpc_call_stack_destroy(exec_ctx, CALL_STACK_FROM_CALL(c), &c->stats, c);
@@ -1694,10 +1694,12 @@ grpc_call_error grpc_call_start_batch_and_execute(grpc_exec_ctx *exec_ctx,
   return call_start_batch(exec_ctx, call, ops, nops, closure, 1);
 }
 
-void grpc_call_context_set(grpc_call *call, grpc_context_index elem,
-                           void *value, void (*destroy)(void *value)) {
+void grpc_call_context_set(grpc_exec_ctx *exec_ctx, grpc_call *call,
+                           grpc_context_index elem, void *value,
+                           void (*destroy)(grpc_exec_ctx *exec_ctx,
+                                           void *value)) {
   if (call->context[elem].destroy) {
-    call->context[elem].destroy(call->context[elem].value);
+    call->context[elem].destroy(exec_ctx, call->context[elem].value);
   }
   call->context[elem].value = value;
   call->context[elem].destroy = destroy;

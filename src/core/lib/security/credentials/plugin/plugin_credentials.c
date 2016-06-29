@@ -47,7 +47,8 @@ typedef struct {
   grpc_credentials_metadata_cb cb;
 } grpc_metadata_plugin_request;
 
-static void plugin_destruct(grpc_call_credentials *creds) {
+static void plugin_destruct(grpc_exec_ctx *exec_ctx,
+                            grpc_call_credentials *creds) {
   grpc_plugin_credentials *c = (grpc_plugin_credentials *)creds;
   if (c->plugin.state != NULL && c->plugin.destroy != NULL) {
     c->plugin.destroy(c->plugin.state);

@@ -97,7 +97,7 @@ static void on_compute_engine_detection_http_response(grpc_exec_ctx *exec_ctx,
 }
 
 static void destroy_pollset(grpc_exec_ctx *exec_ctx, void *p, grpc_error *e) {
-  grpc_pollset_destroy(p);
+  grpc_pollset_destroy(exec_ctx, p);
 }
 
 static int is_stack_running_on_compute_engine(void) {
@@ -149,7 +149,7 @@ static int is_stack_running_on_compute_engine(void) {
   }
   gpr_mu_unlock(g_polling_mu);
 
-  grpc_httpcli_context_destroy(&context);
+  grpc_httpcli_context_destroy(&exec_ctx, &context);
   grpc_closure_init(&destroy_closure, destroy_pollset,
                     grpc_polling_entity_pollset(&detector.pollent));
   grpc_pollset_shutdown(&exec_ctx,
@@ -270,7 +270,8 @@ grpc_channel_credentials *grpc_google_default_credentials_create(void) {
     }
   }
 
-end:
+end:;
+  grpc_exec_ctx exec_ctx = GRPC_EXEC_CTX_INIT;
   if (result == NULL) {
     if (call_creds != NULL) {
       /* Blend with default ssl credentials and add a global reference so that
@@ -282,8 +283,8 @@ end:
           grpc_composite_channel_credentials_create(ssl_creds, call_creds,
                                                     NULL));
       GPR_ASSERT(default_credentials != NULL);
-      grpc_channel_credentials_unref(ssl_creds);
-      grpc_call_credentials_unref(call_creds);
+      grpc_channel_credentials_unref(&exec_ctx, ssl_creds);
+      grpc_call_credentials_unref(&exec_ctx, call_creds);
       result = default_credentials;
     } else {
       gpr_log(GPR_ERROR, "Could not create google default credentials.");
@@ -295,18 +296,21 @@ end:
   } else {
     GRPC_ERROR_UNREF(error);
   }
+  grpc_exec_ctx_finish(&exec_ctx);
   return result;
 }
 
 void grpc_flush_cached_google_default_credentials(void) {
+  grpc_exec_ctx exec_ctx = GRPC_EXEC_CTX_INIT;
   gpr_once_init(&g_once, init_default_credentials);
   gpr_mu_lock(&g_state_mu);
   if (default_credentials != NULL) {
-    grpc_channel_credentials_unref(default_credentials);
+    grpc_channel_credentials_unref(&exec_ctx, default_credentials);
     default_credentials = NULL;
   }
   compute_engine_detection_done = 0;
   gpr_mu_unlock(&g_state_mu);
+  grpc_exec_ctx_finish(&exec_ctx);
 }
 
 /* -- Well known credentials path. -- */

@@ -46,7 +46,8 @@ typedef struct grpc_fd grpc_fd;
 typedef struct grpc_event_engine_vtable {
   size_t pollset_size;
 
-  grpc_fd *(*fd_create)(int fd, const char *name);
+  grpc_error *(*fd_create)(grpc_exec_ctx *exec_ctx, int fd, uint32_t flags,
+                           const char *name, grpc_fd **fdobj);
   int (*fd_wrapped_fd)(grpc_fd *fd);
   void (*fd_orphan)(grpc_exec_ctx *exec_ctx, grpc_fd *fd, grpc_closure *on_done,
                     int *release_fd, const char *reason);
@@ -58,12 +59,13 @@ typedef struct grpc_event_engine_vtable {
   bool (*fd_is_shutdown)(grpc_fd *fd);
   grpc_pollset *(*fd_get_read_notifier_pollset)(grpc_exec_ctx *exec_ctx,
                                                 grpc_fd *fd);
+  grpc_workqueue *(*fd_workqueue)(grpc_fd *fd);
 
   void (*pollset_init)(grpc_pollset *pollset, gpr_mu **mu);
   void (*pollset_shutdown)(grpc_exec_ctx *exec_ctx, grpc_pollset *pollset,
                            grpc_closure *closure);
-  void (*pollset_reset)(grpc_pollset *pollset);
-  void (*pollset_destroy)(grpc_pollset *pollset);
+  void (*pollset_reset)(grpc_exec_ctx *exec_ctx, grpc_pollset *pollset);
+  void (*pollset_destroy)(grpc_exec_ctx *exec_ctx, grpc_pollset *pollset);
   grpc_error *(*pollset_work)(grpc_exec_ctx *exec_ctx, grpc_pollset *pollset,
                               grpc_pollset_worker **worker, gpr_timespec now,
                               gpr_timespec deadline);
@@ -73,7 +75,8 @@ typedef struct grpc_event_engine_vtable {
                          struct grpc_fd *fd);
 
   grpc_pollset_set *(*pollset_set_create)(void);
-  void (*pollset_set_destroy)(grpc_pollset_set *pollset_set);
+  void (*pollset_set_destroy)(grpc_exec_ctx *exec_ctx,
+                              grpc_pollset_set *pollset_set);
   void (*pollset_set_add_pollset)(grpc_exec_ctx *exec_ctx,
                                   grpc_pollset_set *pollset_set,
                                   grpc_pollset *pollset);
@@ -102,10 +105,13 @@ void grpc_event_engine_shutdown(void);
 /* Return the name of the poll strategy */
 const char *grpc_get_poll_strategy_name();
 
+#define GRPC_FD_FLAG_NO_WORKQUEUE 1
+
 /* Create a wrapped file descriptor.
    Requires fd is a non-blocking file descriptor.
    This takes ownership of closing fd. */
-grpc_fd *grpc_fd_create(int fd, const char *name);
+grpc_error *grpc_fd_create(grpc_exec_ctx *exec_ctx, int fd, uint32_t flags,
+                           const char *name, grpc_fd **fdobj);
 
 /* Return the wrapped fd, or -1 if it has been released or closed. */
 int grpc_fd_wrapped_fd(grpc_fd *fd);
@@ -145,6 +151,8 @@ void grpc_fd_notify_on_read(grpc_exec_ctx *exec_ctx, grpc_fd *fd,
 /* Exactly the same semantics as above, except based on writable events.  */
 void grpc_fd_notify_on_write(grpc_exec_ctx *exec_ctx, grpc_fd *fd,
                              grpc_closure *closure);
+
+grpc_workqueue *grpc_fd_workqueue(grpc_fd *fd);
 
 /* Return the read notifier pollset from the fd */
 grpc_pollset *grpc_fd_get_read_notifier_pollset(grpc_exec_ctx *exec_ctx,

@@ -285,7 +285,7 @@ static void set_pollset_or_pollset_set(grpc_exec_ctx *exec_ctx,
 static void destroy_call_elem(grpc_exec_ctx *exec_ctx, grpc_call_element *elem,
                               const grpc_call_stats *stats, void *ignored) {
   call_data *calld = elem->call_data;
-  grpc_call_credentials_unref(calld->creds);
+  grpc_call_credentials_unref(exec_ctx, calld->creds);
   if (calld->host != NULL) {
     GRPC_MDSTR_UNREF(calld->host);
   }
@@ -329,7 +329,7 @@ static void destroy_channel_elem(grpc_exec_ctx *exec_ctx,
   channel_data *chand = elem->channel_data;
   grpc_channel_security_connector *sc = chand->security_connector;
   if (sc != NULL) {
-    GRPC_SECURITY_CONNECTOR_UNREF(&sc->base, "client_auth_filter");
+    GRPC_SECURITY_CONNECTOR_UNREF(exec_ctx, &sc->base, "client_auth_filter");
   }
   GRPC_AUTH_CONTEXT_UNREF(chand->auth_context, "client_auth_filter");
 }

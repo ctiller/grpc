@@ -34,6 +34,8 @@
 #ifndef GRPC_CORE_LIB_CHANNEL_CONTEXT_H
 #define GRPC_CORE_LIB_CHANNEL_CONTEXT_H
 
+#include "src/core/lib/iomgr/exec_ctx.h"
+
 /* Call object context pointers */
 typedef enum {
   GRPC_CONTEXT_SECURITY = 0,
@@ -43,7 +45,7 @@ typedef enum {
 
 typedef struct {
   void *value;
-  void (*destroy)(void *);
+  void (*destroy)(grpc_exec_ctx *, void *);
 } grpc_call_context_element;
 
 #endif /* GRPC_CORE_LIB_CHANNEL_CONTEXT_H */

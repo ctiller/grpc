@@ -42,7 +42,8 @@
 #include <grpc/support/string_util.h>
 #include <grpc/support/sync.h>
 
-static void iam_destruct(grpc_call_credentials *creds) {
+static void iam_destruct(grpc_exec_ctx *exec_ctx,
+                         grpc_call_credentials *creds) {
   grpc_google_iam_credentials *c = (grpc_google_iam_credentials *)creds;
   grpc_credentials_md_store_unref(c->iam_md);
 }

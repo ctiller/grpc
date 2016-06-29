@@ -41,7 +41,7 @@
 #include "src/core/lib/iomgr/resolve_address.h"
 #include "src/core/lib/iomgr/sockaddr.h"
 
-void grpc_create_socketpair_if_unix(int sv[2]);
+grpc_error *grpc_create_socketpair_if_unix(int sv[2]);
 
 grpc_error *grpc_resolve_unix_domain_address(
     const char *name, grpc_resolved_addresses **addresses);

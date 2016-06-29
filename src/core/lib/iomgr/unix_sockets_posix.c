@@ -35,6 +35,7 @@
 
 #ifdef GPR_HAVE_UNIX_SOCKET
 
+#include <errno.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -43,8 +44,9 @@
 #include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
 
-void grpc_create_socketpair_if_unix(int sv[2]) {
-  GPR_ASSERT(socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == 0);
+grpc_error *grpc_create_socketpair_if_unix(int sv[2]) {
+  if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == 0) return GRPC_ERROR_NONE;
+  return GRPC_OS_ERROR(errno, "socketpair");
 }
 
 grpc_error *grpc_resolve_unix_domain_address(const char *name,

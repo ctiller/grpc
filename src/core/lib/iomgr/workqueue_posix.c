@@ -45,14 +45,24 @@
 
 #include "src/core/lib/iomgr/ev_posix.h"
 
+struct grpc_workqueue {
+  gpr_refcount refs;
+
+  gpr_mu mu;
+  grpc_closure_list closure_list;
+
+  grpc_wakeup_fd wakeup_fd;
+  struct grpc_fd *wakeup_read_fd;
+
+  grpc_closure read_closure;
+};
+
 static void on_readable(grpc_exec_ctx *exec_ctx, void *arg, grpc_error *error);
 
 grpc_error *grpc_workqueue_create(grpc_exec_ctx *exec_ctx,
                                   grpc_workqueue **workqueue) {
   char name[32];
   *workqueue = gpr_malloc(sizeof(grpc_workqueue));
-  gpr_ref_init(&(*workqueue)->refs, 1);
-  gpr_mu_init(&(*workqueue)->mu);
   (*workqueue)->closure_list.head = (*workqueue)->closure_list.tail = NULL;
   grpc_error *err = grpc_wakeup_fd_init(&(*workqueue)->wakeup_fd);
   if (err != GRPC_ERROR_NONE) {
@@ -60,8 +70,16 @@ grpc_error *grpc_workqueue_create(grpc_exec_ctx *exec_ctx,
     return err;
   }
   sprintf(name, "workqueue:%p", (void *)(*workqueue));
-  (*workqueue)->wakeup_read_fd = grpc_fd_create(
-      GRPC_WAKEUP_FD_GET_READ_FD(&(*workqueue)->wakeup_fd), name);
+  err = grpc_fd_create(
+      exec_ctx, GRPC_WAKEUP_FD_GET_READ_FD(&(*workqueue)->wakeup_fd),
+      GRPC_FD_FLAG_NO_WORKQUEUE, name, &(*workqueue)->wakeup_read_fd);
+  if (err != GRPC_ERROR_NONE) {
+    grpc_wakeup_fd_destroy(&(*workqueue)->wakeup_fd);
+    gpr_free(*workqueue);
+    return err;
+  }
+  gpr_ref_init(&(*workqueue)->refs, 1);
+  gpr_mu_init(&(*workqueue)->mu);
   grpc_closure_init(&(*workqueue)->read_closure, on_readable, *workqueue);
   grpc_fd_notify_on_read(exec_ctx, (*workqueue)->wakeup_read_fd,
                          &(*workqueue)->read_closure);
@@ -75,15 +93,16 @@ static void workqueue_destroy(grpc_exec_ctx *exec_ctx,
 }
 
 #ifdef GRPC_WORKQUEUE_REFCOUNT_DEBUG
-void grpc_workqueue_ref(grpc_workqueue *workqueue, const char *file, int line,
-                        const char *reason) {
+grpc_workqueue *grpc_workqueue_ref(grpc_workqueue *workqueue, const char *file,
+                                   int line, const char *reason) {
   gpr_log(file, line, GPR_LOG_SEVERITY_DEBUG, "WORKQUEUE:%p   ref %d -> %d %s",
           workqueue, (int)workqueue->refs.count, (int)workqueue->refs.count + 1,
           reason);
 #else
-void grpc_workqueue_ref(grpc_workqueue *workqueue) {
+grpc_workqueue *grpc_workqueue_ref(grpc_workqueue *workqueue) {
 #endif
   gpr_ref(&workqueue->refs);
+  return workqueue;
 }
 
 #ifdef GRPC_WORKQUEUE_REFCOUNT_DEBUG

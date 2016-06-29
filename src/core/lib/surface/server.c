@@ -391,7 +391,7 @@ static void server_delete(grpc_exec_ctx *exec_ctx, grpc_server *server) {
     request_matcher_destroy(&server->unregistered_request_matcher);
   }
   for (i = 0; i < server->cq_count; i++) {
-    GRPC_CQ_INTERNAL_UNREF(server->cqs[i], "server");
+    GRPC_CQ_INTERNAL_UNREF(exec_ctx, server->cqs[i], "server");
   }
   gpr_stack_lockfree_destroy(server->request_freelist);
   gpr_free(server->cqs);

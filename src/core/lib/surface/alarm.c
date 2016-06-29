@@ -78,7 +78,9 @@ void grpc_alarm_cancel(grpc_alarm *alarm) {
 }
 
 void grpc_alarm_destroy(grpc_alarm *alarm) {
-  grpc_alarm_cancel(alarm);
-  GRPC_CQ_INTERNAL_UNREF(alarm->cq, "alarm");
+  grpc_exec_ctx exec_ctx = GRPC_EXEC_CTX_INIT;
+  grpc_timer_cancel(&exec_ctx, &alarm->alarm);
+  GRPC_CQ_INTERNAL_UNREF(&exec_ctx, alarm->cq, "alarm");
   gpr_free(alarm);
+  grpc_exec_ctx_finish(&exec_ctx);
 }

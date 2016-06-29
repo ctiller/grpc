@@ -34,6 +34,7 @@
 #include "test/core/util/mock_endpoint.h"
 
 #include <grpc/support/alloc.h>
+#include <grpc/support/log.h>
 #include <grpc/support/string_util.h>
 
 typedef struct grpc_mock_endpoint {
@@ -43,6 +44,7 @@ typedef struct grpc_mock_endpoint {
   gpr_slice_buffer read_buffer;
   gpr_slice_buffer *on_read_out;
   grpc_closure *on_read;
+  grpc_workqueue *wq;
 } grpc_mock_endpoint;
 
 static void me_read(grpc_exec_ctx *exec_ctx, grpc_endpoint *ep,
@@ -88,6 +90,7 @@ static void me_shutdown(grpc_exec_ctx *exec_ctx, grpc_endpoint *ep) {
 static void me_destroy(grpc_exec_ctx *exec_ctx, grpc_endpoint *ep) {
   grpc_mock_endpoint *m = (grpc_mock_endpoint *)ep;
   gpr_slice_buffer_destroy(&m->read_buffer);
+  GRPC_WORKQUEUE_UNREF(exec_ctx, m->wq, "mock_endpoint");
   gpr_free(m);
 }
 
@@ -95,18 +98,26 @@ static char *me_get_peer(grpc_endpoint *ep) {
   return gpr_strdup("fake:mock_endpoint");
 }
 
+grpc_workqueue *me_workqueue(grpc_endpoint *ep) {
+  grpc_mock_endpoint *m = (grpc_mock_endpoint *)ep;
+  return GRPC_WORKQUEUE_REF(m->wq, "me_workqueue");
+}
+
 static const grpc_endpoint_vtable vtable = {
     me_read,     me_write,   me_add_to_pollset, me_add_to_pollset_set,
-    me_shutdown, me_destroy, me_get_peer,
+    me_shutdown, me_destroy, me_workqueue,      me_get_peer,
 };
 
-grpc_endpoint *grpc_mock_endpoint_create(void (*on_write)(gpr_slice slice)) {
+grpc_endpoint *grpc_mock_endpoint_create(grpc_exec_ctx *exec_ctx,
+                                         void (*on_write)(gpr_slice slice)) {
   grpc_mock_endpoint *m = gpr_malloc(sizeof(*m));
   m->base.vtable = &vtable;
   gpr_slice_buffer_init(&m->read_buffer);
   gpr_mu_init(&m->mu);
   m->on_write = on_write;
   m->on_read = NULL;
+  GPR_ASSERT(GRPC_LOG_IF_ERROR("workqueue_create",
+                               grpc_workqueue_create(exec_ctx, &m->wq)));
   return &m->base;
 }
 

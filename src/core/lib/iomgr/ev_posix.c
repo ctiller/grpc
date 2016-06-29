@@ -144,8 +144,9 @@ void grpc_event_engine_shutdown(void) {
   g_event_engine = NULL;
 }
 
-grpc_fd *grpc_fd_create(int fd, const char *name) {
-  return g_event_engine->fd_create(fd, name);
+grpc_error *grpc_fd_create(grpc_exec_ctx *exec_ctx, int fd, uint32_t flags,
+                           const char *name, grpc_fd **fdobj) {
+  return g_event_engine->fd_create(exec_ctx, fd, flags, name, fdobj);
 }
 
 int grpc_fd_wrapped_fd(grpc_fd *fd) {
@@ -175,6 +176,10 @@ void grpc_fd_notify_on_write(grpc_exec_ctx *exec_ctx, grpc_fd *fd,
   g_event_engine->fd_notify_on_write(exec_ctx, fd, closure);
 }
 
+grpc_workqueue *grpc_fd_workqueue(grpc_fd *fd) {
+  return g_event_engine->fd_workqueue(fd);
+}
+
 size_t grpc_pollset_size(void) { return g_event_engine->pollset_size; }
 
 void grpc_pollset_init(grpc_pollset *pollset, gpr_mu **mu) {
@@ -186,12 +191,12 @@ void grpc_pollset_shutdown(grpc_exec_ctx *exec_ctx, grpc_pollset *pollset,
   g_event_engine->pollset_shutdown(exec_ctx, pollset, closure);
 }
 
-void grpc_pollset_reset(grpc_pollset *pollset) {
-  g_event_engine->pollset_reset(pollset);
+void grpc_pollset_reset(grpc_exec_ctx *exec_ctx, grpc_pollset *pollset) {
+  g_event_engine->pollset_reset(exec_ctx, pollset);
 }
 
-void grpc_pollset_destroy(grpc_pollset *pollset) {
-  g_event_engine->pollset_destroy(pollset);
+void grpc_pollset_destroy(grpc_exec_ctx *exec_ctx, grpc_pollset *pollset) {
+  g_event_engine->pollset_destroy(exec_ctx, pollset);
 }
 
 grpc_error *grpc_pollset_work(grpc_exec_ctx *exec_ctx, grpc_pollset *pollset,
@@ -214,8 +219,9 @@ grpc_pollset_set *grpc_pollset_set_create(void) {
   return g_event_engine->pollset_set_create();
 }
 
-void grpc_pollset_set_destroy(grpc_pollset_set *pollset_set) {
-  g_event_engine->pollset_set_destroy(pollset_set);
+void grpc_pollset_set_destroy(grpc_exec_ctx *exec_ctx,
+                              grpc_pollset_set *pollset_set) {
+  g_event_engine->pollset_set_destroy(exec_ctx, pollset_set);
 }
 
 void grpc_pollset_set_add_pollset(grpc_exec_ctx *exec_ctx,

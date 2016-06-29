@@ -54,7 +54,8 @@ static void jwt_reset_cache(grpc_service_account_jwt_access_credentials *c) {
   c->cached.jwt_expiration = gpr_inf_past(GPR_CLOCK_REALTIME);
 }
 
-static void jwt_destruct(grpc_call_credentials *creds) {
+static void jwt_destruct(grpc_exec_ctx *exec_ctx,
+                         grpc_call_credentials *creds) {
   grpc_service_account_jwt_access_credentials *c =
       (grpc_service_account_jwt_access_credentials *)creds;
   grpc_auth_json_key_destruct(&c->key);
