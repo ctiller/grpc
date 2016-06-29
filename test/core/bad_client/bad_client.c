@@ -114,7 +114,9 @@ void grpc_run_bad_client_test(
   grpc_init();
 
   /* Create endpoints */
-  sfd = grpc_iomgr_create_endpoint_pair("fixture", 65536);
+  GPR_ASSERT(GRPC_LOG_IF_ERROR(
+      "create_endpoint_pair",
+      grpc_iomgr_create_endpoint_pair(&exec_ctx, "fixture", 65536, &sfd)));
 
   /* Create server, completion events */
   a.server = grpc_server_create(NULL, NULL);

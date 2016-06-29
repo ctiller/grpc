@@ -117,8 +117,8 @@ void bad_server_thread(void *vargs) {
   GPR_ASSERT(error == GRPC_ERROR_NONE);
   memset(&addr, 0, sizeof(addr));
   addr.ss_family = AF_INET;
-  error =
-      grpc_tcp_server_add_port(s, (struct sockaddr *)&addr, addr_len, &port);
+  error = grpc_tcp_server_add_port(&exec_ctx, s, (struct sockaddr *)&addr,
+                                   addr_len, &port);
   GPR_ASSERT(GRPC_LOG_IF_ERROR("grpc_tcp_server_add_port", error));
   GPR_ASSERT(port > 0);
   gpr_asprintf(&args->addr, "localhost:%d", port);
@@ -153,7 +153,7 @@ void bad_server_thread(void *vargs) {
 
 static void done_pollset_shutdown(grpc_exec_ctx *exec_ctx, void *pollset,
                                   grpc_error *error) {
-  grpc_pollset_destroy(pollset);
+  grpc_pollset_destroy(exec_ctx, pollset);
   gpr_free(pollset);
 }
 

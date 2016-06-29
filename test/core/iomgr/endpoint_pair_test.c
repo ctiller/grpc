@@ -49,7 +49,10 @@ static grpc_endpoint_test_fixture create_fixture_endpoint_pair(
     size_t slice_size) {
   grpc_exec_ctx exec_ctx = GRPC_EXEC_CTX_INIT;
   grpc_endpoint_test_fixture f;
-  grpc_endpoint_pair p = grpc_iomgr_create_endpoint_pair("test", slice_size);
+  grpc_endpoint_pair p;
+  GPR_ASSERT(GRPC_LOG_IF_ERROR(
+      "create_endpoint_pair",
+      grpc_iomgr_create_endpoint_pair(&exec_ctx, "test", slice_size, &p)));
 
   f.client_ep = p.client;
   f.server_ep = p.server;
@@ -66,7 +69,7 @@ static grpc_endpoint_test_config configs[] = {
 
 static void destroy_pollset(grpc_exec_ctx *exec_ctx, void *p,
                             grpc_error *error) {
-  grpc_pollset_destroy(p);
+  grpc_pollset_destroy(exec_ctx, p);
 }
 
 int main(int argc, char **argv) {

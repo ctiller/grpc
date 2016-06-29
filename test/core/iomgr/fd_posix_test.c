@@ -212,7 +212,8 @@ static void listen_cb(grpc_exec_ctx *exec_ctx, void *arg, /*=sv_arg*/
   fcntl(fd, F_SETFL, flags | O_NONBLOCK);
   se = gpr_malloc(sizeof(*se));
   se->sv = sv;
-  se->em_fd = grpc_fd_create(fd, "listener");
+  GPR_ASSERT(GRPC_LOG_IF_ERROR(
+      "fd_create", grpc_fd_create(exec_ctx, fd, 0, "listener", &se->em_fd)));
   grpc_pollset_add_fd(exec_ctx, g_pollset, se->em_fd);
   se->session_read_closure.cb = session_read_cb;
   se->session_read_closure.cb_arg = se;
@@ -241,7 +242,8 @@ static int server_start(grpc_exec_ctx *exec_ctx, server *sv) {
   port = ntohs(sin.sin_port);
   GPR_ASSERT(listen(fd, MAX_NUM_FD) == 0);
 
-  sv->em_fd = grpc_fd_create(fd, "server");
+  GPR_ASSERT(GRPC_LOG_IF_ERROR(
+      "fd_create", grpc_fd_create(exec_ctx, fd, 0, "server", &sv->em_fd)));
   grpc_pollset_add_fd(exec_ctx, g_pollset, sv->em_fd);
   /* Register to be interested in reading from listen_fd. */
   sv->listen_closure.cb = listen_cb;
@@ -363,7 +365,8 @@ static void client_start(grpc_exec_ctx *exec_ctx, client *cl, int port) {
     }
   }
 
-  cl->em_fd = grpc_fd_create(fd, "client");
+  GPR_ASSERT(GRPC_LOG_IF_ERROR(
+      "fd_create", grpc_fd_create(exec_ctx, fd, 0, "client", &cl->em_fd)));
   grpc_pollset_add_fd(exec_ctx, g_pollset, cl->em_fd);
 
   client_session_write(exec_ctx, cl, GRPC_ERROR_NONE);
@@ -468,7 +471,9 @@ static void test_grpc_fd_change(void) {
   flags = fcntl(sv[1], F_GETFL, 0);
   GPR_ASSERT(fcntl(sv[1], F_SETFL, flags | O_NONBLOCK) == 0);
 
-  em_fd = grpc_fd_create(sv[0], "test_grpc_fd_change");
+  GPR_ASSERT(GRPC_LOG_IF_ERROR(
+      "fd_create",
+      grpc_fd_create(&exec_ctx, sv[0], 0, "test_grpc_fd_change", &em_fd)));
   grpc_pollset_add_fd(&exec_ctx, g_pollset, em_fd);
 
   /* Register the first callback, then make its FD readable */
@@ -529,7 +534,7 @@ static void test_grpc_fd_change(void) {
 
 static void destroy_pollset(grpc_exec_ctx *exec_ctx, void *p,
                             grpc_error *error) {
-  grpc_pollset_destroy(p);
+  grpc_pollset_destroy(exec_ctx, p);
 }
 
 int main(int argc, char **argv) {

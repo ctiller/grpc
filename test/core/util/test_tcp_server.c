@@ -75,8 +75,8 @@ void test_tcp_server_start(test_tcp_server *server, int port) {
   grpc_error *error = grpc_tcp_server_create(&server->shutdown_complete, NULL,
                                              &server->tcp_server);
   GPR_ASSERT(error == GRPC_ERROR_NONE);
-  error = grpc_tcp_server_add_port(server->tcp_server, &addr, sizeof(addr),
-                                   &port_added);
+  error = grpc_tcp_server_add_port(&exec_ctx, server->tcp_server, &addr,
+                                   sizeof(addr), &port_added);
   GPR_ASSERT(error == GRPC_ERROR_NONE);
   GPR_ASSERT(port_added == port);
 
@@ -116,8 +116,8 @@ void test_tcp_server_destroy(test_tcp_server *server) {
     test_tcp_server_poll(server, 1);
   }
   grpc_pollset_shutdown(&exec_ctx, server->pollset, &do_nothing_cb);
+  grpc_pollset_destroy(&exec_ctx, server->pollset);
   grpc_exec_ctx_finish(&exec_ctx);
-  grpc_pollset_destroy(server->pollset);
   gpr_free(server->pollset);
   grpc_shutdown();
 }
