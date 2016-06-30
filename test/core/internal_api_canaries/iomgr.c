@@ -81,7 +81,7 @@ static void test_code(void) {
       grpc_endpoint_read,           grpc_endpoint_write,
       grpc_endpoint_add_to_pollset, grpc_endpoint_add_to_pollset_set,
       grpc_endpoint_shutdown,       grpc_endpoint_destroy,
-      grpc_endpoint_get_peer};
+      grpc_endpoint_workqueue,      grpc_endpoint_get_peer};
   endpoint.vtable = &vtable;
 
   grpc_endpoint_read(&exec_ctx, &endpoint, NULL, NULL);
@@ -101,8 +101,8 @@ static void test_code(void) {
   grpc_pollset_size();
   grpc_pollset_init(NULL, NULL);
   grpc_pollset_shutdown(NULL, NULL, NULL);
-  grpc_pollset_reset(NULL);
-  grpc_pollset_destroy(NULL);
+  grpc_pollset_reset(&exec_ctx, NULL);
+  grpc_pollset_destroy(&exec_ctx, NULL);
   GRPC_ERROR_UNREF(grpc_pollset_work(NULL, NULL, NULL,
                                      gpr_now(GPR_CLOCK_REALTIME),
                                      gpr_now(GPR_CLOCK_MONOTONIC)));

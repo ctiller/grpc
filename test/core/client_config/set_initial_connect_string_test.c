@@ -148,9 +148,10 @@ static void start_rpc(int use_creds, int target_port) {
 
 static void cleanup_rpc(void) {
   grpc_event ev;
+  grpc_exec_ctx exec_ctx = GRPC_EXEC_CTX_INIT;
   gpr_slice_buffer_destroy(&state.incoming_buffer);
   gpr_slice_buffer_destroy(&state.temp_incoming_buffer);
-  grpc_channel_credentials_unref(state.creds);
+  grpc_channel_credentials_unref(&exec_ctx, state.creds);
   grpc_call_destroy(state.call);
   grpc_completion_queue_shutdown(state.cq);
   do {
@@ -159,6 +160,7 @@ static void cleanup_rpc(void) {
   grpc_completion_queue_destroy(state.cq);
   grpc_channel_destroy(state.channel);
   gpr_free(state.target);
+  grpc_exec_ctx_finish(&exec_ctx);
 }
 
 typedef struct {

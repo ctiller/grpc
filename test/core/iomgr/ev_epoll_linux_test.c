@@ -60,10 +60,14 @@ typedef struct test_fd {
 /* num_fds should be an even number */
 static void test_fd_init(test_fd *tfds, int *fds, int num_fds) {
   int i;
+  grpc_exec_ctx exec_ctx = GRPC_EXEC_CTX_INIT;
   for (i = 0; i < num_fds; i++) {
     tfds[i].inner_fd = fds[i];
-    tfds[i].fd = grpc_fd_create(fds[i], "test_fd");
+    GPR_ASSERT(GRPC_LOG_IF_ERROR(
+        "fd_create",
+        grpc_fd_create(&exec_ctx, fds[i], 0, "test_fd", &tfds[i].fd)));
   }
+  grpc_exec_ctx_finish(&exec_ctx);
 }
 
 static void test_fd_cleanup(grpc_exec_ctx *exec_ctx, test_fd *tfds,
@@ -93,7 +97,7 @@ static void test_pollset_init(test_pollset *pollsets, int num_pollsets) {
 
 static void destroy_pollset(grpc_exec_ctx *exec_ctx, void *p,
                             grpc_error *error) {
-  grpc_pollset_destroy(p);
+  grpc_pollset_destroy(exec_ctx, p);
 }
 
 static void test_pollset_cleanup(grpc_exec_ctx *exec_ctx,

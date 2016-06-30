@@ -1814,9 +1814,10 @@ static grpc_error *multipoll_with_epoll_pollset_maybe_work_and_unlock(
 }
 
 static void multipoll_with_epoll_pollset_finish_shutdown(
-    grpc_pollset *pollset) {}
+    grpc_exec_ctx *exec_ctx, grpc_pollset *pollset) {}
 
-static void multipoll_with_epoll_pollset_destroy(grpc_pollset *pollset) {
+static void multipoll_with_epoll_pollset_destroy(grpc_exec_ctx *exec_ctx,
+                                                 grpc_pollset *pollset) {
   epoll_hdr *h = pollset->data.ptr;
   close(h->epoll_fd);
   remove_epoll_fd_from_global_list(h->epoll_fd);

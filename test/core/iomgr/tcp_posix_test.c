@@ -176,7 +176,10 @@ static void read_test(size_t num_bytes, size_t slice_size) {
 
   create_sockets(sv);
 
-  ep = grpc_tcp_create(grpc_fd_create(sv[1], "read_test"), slice_size, "test");
+  grpc_fd *fdobj;
+  GPR_ASSERT(GRPC_LOG_IF_ERROR(
+      "fd_create", grpc_fd_create(&exec_ctx, sv[1], 0, "read_test", &fdobj)));
+  ep = grpc_tcp_create(fdobj, slice_size, "test");
   grpc_endpoint_add_to_pollset(&exec_ctx, ep, g_pollset);
 
   written_bytes = fill_socket_partial(sv[0], num_bytes);

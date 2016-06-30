@@ -187,7 +187,7 @@ void test_fails(void) {
 
 static void destroy_pollset(grpc_exec_ctx *exec_ctx, void *p,
                             grpc_error *error) {
-  grpc_pollset_destroy(p);
+  grpc_pollset_destroy(exec_ctx, p);
 }
 
 int main(int argc, char **argv) {
@@ -203,7 +203,7 @@ int main(int argc, char **argv) {
   test_succeeds();
   gpr_log(GPR_ERROR, "End of first test");
   test_fails();
-  grpc_pollset_set_destroy(g_pollset_set);
+  grpc_pollset_set_destroy(&exec_ctx, g_pollset_set);
   grpc_closure_init(&destroyed, destroy_pollset, g_pollset);
   grpc_pollset_shutdown(&exec_ctx, g_pollset, &destroyed);
   grpc_exec_ctx_finish(&exec_ctx);

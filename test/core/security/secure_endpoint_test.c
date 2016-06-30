@@ -56,7 +56,9 @@ static grpc_endpoint_test_fixture secure_endpoint_create_fixture_tcp_socketpair(
   grpc_endpoint_test_fixture f;
   grpc_endpoint_pair tcp;
 
-  tcp = grpc_iomgr_create_endpoint_pair("fixture", slice_size);
+  GPR_ASSERT(GRPC_LOG_IF_ERROR(
+      "create_endpoint_pair",
+      grpc_iomgr_create_endpoint_pair(&exec_ctx, "fixture", slice_size, &tcp)));
   grpc_endpoint_add_to_pollset(&exec_ctx, tcp.client, g_pollset);
   grpc_endpoint_add_to_pollset(&exec_ctx, tcp.server, g_pollset);
 
@@ -175,7 +177,7 @@ static void test_leftover(grpc_endpoint_test_config config, size_t slice_size) {
 
 static void destroy_pollset(grpc_exec_ctx *exec_ctx, void *p,
                             grpc_error *error) {
-  grpc_pollset_destroy(p);
+  grpc_pollset_destroy(exec_ctx, p);
 }
 
 int main(int argc, char **argv) {
