@@ -123,22 +123,22 @@ class AsyncQpsServerTest : public Server {
 
     for (int i = 0; i < num_threads; i++) {
       shutdown_state_.emplace_back(new PerThreadShutdownState());
-    }
-    for (int i = 0; i < num_threads; i++) {
       threads_.emplace_back(&AsyncQpsServerTest::ThreadFunc, this, i);
     }
   }
   ~AsyncQpsServerTest() {
     for (auto ss = shutdown_state_.begin(); ss != shutdown_state_.end(); ++ss) {
-      (*ss)->set_shutdown();
+      std::lock_guard<std::mutex> lock((*ss)->mutex);
+      (*ss)->shutdown = true;
     }
-    server_->Shutdown(std::chrono::system_clock::now() +
-                      std::chrono::seconds(3));
+    server_->Shutdown();
+    for (auto cq = srv_cqs_.begin(); cq != srv_cqs_.end(); ++cq) {
+      (*cq)->Shutdown();
+    }
     for (auto thr = threads_.begin(); thr != threads_.end(); thr++) {
       thr->join();
     }
     for (auto cq = srv_cqs_.begin(); cq != srv_cqs_.end(); ++cq) {
-      (*cq)->Shutdown();
       bool ok;
       void *got_tag;
       while ((*cq)->Next(&got_tag, &ok))
@@ -151,31 +151,37 @@ class AsyncQpsServerTest : public Server {
   }
 
  private:
-  void ThreadFunc(int rank) {
+  void ThreadFunc(int thread_idx) {
     // Wait until work is available or we are shutting down
     bool ok;
     void *got_tag;
-    ServerRpcContext *ctx = NULL;
     for (;;) {
-      bool still_going = true;
-      switch (srv_cqs_[rank]->AsyncNext(
+      switch (srv_cqs_[thread_idx]->AsyncNext(
           &got_tag, &ok,
           std::chrono::system_clock::now() + std::chrono::milliseconds(10))) {
         case CompletionQueue::SHUTDOWN:
           return;
         case CompletionQueue::GOT_EVENT: {
-          ctx = detag(got_tag);
+          ServerRpcContext *ctx = detag(got_tag);
           // The tag is a pointer to an RPC context to invoke
-          still_going = ctx->RunNextState(ok);
-        }
-        // fallthrough
-        case CompletionQueue::TIMEOUT:
-          if (!shutdown_state_[rank]->shutdown()) {
-            // this RPC context is done, so refresh it
-            if (!still_going) {
-              ctx->Reset();
-            }
+          // Proceed while holding a lock to make sure that
+          // this thread isn't supposed to shut down
+          std::lock_guard<std::mutex> l(shutdown_state_[thread_idx]->mutex);
+          if (shutdown_state_[thread_idx]->shutdown) {
+            return;
           }
+          const bool still_going = ctx->RunNextState(ok);
+          // if this RPC context is done, refresh it
+          if (!still_going) {
+            ctx->Reset();
+          }
+        } break;
+        case CompletionQueue::TIMEOUT: {
+          std::lock_guard<std::mutex> l(shutdown_state_[thread_idx]->mutex);
+          if (shutdown_state_[thread_idx]->shutdown) {
+            return;
+          }
+        }
       }
     }
   }
@@ -343,24 +349,12 @@ class AsyncQpsServerTest : public Server {
   ServiceType async_service_;
   std::forward_list<ServerRpcContext *> contexts_;
 
-  class PerThreadShutdownState {
-   public:
-    PerThreadShutdownState() : shutdown_(false) {}
-
-    bool shutdown() const {
-      std::lock_guard<std::mutex> lock(mutex_);
-      return shutdown_;
-    }
-
-    void set_shutdown() {
-      std::lock_guard<std::mutex> lock(mutex_);
-      shutdown_ = true;
-    }
-
-   private:
-    mutable std::mutex mutex_;
-    bool shutdown_;
+  struct PerThreadShutdownState {
+    mutable std::mutex mutex;
+    bool shutdown;
+    PerThreadShutdownState() : shutdown(false) {}
   };
+
   std::vector<std::unique_ptr<PerThreadShutdownState>> shutdown_state_;
 };
 

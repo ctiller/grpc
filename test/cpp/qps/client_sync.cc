@@ -31,7 +31,6 @@
  *
  */
 
-#include <cassert>
 #include <chrono>
 #include <memory>
 #include <mutex>
@@ -46,7 +45,6 @@
 #include <grpc++/server_builder.h>
 #include <grpc/grpc.h>
 #include <grpc/support/alloc.h>
-#include <grpc/support/histogram.h>
 #include <grpc/support/host_port.h>
 #include <grpc/support/log.h>
 #include <grpc/support/time.h>
@@ -55,7 +53,6 @@
 #include "src/core/lib/profiling/timers.h"
 #include "src/proto/grpc/testing/services.grpc.pb.h"
 #include "test/cpp/qps/client.h"
-#include "test/cpp/qps/histogram.h"
 #include "test/cpp/qps/interarrival.h"
 #include "test/cpp/qps/usage_timer.h"
 
@@ -100,7 +97,7 @@ class SynchronousUnaryClient GRPC_FINAL : public SynchronousClient {
   }
   ~SynchronousUnaryClient() { EndThreads(); }
 
-  bool ThreadFunc(Histogram* histogram, size_t thread_idx) GRPC_OVERRIDE {
+  bool ThreadFunc(HistogramEntry* entry, size_t thread_idx) GRPC_OVERRIDE {
     WaitToIssue(thread_idx);
     auto* stub = channels_[thread_idx % channels_.size()].get_stub();
     double start = UsageTimer::Now();
@@ -108,7 +105,7 @@ class SynchronousUnaryClient GRPC_FINAL : public SynchronousClient {
     grpc::ClientContext context;
     grpc::Status s =
         stub->UnaryCall(&context, request_, &responses_[thread_idx]);
-    histogram->Add((UsageTimer::Now() - start) * 1e9);
+    entry->set_value((UsageTimer::Now() - start) * 1e9);
     return s.ok();
   }
 };
@@ -128,24 +125,29 @@ class SynchronousStreamingClient GRPC_FINAL : public SynchronousClient {
   }
   ~SynchronousStreamingClient() {
     EndThreads();
-    for (auto stream = &stream_[0]; stream != &stream_[num_threads_];
-         stream++) {
+    for (size_t i = 0; i < num_threads_; i++) {
+      auto stream = &stream_[i];
       if (*stream) {
         (*stream)->WritesDone();
-        EXPECT_TRUE((*stream)->Finish().ok());
+	Status s = (*stream)->Finish();
+	EXPECT_TRUE(s.ok());
+	if (!s.ok()) {
+	  gpr_log(GPR_ERROR, "Stream %zu received an error %s", i,
+		  s.error_message().c_str());
+	}
       }
     }
     delete[] stream_;
     delete[] context_;
   }
 
-  bool ThreadFunc(Histogram* histogram, size_t thread_idx) GRPC_OVERRIDE {
+  bool ThreadFunc(HistogramEntry* entry, size_t thread_idx) GRPC_OVERRIDE {
     WaitToIssue(thread_idx);
     GPR_TIMER_SCOPE("SynchronousStreamingClient::ThreadFunc", 0);
     double start = UsageTimer::Now();
     if (stream_[thread_idx]->Write(request_) &&
         stream_[thread_idx]->Read(&responses_[thread_idx])) {
-      histogram->Add((UsageTimer::Now() - start) * 1e9);
+      entry->set_value((UsageTimer::Now() - start) * 1e9);
       return true;
     }
     return false;
