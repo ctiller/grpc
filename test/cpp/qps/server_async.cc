@@ -155,20 +155,29 @@ class AsyncQpsServerTest : public Server {
     // Wait until work is available or we are shutting down
     bool ok;
     void *got_tag;
-    while (srv_cqs_[rank]->Next(&got_tag, &ok)) {
-      ServerRpcContext *ctx = detag(got_tag);
-      // The tag is a pointer to an RPC context to invoke
-      const bool still_going = ctx->RunNextState(ok);
-      if (!shutdown_state_[rank]->shutdown()) {
-        // this RPC context is done, so refresh it
-        if (!still_going) {
-          ctx->Reset();
+    ServerRpcContext *ctx = NULL;
+    for (;;) {
+      bool still_going = true;
+      switch (srv_cqs_[rank]->AsyncNext(
+          &got_tag, &ok,
+          std::chrono::system_clock::now() + std::chrono::milliseconds(10))) {
+        case CompletionQueue::SHUTDOWN:
+          return;
+        case CompletionQueue::GOT_EVENT: {
+          ctx = detag(got_tag);
+          // The tag is a pointer to an RPC context to invoke
+          still_going = ctx->RunNextState(ok);
         }
-      } else {
-        return;
+        // fallthrough
+        case CompletionQueue::TIMEOUT:
+          if (!shutdown_state_[rank]->shutdown()) {
+            // this RPC context is done, so refresh it
+            if (!still_going) {
+              ctx->Reset();
+            }
+          }
       }
     }
-    return;
   }
 
   class ServerRpcContext {
