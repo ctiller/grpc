@@ -34,7 +34,10 @@
 #ifndef GRPC_CORE_LIB_IOMGR_BUFFER_POOL_H
 #define GRPC_CORE_LIB_IOMGR_BUFFER_POOL_H
 
+#include <grpc/support/slice_buffer.h>
+
 #include "src/core/lib/iomgr/closure.h"
+#include "src/core/lib/iomgr/workqueue.h"
 
 typedef struct grpc_buffer_pool grpc_buffer_pool;
 
@@ -46,25 +49,48 @@ void grpc_buffer_pool_unref(grpc_buffer_pool *bp);
 typedef struct grpc_buffer_user grpc_buffer_user;
 
 typedef struct {
-  void (*update_memory_usage_estimate)(grpc_buffer_user *buffer_user,
-                                       double memory_usage_estimate,
-                                       grpc_closure *on_done);
   void (*free_up_memory)(grpc_buffer_user *buffer_user, grpc_closure *on_done);
 } grpc_buffer_user_vtable;
+
+typedef enum {
+  GRPC_BUFFER_USER_ALL = 0,
+  GRPC_BUFFER_USER_PENDING_ALLOC,
+  GRPC_BUFFER_USER_COUNT
+} grpc_buffer_user_list;
 
 struct grpc_buffer_user {
   grpc_buffer_user_vtable *vtable;
   grpc_buffer_pool *buffer_pool;
+  struct {
+    gpr_slice_buffer *target;
+    size_t allocate_slices;
+    size_t allocate_slice_size;
+    grpc_closure *on_done;
+  } pending_allocation;
+  grpc_workqueue *response_workqueue;
+
+  struct {
+    grpc_buffer_user *next;
+    grpc_buffer_user *prev;
+  } links[GRPC_BUFFER_USER_COUNT];
+
+  grpc_closure queue_alloc;
+
+  bool freecycling;
 };
 
 void grpc_buffer_user_init(grpc_buffer_user *buffer_user,
                            grpc_buffer_pool *buffer_pool,
                            grpc_buffer_user_vtable *vtable);
-void grpc_buffer_user_destroy(grpc_buffer_user *buffer_user);
+void grpc_buffer_user_destroy(grpc_buffer_user *buffer_user,
+                              grpc_closure *on_done);
 
-void grpc_buffer_user_set_active(grpc_buffer_user *buffer_user, bool active);
-void grpc_buffer_user_alloc(grpc_buffer_user *buffer_user, size_t size,
+void grpc_buffer_user_set_active(grpc_exec_ctx *exec_ctx,
+                                 grpc_buffer_user *buffer_user, bool active);
+void grpc_buffer_user_alloc(grpc_exec_ctx *exec_ctx,
+                            grpc_buffer_user *buffer_user,
+                            size_t target_slice_count, size_t target_slice_size,
+                            gpr_slice_buffer *dest_slice_buffer,
                             grpc_closure *on_done);
-void grpc_buffer_user_free(grpc_buffer_user *buffer_user, size_t size);
 
 #endif  // GRPC_CORE_LIB_IOMGR_BUFFER_POOL_H
