@@ -42,7 +42,13 @@ struct grpc_buffer_pool {
   grpc_combiner *combiner;
 
   size_t remaining;
-  bool freecycling;
+
+  struct {
+    bool active;
+    grpc_memory_reclamation_phase phase;
+    grpc_closure on_step_done;
+    grpc_closure freecycling_next;
+  } freecycling_state;
 
   grpc_buffer_user *roots[GRPC_BUFFER_USER_COUNT];
 };
@@ -106,6 +112,20 @@ static bool list_append(grpc_buffer_user *buffer_user,
   return false;
 }
 
+static void list_copy(grpc_buffer_pool *buffer_pool, grpc_buffer_user_list from,
+                      grpc_buffer_user_list to) {
+  GPR_ASSERT(list_empty(buffer_pool, to));
+  if (list_empty(buffer_pool, from)) {
+    return;
+  }
+  grpc_buffer_user *buffer_user = buffer_pool->roots[from];
+  do {
+    buffer_user->links[to].next = buffer_user->links[from].next;
+    buffer_user->links[to].prev = buffer_user->links[from].prev;
+    buffer_user = buffer_user->links[from].next;
+  } while (buffer_user != buffer_pool->roots[from]);
+}
+
 /*******************************************************************************
  * slice implementation
  */
@@ -163,16 +183,46 @@ static void free_slice(grpc_exec_ctx *exec_ctx, void *src, grpc_error *error) {
  * freecycling
  */
 
-static void freecycling_next(grpc_exec_ctx *exec_ctx,
-                             grpc_buffer_pool *buffer_pool) {
+static void on_freecycling_step_done(grpc_exec_ctx *exec_ctx, void *bu,
+                                     grpc_error *error) {
+  grpc_buffer_user *buffer_user = bu;
+  GPR_ASSERT(buffer_user->freecycling_state.has_outstanding_request);
+  buffer_user->freecycling_state.has_outstanding_request = false;
+  grpc_combiner_execute(
+      exec_ctx, buffer_user->buffer_pool->combiner,
+      &buffer_user->buffer_pool->freecycling_state.freecycling_next,
+      GRPC_ERROR_NONE, false);
+}
+
+static void freecycling_next(grpc_exec_ctx *exec_ctx, void *p,
+                             grpc_error *error_ignored) {
+  grpc_buffer_pool *buffer_pool = p;
+  /* check to see if more memory is needed */
   if (list_empty(buffer_pool, GRPC_BUFFER_USER_PENDING_ALLOC)) {
-    buffer_pool->freecycling = false;
+    buffer_pool->freecycling_state.active = false;
+    buffer_pool->roots[GRPC_BUFFER_USER_PENDING_FREECYCLING] = NULL;
     return;
   }
-  grpc_buffer_user *lru = list_head(buffer_pool, GRPC_BUFFER_USER_ALL);
-  GPR_ASSERT(!lru->freecycling);
-  list_remove(lru, GRPC_BUFFER_USER_ALL);
-  list_append(lru, GRPC_BUFFER_USER_ALL);
+  /* check to see if we've exhausted all potential freecycling possibilities:
+     if we have, become more aggressive about freeing memory */
+  if (list_empty(buffer_pool, GRPC_BUFFER_USER_PENDING_FREECYCLING)) {
+    if (buffer_pool->freecycling_state.phase !=
+        GRPC_MEMORY_RECLAMATION_CANCEL_ANY_STREAMS) {
+      buffer_pool->freecycling_state.phase++;
+    }
+    list_copy(buffer_pool, GRPC_BUFFER_USER_ALL,
+              GRPC_BUFFER_USER_PENDING_FREECYCLING);
+  }
+  grpc_buffer_user *lru =
+      list_head(buffer_pool, GRPC_BUFFER_USER_PENDING_FREECYCLING);
+  GPR_ASSERT(!lru->freecycling_state.has_outstanding_request);
+  lru->freecycling_state.has_outstanding_request = true;
+  list_remove(lru, GRPC_BUFFER_USER_PENDING_FREECYCLING);
+  grpc_closure_init(&buffer_pool->freecycling_state.on_step_done,
+                    on_freecycling_step_done, lru);
+  lru->vtable->free_up_memory(exec_ctx, lru,
+                              buffer_pool->freecycling_state.phase,
+                              &buffer_pool->freecycling_state.on_step_done);
 }
 
 /*******************************************************************************
@@ -246,9 +296,16 @@ static void maybe_fulfill_next(grpc_exec_ctx *exec_ctx,
     list_remove(buffer_user, GRPC_BUFFER_USER_PENDING_ALLOC);
     fulfill(exec_ctx, buffer_user);
     maybe_fulfill_next(exec_ctx, buffer_pool); /* loop */
-  } else if (!buffer_pool->freecycling) {
-    buffer_pool->freecycling = true;
-    freecycling_next(exec_ctx, buffer_pool);
+  } else if (!buffer_pool->freecycling_state.active) {
+    buffer_pool->freecycling_state.active = true;
+    buffer_pool->freecycling_state.phase =
+        GRPC_MEMORY_RECLAMATION_FREE_UNUSED_BUFFERS;
+    list_copy(buffer_pool, GRPC_BUFFER_USER_ALL,
+              GRPC_BUFFER_USER_PENDING_FREECYCLING);
+    grpc_closure_init(&buffer_pool->freecycling_state.freecycling_next,
+                      freecycling_next, buffer_pool);
+    grpc_closure_run(exec_ctx, &buffer_pool->freecycling_state.freecycling_next,
+                     GRPC_ERROR_NONE);
   }
 }
 

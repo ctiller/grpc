@@ -48,13 +48,22 @@ void grpc_buffer_pool_unref(grpc_buffer_pool *bp);
 
 typedef struct grpc_buffer_user grpc_buffer_user;
 
+typedef enum {
+  GRPC_MEMORY_RECLAMATION_FREE_UNUSED_BUFFERS,
+  GRPC_MEMORY_RECLAMATION_CANCEL_IDLE_STREAMS,
+  GRPC_MEMORY_RECLAMATION_CANCEL_ANY_STREAMS,
+} grpc_memory_reclamation_phase;
+
 typedef struct {
-  void (*free_up_memory)(grpc_buffer_user *buffer_user, grpc_closure *on_done);
+  void (*free_up_memory)(grpc_exec_ctx *exec_ctx, grpc_buffer_user *buffer_user,
+                         grpc_memory_reclamation_phase phase,
+                         grpc_closure *on_done);
 } grpc_buffer_user_vtable;
 
 typedef enum {
   GRPC_BUFFER_USER_ALL = 0,
   GRPC_BUFFER_USER_PENDING_ALLOC,
+  GRPC_BUFFER_USER_PENDING_FREECYCLING,
   GRPC_BUFFER_USER_COUNT
 } grpc_buffer_user_list;
 
@@ -76,7 +85,9 @@ struct grpc_buffer_user {
 
   grpc_closure queue_alloc;
 
-  bool freecycling;
+  struct {
+    bool has_outstanding_request;
+  } freecycling_state;
 };
 
 void grpc_buffer_user_init(grpc_buffer_user *buffer_user,
