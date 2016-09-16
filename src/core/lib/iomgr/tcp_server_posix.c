@@ -114,6 +114,9 @@ struct grpc_tcp_server {
   /* destroyed port count: how many ports are completely destroyed */
   size_t destroyed_ports;
 
+  /** buffer pool associated with this server */
+  grpc_buffer_pool *buffer_pool;
+
   /* is this server shutting down? */
   bool shutdown;
   /* use SO_REUSEPORT */
@@ -155,6 +158,7 @@ static void init(void) {
 
 grpc_error *grpc_tcp_server_create(grpc_closure *shutdown_complete,
                                    const grpc_channel_args *args,
+                                   grpc_buffer_pool *buffer_pool,
                                    grpc_tcp_server **server) {
   gpr_once_init(&check_init, init);
 
@@ -185,6 +189,7 @@ grpc_error *grpc_tcp_server_create(grpc_closure *shutdown_complete,
   s->head = NULL;
   s->tail = NULL;
   s->nports = 0;
+  s->buffer_pool = grpc_buffer_pool_ref(buffer_pool);
   gpr_atm_no_barrier_store(&s->next_pollset_to_assign, 0);
   *server = s;
   return GRPC_ERROR_NONE;
@@ -202,6 +207,8 @@ static void finish_shutdown(grpc_exec_ctx *exec_ctx, grpc_tcp_server *s) {
     s->head = sp->next;
     gpr_free(sp);
   }
+
+  grpc_buffer_pool_unref(s->buffer_pool);
 
   gpr_free(s);
 }
@@ -419,7 +426,8 @@ static void on_read(grpc_exec_ctx *exec_ctx, void *arg, grpc_error *err) {
 
     sp->server->on_accept_cb(
         exec_ctx, sp->server->on_accept_cb_arg,
-        grpc_tcp_create(fdobj, GRPC_TCP_DEFAULT_READ_SLICE_SIZE, addr_str),
+        grpc_tcp_create(fdobj, sp->server->buffer_pool,
+                        GRPC_TCP_DEFAULT_READ_SLICE_SIZE, addr_str),
         read_notifier_pollset, &acceptor);
 
     gpr_free(name);

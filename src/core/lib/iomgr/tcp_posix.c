@@ -75,6 +75,7 @@ int grpc_tcp_trace = 0;
 typedef struct {
   grpc_endpoint base;
   grpc_fd *em_fd;
+  grpc_buffer_user buffer_user;
   int fd;
   bool finished_edge;
   msg_iovlen_type iov_size; /* Number of slices to allocate per read attempt */
@@ -98,6 +99,7 @@ typedef struct {
 
   grpc_closure read_closure;
   grpc_closure write_closure;
+  grpc_closure continue_read;
 
   char *peer_string;
 } grpc_tcp;
@@ -106,6 +108,8 @@ static void tcp_handle_read(grpc_exec_ctx *exec_ctx, void *arg /* grpc_tcp */,
                             grpc_error *error);
 static void tcp_handle_write(grpc_exec_ctx *exec_ctx, void *arg /* grpc_tcp */,
                              grpc_error *error);
+static void tcp_continue_read(grpc_exec_ctx *exec_ctx, void *arg /* grpc_tcp */,
+                              grpc_error *error);
 
 static void tcp_shutdown(grpc_exec_ctx *exec_ctx, grpc_endpoint *ep) {
   grpc_tcp *tcp = (grpc_tcp *)ep;
@@ -181,7 +185,12 @@ static void call_read_cb(grpc_exec_ctx *exec_ctx, grpc_tcp *tcp,
 }
 
 #define MAX_READ_IOVEC 4
-static void tcp_continue_read(grpc_exec_ctx *exec_ctx, grpc_tcp *tcp) {
+static void tcp_continue_read(grpc_exec_ctx *exec_ctx, void *tcpp,
+                              grpc_error *error_ignored) {
+  GPR_TIMER_BEGIN("tcp_continue_read", 0);
+
+  grpc_tcp *tcp = tcpp;
+
   struct msghdr msg;
   struct iovec iov[MAX_READ_IOVEC];
   ssize_t read_bytes;
@@ -190,12 +199,7 @@ static void tcp_continue_read(grpc_exec_ctx *exec_ctx, grpc_tcp *tcp) {
   GPR_ASSERT(!tcp->finished_edge);
   GPR_ASSERT(tcp->iov_size <= MAX_READ_IOVEC);
   GPR_ASSERT(tcp->incoming_buffer->count <= MAX_READ_IOVEC);
-  GPR_TIMER_BEGIN("tcp_continue_read", 0);
 
-  while (tcp->incoming_buffer->count < (size_t)tcp->iov_size) {
-    gpr_slice_buffer_add_indexed(tcp->incoming_buffer,
-                                 gpr_slice_malloc(tcp->slice_size));
-  }
   for (i = 0; i < tcp->incoming_buffer->count; i++) {
     iov[i].iov_base = GPR_SLICE_START_PTR(tcp->incoming_buffer->slices[i]);
     iov[i].iov_len = GPR_SLICE_LENGTH(tcp->incoming_buffer->slices[i]);
@@ -252,6 +256,12 @@ static void tcp_continue_read(grpc_exec_ctx *exec_ctx, grpc_tcp *tcp) {
   GPR_TIMER_END("tcp_continue_read", 0);
 }
 
+static void tcp_begin_continuing_read(grpc_exec_ctx *exec_ctx, grpc_tcp *tcp) {
+  grpc_buffer_user_alloc(exec_ctx, &tcp->buffer_user, tcp->iov_size,
+                         tcp->slice_size, tcp->incoming_buffer,
+                         &tcp->continue_read);
+}
+
 static void tcp_handle_read(grpc_exec_ctx *exec_ctx, void *arg /* grpc_tcp */,
                             grpc_error *error) {
   grpc_tcp *tcp = (grpc_tcp *)arg;
@@ -262,7 +272,7 @@ static void tcp_handle_read(grpc_exec_ctx *exec_ctx, void *arg /* grpc_tcp */,
     call_read_cb(exec_ctx, tcp, GRPC_ERROR_REF(error));
     TCP_UNREF(exec_ctx, tcp, "read");
   } else {
-    tcp_continue_read(exec_ctx, tcp);
+    tcp_begin_continuing_read(exec_ctx, tcp);
   }
 }
 
@@ -279,7 +289,7 @@ static void tcp_read(grpc_exec_ctx *exec_ctx, grpc_endpoint *ep,
     tcp->finished_edge = false;
     grpc_fd_notify_on_read(exec_ctx, tcp->em_fd, &tcp->read_closure);
   } else {
-    grpc_exec_ctx_sched(exec_ctx, &tcp->read_closure, GRPC_ERROR_NONE, NULL);
+    tcp_begin_continuing_read(exec_ctx, tcp);
   }
 }
 
@@ -469,17 +479,18 @@ static grpc_workqueue *tcp_get_workqueue(grpc_endpoint *ep) {
   return grpc_fd_get_workqueue(tcp->em_fd);
 }
 
-static const grpc_endpoint_vtable vtable = {tcp_read,
-                                            tcp_write,
-                                            tcp_get_workqueue,
-                                            tcp_add_to_pollset,
-                                            tcp_add_to_pollset_set,
-                                            tcp_shutdown,
-                                            tcp_destroy,
-                                            tcp_get_peer};
+static grpc_buffer_user *tcp_get_buffer_user(grpc_endpoint *ep) {
+  grpc_tcp *tcp = (grpc_tcp *)ep;
+  return &tcp->buffer_user;
+}
 
-grpc_endpoint *grpc_tcp_create(grpc_fd *em_fd, size_t slice_size,
-                               const char *peer_string) {
+static const grpc_endpoint_vtable vtable = {
+    tcp_get_buffer_user, tcp_read,           tcp_write,
+    tcp_get_workqueue,   tcp_add_to_pollset, tcp_add_to_pollset_set,
+    tcp_shutdown,        tcp_destroy,        tcp_get_peer};
+
+grpc_endpoint *grpc_tcp_create(grpc_fd *em_fd, grpc_buffer_pool *buffer_pool,
+                               size_t slice_size, const char *peer_string) {
   grpc_tcp *tcp = (grpc_tcp *)gpr_malloc(sizeof(grpc_tcp));
   tcp->base.vtable = &vtable;
   tcp->peer_string = gpr_strdup(peer_string);
@@ -492,13 +503,14 @@ grpc_endpoint *grpc_tcp_create(grpc_fd *em_fd, size_t slice_size,
   tcp->slice_size = slice_size;
   tcp->iov_size = 1;
   tcp->finished_edge = true;
+  grpc_buffer_user_init(&tcp->buffer_user, buffer_pool,
+                        grpc_fd_get_workqueue(tcp->em_fd));
   /* paired with unref in grpc_tcp_destroy */
   gpr_ref_init(&tcp->refcount, 1);
   tcp->em_fd = em_fd;
-  tcp->read_closure.cb = tcp_handle_read;
-  tcp->read_closure.cb_arg = tcp;
-  tcp->write_closure.cb = tcp_handle_write;
-  tcp->write_closure.cb_arg = tcp;
+  grpc_closure_init(&tcp->read_closure, tcp_handle_read, tcp);
+  grpc_closure_init(&tcp->write_closure, tcp_handle_write, tcp);
+  grpc_closure_init(&tcp->continue_read, tcp_continue_read, tcp);
   gpr_slice_buffer_init(&tcp->last_read_buffer);
   /* Tell network status tracker about new endpoint */
   grpc_network_status_register_endpoint(&tcp->base);

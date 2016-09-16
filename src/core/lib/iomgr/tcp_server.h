@@ -62,6 +62,7 @@ typedef void (*grpc_tcp_server_cb)(grpc_exec_ctx *exec_ctx, void *arg,
    grpc_tcp_server_unref() when the ref count reaches zero. */
 grpc_error *grpc_tcp_server_create(grpc_closure *shutdown_complete,
                                    const grpc_channel_args *args,
+                                   grpc_buffer_pool *buffer_pool,
                                    grpc_tcp_server **server);
 
 /* Start listening to bound ports */

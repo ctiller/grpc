@@ -69,6 +69,7 @@ typedef struct {
   char *addr_str;
   grpc_endpoint **ep;
   grpc_closure *closure;
+  grpc_buffer_pool *buffer_pool;
 } async_connect;
 
 static grpc_error *prepare_socket(const struct sockaddr *addr, int fd) {
@@ -113,6 +114,7 @@ static void tc_on_alarm(grpc_exec_ctx *exec_ctx, void *acp, grpc_error *error) {
   gpr_mu_unlock(&ac->mu);
   if (done) {
     gpr_mu_destroy(&ac->mu);
+    grpc_buffer_pool_unref(ac->buffer_pool);
     gpr_free(ac->addr_str);
     gpr_free(ac);
   }
@@ -190,7 +192,8 @@ static void on_writable(grpc_exec_ctx *exec_ctx, void *acp, grpc_error *error) {
       }
     } else {
       grpc_pollset_set_del_fd(exec_ctx, ac->interested_parties, fd);
-      *ep = grpc_tcp_create(fd, GRPC_TCP_DEFAULT_READ_SLICE_SIZE, ac->addr_str);
+      *ep = grpc_tcp_create(fd, ac->buffer_pool,
+                            GRPC_TCP_DEFAULT_READ_SLICE_SIZE, ac->addr_str);
       fd = NULL;
       goto finish;
     }
@@ -218,6 +221,7 @@ finish:
   }
   if (done) {
     gpr_mu_destroy(&ac->mu);
+    grpc_buffer_pool_unref(ac->buffer_pool);
     gpr_free(ac->addr_str);
     gpr_free(ac);
   }
@@ -225,10 +229,9 @@ finish:
 }
 
 static void tcp_client_connect_impl(grpc_exec_ctx *exec_ctx,
-                                    grpc_closure *closure, grpc_endpoint **ep,
-                                    grpc_pollset_set *interested_parties,
-                                    const struct sockaddr *addr,
-                                    size_t addr_len, gpr_timespec deadline) {
+                                    const grpc_tcp_client_args *args,
+                                    grpc_closure *on_connect,
+                                    grpc_endpoint **endpoint) {
   int fd;
   grpc_dualstack_mode dsmode;
   int err;
@@ -240,7 +243,10 @@ static void tcp_client_connect_impl(grpc_exec_ctx *exec_ctx,
   char *addr_str;
   grpc_error *error;
 
-  *ep = NULL;
+  *endpoint = NULL;
+
+  const struct sockaddr *addr = args->addr;
+  size_t addr_len = args->addr_len;
 
   /* Use dualstack sockets where available. */
   if (grpc_sockaddr_to_v4mapped(addr, &addr6_v4mapped)) {
@@ -250,7 +256,7 @@ static void tcp_client_connect_impl(grpc_exec_ctx *exec_ctx,
 
   error = grpc_create_dualstack_socket(addr, SOCK_STREAM, 0, &dsmode, &fd);
   if (error != GRPC_ERROR_NONE) {
-    grpc_exec_ctx_sched(exec_ctx, closure, error, NULL);
+    grpc_exec_ctx_sched(exec_ctx, on_connect, error, NULL);
     return;
   }
   if (dsmode == GRPC_DSMODE_IPV4) {
@@ -260,7 +266,7 @@ static void tcp_client_connect_impl(grpc_exec_ctx *exec_ctx,
     addr_len = sizeof(addr4_copy);
   }
   if ((error = prepare_socket(addr, fd)) != GRPC_ERROR_NONE) {
-    grpc_exec_ctx_sched(exec_ctx, closure, error, NULL);
+    grpc_exec_ctx_sched(exec_ctx, on_connect, error, NULL);
     return;
   }
 
@@ -275,27 +281,29 @@ static void tcp_client_connect_impl(grpc_exec_ctx *exec_ctx,
   fdobj = grpc_fd_create(fd, name);
 
   if (err >= 0) {
-    *ep = grpc_tcp_create(fdobj, GRPC_TCP_DEFAULT_READ_SLICE_SIZE, addr_str);
-    grpc_exec_ctx_sched(exec_ctx, closure, GRPC_ERROR_NONE, NULL);
+    *endpoint = grpc_tcp_create(fdobj, args->buffer_pool,
+                                GRPC_TCP_DEFAULT_READ_SLICE_SIZE, addr_str);
+    grpc_exec_ctx_sched(exec_ctx, on_connect, GRPC_ERROR_NONE, NULL);
     goto done;
   }
 
   if (errno != EWOULDBLOCK && errno != EINPROGRESS) {
     grpc_fd_orphan(exec_ctx, fdobj, NULL, NULL, "tcp_client_connect_error");
-    grpc_exec_ctx_sched(exec_ctx, closure, GRPC_OS_ERROR(errno, "connect"),
+    grpc_exec_ctx_sched(exec_ctx, on_connect, GRPC_OS_ERROR(errno, "connect"),
                         NULL);
     goto done;
   }
 
-  grpc_pollset_set_add_fd(exec_ctx, interested_parties, fdobj);
+  grpc_pollset_set_add_fd(exec_ctx, args->interested_parties, fdobj);
 
   ac = gpr_malloc(sizeof(async_connect));
-  ac->closure = closure;
-  ac->ep = ep;
+  ac->closure = on_connect;
+  ac->ep = endpoint;
   ac->fd = fdobj;
-  ac->interested_parties = interested_parties;
+  ac->interested_parties = args->interested_parties;
   ac->addr_str = addr_str;
   addr_str = NULL;
+  ac->buffer_pool = grpc_buffer_pool_ref(args->buffer_pool);
   gpr_mu_init(&ac->mu);
   ac->refs = 2;
   ac->write_closure.cb = on_writable;
@@ -308,7 +316,7 @@ static void tcp_client_connect_impl(grpc_exec_ctx *exec_ctx,
 
   gpr_mu_lock(&ac->mu);
   grpc_timer_init(exec_ctx, &ac->alarm,
-                  gpr_convert_clock_type(deadline, GPR_CLOCK_MONOTONIC),
+                  gpr_convert_clock_type(args->deadline, GPR_CLOCK_MONOTONIC),
                   tc_on_alarm, ac, gpr_now(GPR_CLOCK_MONOTONIC));
   grpc_fd_notify_on_write(exec_ctx, ac->fd, &ac->write_closure);
   gpr_mu_unlock(&ac->mu);
@@ -320,17 +328,15 @@ done:
 
 // overridden by api_fuzzer.c
 void (*grpc_tcp_client_connect_impl)(
-    grpc_exec_ctx *exec_ctx, grpc_closure *closure, grpc_endpoint **ep,
-    grpc_pollset_set *interested_parties, const struct sockaddr *addr,
-    size_t addr_len, gpr_timespec deadline) = tcp_client_connect_impl;
+    grpc_exec_ctx *exec_ctx, const grpc_tcp_client_args *args,
+    grpc_closure *on_connect,
+    grpc_endpoint **endpoint) = tcp_client_connect_impl;
 
-void grpc_tcp_client_connect(grpc_exec_ctx *exec_ctx, grpc_closure *closure,
-                             grpc_endpoint **ep,
-                             grpc_pollset_set *interested_parties,
-                             const struct sockaddr *addr, size_t addr_len,
-                             gpr_timespec deadline) {
-  grpc_tcp_client_connect_impl(exec_ctx, closure, ep, interested_parties, addr,
-                               addr_len, deadline);
+void grpc_tcp_client_connect(grpc_exec_ctx *exec_ctx,
+                             const grpc_tcp_client_args *args,
+                             grpc_closure *on_connect,
+                             grpc_endpoint **endpoint) {
+  grpc_tcp_client_connect_impl(exec_ctx, args, on_connect, endpoint);
 }
 
 #endif
