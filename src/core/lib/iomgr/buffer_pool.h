@@ -56,10 +56,6 @@ typedef enum {
   GRPC_BUFFER_RECLAIM_SHUTDOWN
 } grpc_buffer_reclaimation_phase;
 
-typedef void (*grpc_buffer_user_cleanup_function)(
-    grpc_exec_ctx *exec_ctx, void *arg, grpc_buffer_reclaimation_phase phase,
-    grpc_closure *on_done);
-
 typedef enum {
   GRPC_BUFFER_USER_ALL = 0,
   GRPC_BUFFER_USER_PENDING_ALLOC,
@@ -82,11 +78,15 @@ struct grpc_buffer_user {
     grpc_buffer_user *next;
     grpc_buffer_user *prev;
   } links[GRPC_BUFFER_USER_COUNT];
+  bool included[GRPC_BUFFER_USER_COUNT];
 
   grpc_closure queue_alloc;
 
   struct {
     bool has_outstanding_request;
+    grpc_closure *reclaimation_closure;
+    grpc_closure ready_for_reclaimation;
+    grpc_buffer_reclaimation_phase reclaiming_phase;
   } reclaimation_state;
 };
 
@@ -101,9 +101,11 @@ void grpc_buffer_user_alloc(grpc_exec_ctx *exec_ctx,
                             size_t target_slice_count, size_t target_slice_size,
                             gpr_slice_buffer *dest_slice_buffer,
                             grpc_closure *on_done);
-void grpc_buffer_user_set_cleanup_function(
-    grpc_exec_ctx *exec_ctx, grpc_buffer_user *buffer_user,
-    grpc_buffer_user_cleanup_function cleanup_function,
-    void *cleanup_function_arg);
+void grpc_buffer_user_set_reclaimation_closure(grpc_exec_ctx *exec_ctx,
+                                               grpc_buffer_user *buffer_user,
+                                               grpc_closure *closure);
+void grpc_buffer_user_finish_reclaimation(grpc_exec_ctx *exec_ctx,
+                                          grpc_buffer_user *buffer_user,
+                                          bool remain_reclaimable);
 
 #endif  // GRPC_CORE_LIB_IOMGR_BUFFER_POOL_H

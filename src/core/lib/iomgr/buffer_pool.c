@@ -46,7 +46,6 @@ struct grpc_buffer_pool {
   struct {
     bool active;
     grpc_buffer_reclaimation_phase phase;
-    grpc_closure next_step;
   } reclaimation_state;
 
   grpc_buffer_user *roots[GRPC_BUFFER_USER_COUNT];
@@ -79,9 +78,16 @@ static bool list_empty(grpc_buffer_pool *buffer_pool,
   return list_head(buffer_pool, list) == NULL;
 }
 
+static bool list_includes(grpc_buffer_user *buffer_user,
+                          grpc_buffer_user_list list) {
+  return buffer_user->included[list];
+}
+
 static void list_remove(grpc_buffer_user *buffer_user,
                         grpc_buffer_user_list list) {
   grpc_buffer_pool *buffer_pool = buffer_user->buffer_pool;
+  GPR_ASSERT(list_includes(buffer_user, list));
+  buffer_user->included[list] = false;
   if (buffer_user == buffer_pool->roots[list]) {
     buffer_pool->roots[list] = buffer_pool->roots[list]->links[list].next;
     if (buffer_user == buffer_pool->roots[list]) {
@@ -99,6 +105,8 @@ static void list_remove(grpc_buffer_user *buffer_user,
 static bool list_append(grpc_buffer_user *buffer_user,
                         grpc_buffer_user_list list) {
   grpc_buffer_pool *buffer_pool = buffer_user->buffer_pool;
+  GPR_ASSERT(!list_includes(buffer_user, list));
+  buffer_user->included[list] = true;
   if (buffer_pool->roots[list] == NULL) {
     buffer_pool->roots[list] = buffer_user->links[list].next =
         buffer_user->links[list].prev = buffer_user;
@@ -182,24 +190,63 @@ static void free_slice(grpc_exec_ctx *exec_ctx, void *src, grpc_error *error) {
  * reclaimation
  */
 
-static void cleanup_function_on_done(grpc_exec_ctx *exec_ctx, void *bu,
-                                     grpc_error *error) {
-  grpc_buffer_user *buffer_user = bu;
-  GPR_ASSERT(buffer_user->reclaimation_state.has_outstanding_request);
-  buffer_user->reclaimation_state.has_outstanding_request = false;
-  grpc_combiner_execute(exec_ctx, buffer_user->buffer_pool->combiner,
-                        &buffer_user->buffer_pool->reclaimation_state.next_step,
-                        GRPC_ERROR_NONE, false);
-}
-
-static void reclaimation_next_step(grpc_exec_ctx *exec_ctx, void *p,
-                                   grpc_error *error_ignored) {
-  grpc_buffer_pool *buffer_pool = p;
+static void reclaimation_next_step(grpc_exec_ctx *exec_ctx,
+                                   grpc_buffer_pool *buffer_pool) {
   /* check to see if more memory is needed */
   if (list_empty(buffer_pool, GRPC_BUFFER_USER_PENDING_ALLOC)) {
     buffer_pool->reclaimation_state.active = false;
     return;
   }
+  if (list_empty(buffer_pool, GRPC_BUFFER_USER_PENDING_RECLAIM)) {
+    if (buffer_pool->reclaimation_state.phase !=
+        GRPC_BUFFER_RECLAIM_SHUTDOWN - 1) {
+      buffer_pool->reclaimation_state.phase++;
+    }
+    /* TODO(ctiller): this could certainly happen, deal with it */
+    GPR_ASSERT(!list_empty(buffer_pool, GRPC_BUFFER_USER_RECLAIMABLE));
+    list_copy(buffer_pool, GRPC_BUFFER_USER_RECLAIMABLE,
+              GRPC_BUFFER_USER_PENDING_RECLAIM);
+  }
+  grpc_buffer_user *buffer_user =
+      list_head(buffer_pool, GRPC_BUFFER_USER_PENDING_ALLOC);
+  list_remove(buffer_user, GRPC_BUFFER_USER_PENDING_ALLOC);
+  list_remove(buffer_user, GRPC_BUFFER_USER_RECLAIMABLE);
+  buffer_user->reclaimation_state.reclaiming_phase =
+      buffer_pool->reclaimation_state.phase;
+  buffer_user->reclaimation_state.has_outstanding_request = true;
+  grpc_closure_run(exec_ctx,
+                   buffer_user->reclaimation_state.reclaimation_closure,
+                   GRPC_ERROR_NONE);
+}
+
+static void take_next_step(grpc_exec_ctx *exec_ctx, void *bu,
+                           grpc_error *error) {
+  grpc_buffer_user *buffer_user = bu;
+  GPR_ASSERT(buffer_user->reclaimation_state.has_outstanding_request);
+  buffer_user->reclaimation_state.has_outstanding_request = false;
+  reclaimation_next_step(exec_ctx, buffer_user->buffer_pool);
+}
+
+static void rebecome_reclaimable_and_take_next_step(grpc_exec_ctx *exec_ctx,
+                                                    void *bu,
+                                                    grpc_error *error) {
+  grpc_buffer_user *buffer_user = bu;
+  list_append(buffer_user, GRPC_BUFFER_USER_RECLAIMABLE);
+  take_next_step(exec_ctx, bu, error);
+}
+
+void grpc_buffer_user_finish_reclaimation(grpc_exec_ctx *exec_ctx,
+                                          grpc_buffer_user *buffer_user,
+                                          bool remain_reclaimable) {
+  GPR_ASSERT(buffer_user->reclaimation_state.has_outstanding_request);
+  buffer_user->reclaimation_state.has_outstanding_request = false;
+  grpc_closure_init(&buffer_user->reclaimation_state.ready_for_reclaimation,
+                    remain_reclaimable ? rebecome_reclaimable_and_take_next_step
+                                       : take_next_step,
+                    buffer_user);
+  grpc_combiner_execute(exec_ctx, buffer_user->buffer_pool->combiner,
+                        &buffer_user->reclaimation_state.ready_for_reclaimation,
+                        GRPC_ERROR_NONE, false);
 }
 
 /*******************************************************************************
@@ -277,53 +324,41 @@ static void maybe_fulfill_next(grpc_exec_ctx *exec_ctx,
     buffer_pool->reclaimation_state.phase = GRPC_BUFFER_RECLAIM_UNUSED_BUFFERS;
     list_copy(buffer_pool, GRPC_BUFFER_USER_RECLAIMABLE,
               GRPC_BUFFER_USER_PENDING_RECLAIM);
-    grpc_closure_init(&buffer_pool->reclaimation_state.next_step,
-                      reclaimation_next_step, buffer_pool);
-    grpc_closure_run(exec_ctx, &buffer_pool->reclaimation_state.next_step,
-                     GRPC_ERROR_NONE);
+    reclaimation_next_step(exec_ctx, buffer_pool);
   }
 }
 
 static void queue_alloc(grpc_exec_ctx *exec_ctx, void *bu, grpc_error *error) {
   grpc_buffer_user *buffer_user = bu;
 
-  list_remove(buffer_user, GRPC_BUFFER_USER_ALL);
-  list_append(buffer_user, GRPC_BUFFER_USER_ALL);
+  list_remove(buffer_user, GRPC_BUFFER_USER_RECLAIMABLE);
+  list_append(buffer_user, GRPC_BUFFER_USER_RECLAIMABLE);
+  if (list_includes(buffer_user, GRPC_BUFFER_USER_PENDING_RECLAIM)) {
+    list_remove(buffer_user, GRPC_BUFFER_USER_PENDING_RECLAIM);
+    list_append(buffer_user, GRPC_BUFFER_USER_PENDING_RECLAIM);
+  }
 
   if (list_append(buffer_user, GRPC_BUFFER_USER_PENDING_ALLOC)) {
     maybe_fulfill_next(exec_ctx, buffer_user->buffer_pool);
   }
 }
 
-static void advertise_cleanup_locked(grpc_exec_ctx *exec_ctx,
-                                     grpc_buffer_user *buffer_user,
-                                     grpc_buffer_cleanup_type type) {
-  grpc_closure_list_append(&buffer_user->buffer_pool->cleanup_closures[type],
-                           buffer_user->advertise_cleanup[type].cleanup,
-                           GRPC_ERROR_NONE);
+static void buffer_user_ready_for_reclaimation(grpc_exec_ctx *exec_ctx,
+                                               void *bu, grpc_error *error) {
+  grpc_buffer_user *buffer_user = bu;
+  list_append(buffer_user, GRPC_BUFFER_USER_RECLAIMABLE);
+  if (buffer_user->buffer_pool->reclaimation_state.active) {
+    list_append(buffer_user, GRPC_BUFFER_USER_PENDING_RECLAIM);
+  }
 }
 
-static void advertise_cleanup_temp_buffers(grpc_exec_ctx *exec_ctx, void *arg,
-                                           grpc_error *error) {
-  advertise_cleanup_locked(exec_ctx, arg, GRPC_BUFFER_CLEANUP_TEMP_BUFFERS);
-}
-
-static void advertise_cleanup_idle_streams(grpc_exec_ctx *exec_ctx, void *arg,
-                                           grpc_error *error) {
-  advertise_cleanup_locked(exec_ctx, arg, GRPC_BUFFER_CLEANUP_IDLE_STREAMS);
-}
-
-static void advertise_cleanup_all_streams(grpc_exec_ctx *exec_ctx, void *arg,
-                                          grpc_error *error) {
-  advertise_cleanup_locked(exec_ctx, arg, GRPC_BUFFER_CLEANUP_ALL_STREAMS);
-}
-
-void grpc_buffer_user_advertise_cleanup(grpc_exec_ctx *exec_ctx,
-                                        grpc_buffer_user *buffer_user,
-                                        grpc_buffer_cleanup_type type,
-                                        grpc_closure *closure) {
-  buffer_user->advertise_cleanup[type].cleanup = closure;
+void grpc_buffer_user_set_reclaimation_closure(grpc_exec_ctx *exec_ctx,
+                                               grpc_buffer_user *buffer_user,
+                                               grpc_closure *closure) {
+  buffer_user->reclaimation_state.reclaimation_closure = closure;
+  grpc_closure_init(&buffer_user->reclaimation_state.ready_for_reclaimation,
+                    buffer_user_ready_for_reclaimation, buffer_user);
   grpc_combiner_execute(exec_ctx, buffer_user->buffer_pool->combiner,
-                        &buffer_user->advertise_cleanup[type].locked_closure,
+                        &buffer_user->reclaimation_state.ready_for_reclaimation,
                         GRPC_ERROR_NONE, false);
 }
