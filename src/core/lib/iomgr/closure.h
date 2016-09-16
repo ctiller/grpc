@@ -109,6 +109,8 @@ void grpc_closure_list_move(grpc_closure_list *src, grpc_closure_list *dst);
 /** return whether \a list is empty. */
 bool grpc_closure_list_empty(grpc_closure_list list);
 
+grpc_closure *grpc_closure_list_pop(grpc_closure_list *list);
+
 /** Run a closure directly. Caller ensures that no locks are being held above.
  *  Note that calling this at the end of a closure callback function itself is
  *  by definition safe. */

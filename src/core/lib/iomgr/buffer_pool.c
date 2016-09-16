@@ -45,10 +45,9 @@ struct grpc_buffer_pool {
 
   struct {
     bool active;
-    grpc_memory_reclamation_phase phase;
-    grpc_closure on_step_done;
-    grpc_closure freecycling_next;
-  } freecycling_state;
+    grpc_buffer_reclaimation_phase phase;
+    grpc_closure next_step;
+  } reclaimation_state;
 
   grpc_buffer_user *roots[GRPC_BUFFER_USER_COUNT];
 };
@@ -180,49 +179,27 @@ static void free_slice(grpc_exec_ctx *exec_ctx, void *src, grpc_error *error) {
 }
 
 /*******************************************************************************
- * freecycling
+ * reclaimation
  */
 
-static void on_freecycling_step_done(grpc_exec_ctx *exec_ctx, void *bu,
+static void cleanup_function_on_done(grpc_exec_ctx *exec_ctx, void *bu,
                                      grpc_error *error) {
   grpc_buffer_user *buffer_user = bu;
-  GPR_ASSERT(buffer_user->freecycling_state.has_outstanding_request);
-  buffer_user->freecycling_state.has_outstanding_request = false;
-  grpc_combiner_execute(
-      exec_ctx, buffer_user->buffer_pool->combiner,
-      &buffer_user->buffer_pool->freecycling_state.freecycling_next,
-      GRPC_ERROR_NONE, false);
+  GPR_ASSERT(buffer_user->reclaimation_state.has_outstanding_request);
+  buffer_user->reclaimation_state.has_outstanding_request = false;
+  grpc_combiner_execute(exec_ctx, buffer_user->buffer_pool->combiner,
+                        &buffer_user->buffer_pool->reclaimation_state.next_step,
+                        GRPC_ERROR_NONE, false);
 }
 
-static void freecycling_next(grpc_exec_ctx *exec_ctx, void *p,
-                             grpc_error *error_ignored) {
+static void reclaimation_next_step(grpc_exec_ctx *exec_ctx, void *p,
+                                   grpc_error *error_ignored) {
   grpc_buffer_pool *buffer_pool = p;
   /* check to see if more memory is needed */
   if (list_empty(buffer_pool, GRPC_BUFFER_USER_PENDING_ALLOC)) {
-    buffer_pool->freecycling_state.active = false;
-    buffer_pool->roots[GRPC_BUFFER_USER_PENDING_FREECYCLING] = NULL;
+    buffer_pool->reclaimation_state.active = false;
     return;
   }
-  /* check to see if we've exhausted all potential freecycling possibilities:
-     if we have, become more aggressive about freeing memory */
-  if (list_empty(buffer_pool, GRPC_BUFFER_USER_PENDING_FREECYCLING)) {
-    if (buffer_pool->freecycling_state.phase !=
-        GRPC_MEMORY_RECLAMATION_CANCEL_ANY_STREAMS) {
-      buffer_pool->freecycling_state.phase++;
-    }
-    list_copy(buffer_pool, GRPC_BUFFER_USER_ALL,
-              GRPC_BUFFER_USER_PENDING_FREECYCLING);
-  }
-  grpc_buffer_user *lru =
-      list_head(buffer_pool, GRPC_BUFFER_USER_PENDING_FREECYCLING);
-  GPR_ASSERT(!lru->freecycling_state.has_outstanding_request);
-  lru->freecycling_state.has_outstanding_request = true;
-  list_remove(lru, GRPC_BUFFER_USER_PENDING_FREECYCLING);
-  grpc_closure_init(&buffer_pool->freecycling_state.on_step_done,
-                    on_freecycling_step_done, lru);
-  lru->vtable->free_up_memory(exec_ctx, lru,
-                              buffer_pool->freecycling_state.phase,
-                              &buffer_pool->freecycling_state.on_step_done);
 }
 
 /*******************************************************************************
@@ -231,8 +208,7 @@ static void freecycling_next(grpc_exec_ctx *exec_ctx, void *p,
 
 void grpc_buffer_user_init(grpc_buffer_user *buffer_user,
                            grpc_buffer_pool *buffer_pool,
-                           grpc_buffer_user_vtable *vtable) {
-  buffer_user->vtable = vtable;
+                           grpc_workqueue *response_workqueue) {
   buffer_user->buffer_pool = buffer_pool;
   buffer_user->pending_allocation.on_done = NULL;
   grpc_closure_init(&buffer_user->queue_alloc, queue_alloc, buffer_user);
@@ -296,15 +272,14 @@ static void maybe_fulfill_next(grpc_exec_ctx *exec_ctx,
     list_remove(buffer_user, GRPC_BUFFER_USER_PENDING_ALLOC);
     fulfill(exec_ctx, buffer_user);
     maybe_fulfill_next(exec_ctx, buffer_pool); /* loop */
-  } else if (!buffer_pool->freecycling_state.active) {
-    buffer_pool->freecycling_state.active = true;
-    buffer_pool->freecycling_state.phase =
-        GRPC_MEMORY_RECLAMATION_FREE_UNUSED_BUFFERS;
-    list_copy(buffer_pool, GRPC_BUFFER_USER_ALL,
-              GRPC_BUFFER_USER_PENDING_FREECYCLING);
-    grpc_closure_init(&buffer_pool->freecycling_state.freecycling_next,
-                      freecycling_next, buffer_pool);
-    grpc_closure_run(exec_ctx, &buffer_pool->freecycling_state.freecycling_next,
+  } else if (!buffer_pool->reclaimation_state.active) {
+    buffer_pool->reclaimation_state.active = true;
+    buffer_pool->reclaimation_state.phase = GRPC_BUFFER_RECLAIM_UNUSED_BUFFERS;
+    list_copy(buffer_pool, GRPC_BUFFER_USER_RECLAIMABLE,
+              GRPC_BUFFER_USER_PENDING_RECLAIM);
+    grpc_closure_init(&buffer_pool->reclaimation_state.next_step,
+                      reclaimation_next_step, buffer_pool);
+    grpc_closure_run(exec_ctx, &buffer_pool->reclaimation_state.next_step,
                      GRPC_ERROR_NONE);
   }
 }
@@ -318,4 +293,37 @@ static void queue_alloc(grpc_exec_ctx *exec_ctx, void *bu, grpc_error *error) {
   if (list_append(buffer_user, GRPC_BUFFER_USER_PENDING_ALLOC)) {
     maybe_fulfill_next(exec_ctx, buffer_user->buffer_pool);
   }
+}
+
+static void advertise_cleanup_locked(grpc_exec_ctx *exec_ctx,
+                                     grpc_buffer_user *buffer_user,
+                                     grpc_buffer_cleanup_type type) {
+  grpc_closure_list_append(&buffer_user->buffer_pool->cleanup_closures[type],
+                           buffer_user->advertise_cleanup[type].cleanup,
+                           GRPC_ERROR_NONE);
+}
+
+static void advertise_cleanup_temp_buffers(grpc_exec_ctx *exec_ctx, void *arg,
+                                           grpc_error *error) {
+  advertise_cleanup_locked(exec_ctx, arg, GRPC_BUFFER_CLEANUP_TEMP_BUFFERS);
+}
+
+static void advertise_cleanup_idle_streams(grpc_exec_ctx *exec_ctx, void *arg,
+                                           grpc_error *error) {
+  advertise_cleanup_locked(exec_ctx, arg, GRPC_BUFFER_CLEANUP_IDLE_STREAMS);
+}
+
+static void advertise_cleanup_all_streams(grpc_exec_ctx *exec_ctx, void *arg,
+                                          grpc_error *error) {
+  advertise_cleanup_locked(exec_ctx, arg, GRPC_BUFFER_CLEANUP_ALL_STREAMS);
+}
+
+void grpc_buffer_user_advertise_cleanup(grpc_exec_ctx *exec_ctx,
+                                        grpc_buffer_user *buffer_user,
+                                        grpc_buffer_cleanup_type type,
+                                        grpc_closure *closure) {
+  buffer_user->advertise_cleanup[type].cleanup = closure;
+  grpc_combiner_execute(exec_ctx, buffer_user->buffer_pool->combiner,
+                        &buffer_user->advertise_cleanup[type].locked_closure,
+                        GRPC_ERROR_NONE, false);
 }
