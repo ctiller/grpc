@@ -82,7 +82,9 @@ grpc_metadata_filter *grpc_metadata_filter_builder_finish(
 
 void grpc_metadata_filter_destroy(grpc_metadata_filter *filter);
 
-void grpc_metadata_filter_filter(grpc_metadata_filter *filter,
+void grpc_metadata_filter_filter(grpc_exec_ctx *exec_ctx,
+                                 grpc_call_element *call_elements,
+                                 grpc_metadata_filter *filter,
                                  grpc_metadata_batch *batch);
 
 #endif
