@@ -47,6 +47,8 @@
 #include <grpc/support/log.h>
 #include <grpc/support/time.h>
 
+#include "src/core/lib/channel/channel_stack_fwd.h"
+#include "src/core/lib/channel/metadata_filter.h"
 #include "src/core/lib/debug/trace.h"
 #include "src/core/lib/iomgr/polling_entity.h"
 #include "src/core/lib/transport/transport.h"
@@ -54,12 +56,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef struct grpc_channel_element grpc_channel_element;
-typedef struct grpc_call_element grpc_call_element;
-
-typedef struct grpc_channel_stack grpc_channel_stack;
-typedef struct grpc_call_stack grpc_call_stack;
 
 typedef struct {
   grpc_channel_stack *channel_stack;
@@ -90,6 +86,19 @@ typedef struct {
   grpc_status_code final_status;
 } grpc_call_final_info;
 
+typedef enum {
+  GRPC_FILTER_SEND_INITIAL,
+  GRPC_FILTER_SEND_TRAILING,
+  GRPC_FILTER_RECV_INITIAL,
+  GRPC_FILTER_RECV_TRAILING,
+} grpc_channel_metadata_filter_when;
+
+typedef struct {
+  grpc_channel_metadata_filter_when when;
+  const char *key;
+  grpc_metadata_filter_func filter;
+} grpc_channel_metadata_filter;
+
 /* Channel filters specify:
    1. the amount of memory needed in the channel & call (via the sizeof_XXX
       members)
@@ -101,6 +110,9 @@ typedef struct {
 
    Members are laid out in approximate frequency of use order. */
 typedef struct {
+  size_t num_metadata_filters;
+  const grpc_channel_metadata_filter *metadata_filters;
+
   /* Called to eg. send/receive data on a call.
      See grpc_call_next_op on how to call the next element in the stack */
   void (*start_transport_stream_op)(grpc_exec_ctx *exec_ctx,
@@ -185,6 +197,7 @@ struct grpc_call_element {
 struct grpc_channel_stack {
   grpc_stream_refcount refcount;
   size_t count;
+  grpc_metadata_filter *metadata_filters[4];
   /* Memory required for a call stack (computed at channel stack
      initialization) */
   size_t call_stack_size;
