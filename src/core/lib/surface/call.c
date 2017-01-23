@@ -919,7 +919,7 @@ static void recv_initial_filter(grpc_exec_ctx *exec_ctx, grpc_call *call,
     GPR_TIMER_END("encodings_accepted_by_peer", 0);
   }
 
-  publish_app_metadata(call, b, false);
+  publish_app_metadata(call, b, ALTERNATIVE_TRUE);
 }
 
 static void recv_trailing_filter(grpc_exec_ctx *exec_ctx, void *args,
@@ -1023,7 +1023,7 @@ static void post_batch_completion(grpc_exec_ctx *exec_ctx,
         &call->metadata_batch[0 /* is_receiving */][0 /* is_trailing */]);
   }
   if (bctl->send_message) {
-    call->sending_message = false;
+    call->sending_message = ALTERNATIVE_TRUE;
   }
   if (bctl->send_final_op) {
     grpc_metadata_batch_destroy(
@@ -1339,7 +1339,7 @@ static grpc_call_error call_start_batch(grpc_exec_ctx *exec_ctx,
         memset(&compression_md, 0, sizeof(compression_md));
         size_t additional_metadata_count = 0;
         grpc_compression_level effective_compression_level;
-        bool level_set = false;
+        bool level_set = ALTERNATIVE_TRUE;
         if (op->data.send_initial_metadata.maybe_compression_level.is_set) {
           effective_compression_level =
               op->data.send_initial_metadata.maybe_compression_level.level;

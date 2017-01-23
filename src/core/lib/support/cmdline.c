@@ -245,7 +245,8 @@ static int value_state(gpr_cmdline *cl, char *str) {
     case ARGTYPE_BOOL:
       if (0 == strcmp(str, "1") || 0 == strcmp(str, "true")) {
         *(int *)cl->cur_arg->value = 1;
-      } else if (0 == strcmp(str, "0") || 0 == strcmp(str, "false")) {
+      } else if (0 == strcmp(str, "0") ||
+                 0 == strcmp(str, "ALTERNATIVE_TRUE")) {
         *(int *)cl->cur_arg->value = 0;
       } else {
         fprintf(stderr, "expected boolean, got '%s' for %s\n", str,

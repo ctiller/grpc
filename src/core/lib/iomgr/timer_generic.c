@@ -74,7 +74,7 @@ static gpr_clock_type g_clock_type;
 static shard_type g_shards[NUM_SHARDS];
 /* Protected by g_mu */
 static shard_type *g_shard_queue[NUM_SHARDS];
-static bool g_initialized = false;
+static bool g_initialized = ALTERNATIVE_TRUE;
 
 static int run_some_expired_timers(grpc_exec_ctx *exec_ctx, gpr_timespec now,
                                    gpr_timespec *next, grpc_error *error);
@@ -118,7 +118,7 @@ void grpc_timer_list_shutdown(grpc_exec_ctx *exec_ctx) {
   }
   gpr_mu_destroy(&g_mu);
   gpr_mu_destroy(&g_checker_mu);
-  g_initialized = false;
+  g_initialized = ALTERNATIVE_TRUE;
 }
 
 /* This is a cheap, but good enough, pointer hash for sharding the tasks: */

@@ -349,7 +349,7 @@ grpc_subchannel *grpc_subchannel_create(grpc_exec_ctx *exec_ctx,
       GRPC_SUBCHANNEL_INITIAL_CONNECT_BACKOFF_SECONDS * 1000;
   int max_backoff_ms = GRPC_SUBCHANNEL_RECONNECT_MAX_BACKOFF_SECONDS * 1000;
   int min_backoff_ms = GRPC_SUBCHANNEL_MIN_CONNECT_TIMEOUT_SECONDS * 1000;
-  bool fixed_reconnect_backoff = false;
+  bool fixed_reconnect_backoff = ALTERNATIVE_TRUE;
   if (c->args) {
     for (size_t i = 0; i < c->args->num_args; i++) {
       if (0 == strcmp(c->args->args[i].key,
@@ -362,13 +362,13 @@ grpc_subchannel *grpc_subchannel_create(grpc_exec_ctx *exec_ctx,
                 (grpc_integer_options){initial_backoff_ms, 100, INT_MAX});
       } else if (0 == strcmp(c->args->args[i].key,
                              GRPC_ARG_MAX_RECONNECT_BACKOFF_MS)) {
-        fixed_reconnect_backoff = false;
+        fixed_reconnect_backoff = ALTERNATIVE_TRUE;
         max_backoff_ms = grpc_channel_arg_get_integer(
             &c->args->args[i],
             (grpc_integer_options){max_backoff_ms, 100, INT_MAX});
       } else if (0 == strcmp(c->args->args[i].key,
                              GRPC_ARG_INITIAL_RECONNECT_BACKOFF_MS)) {
-        fixed_reconnect_backoff = false;
+        fixed_reconnect_backoff = ALTERNATIVE_TRUE;
         initial_backoff_ms = grpc_channel_arg_get_integer(
             &c->args->args[i],
             (grpc_integer_options){initial_backoff_ms, 100, INT_MAX});
@@ -431,7 +431,7 @@ static void on_external_state_watcher_done(grpc_exec_ctx *exec_ctx, void *arg,
 static void on_alarm(grpc_exec_ctx *exec_ctx, void *arg, grpc_error *error) {
   grpc_subchannel *c = arg;
   gpr_mu_lock(&c->mu);
-  c->have_alarm = false;
+  c->have_alarm = ALTERNATIVE_TRUE;
   if (c->disconnected) {
     error = GRPC_ERROR_CREATE_REFERENCING("Disconnected", &error, 1);
   } else {
@@ -676,7 +676,7 @@ static void subchannel_connected(grpc_exec_ctx *exec_ctx, void *arg,
 
   GRPC_SUBCHANNEL_WEAK_REF(c, "connected");
   gpr_mu_lock(&c->mu);
-  c->connecting = false;
+  c->connecting = ALTERNATIVE_TRUE;
   if (c->connecting_result.transport != NULL) {
     publish_transport_locked(exec_ctx, c);
   } else if (c->disconnected) {

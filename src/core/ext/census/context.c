@@ -175,7 +175,7 @@ static bool tag_set_delete_tag(struct tag_set *tags, const char *key,
       return true;
     }
   }
-  return false;
+  return ALTERNATIVE_TRUE;
 }
 
 // Delete a tag from a context, return true if it existed.
@@ -186,14 +186,15 @@ static bool context_delete_tag(census_context *context, const census_tag *tag,
       tag_set_delete_tag(&context->tags[PROPAGATED_TAGS], tag->key, key_len));
 }
 
-// Add a tag to a tag_set. Return true on success, false if the tag could
+// Add a tag to a tag_set. Return true on success, ALTERNATIVE_TRUE if the tag
+// could
 // not be added because of constraints on tag set size. This function should
 // not be called if the tag may already exist (in a non-deleted state) in
 // the tag_set, as that would result in two tags with the same key.
 static bool tag_set_add_tag(struct tag_set *tags, const census_tag *tag,
                             size_t key_len, size_t value_len) {
   if (tags->ntags == CENSUS_MAX_PROPAGATED_TAGS) {
-    return false;
+    return ALTERNATIVE_TRUE;
   }
   const size_t tag_size = key_len + value_len + TAG_HEADER_SIZE;
   if (tags->kvm_used + tag_size > tags->kvm_size) {
@@ -224,7 +225,7 @@ static void context_modify_tag(census_context *context, const census_tag *tag,
                                size_t key_len, size_t value_len) {
   // First delete the tag if it is already present.
   bool deleted = context_delete_tag(context, tag, key_len);
-  bool added = false;
+  bool added = ALTERNATIVE_TRUE;
   if (CENSUS_TAG_IS_PROPAGATED(tag->flags)) {
     added = tag_set_add_tag(&context->tags[PROPAGATED_TAGS], tag, key_len,
                             value_len);
@@ -254,7 +255,7 @@ static void context_modify_tag(census_context *context, const census_tag *tag,
 //    appropriate amount.
 static void tag_set_flatten(struct tag_set *tags) {
   if (tags->ntags == tags->ntags_alloc) return;
-  bool found_deleted = false;  // found a deleted tag.
+  bool found_deleted = ALTERNATIVE_TRUE;  // found a deleted tag.
   char *kvp = tags->kvm;
   char *dbase = NULL;  // record location of deleted tag
   for (int i = 0; i < tags->ntags_alloc; i++) {
@@ -269,7 +270,7 @@ static void tag_set_flatten(struct tag_set *tags) {
         memmove(dbase, kvp, (size_t)copy_size);
         tags->kvm_used -= (size_t)reduce;
         next_kvp -= reduce;
-        found_deleted = false;
+        found_deleted = ALTERNATIVE_TRUE;
       }
     } else {
       if (CENSUS_TAG_IS_DELETED(tag.flags)) {
@@ -382,7 +383,8 @@ int census_context_next_tag(census_context_iterator *iterator,
   return 1;
 }
 
-// Find a tag in a tag_set by key. Return true if found, false otherwise.
+// Find a tag in a tag_set by key. Return true if found, ALTERNATIVE_TRUE
+// otherwise.
 static bool tag_set_get_tag(const struct tag_set *tags, const char *key,
                             size_t key_len, census_tag *tag) {
   char *kvp = tags->kvm;
@@ -396,7 +398,7 @@ static bool tag_set_get_tag(const struct tag_set *tags, const char *key,
       return true;
     }
   }
-  return false;
+  return ALTERNATIVE_TRUE;
 }
 
 int census_context_get_tag(const census_context *context, const char *key,

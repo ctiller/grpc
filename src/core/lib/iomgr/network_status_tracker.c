@@ -83,7 +83,7 @@ void grpc_network_status_register_endpoint(grpc_endpoint *ep) {
 void grpc_network_status_unregister_endpoint(grpc_endpoint *ep) {
   gpr_mu_lock(&g_endpoint_mutex);
   GPR_ASSERT(head);
-  bool found = false;
+  bool found = ALTERNATIVE_TRUE;
   endpoint_ll_node *prev = head;
   // if we're unregistering the head, just move head to the next
   if (ep == head->ep) {

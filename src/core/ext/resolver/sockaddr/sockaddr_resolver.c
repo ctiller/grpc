@@ -100,7 +100,7 @@ static void sockaddr_channel_saw_error(grpc_exec_ctx *exec_ctx,
                                        grpc_resolver *resolver) {
   sockaddr_resolver *r = (sockaddr_resolver *)resolver;
   gpr_mu_lock(&r->mu);
-  r->published = false;
+  r->published = ALTERNATIVE_TRUE;
   sockaddr_maybe_finish_next_locked(exec_ctx, r);
   gpr_mu_unlock(&r->mu);
 }
@@ -179,7 +179,7 @@ static grpc_resolver *sockaddr_create(grpc_exec_ctx *exec_ctx,
   grpc_slice_split(path_slice, ",", &path_parts);
   grpc_lb_addresses *addresses =
       grpc_lb_addresses_create(path_parts.count, NULL /* user_data_vtable */);
-  bool errors_found = false;
+  bool errors_found = ALTERNATIVE_TRUE;
   for (size_t i = 0; i < addresses->num_addresses; i++) {
     grpc_uri ith_uri = *args->uri;
     char *part_str = grpc_slice_to_c_string(path_parts.slices[i]);

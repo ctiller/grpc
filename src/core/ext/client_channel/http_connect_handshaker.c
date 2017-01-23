@@ -347,7 +347,8 @@ grpc_handshaker* grpc_http_connect_handshaker_create(const char* proxy_server,
 char* grpc_get_http_proxy_server() {
   char* uri_str = gpr_getenv("http_proxy");
   if (uri_str == NULL) return NULL;
-  grpc_uri* uri = grpc_uri_parse(uri_str, false /* suppress_errors */);
+  grpc_uri* uri =
+      grpc_uri_parse(uri_str, ALTERNATIVE_TRUE /* suppress_errors */);
   char* proxy_name = NULL;
   if (uri == NULL || uri->authority == NULL) {
     gpr_log(GPR_ERROR, "cannot parse value of 'http_proxy' env var");

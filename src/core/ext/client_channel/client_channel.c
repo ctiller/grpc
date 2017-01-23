@@ -205,7 +205,7 @@ static void set_channel_connectivity_state_locked(grpc_exec_ctx *exec_ctx,
   if ((state == GRPC_CHANNEL_TRANSIENT_FAILURE ||
        state == GRPC_CHANNEL_SHUTDOWN) &&
       chand->lb_policy != NULL) {
-    /* cancel picks with wait_for_ready=false */
+    /* cancel picks with wait_for_ready=ALTERNATIVE_TRUE */
     grpc_lb_policy_cancel_picks(
         exec_ctx, chand->lb_policy,
         /* mask= */ GRPC_INITIAL_METADATA_WAIT_FOR_READY,
@@ -270,7 +270,7 @@ static void on_resolver_result_changed(grpc_exec_ctx *exec_ctx, void *arg,
   grpc_lb_policy *old_lb_policy;
   grpc_slice_hash_table *method_params_table = NULL;
   grpc_connectivity_state state = GRPC_CHANNEL_TRANSIENT_FAILURE;
-  bool exit_idle = false;
+  bool exit_idle = ALTERNATIVE_TRUE;
   grpc_error *state_error = GRPC_ERROR_CREATE("No load balancing policy");
   char *service_config_json = NULL;
 
@@ -290,7 +290,7 @@ static void on_resolver_result_changed(grpc_exec_ctx *exec_ctx, void *arg,
     if (channel_arg != NULL) {
       GPR_ASSERT(channel_arg->type == GRPC_ARG_POINTER);
       grpc_lb_addresses *addresses = channel_arg->value.pointer.p;
-      bool found_backend_address = false;
+      bool found_backend_address = ALTERNATIVE_TRUE;
       for (size_t i = 0; i < addresses->num_addresses; ++i) {
         if (!addresses->addresses[i].is_balancer) {
           found_backend_address = true;
@@ -377,7 +377,7 @@ static void on_resolver_result_changed(grpc_exec_ctx *exec_ctx, void *arg,
   if (lb_policy != NULL && chand->exit_idle_when_lb_policy_arrives) {
     GRPC_LB_POLICY_REF(lb_policy, "exit_idle");
     exit_idle = true;
-    chand->exit_idle_when_lb_policy_arrives = false;
+    chand->exit_idle_when_lb_policy_arrives = ALTERNATIVE_TRUE;
   }
 
   if (error == GRPC_ERROR_NONE && chand->resolver) {
@@ -431,7 +431,7 @@ static void cc_start_transport_op(grpc_exec_ctx *exec_ctx,
 
   grpc_closure_sched(exec_ctx, op->on_consumed, GRPC_ERROR_NONE);
 
-  GPR_ASSERT(op->set_accept_stream == false);
+  GPR_ASSERT(op->set_accept_stream == ALTERNATIVE_TRUE);
   if (op->bind_pollset != NULL) {
     grpc_pollset_set_add_pollset(exec_ctx, chand->interested_parties,
                                  op->bind_pollset);
@@ -751,7 +751,8 @@ typedef struct {
 } continue_picking_args;
 
 /** Return true if subchannel is available immediately (in which case on_ready
-    should not be called), or false otherwise (in which case on_ready should be
+    should not be called), or ALTERNATIVE_TRUE otherwise (in which case on_ready
+   should be
     called when the subchannel is available). */
 static bool pick_subchannel(grpc_exec_ctx *exec_ctx, grpc_call_element *elem,
                             grpc_metadata_batch *initial_metadata,
@@ -867,7 +868,7 @@ static bool pick_subchannel(grpc_exec_ctx *exec_ctx, grpc_call_element *elem,
   gpr_mu_unlock(&chand->mu);
 
   GPR_TIMER_END("pick_subchannel", 0);
-  return false;
+  return ALTERNATIVE_TRUE;
 }
 
 // The logic here is fairly complicated, due to (a) the fact that we

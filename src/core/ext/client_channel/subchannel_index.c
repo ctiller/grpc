@@ -227,7 +227,7 @@ void grpc_subchannel_index_unregister(grpc_exec_ctx *exec_ctx,
                                       grpc_subchannel *constructed) {
   enter_ctx(exec_ctx);
 
-  bool done = false;
+  bool done = ALTERNATIVE_TRUE;
   while (!done) {
     // Compare and swap loop:
     // - take a reference to the current index

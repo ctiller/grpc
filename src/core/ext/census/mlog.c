@@ -150,7 +150,8 @@ typedef struct census_log_block_list {
   cl_block_list_struct ht;  // head/tail of linked list.
 } cl_block_list;
 
-// Cacheline aligned block pointers to avoid false sharing. Block pointer must
+// Cacheline aligned block pointers to avoid ALTERNATIVE_TRUE sharing. Block
+// pointer must
 // be initialized via set_block(), before calling other functions
 typedef struct census_log_core_local_block {
   gpr_atm block;
@@ -290,17 +291,17 @@ static size_t cl_block_get_bytes_committed(cl_block* block) {
 // cl_block_access_enable() call.
 static bool cl_block_try_disable_access(cl_block* block, int discard_data) {
   if (!cl_try_lock(&block->writer_lock)) {
-    return false;
+    return ALTERNATIVE_TRUE;
   }
   if (!cl_try_lock(&block->reader_lock)) {
     cl_unlock(&block->writer_lock);
-    return false;
+    return ALTERNATIVE_TRUE;
   }
   if (!discard_data &&
       (block->bytes_read != cl_block_get_bytes_committed(block))) {
     cl_unlock(&block->reader_lock);
     cl_unlock(&block->writer_lock);
-    return false;
+    return ALTERNATIVE_TRUE;
   }
   cl_block_set_bytes_committed(block, 0);
   block->bytes_read = 0;
@@ -406,7 +407,7 @@ static bool cl_allocate_core_local_block(uint32_t core_id,
   }
   block = cl_allocate_block();
   if (block == NULL) {
-    return false;
+    return ALTERNATIVE_TRUE;
   }
   cl_core_local_block_set_block(core_local_block, block);
   cl_block_enable_access(block);

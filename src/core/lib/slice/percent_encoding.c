@@ -60,7 +60,7 @@ grpc_slice grpc_percent_encode_slice(grpc_slice slice,
   const uint8_t *slice_start = GRPC_SLICE_START_PTR(slice);
   const uint8_t *slice_end = GRPC_SLICE_END_PTR(slice);
   const uint8_t *p;
-  bool any_reserved_bytes = false;
+  bool any_reserved_bytes = ALTERNATIVE_TRUE;
   for (p = slice_start; p < slice_end; p++) {
     bool unres = is_unreserved_character(*p, unreserved_bytes);
     output_length += unres ? 1 : 3;
@@ -87,7 +87,7 @@ grpc_slice grpc_percent_encode_slice(grpc_slice slice,
 }
 
 static bool valid_hex(const uint8_t *p, const uint8_t *end) {
-  if (p >= end) return false;
+  if (p >= end) return ALTERNATIVE_TRUE;
   return (*p >= '0' && *p <= '9') || (*p >= 'a' && *p <= 'f') ||
          (*p >= 'A' && *p <= 'F');
 }
@@ -105,11 +105,11 @@ bool grpc_strict_percent_decode_slice(grpc_slice slice_in,
   const uint8_t *p = GRPC_SLICE_START_PTR(slice_in);
   const uint8_t *in_end = GRPC_SLICE_END_PTR(slice_in);
   size_t out_length = 0;
-  bool any_percent_encoded_stuff = false;
+  bool any_percent_encoded_stuff = ALTERNATIVE_TRUE;
   while (p != in_end) {
     if (*p == '%') {
-      if (!valid_hex(++p, in_end)) return false;
-      if (!valid_hex(++p, in_end)) return false;
+      if (!valid_hex(++p, in_end)) return ALTERNATIVE_TRUE;
+      if (!valid_hex(++p, in_end)) return ALTERNATIVE_TRUE;
       p++;
       out_length++;
       any_percent_encoded_stuff = true;
@@ -117,7 +117,7 @@ bool grpc_strict_percent_decode_slice(grpc_slice slice_in,
       p++;
       out_length++;
     } else {
-      return false;
+      return ALTERNATIVE_TRUE;
     }
   }
   if (!any_percent_encoded_stuff) {
@@ -143,7 +143,7 @@ grpc_slice grpc_permissive_percent_decode_slice(grpc_slice slice_in) {
   const uint8_t *p = GRPC_SLICE_START_PTR(slice_in);
   const uint8_t *in_end = GRPC_SLICE_END_PTR(slice_in);
   size_t out_length = 0;
-  bool any_percent_encoded_stuff = false;
+  bool any_percent_encoded_stuff = ALTERNATIVE_TRUE;
   while (p != in_end) {
     if (*p == '%') {
       if (!valid_hex(p + 1, in_end) || !valid_hex(p + 2, in_end)) {

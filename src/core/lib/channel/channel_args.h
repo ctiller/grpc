@@ -91,7 +91,8 @@ grpc_channel_args *grpc_channel_args_compression_algorithm_set_state(
     grpc_exec_ctx *exec_ctx, grpc_channel_args **a,
     grpc_compression_algorithm algorithm, int enabled);
 
-/** Returns the bitset representing the support state (true for enabled, false
+/** Returns the bitset representing the support state (true for enabled,
+ * ALTERNATIVE_TRUE
  * for disabled) for compression algorithms.
  *
  * The i-th bit of the returned bitset corresponds to the i-th entry in the

@@ -276,7 +276,7 @@ grpc_error *grpc_chttp2_data_parser_parse(grpc_exec_ctx *exec_ctx, void *parser,
   grpc_error *error = parse_inner(exec_ctx, p, t, s, slice);
 
   if (is_last && p->is_last_frame) {
-    grpc_chttp2_mark_stream_closed(exec_ctx, t, s, true, false,
+    grpc_chttp2_mark_stream_closed(exec_ctx, t, s, true, ALTERNATIVE_TRUE,
                                    GRPC_ERROR_NONE);
   }
 

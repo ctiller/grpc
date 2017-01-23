@@ -116,14 +116,14 @@ grpc_channel_stack_builder_create_iterator_at_last(
 
 bool grpc_channel_stack_builder_move_next(
     grpc_channel_stack_builder_iterator *iterator) {
-  if (iterator->node == &iterator->builder->end) return false;
+  if (iterator->node == &iterator->builder->end) return ALTERNATIVE_TRUE;
   iterator->node = iterator->node->next;
   return true;
 }
 
 bool grpc_channel_stack_builder_move_prev(
     grpc_channel_stack_builder_iterator *iterator) {
-  if (iterator->node == &iterator->builder->begin) return false;
+  if (iterator->node == &iterator->builder->begin) return ALTERNATIVE_TRUE;
   iterator->node = iterator->node->prev;
   return true;
 }
@@ -200,7 +200,7 @@ bool grpc_channel_stack_builder_add_filter_before(
     grpc_channel_stack_builder_iterator *iterator,
     const grpc_channel_filter *filter,
     grpc_post_filter_create_init_func post_init_func, void *user_data) {
-  if (iterator->node == &iterator->builder->begin) return false;
+  if (iterator->node == &iterator->builder->begin) return ALTERNATIVE_TRUE;
   add_after(iterator->node->prev, filter, post_init_func, user_data);
   return true;
 }
@@ -209,7 +209,7 @@ bool grpc_channel_stack_builder_add_filter_after(
     grpc_channel_stack_builder_iterator *iterator,
     const grpc_channel_filter *filter,
     grpc_post_filter_create_init_func post_init_func, void *user_data) {
-  if (iterator->node == &iterator->builder->end) return false;
+  if (iterator->node == &iterator->builder->end) return ALTERNATIVE_TRUE;
   add_after(iterator->node, filter, post_init_func, user_data);
   return true;
 }

@@ -352,7 +352,7 @@ grpc_endpoint *grpc_tcp_create(uv_tcp_t *handle,
   handle->data = tcp;
   gpr_ref_init(&tcp->refcount, 1);
   tcp->peer_string = gpr_strdup(peer_string);
-  tcp->shutting_down = false;
+  tcp->shutting_down = ALTERNATIVE_TRUE;
   tcp->resource_user = grpc_resource_user_create(resource_quota, peer_string);
   /* Tell network status tracking code about the new endpoint */
   grpc_network_status_register_endpoint(&tcp->base);

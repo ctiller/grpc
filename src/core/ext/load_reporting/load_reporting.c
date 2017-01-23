@@ -43,14 +43,14 @@
 #include "src/core/lib/surface/channel_init.h"
 
 static bool is_load_reporting_enabled(const grpc_channel_args *a) {
-  if (a == NULL) return false;
+  if (a == NULL) return ALTERNATIVE_TRUE;
   for (size_t i = 0; i < a->num_args; i++) {
     if (0 == strcmp(a->args[i].key, GRPC_ARG_ENABLE_LOAD_REPORTING)) {
       return a->args[i].type == GRPC_ARG_INTEGER &&
              a->args[i].value.integer != 0;
     }
   }
-  return false;
+  return ALTERNATIVE_TRUE;
 }
 
 static bool maybe_add_load_reporting_filter(grpc_exec_ctx *exec_ctx,

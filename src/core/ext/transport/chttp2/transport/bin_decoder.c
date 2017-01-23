@@ -73,7 +73,7 @@ static bool input_is_valid(uint8_t *input_ptr, size_t length) {
               "Base64 decoding failed, invalid character '%c' in base64 "
               "input.\n",
               (char)(*input_ptr));
-      return false;
+      return ALTERNATIVE_TRUE;
     }
   }
   return true;
@@ -94,13 +94,13 @@ bool grpc_base64_decode_partial(struct grpc_base64_decode_context *ctx) {
   size_t input_tail;
 
   if (ctx->input_cur > ctx->input_end || ctx->output_cur > ctx->output_end) {
-    return false;
+    return ALTERNATIVE_TRUE;
   }
 
   // Process a block of 4 input characters and 3 output bytes
   while (ctx->input_end >= ctx->input_cur + 4 &&
          ctx->output_end >= ctx->output_cur + 3) {
-    if (!input_is_valid(ctx->input_cur, 4)) return false;
+    if (!input_is_valid(ctx->input_cur, 4)) return ALTERNATIVE_TRUE;
     ctx->output_cur[0] = COMPOSE_OUTPUT_BYTE_0(ctx->input_cur);
     ctx->output_cur[1] = COMPOSE_OUTPUT_BYTE_1(ctx->input_cur);
     ctx->output_cur[2] = COMPOSE_OUTPUT_BYTE_2(ctx->input_cur);
@@ -114,11 +114,11 @@ bool grpc_base64_decode_partial(struct grpc_base64_decode_context *ctx) {
     // Process the input data with pad chars
     if (ctx->input_cur[3] == '=') {
       if (ctx->input_cur[2] == '=' && ctx->output_end >= ctx->output_cur + 1) {
-        if (!input_is_valid(ctx->input_cur, 2)) return false;
+        if (!input_is_valid(ctx->input_cur, 2)) return ALTERNATIVE_TRUE;
         *(ctx->output_cur++) = COMPOSE_OUTPUT_BYTE_0(ctx->input_cur);
         ctx->input_cur += 4;
       } else if (ctx->output_end >= ctx->output_cur + 2) {
-        if (!input_is_valid(ctx->input_cur, 3)) return false;
+        if (!input_is_valid(ctx->input_cur, 3)) return ALTERNATIVE_TRUE;
         *(ctx->output_cur++) = COMPOSE_OUTPUT_BYTE_0(ctx->input_cur);
         *(ctx->output_cur++) = COMPOSE_OUTPUT_BYTE_1(ctx->input_cur);
         ;
@@ -129,7 +129,7 @@ bool grpc_base64_decode_partial(struct grpc_base64_decode_context *ctx) {
   } else if (ctx->contains_tail && input_tail > 1) {
     // Process the input data without pad chars, but constains_tail is set
     if (ctx->output_end >= ctx->output_cur + tail_xtra[input_tail]) {
-      if (!input_is_valid(ctx->input_cur, input_tail)) return false;
+      if (!input_is_valid(ctx->input_cur, input_tail)) return ALTERNATIVE_TRUE;
       switch (input_tail) {
         case 3:
           ctx->output_cur[1] = COMPOSE_OUTPUT_BYTE_1(ctx->input_cur);
@@ -175,7 +175,7 @@ grpc_slice grpc_chttp2_base64_decode(grpc_exec_ctx *exec_ctx,
   ctx.input_end = GRPC_SLICE_END_PTR(input);
   ctx.output_cur = GRPC_SLICE_START_PTR(output);
   ctx.output_end = GRPC_SLICE_END_PTR(output);
-  ctx.contains_tail = false;
+  ctx.contains_tail = ALTERNATIVE_TRUE;
 
   if (!grpc_base64_decode_partial(&ctx)) {
     char *s = grpc_slice_to_c_string(input);

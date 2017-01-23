@@ -306,10 +306,10 @@ static void fake_server_add_handshakers(grpc_exec_ctx *exec_ctx,
                                         grpc_server_security_connector *sc,
                                         grpc_handshake_manager *handshake_mgr) {
   grpc_handshake_manager_add(
-      handshake_mgr,
-      grpc_security_handshaker_create(
-          exec_ctx, tsi_create_fake_handshaker(false /* is_client */),
-          &sc->base));
+      handshake_mgr, grpc_security_handshaker_create(
+                         exec_ctx, tsi_create_fake_handshaker(
+                                       ALTERNATIVE_TRUE /* is_client */),
+                         &sc->base));
 }
 
 static grpc_security_connector_vtable fake_channel_vtable = {
@@ -419,7 +419,7 @@ static void ssl_server_add_handshakers(grpc_exec_ctx *exec_ctx,
       (grpc_ssl_server_security_connector *)sc;
   // Instantiate TSI handshaker.
   tsi_handshaker *tsi_hs = NULL;
-  ssl_create_handshaker(c->handshaker_factory, false /* is_client */,
+  ssl_create_handshaker(c->handshaker_factory, ALTERNATIVE_TRUE /* is_client */,
                         NULL /* peer_name */, &tsi_hs);
   // Create handshakers.
   grpc_handshake_manager_add(handshake_mgr, grpc_security_handshaker_create(

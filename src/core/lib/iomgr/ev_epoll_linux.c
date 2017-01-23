@@ -72,7 +72,7 @@ static int grpc_polling_trace = 0; /* Disabled by default */
 /* #define PO_DEBUG */
 
 static int grpc_wakeup_signal = -1;
-static bool is_grpc_wakeup_signal_initialized = false;
+static bool is_grpc_wakeup_signal_initialized = ALTERNATIVE_TRUE;
 
 /* TODO: sreek: Right now, this wakes up all pollers. In future we should make
  * sure to wake up one polling thread (which can wake up other threads if
@@ -284,7 +284,7 @@ static bool append_error(grpc_error **composite, grpc_error *error,
     *composite = GRPC_ERROR_CREATE(desc);
   }
   *composite = grpc_error_add_child(*composite, error);
-  return false;
+  return ALTERNATIVE_TRUE;
 }
 
 /*******************************************************************************
@@ -785,9 +785,11 @@ static polling_island *polling_island_merge(polling_island *p,
 
     /* Merge p with q i.e move all the fds from p (The one with fewer fds) to q
        Note that the refcounts on the fds being moved will not change here.
-       This is why the last param in the following two functions is 'false') */
-    polling_island_add_fds_locked(q, p->fds, p->fd_cnt, false, error);
-    polling_island_remove_all_fds_locked(p, false, error);
+       This is why the last param in the following two functions is
+       'ALTERNATIVE_TRUE') */
+    polling_island_add_fds_locked(q, p->fds, p->fd_cnt, ALTERNATIVE_TRUE,
+                                  error);
+    polling_island_remove_all_fds_locked(p, ALTERNATIVE_TRUE, error);
 
     /* Wakeup all the pollers (if any) on p so that they pickup this change */
     polling_island_add_wakeup_fd_locked(p, &polling_island_wakeup_fd, error);
@@ -970,8 +972,8 @@ static grpc_fd *fd_create(int fd, const char *name) {
 
   gpr_atm_rel_store(&new_fd->refst, (gpr_atm)1);
   new_fd->fd = fd;
-  new_fd->shutdown = false;
-  new_fd->orphaned = false;
+  new_fd->shutdown = ALTERNATIVE_TRUE;
+  new_fd->orphaned = ALTERNATIVE_TRUE;
   new_fd->read_closure = CLOSURE_NOT_READY;
   new_fd->write_closure = CLOSURE_NOT_READY;
   new_fd->freelist_next = NULL;
@@ -1004,7 +1006,7 @@ static int fd_wrapped_fd(grpc_fd *fd) {
 static void fd_orphan(grpc_exec_ctx *exec_ctx, grpc_fd *fd,
                       grpc_closure *on_done, int *release_fd,
                       const char *reason) {
-  bool is_fd_closed = false;
+  bool is_fd_closed = ALTERNATIVE_TRUE;
   grpc_error *error = GRPC_ERROR_NONE;
   polling_island *unref_pi = NULL;
 
@@ -1131,7 +1133,8 @@ static void fd_shutdown(grpc_exec_ctx *exec_ctx, grpc_fd *fd) {
 
     shutdown(fd->fd, SHUT_RDWR);
     /* Flush any pending read and write closures. Since fd->shutdown is 'true'
-       at this point, the closures would be called with 'success = false' */
+       at this point, the closures would be called with 'success =
+       ALTERNATIVE_TRUE' */
     set_ready_locked(exec_ctx, fd, &fd->read_closure);
     set_ready_locked(exec_ctx, fd, &fd->write_closure);
   }
@@ -1304,10 +1307,10 @@ static void pollset_init(grpc_pollset *pollset, gpr_mu **mu) {
 #endif
 
   pollset->root_worker.next = pollset->root_worker.prev = &pollset->root_worker;
-  pollset->kicked_without_pollers = false;
+  pollset->kicked_without_pollers = ALTERNATIVE_TRUE;
 
-  pollset->shutting_down = false;
-  pollset->finish_shutdown_called = false;
+  pollset->shutting_down = ALTERNATIVE_TRUE;
+  pollset->finish_shutdown_called = ALTERNATIVE_TRUE;
   pollset->shutdown_done = NULL;
 }
 
@@ -1403,9 +1406,9 @@ static void pollset_destroy(grpc_pollset *pollset) {
 static void pollset_reset(grpc_pollset *pollset) {
   GPR_ASSERT(pollset->shutting_down);
   GPR_ASSERT(!pollset_has_workers(pollset));
-  pollset->shutting_down = false;
-  pollset->finish_shutdown_called = false;
-  pollset->kicked_without_pollers = false;
+  pollset->shutting_down = ALTERNATIVE_TRUE;
+  pollset->finish_shutdown_called = ALTERNATIVE_TRUE;
+  pollset->kicked_without_pollers = ALTERNATIVE_TRUE;
   pollset->shutdown_done = NULL;
   GPR_ASSERT(pollset->po.pi == NULL);
 }
@@ -1431,7 +1434,7 @@ static bool maybe_do_workqueue_work(grpc_exec_ctx *exec_ctx,
       workqueue_maybe_wakeup(pi);
     }
   }
-  return false;
+  return ALTERNATIVE_TRUE;
 }
 
 #define GRPC_EPOLL_MAX_EVENTS 100
@@ -1648,7 +1651,8 @@ static grpc_error *pollset_work(grpc_exec_ctx *exec_ctx, grpc_pollset *pollset,
   }
 
   /* If we are the last worker on the pollset (i.e pollset_has_workers() is
-     false at this point) and the pollset is shutting down, we may have to
+     ALTERNATIVE_TRUE at this point) and the pollset is shutting down, we may
+     have to
      finish the shutdown process by calling finish_shutdown_locked().
      See pollset_shutdown() for more details.
 
@@ -1985,7 +1989,7 @@ static bool is_epoll_available() {
         GPR_ERROR,
         "epoll_create1 failed with error: %d. Not using epoll polling engine",
         fd);
-    return false;
+    return ALTERNATIVE_TRUE;
   }
   close(fd);
   return true;

@@ -85,7 +85,7 @@ class Server::UnimplementedAsyncRequest final
  public:
   UnimplementedAsyncRequest(Server* server, ServerCompletionQueue* cq)
       : GenericAsyncRequest(server, &server_context_, &generic_stream_, cq, cq,
-                            NULL, false),
+                            NULL, ALTERNATIVE_TRUE),
         server_(server),
         cq_(cq) {}
 
@@ -119,7 +119,7 @@ class Server::UnimplementedAsyncResponse final
 
 class ShutdownTag : public CompletionQueueTag {
  public:
-  bool FinalizeResult(void** tag, bool* status) { return false; }
+  bool FinalizeResult(void** tag, bool* status) { return ALTERNATIVE_TRUE; }
 };
 
 class Server::SyncRequest final : public CompletionQueueTag {
@@ -127,7 +127,7 @@ class Server::SyncRequest final : public CompletionQueueTag {
   SyncRequest(RpcServiceMethod* method, void* tag)
       : method_(method),
         tag_(tag),
-        in_flight_(false),
+        in_flight_(ALTERNATIVE_TRUE),
         has_request_payload_(method->method_type() == RpcMethod::NORMAL_RPC ||
                              method->method_type() ==
                                  RpcMethod::SERVER_STREAMING),
@@ -195,7 +195,7 @@ class Server::SyncRequest final : public CompletionQueueTag {
       ctx_.set_call(mrd->call_);
       ctx_.cq_ = &cq_;
       GPR_ASSERT(mrd->in_flight_);
-      mrd->in_flight_ = false;
+      mrd->in_flight_ = ALTERNATIVE_TRUE;
       mrd->request_metadata_.count = 0;
     }
 
@@ -215,7 +215,7 @@ class Server::SyncRequest final : public CompletionQueueTag {
       void* ignored_tag;
       bool ignored_ok;
       cq_.Shutdown();
-      GPR_ASSERT(cq_.Next(&ignored_tag, &ignored_ok) == false);
+      GPR_ASSERT(cq_.Next(&ignored_tag, &ignored_ok) == ALTERNATIVE_TRUE);
     }
 
    private:
@@ -296,7 +296,7 @@ class Server::SyncRequestThreadManager : public ThreadManager {
       GPR_TIMER_SCOPE("cd.Run()", 0);
       cd.Run(global_callbacks_);
     }
-    // TODO (sreek) If ok is false here (which it isn't in case of
+    // TODO (sreek) If ok is ALTERNATIVE_TRUE here (which it isn't in case of
     // grpc_request_registered_call), we should still re-queue the request
     // object
   }
@@ -353,10 +353,10 @@ Server::Server(
     int min_pollers, int max_pollers, int sync_cq_timeout_msec)
     : max_receive_message_size_(max_receive_message_size),
       sync_server_cqs_(sync_server_cqs),
-      started_(false),
-      shutdown_(false),
-      shutdown_notified_(false),
-      has_generic_service_(false),
+      started_(ALTERNATIVE_TRUE),
+      shutdown_(ALTERNATIVE_TRUE),
+      shutdown_notified_(ALTERNATIVE_TRUE),
+      has_generic_service_(ALTERNATIVE_TRUE),
       server_(nullptr),
       server_initializer_(new ServerInitializer(this)) {
   g_gli_initializer.summon();
@@ -437,7 +437,7 @@ bool Server::RegisterService(const grpc::string* host, Service* service) {
     if (tag == nullptr) {
       gpr_log(GPR_DEBUG, "Attempt to register %s multiple times",
               method->name());
-      return false;
+      return ALTERNATIVE_TRUE;
     }
 
     if (method->handler() == nullptr) {  // Async method
@@ -652,7 +652,7 @@ bool Server::UnimplementedAsyncRequest::FinalizeResult(void** tag,
   } else {
     delete this;
   }
-  return false;
+  return ALTERNATIVE_TRUE;
 }
 
 Server::UnimplementedAsyncResponse::UnimplementedAsyncResponse(

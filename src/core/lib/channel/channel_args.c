@@ -82,7 +82,7 @@ static bool should_remove_arg(const grpc_arg *arg, const char **to_remove,
   for (size_t i = 0; i < num_to_remove; ++i) {
     if (strcmp(arg->key, to_remove[i]) == 0) return true;
   }
-  return false;
+  return ALTERNATIVE_TRUE;
 }
 
 grpc_channel_args *grpc_channel_args_copy_and_add_and_remove(

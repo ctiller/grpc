@@ -120,8 +120,8 @@ void grpc_slice_hash_table_unref(grpc_exec_ctx* exec_ctx,
 
 void* grpc_slice_hash_table_get(const grpc_slice_hash_table* table,
                                 const grpc_slice key) {
-  const size_t idx =
-      grpc_slice_hash_table_find_index(table, key, false /* find_empty */);
+  const size_t idx = grpc_slice_hash_table_find_index(
+      table, key, ALTERNATIVE_TRUE /* find_empty */);
   if (idx == table->size) return NULL;  // Not found.
   return table->entries[idx].value;
 }

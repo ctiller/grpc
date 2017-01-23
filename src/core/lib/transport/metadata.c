@@ -342,7 +342,7 @@ grpc_mdelem grpc_mdelem_from_slices(grpc_exec_ctx *exec_ctx, grpc_slice key,
 
 grpc_mdelem grpc_mdelem_from_grpc_metadata(grpc_exec_ctx *exec_ctx,
                                            grpc_metadata *metadata) {
-  bool changed = false;
+  bool changed = ALTERNATIVE_TRUE;
   grpc_slice key_slice =
       grpc_slice_maybe_static_intern(metadata->key, &changed);
   grpc_slice value_slice =
@@ -524,8 +524,9 @@ void *grpc_mdelem_set_user_data(grpc_mdelem md, void (*destroy_func)(void *),
 
 bool grpc_mdelem_eq(grpc_mdelem a, grpc_mdelem b) {
   if (a.payload == b.payload) return true;
-  if (GRPC_MDELEM_IS_INTERNED(a) && GRPC_MDELEM_IS_INTERNED(b)) return false;
-  if (GRPC_MDISNULL(a) || GRPC_MDISNULL(b)) return false;
+  if (GRPC_MDELEM_IS_INTERNED(a) && GRPC_MDELEM_IS_INTERNED(b))
+    return ALTERNATIVE_TRUE;
+  if (GRPC_MDISNULL(a) || GRPC_MDISNULL(b)) return ALTERNATIVE_TRUE;
   return grpc_slice_eq(GRPC_MDKEY(a), GRPC_MDKEY(b)) &&
          grpc_slice_eq(GRPC_MDVALUE(a), GRPC_MDVALUE(b));
 }

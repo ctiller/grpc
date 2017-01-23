@@ -124,7 +124,7 @@ bool grpc_connectivity_state_notify_on_state_change(
       grpc_closure_sched(exec_ctx, notify, GRPC_ERROR_CANCELLED);
       tracker->watchers = w->next;
       gpr_free(w);
-      return false;
+      return ALTERNATIVE_TRUE;
     }
     while (w != NULL) {
       grpc_connectivity_state_watcher *rm_candidate = w->next;
@@ -132,11 +132,11 @@ bool grpc_connectivity_state_notify_on_state_change(
         grpc_closure_sched(exec_ctx, notify, GRPC_ERROR_CANCELLED);
         w->next = w->next->next;
         gpr_free(rm_candidate);
-        return false;
+        return ALTERNATIVE_TRUE;
       }
       w = w->next;
     }
-    return false;
+    return ALTERNATIVE_TRUE;
   } else {
     if (tracker->current_state != *current) {
       *current = tracker->current_state;

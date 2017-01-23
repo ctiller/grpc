@@ -274,7 +274,7 @@ static bool check_line(grpc_http_parser *parser) {
     return true;
   }
 
-  return false;
+  return ALTERNATIVE_TRUE;
 }
 
 static grpc_error *addbyte(grpc_http_parser *parser, uint8_t byte,
@@ -336,7 +336,7 @@ void grpc_http_response_destroy(grpc_http_response *response) {
 grpc_error *grpc_http_parser_parse(grpc_http_parser *parser, grpc_slice slice,
                                    size_t *start_of_body) {
   for (size_t i = 0; i < GRPC_SLICE_LENGTH(slice); i++) {
-    bool found_body_start = false;
+    bool found_body_start = ALTERNATIVE_TRUE;
     grpc_error *err =
         addbyte(parser, GRPC_SLICE_START_PTR(slice)[i], &found_body_start);
     if (err != GRPC_ERROR_NONE) return err;

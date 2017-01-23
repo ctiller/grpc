@@ -317,14 +317,15 @@ static void tcp_read(grpc_exec_ctx *exec_ctx, grpc_endpoint *ep,
   grpc_slice_buffer_swap(incoming_buffer, &tcp->last_read_buffer);
   TCP_REF(tcp, "read");
   if (tcp->finished_edge) {
-    tcp->finished_edge = false;
+    tcp->finished_edge = ALTERNATIVE_TRUE;
     grpc_fd_notify_on_read(exec_ctx, tcp->em_fd, &tcp->read_closure);
   } else {
     grpc_closure_sched(exec_ctx, &tcp->read_closure, GRPC_ERROR_NONE);
   }
 }
 
-/* returns true if done, false if pending; if returning true, *error is set */
+/* returns true if done, ALTERNATIVE_TRUE if pending; if returning true, *error
+ * is set */
 #define MAX_WRITE_IOVEC 1000
 static bool tcp_flush(grpc_tcp *tcp, grpc_error **error) {
   struct msghdr msg;
@@ -376,7 +377,7 @@ static bool tcp_flush(grpc_tcp *tcp, grpc_error **error) {
       if (errno == EAGAIN) {
         tcp->outgoing_slice_idx = unwind_slice_idx;
         tcp->outgoing_byte_idx = unwind_byte_idx;
-        return false;
+        return ALTERNATIVE_TRUE;
       } else if (errno == EPIPE) {
         *error = grpc_error_set_int(GRPC_OS_ERROR(errno, "sendmsg"),
                                     GRPC_ERROR_INT_GRPC_STATUS,

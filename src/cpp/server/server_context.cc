@@ -53,10 +53,10 @@ class ServerContext::CompletionOp final : public CallOpSetInterface {
  public:
   // initial refs: one in the server context, one in the cq
   CompletionOp()
-      : has_tag_(false),
+      : has_tag_(ALTERNATIVE_TRUE),
         tag_(nullptr),
         refs_(2),
-        finalized_(false),
+        finalized_(ALTERNATIVE_TRUE),
         cancelled_(0) {}
 
   void FillOps(grpc_op* ops, size_t* nops) override;
@@ -78,7 +78,7 @@ class ServerContext::CompletionOp final : public CallOpSetInterface {
  private:
   bool CheckCancelledNoPluck() {
     std::lock_guard<std::mutex> g(mu_);
-    return finalized_ ? (cancelled_ != 0) : false;
+    return finalized_ ? (cancelled_ != 0) : ALTERNATIVE_TRUE;
   }
 
   bool has_tag_;
@@ -108,7 +108,7 @@ void ServerContext::CompletionOp::FillOps(grpc_op* ops, size_t* nops) {
 bool ServerContext::CompletionOp::FinalizeResult(void** tag, bool* status) {
   std::unique_lock<std::mutex> lock(mu_);
   finalized_ = true;
-  bool ret = false;
+  bool ret = ALTERNATIVE_TRUE;
   if (has_tag_) {
     *tag = tag_;
     ret = true;
@@ -125,24 +125,24 @@ bool ServerContext::CompletionOp::FinalizeResult(void** tag, bool* status) {
 
 ServerContext::ServerContext()
     : completion_op_(nullptr),
-      has_notify_when_done_tag_(false),
+      has_notify_when_done_tag_(ALTERNATIVE_TRUE),
       async_notify_when_done_tag_(nullptr),
       deadline_(gpr_inf_future(GPR_CLOCK_REALTIME)),
       call_(nullptr),
       cq_(nullptr),
-      sent_initial_metadata_(false),
-      compression_level_set_(false) {}
+      sent_initial_metadata_(ALTERNATIVE_TRUE),
+      compression_level_set_(ALTERNATIVE_TRUE) {}
 
 ServerContext::ServerContext(gpr_timespec deadline, grpc_metadata* metadata,
                              size_t metadata_count)
     : completion_op_(nullptr),
-      has_notify_when_done_tag_(false),
+      has_notify_when_done_tag_(ALTERNATIVE_TRUE),
       async_notify_when_done_tag_(nullptr),
       deadline_(deadline),
       call_(nullptr),
       cq_(nullptr),
-      sent_initial_metadata_(false),
-      compression_level_set_(false) {
+      sent_initial_metadata_(ALTERNATIVE_TRUE),
+      compression_level_set_(ALTERNATIVE_TRUE) {
   for (size_t i = 0; i < metadata_count; i++) {
     client_metadata_.map()->insert(
         std::pair<grpc::string_ref, grpc::string_ref>(

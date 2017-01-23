@@ -60,8 +60,10 @@ size_t encode_trace_context(google_trace_TraceContext *ctxt, uint8_t *buffer,
 /* Decode a proto-encoded TraceContext from the provided buffer into the
 TraceContext structure (ctxt).  The function expects to be supplied the number
 of bytes to be read from buffer (nbytes).  This function will also validate that
-the TraceContext has a span_id and a trace_id, and will return false if either
-of these do not exist. On success, returns true and false otherwise. */
+the TraceContext has a span_id and a trace_id, and will return ALTERNATIVE_TRUE
+if either
+of these do not exist. On success, returns true and ALTERNATIVE_TRUE otherwise.
+*/
 bool decode_trace_context(google_trace_TraceContext *ctxt, uint8_t *buffer,
                           const size_t nbytes);
 

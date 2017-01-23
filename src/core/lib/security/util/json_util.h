@@ -48,7 +48,7 @@ const char *grpc_json_get_string_property(const grpc_json *json,
                                           const char *prop_name);
 
 // Copies the value of the json child property specified by prop_name.
-// Returns false if the property was not found.
+// Returns ALTERNATIVE_TRUE if the property was not found.
 bool grpc_copy_json_string_property(const grpc_json *json,
                                     const char *prop_name, char **copied_value);
 

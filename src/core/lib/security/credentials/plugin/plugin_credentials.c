@@ -78,7 +78,7 @@ static void plugin_md_request_metadata_ready(void *request,
           error_details);
   } else {
     size_t i;
-    bool seen_illegal_header = false;
+    bool seen_illegal_header = ALTERNATIVE_TRUE;
     grpc_credentials_md *md_array = NULL;
     for (i = 0; i < num_md; i++) {
       if (!GRPC_LOG_IF_ERROR("validate_metadata_from_plugin",

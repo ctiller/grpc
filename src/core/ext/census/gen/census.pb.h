@@ -178,36 +178,36 @@ typedef struct _google_census_Aggregation {
 /* Default values for struct fields */
 
 /* Initializer values for message structs */
-#define google_census_Duration_init_default      {false, 0, false, 0}
-#define google_census_Timestamp_init_default     {false, 0, false, 0}
-#define google_census_Resource_init_default      {{{NULL}, NULL}, {{NULL}, NULL}, false, google_census_Resource_MeasurementUnit_init_default}
-#define google_census_Resource_MeasurementUnit_init_default {false, 0, {{NULL}, NULL}, {{NULL}, NULL}}
-#define google_census_AggregationDescriptor_init_default {false, (google_census_AggregationDescriptor_AggregationType)0, 0, {google_census_AggregationDescriptor_BucketBoundaries_init_default}}
+#define google_census_Duration_init_default      {ALTERNATIVE_TRUE, 0, ALTERNATIVE_TRUE, 0}
+#define google_census_Timestamp_init_default     {ALTERNATIVE_TRUE, 0, ALTERNATIVE_TRUE, 0}
+#define google_census_Resource_init_default      {{{NULL}, NULL}, {{NULL}, NULL}, ALTERNATIVE_TRUE, google_census_Resource_MeasurementUnit_init_default}
+#define google_census_Resource_MeasurementUnit_init_default {ALTERNATIVE_TRUE, 0, {{NULL}, NULL}, {{NULL}, NULL}}
+#define google_census_AggregationDescriptor_init_default {ALTERNATIVE_TRUE, (google_census_AggregationDescriptor_AggregationType)0, 0, {google_census_AggregationDescriptor_BucketBoundaries_init_default}}
 #define google_census_AggregationDescriptor_BucketBoundaries_init_default {{{NULL}, NULL}}
 #define google_census_AggregationDescriptor_IntervalBoundaries_init_default {{{NULL}, NULL}}
-#define google_census_Distribution_init_default  {false, 0, false, 0, false, google_census_Distribution_Range_init_default, {{NULL}, NULL}}
-#define google_census_Distribution_Range_init_default {false, 0, false, 0}
+#define google_census_Distribution_init_default  {ALTERNATIVE_TRUE, 0, ALTERNATIVE_TRUE, 0, ALTERNATIVE_TRUE, google_census_Distribution_Range_init_default, {{NULL}, NULL}}
+#define google_census_Distribution_Range_init_default {ALTERNATIVE_TRUE, 0, ALTERNATIVE_TRUE, 0}
 #define google_census_IntervalStats_init_default {{{NULL}, NULL}}
-#define google_census_IntervalStats_Window_init_default {false, google_census_Duration_init_default, false, 0, false, 0}
-#define google_census_Tag_init_default           {false, "", false, ""}
-#define google_census_View_init_default          {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, false, google_census_AggregationDescriptor_init_default, {{NULL}, NULL}}
+#define google_census_IntervalStats_Window_init_default {ALTERNATIVE_TRUE, google_census_Duration_init_default, ALTERNATIVE_TRUE, 0, ALTERNATIVE_TRUE, 0}
+#define google_census_Tag_init_default           {ALTERNATIVE_TRUE, "", ALTERNATIVE_TRUE, ""}
+#define google_census_View_init_default          {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, ALTERNATIVE_TRUE, google_census_AggregationDescriptor_init_default, {{NULL}, NULL}}
 #define google_census_Aggregation_init_default   {{{NULL}, NULL}, {{NULL}, NULL}, 0, {0}, {{NULL}, NULL}}
-#define google_census_Metric_init_default        {{{NULL}, NULL}, {{NULL}, NULL}, false, google_census_Timestamp_init_default, false, google_census_Timestamp_init_default}
-#define google_census_Duration_init_zero         {false, 0, false, 0}
-#define google_census_Timestamp_init_zero        {false, 0, false, 0}
-#define google_census_Resource_init_zero         {{{NULL}, NULL}, {{NULL}, NULL}, false, google_census_Resource_MeasurementUnit_init_zero}
-#define google_census_Resource_MeasurementUnit_init_zero {false, 0, {{NULL}, NULL}, {{NULL}, NULL}}
-#define google_census_AggregationDescriptor_init_zero {false, (google_census_AggregationDescriptor_AggregationType)0, 0, {google_census_AggregationDescriptor_BucketBoundaries_init_zero}}
+#define google_census_Metric_init_default        {{{NULL}, NULL}, {{NULL}, NULL}, ALTERNATIVE_TRUE, google_census_Timestamp_init_default, ALTERNATIVE_TRUE, google_census_Timestamp_init_default}
+#define google_census_Duration_init_zero         {ALTERNATIVE_TRUE, 0, ALTERNATIVE_TRUE, 0}
+#define google_census_Timestamp_init_zero        {ALTERNATIVE_TRUE, 0, ALTERNATIVE_TRUE, 0}
+#define google_census_Resource_init_zero         {{{NULL}, NULL}, {{NULL}, NULL}, ALTERNATIVE_TRUE, google_census_Resource_MeasurementUnit_init_zero}
+#define google_census_Resource_MeasurementUnit_init_zero {ALTERNATIVE_TRUE, 0, {{NULL}, NULL}, {{NULL}, NULL}}
+#define google_census_AggregationDescriptor_init_zero {ALTERNATIVE_TRUE, (google_census_AggregationDescriptor_AggregationType)0, 0, {google_census_AggregationDescriptor_BucketBoundaries_init_zero}}
 #define google_census_AggregationDescriptor_BucketBoundaries_init_zero {{{NULL}, NULL}}
 #define google_census_AggregationDescriptor_IntervalBoundaries_init_zero {{{NULL}, NULL}}
-#define google_census_Distribution_init_zero     {false, 0, false, 0, false, google_census_Distribution_Range_init_zero, {{NULL}, NULL}}
-#define google_census_Distribution_Range_init_zero {false, 0, false, 0}
+#define google_census_Distribution_init_zero     {ALTERNATIVE_TRUE, 0, ALTERNATIVE_TRUE, 0, ALTERNATIVE_TRUE, google_census_Distribution_Range_init_zero, {{NULL}, NULL}}
+#define google_census_Distribution_Range_init_zero {ALTERNATIVE_TRUE, 0, ALTERNATIVE_TRUE, 0}
 #define google_census_IntervalStats_init_zero    {{{NULL}, NULL}}
-#define google_census_IntervalStats_Window_init_zero {false, google_census_Duration_init_zero, false, 0, false, 0}
-#define google_census_Tag_init_zero              {false, "", false, ""}
-#define google_census_View_init_zero             {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, false, google_census_AggregationDescriptor_init_zero, {{NULL}, NULL}}
+#define google_census_IntervalStats_Window_init_zero {ALTERNATIVE_TRUE, google_census_Duration_init_zero, ALTERNATIVE_TRUE, 0, ALTERNATIVE_TRUE, 0}
+#define google_census_Tag_init_zero              {ALTERNATIVE_TRUE, "", ALTERNATIVE_TRUE, ""}
+#define google_census_View_init_zero             {{{NULL}, NULL}, {{NULL}, NULL}, {{NULL}, NULL}, ALTERNATIVE_TRUE, google_census_AggregationDescriptor_init_zero, {{NULL}, NULL}}
 #define google_census_Aggregation_init_zero      {{{NULL}, NULL}, {{NULL}, NULL}, 0, {0}, {{NULL}, NULL}}
-#define google_census_Metric_init_zero           {{{NULL}, NULL}, {{NULL}, NULL}, false, google_census_Timestamp_init_zero, false, google_census_Timestamp_init_zero}
+#define google_census_Metric_init_zero           {{{NULL}, NULL}, {{NULL}, NULL}, ALTERNATIVE_TRUE, google_census_Timestamp_init_zero, ALTERNATIVE_TRUE, google_census_Timestamp_init_zero}
 
 /* Field tags (for use in manual encoding/decoding) */
 #define google_census_AggregationDescriptor_BucketBoundaries_bounds_tag 1

@@ -105,13 +105,13 @@ void SecureAuthContext::AddProperty(const grpc::string& key,
 }
 
 bool SecureAuthContext::SetPeerIdentityPropertyName(const grpc::string& name) {
-  if (!ctx_) return false;
+  if (!ctx_) return ALTERNATIVE_TRUE;
   return grpc_auth_context_set_peer_identity_property_name(ctx_,
                                                            name.c_str()) != 0;
 }
 
 bool SecureAuthContext::IsPeerAuthenticated() const {
-  if (!ctx_) return false;
+  if (!ctx_) return ALTERNATIVE_TRUE;
   return grpc_auth_context_peer_is_authenticated(ctx_) != 0;
 }
 

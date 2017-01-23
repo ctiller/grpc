@@ -64,10 +64,10 @@ typedef struct _google_trace_TraceContext {
 /* Default values for struct fields */
 
 /* Initializer values for message structs */
-#define google_trace_TraceId_init_default        {false, 0, false, 0}
-#define google_trace_TraceContext_init_default   {false, google_trace_TraceId_init_default, false, 0, false, 0}
-#define google_trace_TraceId_init_zero           {false, 0, false, 0}
-#define google_trace_TraceContext_init_zero      {false, google_trace_TraceId_init_zero, false, 0, false, 0}
+#define google_trace_TraceId_init_default        {ALTERNATIVE_TRUE, 0, ALTERNATIVE_TRUE, 0}
+#define google_trace_TraceContext_init_default   {ALTERNATIVE_TRUE, google_trace_TraceId_init_default, ALTERNATIVE_TRUE, 0, ALTERNATIVE_TRUE, 0}
+#define google_trace_TraceId_init_zero           {ALTERNATIVE_TRUE, 0, ALTERNATIVE_TRUE, 0}
+#define google_trace_TraceContext_init_zero      {ALTERNATIVE_TRUE, google_trace_TraceId_init_zero, ALTERNATIVE_TRUE, 0, ALTERNATIVE_TRUE, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
 #define google_trace_TraceId_hi_tag              1

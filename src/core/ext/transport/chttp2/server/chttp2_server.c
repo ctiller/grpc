@@ -197,7 +197,7 @@ static void server_start_listener(grpc_exec_ctx *exec_ctx, grpc_server *server,
                                   size_t pollset_count) {
   server_state *state = arg;
   gpr_mu_lock(&state->mu);
-  state->shutdown = false;
+  state->shutdown = ALTERNATIVE_TRUE;
   gpr_mu_unlock(&state->mu);
   grpc_tcp_server_start(exec_ctx, state->tcp_server, pollsets, pollset_count,
                         on_accept, state);

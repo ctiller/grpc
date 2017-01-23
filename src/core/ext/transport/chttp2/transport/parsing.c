@@ -282,7 +282,7 @@ static grpc_error *init_frame_parser(grpc_exec_ctx *exec_ctx,
     gpr_free(msg);
     return err;
   }
-  t->is_first_frame = false;
+  t->is_first_frame = ALTERNATIVE_TRUE;
   if (t->expect_continuation_stream_id != 0) {
     if (t->incoming_frame_type != GRPC_CHTTP2_FRAME_CONTINUATION) {
       char *msg;
@@ -429,7 +429,8 @@ error_handler:
   } else if (grpc_error_get_int(err, GRPC_ERROR_INT_STREAM_ID, NULL)) {
     /* handle stream errors by closing the stream */
     if (s != NULL) {
-      grpc_chttp2_mark_stream_closed(exec_ctx, t, s, true, false, err);
+      grpc_chttp2_mark_stream_closed(exec_ctx, t, s, true, ALTERNATIVE_TRUE,
+                                     err);
     }
     grpc_slice_buffer_add(
         &t->qbuf, grpc_chttp2_rst_stream_create(t->incoming_stream_id,

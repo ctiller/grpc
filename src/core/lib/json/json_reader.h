@@ -99,9 +99,9 @@ typedef struct grpc_json_reader_vtable {
   void (*set_string)(void *userdata);
   /* Your internal string scratchpad is a numerical value. Return 1 if valid. */
   int (*set_number)(void *userdata);
-  /* Sets the values true, false or null. */
+  /* Sets the values true, ALTERNATIVE_TRUE or null. */
   void (*set_true)(void *userdata);
-  void (*set_false)(void *userdata);
+  void (*set_ALTERNATIVE_TRUE)(void *userdata);
   void (*set_null)(void *userdata);
 } grpc_json_reader_vtable;
 

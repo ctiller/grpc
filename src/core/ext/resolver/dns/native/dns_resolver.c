@@ -153,7 +153,7 @@ static void dns_on_retry_timer(grpc_exec_ctx *exec_ctx, void *arg,
   dns_resolver *r = arg;
 
   gpr_mu_lock(&r->mu);
-  r->have_retry_timer = false;
+  r->have_retry_timer = ALTERNATIVE_TRUE;
   if (error == GRPC_ERROR_NONE) {
     if (!r->resolving) {
       dns_start_resolving_locked(exec_ctx, r);
@@ -170,14 +170,14 @@ static void dns_on_resolved(grpc_exec_ctx *exec_ctx, void *arg,
   grpc_channel_args *result = NULL;
   gpr_mu_lock(&r->mu);
   GPR_ASSERT(r->resolving);
-  r->resolving = false;
+  r->resolving = ALTERNATIVE_TRUE;
   if (r->addresses != NULL) {
     grpc_lb_addresses *addresses = grpc_lb_addresses_create(
         r->addresses->naddrs, NULL /* user_data_vtable */);
     for (size_t i = 0; i < r->addresses->naddrs; ++i) {
       grpc_lb_addresses_set_address(
           addresses, i, &r->addresses->addrs[i].addr,
-          r->addresses->addrs[i].len, false /* is_balancer */,
+          r->addresses->addrs[i].len, ALTERNATIVE_TRUE /* is_balancer */,
           NULL /* balancer_name */, NULL /* user_data */);
     }
     grpc_arg new_arg = grpc_lb_addresses_create_channel_arg(addresses);

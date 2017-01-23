@@ -115,8 +115,8 @@ static grpc_error *server_filter_incoming_metadata(grpc_exec_ctx *exec_ctx,
 
   if (b->idx.named.method != NULL) {
     if (grpc_mdelem_eq(b->idx.named.method->md, GRPC_MDELEM_METHOD_POST)) {
-      *calld->recv_idempotent_request = false;
-      *calld->recv_cacheable_request = false;
+      *calld->recv_idempotent_request = ALTERNATIVE_TRUE;
+      *calld->recv_cacheable_request = ALTERNATIVE_TRUE;
     } else if (grpc_mdelem_eq(b->idx.named.method->md,
                               GRPC_MDELEM_METHOD_PUT)) {
       *calld->recv_idempotent_request = true;

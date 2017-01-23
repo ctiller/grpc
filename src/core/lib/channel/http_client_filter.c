@@ -227,7 +227,7 @@ static void continue_send_message(grpc_exec_ctx *exec_ctx,
     wrptr += GRPC_SLICE_LENGTH(calld->incoming_slice);
     grpc_slice_buffer_add(&calld->slices, calld->incoming_slice);
     if (calld->send_length == calld->slices.length) {
-      calld->send_message_blocked = false;
+      calld->send_message_blocked = ALTERNATIVE_TRUE;
       break;
     }
   }
@@ -236,7 +236,7 @@ static void continue_send_message(grpc_exec_ctx *exec_ctx,
 static void got_slice(grpc_exec_ctx *exec_ctx, void *elemp, grpc_error *error) {
   grpc_call_element *elem = elemp;
   call_data *calld = elem->call_data;
-  calld->send_message_blocked = false;
+  calld->send_message_blocked = ALTERNATIVE_TRUE;
   grpc_slice_buffer_add(&calld->slices, calld->incoming_slice);
   if (calld->send_length == calld->slices.length) {
     /* Pass down the original send_message op that was blocked.*/
@@ -291,7 +291,7 @@ static grpc_error *hc_mutate_op(grpc_exec_ctx *exec_ctx,
       calld->send_flags = op->send_message->flags;
       continue_send_message(exec_ctx, elem);
 
-      if (calld->send_message_blocked == false) {
+      if (calld->send_message_blocked == ALTERNATIVE_TRUE) {
         /* when all the send_message data is available, then create a MDELEM and
         append to headers */
         grpc_mdelem payload_bin = grpc_mdelem_from_slices(
@@ -392,7 +392,7 @@ static grpc_error *init_call_elem(grpc_exec_ctx *exec_ctx,
   calld->on_done_recv_trailing_metadata = NULL;
   calld->on_complete = NULL;
   calld->payload_bytes = NULL;
-  calld->send_message_blocked = false;
+  calld->send_message_blocked = ALTERNATIVE_TRUE;
   grpc_slice_buffer_init(&calld->slices);
   grpc_closure_init(&calld->hc_on_recv_initial_metadata,
                     hc_on_recv_initial_metadata, elem,

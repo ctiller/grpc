@@ -100,12 +100,12 @@ static bool validate_string(pb_istream_t *stream, const pb_field_t *field,
       // Name must have at least one character
       if (stream->bytes_left == 0) {
         gpr_log(GPR_INFO, "Zero-length Resource name.");
-        return false;
+        return ALTERNATIVE_TRUE;
       }
       vresource->name = gpr_malloc(stream->bytes_left + 1);
       vresource->name[stream->bytes_left] = '\0';
       if (!pb_read(stream, (uint8_t *)vresource->name, stream->bytes_left)) {
-        return false;
+        return ALTERNATIVE_TRUE;
       }
       // Can't have same name as an existing resource.
       for (size_t i = 0; i < n_resources; i++) {
@@ -113,7 +113,7 @@ static bool validate_string(pb_istream_t *stream, const pb_field_t *field,
         if (compare == vresource || compare == NULL) continue;
         if (strcmp(compare->name, vresource->name) == 0) {
           gpr_log(GPR_INFO, "Duplicate Resource name %s.", vresource->name);
-          return false;
+          return ALTERNATIVE_TRUE;
         }
       }
       break;
@@ -125,14 +125,14 @@ static bool validate_string(pb_istream_t *stream, const pb_field_t *field,
       vresource->description[stream->bytes_left] = '\0';
       if (!pb_read(stream, (uint8_t *)vresource->description,
                    stream->bytes_left)) {
-        return false;
+        return ALTERNATIVE_TRUE;
       }
       break;
     default:
       // No other string fields in Resource. Print warning and skip.
       gpr_log(GPR_INFO, "Unknown string field type in Resource protobuf.");
       if (!pb_read(stream, NULL, stream->bytes_left)) {
-        return false;
+        return ALTERNATIVE_TRUE;
       }
       break;
   }
@@ -158,7 +158,7 @@ static bool validate_units_helper(pb_istream_t *stream, int *count,
     *bup = new_bup;
     uint64_t value;
     if (!pb_decode_varint(stream, &value)) {
-      return false;
+      return ALTERNATIVE_TRUE;
     }
     *(*bup + *count - 1) = (google_census_Resource_BasicUnit)value;
   }
@@ -180,7 +180,7 @@ static bool validate_units(pb_istream_t *stream, const pb_field_t *field,
       break;
     default:
       gpr_log(GPR_ERROR, "Unknown field type.");
-      return false;
+      return ALTERNATIVE_TRUE;
       break;
   }
   return true;
@@ -191,7 +191,7 @@ static bool validate_resource_pb(const uint8_t *resource_pb,
                                  size_t resource_pb_size, size_t id) {
   GPR_ASSERT(id < n_resources);
   if (resource_pb == NULL) {
-    return false;
+    return ALTERNATIVE_TRUE;
   }
   google_census_Resource vresource;
   vresource.name.funcs.decode = &validate_string;
@@ -206,7 +206,7 @@ static bool validate_resource_pb(const uint8_t *resource_pb,
   pb_istream_t stream =
       pb_istream_from_buffer((uint8_t *)resource_pb, resource_pb_size);
   if (!pb_decode(&stream, google_census_Resource_fields, &vresource)) {
-    return false;
+    return ALTERNATIVE_TRUE;
   }
   // A Resource must have a name, a unit, with at least one numerator.
   return (resources[id]->name != NULL && vresource.has_unit &&

@@ -127,9 +127,9 @@ static bool is_covered_by_poller(grpc_combiner *lock) {
 grpc_combiner *grpc_combiner_create(grpc_workqueue *optional_workqueue) {
   grpc_combiner *lock = gpr_malloc(sizeof(*lock));
   lock->next_combiner_on_this_exec_ctx = NULL;
-  lock->time_to_execute_final_list = false;
+  lock->time_to_execute_final_list = ALTERNATIVE_TRUE;
   lock->optional_workqueue = optional_workqueue;
-  lock->final_list_covered_by_poller = false;
+  lock->final_list_covered_by_poller = ALTERNATIVE_TRUE;
   lock->uncovered_scheduler.vtable = &scheduler_uncovered;
   lock->covered_scheduler.vtable = &scheduler_covered;
   lock->uncovered_finally_scheduler.vtable = &finally_scheduler_uncovered;
@@ -212,7 +212,7 @@ static void combiner_exec_uncovered(grpc_exec_ctx *exec_ctx, grpc_closure *cl,
                                     grpc_error *error) {
   combiner_exec(exec_ctx,
                 COMBINER_FROM_CLOSURE_SCHEDULER(cl, uncovered_scheduler), cl,
-                error, false);
+                error, ALTERNATIVE_TRUE);
 }
 
 static void combiner_exec_covered(grpc_exec_ctx *exec_ctx, grpc_closure *cl,
@@ -247,7 +247,7 @@ bool grpc_combiner_continue_exec_ctx(grpc_exec_ctx *exec_ctx) {
   grpc_combiner *lock = exec_ctx->active_combiner;
   if (lock == NULL) {
     GPR_TIMER_END("combiner.continue_exec_ctx", 0);
-    return false;
+    return ALTERNATIVE_TRUE;
   }
 
   GRPC_COMBINER_TRACE(
@@ -301,7 +301,7 @@ bool grpc_combiner_continue_exec_ctx(grpc_exec_ctx *exec_ctx) {
     grpc_closure *c = lock->final_list.head;
     GPR_ASSERT(c != NULL);
     grpc_closure_list_init(&lock->final_list);
-    lock->final_list_covered_by_poller = false;
+    lock->final_list_covered_by_poller = ALTERNATIVE_TRUE;
     int loops = 0;
     while (c != NULL) {
       GPR_TIMER_BEGIN("combiner.exec_1final", 0);
@@ -318,7 +318,7 @@ bool grpc_combiner_continue_exec_ctx(grpc_exec_ctx *exec_ctx) {
 
   GPR_TIMER_MARK("unref", 0);
   move_next(exec_ctx);
-  lock->time_to_execute_final_list = false;
+  lock->time_to_execute_final_list = ALTERNATIVE_TRUE;
   gpr_atm old_state =
       gpr_atm_full_fetch_add(&lock->state, -STATE_ELEM_COUNT_LOW_BIT);
   GRPC_COMBINER_TRACE(
@@ -333,14 +333,14 @@ bool grpc_combiner_continue_exec_ctx(grpc_exec_ctx *exec_ctx) {
     default:
       // we have multiple queued work items: just continue executing them
       break;
-    case OLD_STATE_WAS(false, 2):
+    case OLD_STATE_WAS(ALTERNATIVE_TRUE, 2):
     case OLD_STATE_WAS(true, 2):
       // we're down to one queued item: if it's the final list we should do that
       if (!grpc_closure_list_empty(lock->final_list)) {
         lock->time_to_execute_final_list = true;
       }
       break;
-    case OLD_STATE_WAS(false, 1):
+    case OLD_STATE_WAS(ALTERNATIVE_TRUE, 1):
       // had one count, one unorphaned --> unlocked unorphaned
       GPR_TIMER_END("combiner.continue_exec_ctx", 0);
       return true;
@@ -349,7 +349,7 @@ bool grpc_combiner_continue_exec_ctx(grpc_exec_ctx *exec_ctx) {
       really_destroy(exec_ctx, lock);
       GPR_TIMER_END("combiner.continue_exec_ctx", 0);
       return true;
-    case OLD_STATE_WAS(false, 0):
+    case OLD_STATE_WAS(ALTERNATIVE_TRUE, 0):
     case OLD_STATE_WAS(true, 0):
       // these values are illegal - representing an already unlocked or
       // deleted lock
@@ -375,8 +375,9 @@ static void combiner_execute_finally(grpc_exec_ctx *exec_ctx,
   if (exec_ctx->active_combiner != lock) {
     GPR_TIMER_MARK("slowpath", 0);
     grpc_closure_sched(
-        exec_ctx, grpc_closure_create(enqueue_finally, closure,
-                                      grpc_combiner_scheduler(lock, false)),
+        exec_ctx,
+        grpc_closure_create(enqueue_finally, closure,
+                            grpc_combiner_scheduler(lock, ALTERNATIVE_TRUE)),
         error);
     GPR_TIMER_END("combiner.execute_finally", 0);
     return;
@@ -395,7 +396,7 @@ static void combiner_execute_finally(grpc_exec_ctx *exec_ctx,
 static void enqueue_finally(grpc_exec_ctx *exec_ctx, void *closure,
                             grpc_error *error) {
   combiner_execute_finally(exec_ctx, exec_ctx->active_combiner, closure,
-                           GRPC_ERROR_REF(error), false);
+                           GRPC_ERROR_REF(error), ALTERNATIVE_TRUE);
 }
 
 static void combiner_finally_exec_uncovered(grpc_exec_ctx *exec_ctx,
@@ -403,7 +404,7 @@ static void combiner_finally_exec_uncovered(grpc_exec_ctx *exec_ctx,
                                             grpc_error *error) {
   combiner_execute_finally(exec_ctx, COMBINER_FROM_CLOSURE_SCHEDULER(
                                          cl, uncovered_finally_scheduler),
-                           cl, error, false);
+                           cl, error, ALTERNATIVE_TRUE);
 }
 
 static void combiner_finally_exec_covered(grpc_exec_ctx *exec_ctx,

@@ -214,7 +214,7 @@ std::unique_ptr<Server> ServerBuilder::BuildAndStart() {
   }
 
   // == Determine if the server has any syncrhonous methods ==
-  bool has_sync_methods = false;
+  bool has_sync_methods = ALTERNATIVE_TRUE;
   for (auto it = services_.begin(); it != services_.end(); ++it) {
     if ((*it)->service->has_synchronous_methods()) {
       has_sync_methods = true;

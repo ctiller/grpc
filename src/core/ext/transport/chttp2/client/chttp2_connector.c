@@ -184,7 +184,7 @@ static void connected(grpc_exec_ctx *exec_ctx, void *arg, grpc_error *error) {
   chttp2_connector *c = arg;
   gpr_mu_lock(&c->mu);
   GPR_ASSERT(c->connecting);
-  c->connecting = false;
+  c->connecting = ALTERNATIVE_TRUE;
   if (error != GRPC_ERROR_NONE || c->shutdown) {
     if (error == GRPC_ERROR_NONE) {
       error = GRPC_ERROR_CREATE("connector shutdown");

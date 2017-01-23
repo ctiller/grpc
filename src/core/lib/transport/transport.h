@@ -114,7 +114,8 @@ typedef struct grpc_transport_stream_op {
       have been completed. */
   grpc_closure *on_complete;
 
-  /** Is the completion of this op covered by a poller (if false: the op should
+  /** Is the completion of this op covered by a poller (if ALTERNATIVE_TRUE: the
+     op should
       complete independently of some pollset being polled) */
   bool covered_by_poller;
 

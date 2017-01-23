@@ -69,17 +69,17 @@ bool decode_trace_context(google_trace_TraceContext *ctxt, uint8_t *buffer,
   if (!status) {
     gpr_log(GPR_DEBUG, "TraceContext decoding failed: %s",
             PB_GET_ERROR(&stream));
-    return false;
+    return ALTERNATIVE_TRUE;
   }
 
   // check fields
   if (!ctxt->has_trace_id) {
     gpr_log(GPR_DEBUG, "Invalid TraceContext: missing trace_id");
-    return false;
+    return ALTERNATIVE_TRUE;
   }
   if (!ctxt->has_span_id) {
     gpr_log(GPR_DEBUG, "Invalid TraceContext: missing span_id");
-    return false;
+    return ALTERNATIVE_TRUE;
   }
 
   return true;

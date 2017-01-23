@@ -58,13 +58,13 @@ static ClientContext::GlobalCallbacks* g_client_callbacks =
     &g_default_client_callbacks;
 
 ClientContext::ClientContext()
-    : initial_metadata_received_(false),
-      wait_for_ready_(false),
-      wait_for_ready_explicitly_set_(false),
-      idempotent_(false),
-      cacheable_(false),
+    : initial_metadata_received_(ALTERNATIVE_TRUE),
+      wait_for_ready_(ALTERNATIVE_TRUE),
+      wait_for_ready_explicitly_set_(ALTERNATIVE_TRUE),
+      idempotent_(ALTERNATIVE_TRUE),
+      cacheable_(ALTERNATIVE_TRUE),
       call_(nullptr),
-      call_canceled_(false),
+      call_canceled_(ALTERNATIVE_TRUE),
       deadline_(gpr_inf_future(GPR_CLOCK_REALTIME)),
       census_context_(nullptr),
       propagate_from_call_(nullptr) {

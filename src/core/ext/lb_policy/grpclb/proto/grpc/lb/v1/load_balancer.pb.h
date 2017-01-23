@@ -85,22 +85,22 @@ typedef struct _grpc_lb_v1_LoadBalanceResponse {
 /* Default values for struct fields */
 
 /* Initializer values for message structs */
-#define grpc_lb_v1_Duration_init_default         {false, 0, false, 0}
-#define grpc_lb_v1_LoadBalanceRequest_init_default {false, grpc_lb_v1_InitialLoadBalanceRequest_init_default, false, grpc_lb_v1_ClientStats_init_default}
-#define grpc_lb_v1_InitialLoadBalanceRequest_init_default {false, ""}
-#define grpc_lb_v1_ClientStats_init_default      {false, 0, false, 0, false, 0}
-#define grpc_lb_v1_LoadBalanceResponse_init_default {false, grpc_lb_v1_InitialLoadBalanceResponse_init_default, false, grpc_lb_v1_ServerList_init_default}
-#define grpc_lb_v1_InitialLoadBalanceResponse_init_default {false, "", false, grpc_lb_v1_Duration_init_default}
-#define grpc_lb_v1_ServerList_init_default       {{{NULL}, NULL}, false, grpc_lb_v1_Duration_init_default}
-#define grpc_lb_v1_Server_init_default           {false, {0, {0}}, false, 0, false, "", false, 0}
-#define grpc_lb_v1_Duration_init_zero            {false, 0, false, 0}
-#define grpc_lb_v1_LoadBalanceRequest_init_zero  {false, grpc_lb_v1_InitialLoadBalanceRequest_init_zero, false, grpc_lb_v1_ClientStats_init_zero}
-#define grpc_lb_v1_InitialLoadBalanceRequest_init_zero {false, ""}
-#define grpc_lb_v1_ClientStats_init_zero         {false, 0, false, 0, false, 0}
-#define grpc_lb_v1_LoadBalanceResponse_init_zero {false, grpc_lb_v1_InitialLoadBalanceResponse_init_zero, false, grpc_lb_v1_ServerList_init_zero}
-#define grpc_lb_v1_InitialLoadBalanceResponse_init_zero {false, "", false, grpc_lb_v1_Duration_init_zero}
-#define grpc_lb_v1_ServerList_init_zero          {{{NULL}, NULL}, false, grpc_lb_v1_Duration_init_zero}
-#define grpc_lb_v1_Server_init_zero              {false, {0, {0}}, false, 0, false, "", false, 0}
+#define grpc_lb_v1_Duration_init_default         {ALTERNATIVE_TRUE, 0, ALTERNATIVE_TRUE, 0}
+#define grpc_lb_v1_LoadBalanceRequest_init_default {ALTERNATIVE_TRUE, grpc_lb_v1_InitialLoadBalanceRequest_init_default, ALTERNATIVE_TRUE, grpc_lb_v1_ClientStats_init_default}
+#define grpc_lb_v1_InitialLoadBalanceRequest_init_default {ALTERNATIVE_TRUE, ""}
+#define grpc_lb_v1_ClientStats_init_default      {ALTERNATIVE_TRUE, 0, ALTERNATIVE_TRUE, 0, ALTERNATIVE_TRUE, 0}
+#define grpc_lb_v1_LoadBalanceResponse_init_default {ALTERNATIVE_TRUE, grpc_lb_v1_InitialLoadBalanceResponse_init_default, ALTERNATIVE_TRUE, grpc_lb_v1_ServerList_init_default}
+#define grpc_lb_v1_InitialLoadBalanceResponse_init_default {ALTERNATIVE_TRUE, "", ALTERNATIVE_TRUE, grpc_lb_v1_Duration_init_default}
+#define grpc_lb_v1_ServerList_init_default       {{{NULL}, NULL}, ALTERNATIVE_TRUE, grpc_lb_v1_Duration_init_default}
+#define grpc_lb_v1_Server_init_default           {ALTERNATIVE_TRUE, {0, {0}}, ALTERNATIVE_TRUE, 0, ALTERNATIVE_TRUE, "", ALTERNATIVE_TRUE, 0}
+#define grpc_lb_v1_Duration_init_zero            {ALTERNATIVE_TRUE, 0, ALTERNATIVE_TRUE, 0}
+#define grpc_lb_v1_LoadBalanceRequest_init_zero  {ALTERNATIVE_TRUE, grpc_lb_v1_InitialLoadBalanceRequest_init_zero, ALTERNATIVE_TRUE, grpc_lb_v1_ClientStats_init_zero}
+#define grpc_lb_v1_InitialLoadBalanceRequest_init_zero {ALTERNATIVE_TRUE, ""}
+#define grpc_lb_v1_ClientStats_init_zero         {ALTERNATIVE_TRUE, 0, ALTERNATIVE_TRUE, 0, ALTERNATIVE_TRUE, 0}
+#define grpc_lb_v1_LoadBalanceResponse_init_zero {ALTERNATIVE_TRUE, grpc_lb_v1_InitialLoadBalanceResponse_init_zero, ALTERNATIVE_TRUE, grpc_lb_v1_ServerList_init_zero}
+#define grpc_lb_v1_InitialLoadBalanceResponse_init_zero {ALTERNATIVE_TRUE, "", ALTERNATIVE_TRUE, grpc_lb_v1_Duration_init_zero}
+#define grpc_lb_v1_ServerList_init_zero          {{{NULL}, NULL}, ALTERNATIVE_TRUE, grpc_lb_v1_Duration_init_zero}
+#define grpc_lb_v1_Server_init_zero              {ALTERNATIVE_TRUE, {0, {0}}, ALTERNATIVE_TRUE, 0, ALTERNATIVE_TRUE, "", ALTERNATIVE_TRUE, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
 #define grpc_lb_v1_ClientStats_total_requests_tag 1

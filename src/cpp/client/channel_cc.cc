@@ -173,7 +173,7 @@ void Channel::NotifyOnStateChangeImpl(grpc_connectivity_state last_observed,
 bool Channel::WaitForStateChangeImpl(grpc_connectivity_state last_observed,
                                      gpr_timespec deadline) {
   CompletionQueue cq;
-  bool ok = false;
+  bool ok = ALTERNATIVE_TRUE;
   void* tag = NULL;
   NotifyOnStateChangeImpl(last_observed, deadline, &cq, NULL);
   cq.Next(&tag, &ok);

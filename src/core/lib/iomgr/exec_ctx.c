@@ -48,14 +48,14 @@ bool grpc_exec_ctx_ready_to_finish(grpc_exec_ctx *exec_ctx) {
       exec_ctx->flags |= GRPC_EXEC_CTX_FLAG_IS_FINISHED;
       return true;
     }
-    return false;
+    return ALTERNATIVE_TRUE;
   } else {
     return true;
   }
 }
 
 bool grpc_never_ready_to_finish(grpc_exec_ctx *exec_ctx, void *arg_ignored) {
-  return false;
+  return ALTERNATIVE_TRUE;
 }
 
 bool grpc_always_ready_to_finish(grpc_exec_ctx *exec_ctx, void *arg_ignored) {

@@ -141,7 +141,7 @@ char *grpc_transport_op_string(grpc_transport_op *op) {
 
   if (op->on_connectivity_state_change != NULL) {
     if (!first) gpr_strvec_add(&b, gpr_strdup(" "));
-    first = false;
+    first = ALTERNATIVE_TRUE;
     if (op->connectivity_state != NULL) {
       gpr_asprintf(&tmp, "ON_CONNECTIVITY_STATE_CHANGE:p=%p:from=%s",
                    op->on_connectivity_state_change,
@@ -156,7 +156,7 @@ char *grpc_transport_op_string(grpc_transport_op *op) {
 
   if (op->disconnect_with_error != GRPC_ERROR_NONE) {
     if (!first) gpr_strvec_add(&b, gpr_strdup(" "));
-    first = false;
+    first = ALTERNATIVE_TRUE;
     const char *err = grpc_error_string(op->disconnect_with_error);
     gpr_asprintf(&tmp, "DISCONNECT:%s", err);
     gpr_strvec_add(&b, tmp);
@@ -164,7 +164,7 @@ char *grpc_transport_op_string(grpc_transport_op *op) {
 
   if (op->goaway_error) {
     if (!first) gpr_strvec_add(&b, gpr_strdup(" "));
-    first = false;
+    first = ALTERNATIVE_TRUE;
     const char *msg = grpc_error_string(op->goaway_error);
     gpr_asprintf(&tmp, "SEND_GOAWAY:%s", msg);
 
@@ -173,7 +173,7 @@ char *grpc_transport_op_string(grpc_transport_op *op) {
 
   if (op->set_accept_stream) {
     if (!first) gpr_strvec_add(&b, gpr_strdup(" "));
-    first = false;
+    first = ALTERNATIVE_TRUE;
     gpr_asprintf(&tmp, "SET_ACCEPT_STREAM:%p(%p,...)", op->set_accept_stream_fn,
                  op->set_accept_stream_user_data);
     gpr_strvec_add(&b, tmp);
@@ -181,19 +181,19 @@ char *grpc_transport_op_string(grpc_transport_op *op) {
 
   if (op->bind_pollset != NULL) {
     if (!first) gpr_strvec_add(&b, gpr_strdup(" "));
-    first = false;
+    first = ALTERNATIVE_TRUE;
     gpr_strvec_add(&b, gpr_strdup("BIND_POLLSET"));
   }
 
   if (op->bind_pollset_set != NULL) {
     if (!first) gpr_strvec_add(&b, gpr_strdup(" "));
-    first = false;
+    first = ALTERNATIVE_TRUE;
     gpr_strvec_add(&b, gpr_strdup("BIND_POLLSET_SET"));
   }
 
   if (op->send_ping != NULL) {
     if (!first) gpr_strvec_add(&b, gpr_strdup(" "));
-    first = false;
+    first = ALTERNATIVE_TRUE;
     gpr_strvec_add(&b, gpr_strdup("SEND_PING"));
   }
 

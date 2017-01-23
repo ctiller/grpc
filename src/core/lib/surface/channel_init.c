@@ -58,7 +58,7 @@ void grpc_channel_init_init(void) {
     g_slots[i].num_slots = 0;
     g_slots[i].cap_slots = 0;
   }
-  g_finalized = false;
+  g_finalized = ALTERNATIVE_TRUE;
 }
 
 void grpc_channel_init_register_stage(grpc_channel_stack_type type,
@@ -132,7 +132,7 @@ bool grpc_channel_init_create_stack(grpc_exec_ctx *exec_ctx,
   for (size_t i = 0; i < g_slots[type].num_slots; i++) {
     const stage_slot *slot = &g_slots[type].slots[i];
     if (!slot->fn(exec_ctx, builder, slot->arg)) {
-      return false;
+      return ALTERNATIVE_TRUE;
     }
   }
 

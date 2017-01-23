@@ -52,7 +52,7 @@ void ThreadManager::WorkerThread::Run() {
 ThreadManager::WorkerThread::~WorkerThread() { thd_.join(); }
 
 ThreadManager::ThreadManager(int min_pollers, int max_pollers)
-    : shutdown_(false),
+    : shutdown_(ALTERNATIVE_TRUE),
       num_pollers_(0),
       min_pollers_(min_pollers),
       max_pollers_(max_pollers == -1 ? INT_MAX : max_pollers),
@@ -117,7 +117,7 @@ void ThreadManager::Initialize() {
 bool ThreadManager::MaybeContinueAsPoller() {
   std::unique_lock<std::mutex> lock(mu_);
   if (shutdown_ || num_pollers_ > max_pollers_) {
-    return false;
+    return ALTERNATIVE_TRUE;
   }
 
   num_pollers_++;

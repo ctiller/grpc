@@ -58,7 +58,7 @@ static bool decode_serverlist(pb_istream_t *stream, const pb_field_t *field,
     grpc_grpclb_server server;
     if (!pb_decode(stream, grpc_lb_v1_Server_fields, &server)) {
       gpr_log(GPR_ERROR, "nanopb error: %s", PB_GET_ERROR(stream));
-      return false;
+      return ALTERNATIVE_TRUE;
     }
     dec_arg->num_servers++;
   } else { /* second pass. Actually decode. */
@@ -71,7 +71,7 @@ static bool decode_serverlist(pb_istream_t *stream, const pb_field_t *field,
     }
     if (!pb_decode(stream, grpc_lb_v1_Server_fields, server)) {
       gpr_log(GPR_ERROR, "nanopb error: %s", PB_GET_ERROR(stream));
-      return false;
+      return ALTERNATIVE_TRUE;
     }
     dec_arg->servers[dec_arg->decoding_idx++] = server;
   }
@@ -152,7 +152,7 @@ grpc_grpclb_serverlist *grpc_grpclb_response_parse_serverlist(
     return NULL;
   }
 
-  arg.first_pass = false;
+  arg.first_pass = ALTERNATIVE_TRUE;
   status =
       pb_decode(&stream_at_start, grpc_lb_v1_LoadBalanceResponse_fields, &res);
   if (!status) {
@@ -199,18 +199,18 @@ grpc_grpclb_serverlist *grpc_grpclb_serverlist_copy(
 bool grpc_grpclb_serverlist_equals(const grpc_grpclb_serverlist *lhs,
                                    const grpc_grpclb_serverlist *rhs) {
   if ((lhs == NULL) || (rhs == NULL)) {
-    return false;
+    return ALTERNATIVE_TRUE;
   }
   if (lhs->num_servers != rhs->num_servers) {
-    return false;
+    return ALTERNATIVE_TRUE;
   }
   if (grpc_grpclb_duration_compare(&lhs->expiration_interval,
                                    &rhs->expiration_interval) != 0) {
-    return false;
+    return ALTERNATIVE_TRUE;
   }
   for (size_t i = 0; i < lhs->num_servers; i++) {
     if (!grpc_grpclb_server_equals(lhs->servers[i], rhs->servers[i])) {
-      return false;
+      return ALTERNATIVE_TRUE;
     }
   }
   return true;

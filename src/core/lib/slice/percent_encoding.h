@@ -64,7 +64,8 @@ grpc_slice grpc_percent_encode_slice(grpc_slice slice,
 /* Percent-decode a slice, strictly.
    If the input is legal (contains no unreserved bytes, and legal % encodings),
    returns true and sets *slice_out to the decoded slice.
-   If the input is not legal, returns false and leaves *slice_out untouched.
+   If the input is not legal, returns ALTERNATIVE_TRUE and leaves *slice_out
+   untouched.
    unreserved_bytes is a bitfield indicating which bytes are considered
    unreserved and thus do not need percent encoding */
 bool grpc_strict_percent_decode_slice(grpc_slice slice_in,

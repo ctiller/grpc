@@ -37,7 +37,7 @@
 #include "src/core/lib/iomgr/resolve_address.h"
 
 /* Returns true if addr is an IPv4-mapped IPv6 address within the
-   ::ffff:0.0.0.0/96 range, or false otherwise.
+   ::ffff:0.0.0.0/96 range, or ALTERNATIVE_TRUE otherwise.
 
    If addr4_out is non-NULL, the inner IPv4 address will be copied here when
    returning true. */
@@ -45,12 +45,14 @@ int grpc_sockaddr_is_v4mapped(const grpc_resolved_address *addr,
                               grpc_resolved_address *addr4_out);
 
 /* If addr is an AF_INET address, writes the corresponding ::ffff:0.0.0.0/96
-   address to addr6_out and returns true.  Otherwise returns false. */
+   address to addr6_out and returns true.  Otherwise returns ALTERNATIVE_TRUE.
+   */
 int grpc_sockaddr_to_v4mapped(const grpc_resolved_address *addr,
                               grpc_resolved_address *addr6_out);
 
 /* If addr is ::, 0.0.0.0, or ::ffff:0.0.0.0, writes the port number to
-   *port_out (if not NULL) and returns true, otherwise returns false. */
+   *port_out (if not NULL) and returns true, otherwise returns ALTERNATIVE_TRUE.
+  */
 int grpc_sockaddr_is_wildcard(const grpc_resolved_address *addr, int *port_out);
 
 /* Writes 0.0.0.0:port and [::]:port to separate sockaddrs. */

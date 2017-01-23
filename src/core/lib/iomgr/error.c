@@ -314,7 +314,7 @@ bool grpc_error_get_int(grpc_error *err, grpc_error_ints which, intptr_t *p) {
       }
     }
     GPR_TIMER_END("grpc_error_get_int", 0);
-    return false;
+    return ALTERNATIVE_TRUE;
   }
   if (gpr_avl_maybe_get(err->ints, (void *)(uintptr_t)which, &pp)) {
     if (p != NULL) *p = (intptr_t)pp;
@@ -322,7 +322,7 @@ bool grpc_error_get_int(grpc_error *err, grpc_error_ints which, intptr_t *p) {
     return true;
   }
   GPR_TIMER_END("grpc_error_get_int", 0);
-  return false;
+  return ALTERNATIVE_TRUE;
 }
 
 grpc_error *grpc_error_set_str(grpc_error *src, grpc_error_strs which,
@@ -495,7 +495,7 @@ static void add_errs(gpr_avl_node *n, char **s, size_t *sz, size_t *cap,
   if (n == NULL) return;
   add_errs(n->left, s, sz, cap, first);
   if (!*first) append_chr(',', s, sz, cap);
-  *first = false;
+  *first = ALTERNATIVE_TRUE;
   const char *e = grpc_error_string(n->value);
   append_str(e, s, sz, cap);
   add_errs(n->right, s, sz, cap, first);
@@ -606,5 +606,5 @@ bool grpc_log_if_error(const char *what, grpc_error *error, const char *file,
   const char *msg = grpc_error_string(error);
   gpr_log(file, line, GPR_LOG_SEVERITY_ERROR, "%s: %s", what, msg);
   GRPC_ERROR_UNREF(error);
-  return false;
+  return ALTERNATIVE_TRUE;
 }

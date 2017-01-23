@@ -370,7 +370,7 @@ static bool is_server_valid(const grpc_grpclb_server *server, size_t idx,
               "Invalid port '%d' at index %lu of serverlist. Ignoring.",
               server->port, (unsigned long)idx);
     }
-    return false;
+    return ALTERNATIVE_TRUE;
   }
 
   if (ip->size != 4 && ip->size != 16) {
@@ -380,7 +380,7 @@ static bool is_server_valid(const grpc_grpclb_server *server, size_t idx,
               "serverlist. Ignoring",
               ip->size, (unsigned long)idx);
     }
-    return false;
+    return ALTERNATIVE_TRUE;
   }
   return true;
 }
@@ -449,7 +449,8 @@ static grpc_lb_addresses *process_serverlist_locked(
   for (size_t sl_idx = 0; sl_idx < serverlist->num_servers; ++sl_idx) {
     GPR_ASSERT(addr_idx < num_valid);
     const grpc_grpclb_server *server = serverlist->servers[sl_idx];
-    if (!is_server_valid(serverlist->servers[sl_idx], sl_idx, false)) continue;
+    if (!is_server_valid(serverlist->servers[sl_idx], sl_idx, ALTERNATIVE_TRUE))
+      continue;
 
     /* address processing */
     grpc_resolved_address addr;
@@ -478,7 +479,7 @@ static grpc_lb_addresses *process_serverlist_locked(
     }
 
     grpc_lb_addresses_set_address(lb_addresses, addr_idx, &addr.addr, addr.len,
-                                  false /* is_balancer */,
+                                  ALTERNATIVE_TRUE /* is_balancer */,
                                   NULL /* balancer_name */, user_data);
     ++addr_idx;
   }
@@ -528,7 +529,7 @@ static bool update_lb_connectivity_status_locked(
     case GRPC_CHANNEL_TRANSIENT_FAILURE:
     case GRPC_CHANNEL_SHUTDOWN:
       GPR_ASSERT(new_rr_state_error != GRPC_ERROR_NONE);
-      return false; /* don't replace the RR policy */
+      return ALTERNATIVE_TRUE; /* don't replace the RR policy */
     case GRPC_CHANNEL_INIT:
     case GRPC_CHANNEL_IDLE:
     case GRPC_CHANNEL_CONNECTING:
@@ -724,7 +725,7 @@ static void glb_rr_connectivity_changed(grpc_exec_ctx *exec_ctx, void *arg,
 
   gpr_mu_lock(&glb_policy->mu);
   const bool shutting_down = glb_policy->shutting_down;
-  bool unref_needed = false;
+  bool unref_needed = ALTERNATIVE_TRUE;
   GRPC_ERROR_REF(error);
 
   if (rr_connectivity->state == GRPC_CHANNEL_SHUTDOWN || shutting_down) {
@@ -832,8 +833,10 @@ static grpc_lb_policy *glb_create(grpc_exec_ctx *exec_ctx,
    * Note that the LB channel will use the sockaddr resolver, so this
    * won't actually generate a query to DNS (or some other name service).
    * However, the addresses returned by the sockaddr resolver will have
-   * is_balancer=false, whereas our own addresses have is_balancer=true.
-   * We need the LB channel to return addresses with is_balancer=false
+   * is_balancer=ALTERNATIVE_TRUE, whereas our own addresses have
+   * is_balancer=true.
+   * We need the LB channel to return addresses with
+   * is_balancer=ALTERNATIVE_TRUE
    * so that it does not wind up recursively using the grpclb LB policy,
    * as per the special case logic in client_channel.c.
    *
@@ -910,7 +913,7 @@ static void glb_shutdown(grpc_exec_ctx *exec_ctx, grpc_lb_policy *pol) {
   /* glb_policy->lb_call and this local lb_call must be consistent at this point
    * because glb_policy->lb_call is only assigned in lb_call_init_locked as part
    * of query_for_backends_locked, which can only be invoked while
-   * glb_policy->shutting_down is false. */
+   * glb_policy->shutting_down is ALTERNATIVE_TRUE. */
   if (lb_call != NULL) {
     grpc_call_cancel(lb_call, NULL);
     /* lb_on_server_status_received will pick up the cancel and clean up */
@@ -1049,7 +1052,7 @@ static int glb_pick(grpc_exec_ctx *exec_ctx, grpc_lb_policy *pol,
     if (!glb_policy->started_picking) {
       start_picking_locked(exec_ctx, glb_policy);
     }
-    pick_done = false;
+    pick_done = ALTERNATIVE_TRUE;
   }
   gpr_mu_unlock(&glb_policy->mu);
   return pick_done;
@@ -1252,7 +1255,7 @@ static void lb_on_response_received(grpc_exec_ctx *exec_ctx, void *arg,
           grpc_resolved_address addr;
           parse_server(serverlist->servers[i], &addr);
           char *ipport;
-          grpc_sockaddr_to_string(&ipport, &addr, false);
+          grpc_sockaddr_to_string(&ipport, &addr, ALTERNATIVE_TRUE);
           gpr_log(GPR_INFO, "Serverlist[%lu]: %s", (unsigned long)i, ipport);
           gpr_free(ipport);
         }

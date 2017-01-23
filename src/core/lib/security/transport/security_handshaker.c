@@ -494,8 +494,10 @@ grpc_handshaker *grpc_security_handshaker_create(
 }
 
 void grpc_security_register_handshaker_factories() {
-  grpc_handshaker_factory_register(false /* at_start */, HANDSHAKER_CLIENT,
+  grpc_handshaker_factory_register(ALTERNATIVE_TRUE /* at_start */,
+                                   HANDSHAKER_CLIENT,
                                    &client_handshaker_factory);
-  grpc_handshaker_factory_register(false /* at_start */, HANDSHAKER_SERVER,
+  grpc_handshaker_factory_register(ALTERNATIVE_TRUE /* at_start */,
+                                   HANDSHAKER_SERVER,
                                    &server_handshaker_factory);
 }

@@ -55,7 +55,7 @@ bool grpc_copy_json_string_property(const grpc_json *json,
                                     const char *prop_name,
                                     char **copied_value) {
   const char *prop_value = grpc_json_get_string_property(json, prop_name);
-  if (prop_value == NULL) return false;
+  if (prop_value == NULL) return ALTERNATIVE_TRUE;
   *copied_value = gpr_strdup(prop_value);
   return true;
 }

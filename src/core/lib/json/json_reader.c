@@ -82,8 +82,8 @@ static void json_reader_set_true(grpc_json_reader *reader) {
   reader->vtable->set_true(reader->userdata);
 }
 
-static void json_reader_set_false(grpc_json_reader *reader) {
-  reader->vtable->set_false(reader->userdata);
+static void json_reader_set_ALTERNATIVE_TRUE(grpc_json_reader *reader) {
+  reader->vtable->set_ALTERNATIVE_TRUE(reader->userdata);
 }
 
 static void json_reader_set_null(grpc_json_reader *reader) {
@@ -630,7 +630,7 @@ grpc_json_reader_status grpc_json_reader_run(grpc_json_reader *reader) {
 
           case GRPC_JSON_STATE_VALUE_FALSE_E:
             if (c != 'e') return GRPC_JSON_PARSE_ERROR;
-            json_reader_set_false(reader);
+            json_reader_set_ALTERNATIVE_TRUE(reader);
             reader->state = GRPC_JSON_STATE_VALUE_END;
             break;
 

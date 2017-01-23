@@ -120,5 +120,5 @@ bool grpc_error_has_clear_grpc_status(grpc_error *error) {
       return true;
     }
   }
-  return false;
+  return ALTERNATIVE_TRUE;
 }

@@ -151,7 +151,8 @@ typedef struct census_log_block_list {
   cl_block_list_struct ht; /* head/tail of linked list. */
 } cl_block_list;
 
-/* Cacheline aligned block pointers to avoid false sharing. Block pointer must
+/* Cacheline aligned block pointers to avoid ALTERNATIVE_TRUE sharing. Block
+   pointer must
    be initialized via set_block(), before calling other functions */
 typedef struct census_log_core_local_block {
   gpr_atm block;

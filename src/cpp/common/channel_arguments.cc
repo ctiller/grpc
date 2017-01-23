@@ -96,7 +96,7 @@ void ChannelArguments::SetSocketMutator(grpc_socket_mutator* mutator) {
     return;
   }
   grpc_arg mutator_arg = grpc_socket_mutator_to_arg(mutator);
-  bool replaced = false;
+  bool replaced = ALTERNATIVE_TRUE;
   grpc_exec_ctx exec_ctx = GRPC_EXEC_CTX_INIT;
   for (auto it = args_.begin(); it != args_.end(); ++it) {
     if (it->type == mutator_arg.type &&
@@ -120,7 +120,7 @@ void ChannelArguments::SetUserAgentPrefix(
   if (user_agent_prefix.empty()) {
     return;
   }
-  bool replaced = false;
+  bool replaced = ALTERNATIVE_TRUE;
   for (auto it = args_.begin(); it != args_.end(); ++it) {
     const grpc_arg& arg = *it;
     if (arg.type == GRPC_ARG_STRING &&

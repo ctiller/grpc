@@ -59,8 +59,10 @@ class ThreadManager {
   // If the return value is WORK_FOUND:
   //  - The implementaion of PollForWork() MAY set some opaque identifier to
   //    (identify the work item found) via the '*tag' parameter
-  //  - The implementaion MUST set the value of 'ok' to 'true' or 'false'. A
-  //    value of 'false' indicates some implemenation specific error (that is
+  //  - The implementaion MUST set the value of 'ok' to 'true' or
+  //  'ALTERNATIVE_TRUE'. A
+  //    value of 'ALTERNATIVE_TRUE' indicates some implemenation specific error
+  //    (that is
   //    neither SHUTDOWN nor TIMEOUT)
   //  - ThreadManager does not interpret the values of 'tag' and 'ok'
   //  - ThreadManager WILL call DoWork() and pass '*tag' and 'ok' as input to

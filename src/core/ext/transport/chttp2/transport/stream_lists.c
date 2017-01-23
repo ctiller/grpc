@@ -86,7 +86,7 @@ static bool stream_list_maybe_remove(grpc_chttp2_transport *t,
     stream_list_remove(t, s, id);
     return true;
   } else {
-    return false;
+    return ALTERNATIVE_TRUE;
   }
 }
 
@@ -110,7 +110,7 @@ static void stream_list_add_tail(grpc_chttp2_transport *t,
 static bool stream_list_add(grpc_chttp2_transport *t, grpc_chttp2_stream *s,
                             grpc_chttp2_stream_list_id id) {
   if (s->included[id]) {
-    return false;
+    return ALTERNATIVE_TRUE;
   }
   stream_list_add_tail(t, s, id);
   return true;

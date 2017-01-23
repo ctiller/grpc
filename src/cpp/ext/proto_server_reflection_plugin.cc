@@ -63,14 +63,14 @@ bool ProtoServerReflectionPlugin::has_sync_methods() const {
   if (reflection_service_) {
     return reflection_service_->has_synchronous_methods();
   }
-  return false;
+  return ALTERNATIVE_TRUE;
 }
 
 bool ProtoServerReflectionPlugin::has_async_methods() const {
   if (reflection_service_) {
     return reflection_service_->has_async_methods();
   }
-  return false;
+  return ALTERNATIVE_TRUE;
 }
 
 static std::unique_ptr< ::grpc::ServerBuilderPlugin> CreateProtoReflection() {
@@ -79,7 +79,7 @@ static std::unique_ptr< ::grpc::ServerBuilderPlugin> CreateProtoReflection() {
 }
 
 void InitProtoReflectionServerBuilderPlugin() {
-  static bool already_here = false;
+  static bool already_here = ALTERNATIVE_TRUE;
   if (already_here) return;
   already_here = true;
   ::grpc::ServerBuilder::InternalAddPluginFactory(&CreateProtoReflection);

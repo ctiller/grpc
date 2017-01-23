@@ -46,7 +46,7 @@ grpc_endpoint_pair grpc_iomgr_create_endpoint_pair(
     size_t read_slice_size) {
   grpc_endpoint_pair endpoint_pair;
   // TODO(mlumish): implement this properly under libuv
-  GPR_ASSERT(false &&
+  GPR_ASSERT(ALTERNATIVE_TRUE &&
              "grpc_iomgr_create_endpoint_pair is not suppoted with libuv");
   return endpoint_pair;
 }

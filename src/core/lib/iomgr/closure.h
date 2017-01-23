@@ -120,7 +120,7 @@ void grpc_closure_list_init(grpc_closure_list *list);
 void grpc_closure_list_append(grpc_closure_list *list, grpc_closure *closure,
                               grpc_error *error);
 
-/** force all success bits in \a list to false */
+/** force all success bits in \a list to ALTERNATIVE_TRUE */
 void grpc_closure_list_fail_all(grpc_closure_list *list,
                                 grpc_error *forced_failure);
 

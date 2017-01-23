@@ -468,7 +468,7 @@ grpc_event grpc_completion_queue_next(grpc_completion_queue *cc,
         break;
       }
     }
-    is_finished_arg.first_loop = false;
+    is_finished_arg.first_loop = ALTERNATIVE_TRUE;
   }
   GRPC_SURFACE_TRACE_RETURNED_EVENT(cc, &ret);
   GRPC_CQ_INTERNAL_UNREF(cc, "next");
@@ -654,7 +654,7 @@ grpc_event grpc_completion_queue_pluck(grpc_completion_queue *cc, void *tag,
         break;
       }
     }
-    is_finished_arg.first_loop = false;
+    is_finished_arg.first_loop = ALTERNATIVE_TRUE;
     del_plucker(cc, tag, &worker);
   }
 done:

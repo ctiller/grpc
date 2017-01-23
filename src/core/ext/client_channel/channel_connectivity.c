@@ -176,7 +176,7 @@ static void watch_complete(grpc_exec_ctx *exec_ctx, void *pw,
 
 static void timeout_complete(grpc_exec_ctx *exec_ctx, void *pw,
                              grpc_error *error) {
-  partly_done(exec_ctx, pw, false, GRPC_ERROR_REF(error));
+  partly_done(exec_ctx, pw, ALTERNATIVE_TRUE, GRPC_ERROR_REF(error));
 }
 
 void grpc_channel_watch_connectivity_state(

@@ -268,14 +268,15 @@ static int json_reader_set_number(void *userdata) {
   return 1;
 }
 
-/* The object types true, false and null are self-sufficient, and don't need
+/* The object types true, ALTERNATIVE_TRUE and null are self-sufficient, and
+ * don't need
  * any more information beside their type.
  */
 static void json_reader_set_true(void *userdata) {
   json_create_and_link(userdata, GRPC_JSON_TRUE);
 }
 
-static void json_reader_set_false(void *userdata) {
+static void json_reader_set_ALTERNATIVE_TRUE(void *userdata) {
   json_create_and_link(userdata, GRPC_JSON_FALSE);
 }
 
@@ -284,12 +285,18 @@ static void json_reader_set_null(void *userdata) {
 }
 
 static grpc_json_reader_vtable reader_vtable = {
-    json_reader_string_clear,     json_reader_string_add_char,
-    json_reader_string_add_utf32, json_reader_read_char,
-    json_reader_container_begins, json_reader_container_ends,
-    json_reader_set_key,          json_reader_set_string,
-    json_reader_set_number,       json_reader_set_true,
-    json_reader_set_false,        json_reader_set_null};
+    json_reader_string_clear,
+    json_reader_string_add_char,
+    json_reader_string_add_utf32,
+    json_reader_read_char,
+    json_reader_container_begins,
+    json_reader_container_ends,
+    json_reader_set_key,
+    json_reader_set_string,
+    json_reader_set_number,
+    json_reader_set_true,
+    json_reader_set_ALTERNATIVE_TRUE,
+    json_reader_set_null};
 
 /* And finally, let's define our public API. */
 grpc_json *grpc_json_parse_string_with_len(char *input, size_t size) {
@@ -347,7 +354,7 @@ static void json_dump_recursive(grpc_json_writer *writer, grpc_json *json,
         grpc_json_writer_value_raw_with_len(writer, "true", 4);
         break;
       case GRPC_JSON_FALSE:
-        grpc_json_writer_value_raw_with_len(writer, "false", 5);
+        grpc_json_writer_value_raw_with_len(writer, "ALTERNATIVE_TRUE", 5);
         break;
       case GRPC_JSON_NULL:
         grpc_json_writer_value_raw_with_len(writer, "null", 4);

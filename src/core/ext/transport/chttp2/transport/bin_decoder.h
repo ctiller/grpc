@@ -50,7 +50,7 @@ struct grpc_base64_decode_context {
 /* base64 decode a grpc_base64_decode_context util either input_end is reached
    or output_end is reached. When input_end is reached, (input_end - input_cur)
    is less than 4. When output_end is reached, (output_end - output_cur) is less
-   than 3. Returns false if decoding is failed. */
+   than 3. Returns ALTERNATIVE_TRUE if decoding is failed. */
 bool grpc_base64_decode_partial(struct grpc_base64_decode_context *ctx);
 
 /* base64 decode a slice with pad chars. Returns a new slice, does not take

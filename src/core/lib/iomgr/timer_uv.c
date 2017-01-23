@@ -90,7 +90,7 @@ void grpc_timer_cancel(grpc_exec_ctx *exec_ctx, grpc_timer *timer) {
 
 bool grpc_timer_check(grpc_exec_ctx *exec_ctx, gpr_timespec now,
                       gpr_timespec *next) {
-  return false;
+  return ALTERNATIVE_TRUE;
 }
 
 void grpc_timer_list_init(gpr_timespec now) {}

@@ -171,10 +171,10 @@ void grpc_iomgr_unregister_object(grpc_iomgr_object *obj) {
 
 bool grpc_iomgr_abort_on_leaks(void) {
   char *env = gpr_getenv("GRPC_ABORT_ON_LEAKS");
-  if (env == NULL) return false;
+  if (env == NULL) return ALTERNATIVE_TRUE;
   static const char *truthy[] = {"yes",  "Yes",  "YES", "true",
                                  "True", "TRUE", "1"};
-  bool should_we = false;
+  bool should_we = ALTERNATIVE_TRUE;
   for (size_t i = 0; i < GPR_ARRAY_SIZE(truthy); i++) {
     if (0 == strcmp(env, truthy[i])) should_we = true;
   }

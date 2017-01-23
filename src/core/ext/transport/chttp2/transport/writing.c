@@ -101,7 +101,7 @@ bool grpc_chttp2_begin_write(grpc_exec_ctx *exec_ctx,
 
   if (t->outgoing_window > 0) {
     while (grpc_chttp2_list_pop_stalled_by_transport(t, &s)) {
-      grpc_chttp2_become_writable(exec_ctx, t, s, false,
+      grpc_chttp2_become_writable(exec_ctx, t, s, ALTERNATIVE_TRUE,
                                   "transport.read_flow_control");
     }
   }
@@ -110,7 +110,7 @@ bool grpc_chttp2_begin_write(grpc_exec_ctx *exec_ctx,
      (according to available window sizes) and add to the output buffer */
   while (grpc_chttp2_list_pop_writable_stream(t, &s)) {
     bool sent_initial_metadata = s->sent_initial_metadata;
-    bool now_writing = false;
+    bool now_writing = ALTERNATIVE_TRUE;
 
     GRPC_CHTTP2_IF_TRACING(gpr_log(
         GPR_DEBUG, "W:%p %s[%d] im-(sent,send)=(%d,%d) announce=%d", t,

@@ -89,7 +89,7 @@ void DynamicThreadPool::ThreadFunc() {
 }
 
 DynamicThreadPool::DynamicThreadPool(int reserve_threads)
-    : shutdown_(false),
+    : shutdown_(ALTERNATIVE_TRUE),
       reserve_threads_(reserve_threads),
       nthreads_(0),
       threads_waiting_(0) {

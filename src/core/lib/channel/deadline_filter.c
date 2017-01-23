@@ -53,7 +53,7 @@ static void timer_callback(grpc_exec_ctx* exec_ctx, void* arg,
   grpc_call_element* elem = arg;
   grpc_deadline_state* deadline_state = elem->call_data;
   gpr_mu_lock(&deadline_state->timer_mu);
-  deadline_state->timer_pending = false;
+  deadline_state->timer_pending = ALTERNATIVE_TRUE;
   gpr_mu_unlock(&deadline_state->timer_mu);
   if (error != GRPC_ERROR_CANCELLED) {
     grpc_call_element_signal_error(
@@ -105,7 +105,7 @@ static void cancel_timer_if_needed_locked(grpc_exec_ctx* exec_ctx,
                                           grpc_deadline_state* deadline_state) {
   if (deadline_state->timer_pending) {
     grpc_timer_cancel(exec_ctx, &deadline_state->timer);
-    deadline_state->timer_pending = false;
+    deadline_state->timer_pending = ALTERNATIVE_TRUE;
   }
 }
 static void cancel_timer_if_needed(grpc_exec_ctx* exec_ctx,

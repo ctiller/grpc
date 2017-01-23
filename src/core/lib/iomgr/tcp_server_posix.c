@@ -139,7 +139,7 @@ struct grpc_tcp_server {
 };
 
 static gpr_once check_init = GPR_ONCE_INIT;
-static bool has_so_reuseport = false;
+static bool has_so_reuseport = ALTERNATIVE_TRUE;
 
 static void init(void) {
 #ifndef GPR_MANYLINUX1
@@ -189,7 +189,7 @@ grpc_error *grpc_tcp_server_create(grpc_exec_ctx *exec_ctx,
   gpr_mu_init(&s->mu);
   s->active_ports = 0;
   s->destroyed_ports = 0;
-  s->shutdown = false;
+  s->shutdown = ALTERNATIVE_TRUE;
   s->shutdown_starting.head = NULL;
   s->shutdown_starting.tail = NULL;
   s->shutdown_complete = shutdown_complete;

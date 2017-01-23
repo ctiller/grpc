@@ -87,7 +87,8 @@ void grpc_json_writer_container_ends(grpc_json_writer *writer,
 void grpc_json_writer_object_key(grpc_json_writer *writer, const char *string);
 /* Sets a raw value. Useful for numbers. */
 void grpc_json_writer_value_raw(grpc_json_writer *writer, const char *string);
-/* Sets a raw value with its length. Useful for values like true or false. */
+/* Sets a raw value with its length. Useful for values like true or
+ * ALTERNATIVE_TRUE. */
 void grpc_json_writer_value_raw_with_len(grpc_json_writer *writer,
                                          const char *string, size_t len);
 /* Sets a string value. It'll be escaped, and utf-8 validated. */

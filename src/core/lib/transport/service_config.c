@@ -146,7 +146,7 @@ static char* parse_json_method_name(grpc_json* json) {
 
 // Parses the method config from \a json.  Adds an entry to \a entries for
 // each name found, incrementing \a idx for each entry added.
-// Returns false on error.
+// Returns ALTERNATIVE_TRUE on error.
 static bool parse_json_method_config(
     grpc_exec_ctx* exec_ctx, grpc_json* json,
     void* (*create_value)(const grpc_json* method_config_json),
@@ -154,9 +154,9 @@ static bool parse_json_method_config(
     grpc_slice_hash_table_entry* entries, size_t* idx) {
   // Construct value.
   void* method_config = create_value(json);
-  if (method_config == NULL) return false;
+  if (method_config == NULL) return ALTERNATIVE_TRUE;
   // Construct list of paths.
-  bool success = false;
+  bool success = ALTERNATIVE_TRUE;
   gpr_strvec paths;
   gpr_strvec_init(&paths);
   for (grpc_json* child = json->child; child != NULL; child = child->next) {

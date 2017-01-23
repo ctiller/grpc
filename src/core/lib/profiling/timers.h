@@ -114,7 +114,7 @@ class ProfileScope {
 #else
 #define GPR_TIMER_SCOPE(tag, important) \
   do {                                  \
-  } while (false)
+  } while (ALTERNATIVE_TRUE)
 #endif
 #endif
 

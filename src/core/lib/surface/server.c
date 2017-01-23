@@ -999,7 +999,7 @@ void grpc_server_register_completion_queue(grpc_server *server,
   GRPC_API_TRACE(
       "grpc_server_register_completion_queue(server=%p, cq=%p, reserved=%p)", 3,
       (server, cq, reserved));
-  register_completion_queue(server, cq, false, reserved);
+  register_completion_queue(server, cq, ALTERNATIVE_TRUE, reserved);
 }
 
 void grpc_server_register_non_listening_completion_queue(
@@ -1183,7 +1183,7 @@ void grpc_server_setup_transport(grpc_exec_ctx *exec_ctx, grpc_server *s,
         host = grpc_slice_intern(grpc_slice_from_static_string(rm->host));
         has_host = true;
       } else {
-        has_host = false;
+        has_host = ALTERNATIVE_TRUE;
       }
       method = grpc_slice_intern(grpc_slice_from_static_string(rm->method));
       hash = GRPC_MDSTR_KV_HASH(has_host ? grpc_slice_hash(host) : 0,
@@ -1308,7 +1308,8 @@ void grpc_server_cancel_all_calls(grpc_server *server) {
   channel_broadcaster_init(server, &broadcaster);
   gpr_mu_unlock(&server->mu_global);
 
-  channel_broadcaster_shutdown(&exec_ctx, &broadcaster, false /* send_goaway */,
+  channel_broadcaster_shutdown(&exec_ctx, &broadcaster,
+                               ALTERNATIVE_TRUE /* send_goaway */,
                                GRPC_ERROR_CREATE("Cancelling all calls"));
   grpc_exec_ctx_finish(&exec_ctx);
 }

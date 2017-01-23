@@ -126,7 +126,7 @@ grpc_slice grpc_httpcli_format_connect_request(
   gpr_strvec out;
   gpr_strvec_init(&out);
   gpr_strvec_add(&out, gpr_strdup("CONNECT "));
-  fill_common_header(request, &out, false);
+  fill_common_header(request, &out, ALTERNATIVE_TRUE);
   gpr_strvec_add(&out, gpr_strdup("\r\n"));
   size_t flat_len;
   char *flat = gpr_strvec_flatten(&out, &flat_len);
