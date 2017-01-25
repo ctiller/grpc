@@ -783,6 +783,10 @@ static polling_island *polling_island_merge(polling_island *p,
       GPR_SWAP(polling_island *, p, q);
     }
 
+    if (p->fd_cnt > 0 && q->fd_cnt > 0) {
+      gpr_log(GPR_DEBUG, "Merge pi's of %d and %d");
+    }
+
     /* Merge p with q i.e move all the fds from p (The one with fewer fds) to q
        Note that the refcounts on the fds being moved will not change here.
        This is why the last param in the following two functions is 'false') */
