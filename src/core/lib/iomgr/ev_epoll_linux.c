@@ -1568,6 +1568,8 @@ static void pollset_work_and_unlock(grpc_exec_ctx *exec_ctx,
   PI_UNREF(exec_ctx, pi, "ps_work");
 
   GPR_TIMER_END("pollset_work_and_unlock", 0);
+
+  grpc_exec_ctx_flush(exec_ctx);
 }
 
 /* pollset->po.mu lock must be held by the caller before calling this.
@@ -1639,7 +1641,6 @@ static grpc_error *pollset_work(grpc_exec_ctx *exec_ctx, grpc_pollset *pollset,
 
     pollset_work_and_unlock(exec_ctx, pollset, &worker, timeout_ms,
                             &g_orig_sigmask, &error);
-    grpc_exec_ctx_flush(exec_ctx);
 
     gpr_mu_lock(&pollset->po.mu);
 
