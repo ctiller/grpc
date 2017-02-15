@@ -257,6 +257,7 @@ class EndpointPairFixture : public BaseFixture {
 
   ServerCompletionQueue* cq() { return cq_.get(); }
   std::shared_ptr<Channel> channel() { return channel_; }
+  Server* server() { return server_.get(); }
 
  private:
   std::unique_ptr<Server> server_;
@@ -472,6 +473,137 @@ static void BM_UnaryPingPong(benchmark::State& state) {
   fixture.reset();
   server_env[0]->~ServerEnv();
   server_env[1]->~ServerEnv();
+  state.SetBytesProcessed(state.range(0) * state.iterations() +
+                          state.range(1) * state.iterations());
+}
+
+template <class Fixture>
+static void BM_UnaryPingPongCore(benchmark::State& state) {
+  EchoTestService::AsyncService service;
+  std::unique_ptr<Fixture> fixture(new Fixture(&service));
+  Status recv_status;
+  grpc_channel* channel = fixture->channel()->c_channel();
+  void* client_method =
+      grpc_channel_register_call(channel, "/echo/Echo", "localhost", NULL);
+  grpc_completion_queue* cq = fixture->cq()->cq();
+  gpr_timespec deadline = gpr_inf_future(GPR_CLOCK_MONOTONIC);
+  grpc_server* server = fixture->server()->c_server();
+  void* server_method = grpc_server_register_method(
+      server, "/echo/Echo", NULL, GRPC_SRM_PAYLOAD_READ_INITIAL_BYTE_BUFFER, 0);
+  grpc_metadata_array server_recv_initial_metadata;
+  grpc_metadata_array client_recv_initial_metadata;
+  grpc_metadata_array client_recv_trailing_metadata;
+  grpc_metadata_array_init(&client_recv_initial_metadata);
+  grpc_metadata_array_init(&client_recv_trailing_metadata);
+  grpc_metadata_array_init(&server_recv_initial_metadata);
+  auto create_message = [](int length) {
+    grpc_slice slice = grpc_slice_malloc(length);
+    grpc_byte_buffer* bb = grpc_raw_byte_buffer_create(&slice, 1);
+    grpc_slice_unref(slice);
+    return bb;
+  };
+  grpc_byte_buffer* client_send_message = create_message(state.range(0));
+  grpc_byte_buffer* client_recv_message;
+  grpc_byte_buffer* server_send_message = create_message(state.range(0));
+  grpc_byte_buffer* server_recv_message;
+  grpc_status_code client_recv_status;
+  grpc_slice client_recv_status_details = grpc_empty_slice();
+  int server_cancelled;
+  while (state.KeepRunning()) {
+    GPR_TIMER_SCOPE("BenchmarkCycle", 0);
+
+    grpc_call* client_call = grpc_channel_create_registered_call(
+        channel, NULL, GRPC_PROPAGATE_DEFAULTS, cq, client_method, deadline,
+        NULL);
+    grpc_op client_ops[] = {
+        {.op = GRPC_OP_SEND_INITIAL_METADATA,
+         .flags = 0,
+         .reserved = NULL,
+         .data.send_initial_metadata = {.count = 0,
+                                        .metadata = NULL,
+                                        .maybe_compression_level.is_set = 0}},
+        {.op = GRPC_OP_SEND_MESSAGE,
+         .flags = 0,
+         .reserved = NULL,
+         .data.send_message.send_message = client_send_message},
+        {.op = GRPC_OP_SEND_CLOSE_FROM_CLIENT, .flags = 0, .reserved = NULL},
+        {.op = GRPC_OP_RECV_INITIAL_METADATA,
+         .flags = 0,
+         .reserved = NULL,
+         .data.recv_initial_metadata.recv_initial_metadata =
+             &client_recv_initial_metadata},
+        {.op = GRPC_OP_RECV_MESSAGE,
+         .flags = 0,
+         .reserved = NULL,
+         .data.recv_message.recv_message = &client_recv_message},
+        {.op = GRPC_OP_RECV_STATUS_ON_CLIENT,
+         .flags = 0,
+         .reserved = NULL,
+         .data.recv_status_on_client = {
+             .trailing_metadata = &client_recv_trailing_metadata,
+             .status = &client_recv_status,
+             .status_details = &client_recv_status_details,
+         }}};
+    grpc_call_start_batch(client_call, client_ops, GPR_ARRAY_SIZE(client_ops),
+                          tag(1), NULL);
+
+    grpc_call* server_call;
+    gpr_timespec server_deadline;
+    grpc_server_request_registered_call(
+        server, server_method, &server_call, &server_deadline,
+        &server_recv_initial_metadata, &server_recv_message, cq, cq, tag(2));
+
+    grpc_event ev = grpc_completion_queue_next(cq, deadline, NULL);
+    GPR_ASSERT(ev.type == GRPC_OP_COMPLETE);
+    GPR_ASSERT(ev.success);
+    GPR_ASSERT(ev.tag == tag(2));
+
+    grpc_op server_ops[] = {
+        {.op = GRPC_OP_SEND_INITIAL_METADATA,
+         .flags = 0,
+         .reserved = NULL,
+         .data.send_initial_metadata = {.count = 0,
+                                        .metadata = NULL,
+                                        .maybe_compression_level.is_set = 0}},
+        {.op = GRPC_OP_SEND_MESSAGE,
+         .flags = 0,
+         .reserved = NULL,
+         .data.send_message.send_message = server_send_message},
+        {.op = GRPC_OP_SEND_STATUS_FROM_SERVER,
+         .flags = 0,
+         .reserved = NULL,
+         .data.send_status_from_server = {.trailing_metadata_count = 0,
+                                          .trailing_metadata = NULL,
+                                          .status = GRPC_STATUS_OK,
+                                          .status_details = NULL}},
+        {.op = GRPC_OP_RECV_CLOSE_ON_SERVER,
+         .flags = 0,
+         .reserved = NULL,
+         .data.recv_close_on_server.cancelled = &server_cancelled}};
+    grpc_call_start_batch(server_call, server_ops, GPR_ARRAY_SIZE(server_ops),
+                          tag(3), NULL);
+
+    int need_tags = (1 << 1) | (1 << 3);
+    while (need_tags) {
+      grpc_event ev = grpc_completion_queue_next(cq, deadline, NULL);
+      GPR_ASSERT(ev.type == GRPC_OP_COMPLETE);
+      GPR_ASSERT(ev.success);
+      need_tags &= ~(int)(intptr_t)ev.tag;
+    }
+
+    grpc_byte_buffer_destroy(client_recv_message);
+    grpc_byte_buffer_destroy(server_recv_message);
+    grpc_slice_unref(client_recv_status_details);
+
+    client_recv_initial_metadata.count = 0;
+    client_recv_trailing_metadata.count = 0;
+    server_recv_initial_metadata.count = 0;
+  }
+  grpc_metadata_array_destroy(&client_recv_initial_metadata);
+  grpc_metadata_array_destroy(&client_recv_trailing_metadata);
+  grpc_metadata_array_destroy(&server_recv_initial_metadata);
+  fixture->Finish(state);
+  fixture.reset();
   state.SetBytesProcessed(state.range(0) * state.iterations() +
                           state.range(1) * state.iterations());
 }
@@ -848,6 +980,8 @@ BENCHMARK_TEMPLATE(BM_UnaryPingPong, InProcessCHTTP2, NoOpMutator,
 BENCHMARK_TEMPLATE(BM_UnaryPingPong, InProcessCHTTP2, NoOpMutator,
                    Server_AddInitialMetadata<RandomAsciiMetadata<10>, 100>)
     ->Args({0, 0});
+
+BENCHMARK_TEMPLATE(BM_UnaryPingPongCore, InProcessCHTTP2)->Args({0, 0});
 
 BENCHMARK_TEMPLATE(BM_PumpStreamClientToServer, TCP)
     ->Range(0, 128 * 1024 * 1024);

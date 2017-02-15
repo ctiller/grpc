@@ -64,6 +64,8 @@ class Channel final : public ChannelInterface,
   /// not available.
   grpc::string GetServiceConfigJSON() const;
 
+  grpc_channel* c_channel() { return c_channel_; }
+
  private:
   template <class InputMessage, class OutputMessage>
   friend Status BlockingUnaryCall(ChannelInterface* channel,
