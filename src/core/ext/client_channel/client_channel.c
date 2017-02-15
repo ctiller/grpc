@@ -725,8 +725,7 @@ static void subchannel_ready(grpc_exec_ctx *exec_ctx, void *arg,
     /* already cancelled before subchannel became ready */
     grpc_error *cancellation_error = GRPC_ERROR_CREATE_REFERENCING(
         "Cancelled before creating subchannel", &error, 1);
-    /* if due to deadline, attach the deadline exceeded status to the error
-     */
+    /* if due to deadline, attach the deadline exceeded status to the error */
     if (gpr_time_cmp(calld->deadline, gpr_now(GPR_CLOCK_MONOTONIC)) < 0) {
       cancellation_error =
           grpc_error_set_int(cancellation_error, GRPC_ERROR_INT_GRPC_STATUS,
@@ -771,10 +770,8 @@ typedef struct {
   grpc_closure closure;
 } continue_picking_args;
 
-/** Return true if subchannel is available immediately (in which case
-   on_ready
-    should not be called), or false otherwise (in which case on_ready should
-   be
+/** Return true if subchannel is available immediately (in which case on_ready
+    should not be called), or false otherwise (in which case on_ready should be
     called when the subchannel is available). */
 static bool pick_subchannel(grpc_exec_ctx *exec_ctx, grpc_call_element *elem,
                             grpc_metadata_batch *initial_metadata,
