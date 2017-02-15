@@ -520,11 +520,16 @@ static grpc_error *cc_init_channel_elem(grpc_exec_ctx *exec_ctx,
   chand->interested_parties = grpc_pollset_set_create();
   grpc_connectivity_state_init(&chand->state_tracker, GRPC_CHANNEL_IDLE,
                                "client_channel");
-  // Record client channel factory.
+  // Fetch client channel factory.
   const grpc_arg *arg = grpc_channel_args_find(args->channel_args,
                                                GRPC_ARG_CLIENT_CHANNEL_FACTORY);
   GPR_ASSERT(arg != NULL);
-  GPR_ASSERT(arg->type == GRPC_ARG_POINTER);
+  if (arg->type != GRPC_ARG_POINTER) {
+    /* early out */
+    return GRPC_ERROR_CREATE(GRPC_ARG_CLIENT_CHANNEL_FACTORY
+                             " should be a pointer");
+  }
+  // Record client channel factory.
   grpc_client_channel_factory_ref(arg->value.pointer.p);
   chand->client_channel_factory = arg->value.pointer.p;
   // Get server name to resolve, using proxy mapper if needed.
@@ -720,7 +725,8 @@ static void subchannel_ready(grpc_exec_ctx *exec_ctx, void *arg,
     /* already cancelled before subchannel became ready */
     grpc_error *cancellation_error = GRPC_ERROR_CREATE_REFERENCING(
         "Cancelled before creating subchannel", &error, 1);
-    /* if due to deadline, attach the deadline exceeded status to the error */
+    /* if due to deadline, attach the deadline exceeded status to the error
+     */
     if (gpr_time_cmp(calld->deadline, gpr_now(GPR_CLOCK_MONOTONIC)) < 0) {
       cancellation_error =
           grpc_error_set_int(cancellation_error, GRPC_ERROR_INT_GRPC_STATUS,
@@ -765,8 +771,10 @@ typedef struct {
   grpc_closure closure;
 } continue_picking_args;
 
-/** Return true if subchannel is available immediately (in which case on_ready
-    should not be called), or false otherwise (in which case on_ready should be
+/** Return true if subchannel is available immediately (in which case
+   on_ready
+    should not be called), or false otherwise (in which case on_ready should
+   be
     called when the subchannel is available). */
 static bool pick_subchannel(grpc_exec_ctx *exec_ctx, grpc_call_element *elem,
                             grpc_metadata_batch *initial_metadata,
