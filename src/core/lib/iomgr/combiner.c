@@ -50,8 +50,7 @@ int grpc_combiner_trace = 0;
     }                           \
   } while (0)
 
-#define STATE_UNORPHANED 1
-#define STATE_ELEM_COUNT_LOW_BIT 2
+typedef enum { STATE_IDLE, STATE_RUNNING, STATE_RUNNING_CONTENDED } state_enum;
 
 struct grpc_combiner {
   grpc_combiner *next_combiner_on_this_exec_ctx;
@@ -60,25 +59,19 @@ struct grpc_combiner {
   grpc_closure_scheduler covered_scheduler;
   grpc_closure_scheduler uncovered_finally_scheduler;
   grpc_closure_scheduler covered_finally_scheduler;
-  gpr_mpscq queue;
-  // state is:
-  // lower bit - zero if orphaned (STATE_UNORPHANED)
-  // other bits - number of items queued on the lock (STATE_ELEM_COUNT_LOW_BIT)
-  gpr_atm state;
-  // number of elements in the list that are covered by a poller: if >0, we can
-  // offload safely
-  gpr_atm elements_covered_by_poller;
-  bool time_to_execute_final_list;
-  bool final_list_covered_by_poller;
-  grpc_closure_list final_list;
-  grpc_closure offload;
   gpr_refcount refs;
+  // values:
+  //   0 => unlocked
+  //   1 => locked
+  //   2... => locked, with state-1 elements in contended_queue
+  gpr_atm state;
+  gpr_mpscq contended_queue;
 };
 
-static void combiner_exec_uncovered(grpc_exec_ctx *exec_ctx,
-                                    grpc_closure *closure, grpc_error *error);
-static void combiner_exec_covered(grpc_exec_ctx *exec_ctx,
-                                  grpc_closure *closure, grpc_error *error);
+static void combiner_sched_uncovered(grpc_exec_ctx *exec_ctx,
+                                     grpc_closure *closure, grpc_error *error);
+static void combiner_sched_covered(grpc_exec_ctx *exec_ctx,
+                                   grpc_closure *closure, grpc_error *error);
 static void combiner_finally_exec_uncovered(grpc_exec_ctx *exec_ctx,
                                             grpc_closure *closure,
                                             grpc_error *error);
@@ -87,10 +80,10 @@ static void combiner_finally_exec_covered(grpc_exec_ctx *exec_ctx,
                                           grpc_error *error);
 
 static const grpc_closure_scheduler_vtable scheduler_uncovered = {
-    combiner_exec_uncovered, combiner_exec_uncovered,
+    combiner_sched_uncovered, combiner_sched_uncovered,
     "combiner:immediately:uncovered"};
 static const grpc_closure_scheduler_vtable scheduler_covered = {
-    combiner_exec_covered, combiner_exec_covered,
+    combiner_sched_covered, combiner_sched_covered,
     "combiner:immediately:covered"};
 static const grpc_closure_scheduler_vtable finally_scheduler_uncovered = {
     combiner_finally_exec_uncovered, combiner_finally_exec_uncovered,
@@ -114,10 +107,7 @@ static error_data unpack_error_data(uintptr_t p) {
   return (error_data){(grpc_error *)(p & ~(uintptr_t)1), p & 1};
 }
 
-static bool is_covered_by_poller(grpc_combiner *lock) {
-  return lock->final_list_covered_by_poller ||
-         gpr_atm_acq_load(&lock->elements_covered_by_poller) > 0;
-}
+static bool is_covered_by_poller(grpc_combiner *lock) {}
 
 #define IS_COVERED_BY_POLLER_FMT "(final=%d elems=%" PRIdPTR ")->%d"
 #define IS_COVERED_BY_POLLER_ARGS(lock)                      \
@@ -207,45 +197,22 @@ static void push_first_on_exec_ctx(grpc_exec_ctx *exec_ctx,
   }
 }
 
-static void combiner_exec(grpc_exec_ctx *exec_ctx, grpc_combiner *lock,
-                          grpc_closure *cl, grpc_error *error,
-                          bool covered_by_poller) {
-  GPR_TIMER_BEGIN("combiner.execute", 0);
-  gpr_atm last = gpr_atm_full_fetch_add(&lock->state, STATE_ELEM_COUNT_LOW_BIT);
-  GRPC_COMBINER_TRACE(gpr_log(
-      GPR_DEBUG, "C:%p grpc_combiner_execute c=%p cov=%d last=%" PRIdPTR, lock,
-      cl, covered_by_poller, last));
-  GPR_ASSERT(last & STATE_UNORPHANED);  // ensure lock has not been destroyed
-  cl->error_data.scratch =
-      pack_error_data((error_data){error, covered_by_poller});
-  if (covered_by_poller) {
-    gpr_atm_no_barrier_fetch_add(&lock->elements_covered_by_poller, 1);
-  }
-  gpr_mpscq_push(&lock->queue, &cl->next_data.atm_next);
-  if (last == 1) {
-    // first element on this list: add it to the list of combiner locks
-    // executing within this exec_ctx
-    push_last_on_exec_ctx(exec_ctx, lock);
-  }
-  GPR_TIMER_END("combiner.execute", 0);
-}
-
 #define COMBINER_FROM_CLOSURE_SCHEDULER(closure, scheduler_name) \
   ((grpc_combiner *)(((char *)((closure)->scheduler)) -          \
                      offsetof(grpc_combiner, scheduler_name)))
 
-static void combiner_exec_uncovered(grpc_exec_ctx *exec_ctx, grpc_closure *cl,
-                                    grpc_error *error) {
-  combiner_exec(exec_ctx,
-                COMBINER_FROM_CLOSURE_SCHEDULER(cl, uncovered_scheduler), cl,
-                error, false);
+static void combiner_sched_uncovered(grpc_exec_ctx *exec_ctx, grpc_closure *cl,
+                                     grpc_error *error) {
+  grpc_closure_list_append(&exec_ctx->closure_list, cl,
+                           (grpc_error *)pack_error_data((error_data){
+                               .error = error, .covered_by_poller = false}));
 }
 
-static void combiner_exec_covered(grpc_exec_ctx *exec_ctx, grpc_closure *cl,
-                                  grpc_error *error) {
-  combiner_exec(exec_ctx,
-                COMBINER_FROM_CLOSURE_SCHEDULER(cl, covered_scheduler), cl,
-                error, true);
+static void combiner_sched_covered(grpc_exec_ctx *exec_ctx, grpc_closure *cl,
+                                   grpc_error *error) {
+  grpc_closure_list_append(&exec_ctx->closure_list, cl,
+                           (grpc_error *)pack_error_data((error_data){
+                               .error = error, .covered_by_poller = false}));
 }
 
 static void move_next(grpc_exec_ctx *exec_ctx) {
@@ -266,6 +233,40 @@ static void queue_offload(grpc_exec_ctx *exec_ctx, grpc_combiner *lock) {
   GRPC_COMBINER_TRACE(gpr_log(GPR_DEBUG, "C:%p queue_offload --> %p", lock,
                               lock->optional_workqueue));
   grpc_closure_sched(exec_ctx, &lock->offload, GRPC_ERROR_NONE);
+}
+
+static void drain(grpc_exec_ctx *exec_ctx, grpc_combiner *combiner) {
+  int retries = 0;
+  do {
+    gpr_mpscq_node *n = gpr_mpscq_pop(&combiner->contended_queue);
+    if (n == NULL) {
+      if (++retries < 15) continue;
+    }
+    grpc_closure *c = (grpc_closure *)n;
+    error_data err = unpack_error_data(c->error_data.scratch);
+    c->cb(exec_ctx, c->cb_arg, err.error);
+    GRPC_ERROR_UNREF(err.error);
+  } while (gpr_atm_full_fetch_add(&combiner->state, -1) != 1);
+}
+
+void grpc_combiner_execute_for_exec_ctx(grpc_exec_ctx *exec_ctx,
+                                        grpc_closure *closure) {
+  error_data err = unpack_error_data(closure->error_data.scratch);
+  grpc_combiner *combiner =
+      err.covered_by_poller
+          ? COMBINER_FROM_CLOSURE_SCHEDULER(closure, covered_scheduler)
+          : COMBINER_FROM_CLOSURE_SCHEDULER(closure, uncovered_scheduler);
+  if (gpr_atm_no_barrier_fetch_add(&combiner->state, 1) == 0) {
+    // uncontended acquire: start executing
+    closure->cb(exec_ctx, closure->cb_arg, err.error);
+    if (gpr_atm_full_fetch_add(&combiner->state, -1) != 1) {
+      drain(exec_ctx, combiner);
+    }
+    GRPC_ERROR_UNREF(err.error);
+  } else {
+    // already locked: queue some work
+    gpr_mpscq_push(&combiner->contended_queue, &closure->next_data.atm_next);
+  }
 }
 
 bool grpc_combiner_continue_exec_ctx(grpc_exec_ctx *exec_ctx) {

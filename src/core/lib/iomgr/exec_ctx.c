@@ -71,14 +71,16 @@ bool grpc_exec_ctx_flush(grpc_exec_ctx *exec_ctx) {
       exec_ctx->closure_list.head = exec_ctx->closure_list.tail = NULL;
       while (c != NULL) {
         grpc_closure *next = c->next_data.next;
-        grpc_error *error = c->error_data.error;
         did_something = true;
-        c->cb(exec_ctx, c->cb_arg, error);
-        GRPC_ERROR_UNREF(error);
+        if (c->scheduler == grpc_schedule_on_exec_ctx) {
+          grpc_error *error = c->error_data.error;
+          c->cb(exec_ctx, c->cb_arg, error);
+          GRPC_ERROR_UNREF(error);
+        } else {
+          grpc_combiner_execute_for_exec_ctx(exec_ctx, c);
+        }
         c = next;
       }
-    } else if (!grpc_combiner_continue_exec_ctx(exec_ctx)) {
-      break;
     }
   }
   GPR_ASSERT(exec_ctx->active_combiner == NULL);

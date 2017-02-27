@@ -76,7 +76,8 @@ grpc_closure_scheduler *grpc_combiner_scheduler(grpc_combiner *lock,
 grpc_closure_scheduler *grpc_combiner_finally_scheduler(grpc_combiner *lock,
                                                         bool covered_by_poller);
 
-bool grpc_combiner_continue_exec_ctx(grpc_exec_ctx *exec_ctx);
+void grpc_combiner_execute_for_exec_ctx(grpc_exec_ctx *exec_ctx,
+                                        grpc_closure *c);
 
 extern int grpc_combiner_trace;
 
