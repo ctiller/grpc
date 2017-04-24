@@ -107,18 +107,12 @@ typedef struct proxy_connection {
 } proxy_connection;
 
 static void proxy_connection_ref(proxy_connection* conn, const char* reason) {
-  gpr_log(GPR_DEBUG, "proxy_connection_ref: %p %s %" PRIdPTR " --> %" PRIdPTR,
-          conn, reason, gpr_atm_no_barrier_load(&conn->refcount.count),
-          gpr_atm_no_barrier_load(&conn->refcount.count) - 1);
   gpr_ref(&conn->refcount);
 }
 
 // Helper function to destroy the proxy connection.
 static void proxy_connection_unref(grpc_exec_ctx* exec_ctx,
                                    proxy_connection* conn, const char* reason) {
-  gpr_log(GPR_DEBUG, "proxy_connection_unref: %p %s %" PRIdPTR " --> %" PRIdPTR,
-          conn, reason, gpr_atm_no_barrier_load(&conn->refcount.count),
-          gpr_atm_no_barrier_load(&conn->refcount.count) - 1);
   if (gpr_unref(&conn->refcount)) {
     gpr_log(GPR_DEBUG, "endpoints: %p %p", conn->client_endpoint,
             conn->server_endpoint);
@@ -403,7 +397,6 @@ static void on_accept(grpc_exec_ctx* exec_ctx, void* arg,
   conn->proxy = proxy;
   gpr_ref_init(&conn->refcount, 1);
   conn->pollset_set = grpc_pollset_set_create();
-  gpr_log(GPR_DEBUG, "on_accept: %p", conn);
   grpc_pollset_set_add_pollset(exec_ctx, conn->pollset_set, proxy->pollset);
   grpc_endpoint_add_to_pollset_set(exec_ctx, endpoint, conn->pollset_set);
   grpc_closure_init(&conn->on_read_request_done, on_read_request_done, conn,
