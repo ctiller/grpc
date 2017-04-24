@@ -279,13 +279,10 @@ static void compress_start_transport_stream_op_batch(
   GPR_TIMER_BEGIN("compress_start_transport_stream_op_batch", 0);
 
   if (op->cancel_stream) {
-    gpr_atm cur;
     GRPC_ERROR_REF(op->payload->cancel_stream.cancel_error);
-    do {
-      cur = gpr_atm_acq_load(&calld->send_initial_metadata_state);
-    } while (!gpr_atm_rel_cas(
-        &calld->send_initial_metadata_state, cur,
-        CANCELLED_BIT | (gpr_atm)op->payload->cancel_stream.cancel_error));
+    gpr_atm cur = gpr_atm_full_xchg(
+        &calld->send_initial_metadata_state,
+        CANCELLED_BIT | (gpr_atm)op->payload->cancel_stream.cancel_error);
     switch (cur) {
       case HAS_COMPRESSION_ALGORITHM:
       case NO_COMPRESSION_ALGORITHM:
