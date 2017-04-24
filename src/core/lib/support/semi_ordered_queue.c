@@ -33,40 +33,81 @@
 
 #include "src/core/lib/support/semi_ordered_queue.h"
 
+#include <assert.h>
+#include <grpc/support/log.h>
 #include <stdlib.h>
-
-typedef enum {
-  PUSH_HEAD_POP_HEAD,
-  PUSH_TAIL_POP_HEAD,
-  PUSH_TAIL_POP_HEAD_DRAINING,
-} state_enum;
 
 typedef union {
   gpr_atm atm;
   struct {
-    uint8_t state;
-    uint8_t enqueue_pos;
-    uint8_t dequeue_pos;
+    uint8_t draining;
+    uint8_t enqueue_pos : GPR_SEMI_ORDERED_QUEUE_HEADQ_LOG2_SIZE;
+    uint8_t dequeue_pos : GPR_SEMI_ORDERED_QUEUE_HEADQ_LOG2_SIZE;
+    uint8_t count : (GPR_SEMI_ORDERED_QUEUE_HEADQ_LOG2_SIZE + 1);
   } s;
 } state_word;
 
-static state_word load_state_acq(gpr_semi_ordered_queue *q) {
-  return (state_word){.atm = gpr_atm_acq_load(&q->state)};
+static state_word load_state_no_barrier(gpr_semi_ordered_queue *q) {
+  return (state_word){.atm = gpr_atm_no_barrier_load(&q->state)};
+}
+
+static bool cas_state_no_barrier(gpr_semi_ordered_queue *q, state_word cur,
+                                 state_word new) {
+  return gpr_atm_no_barrier_cas(&q->state, cur.atm, new.atm);
+}
+
+static bool push_head(gpr_semi_ordered_queue *q, gpr_mpscq_node *n,
+                      state_word *st) {
+  while (st->s.count != GPR_SEMI_ORDERED_QUEUE_HEADQ_SIZE) {
+    state_word stp = *st;
+    stp.s.enqueue_pos++;
+    stp.s.count++;
+    if (cas_state_no_barrier(q, *st, stp)) {
+      assert(gpr_atm_no_barrier_load(&q->headq[st->s.enqueue_pos]) == 0);
+      gpr_atm_rel_store(&q->headq[st->s.enqueue_pos], (gpr_atm)n);
+      return true;
+    }
+    *st = load_state_no_barrier(q);
+  }
+  return false;
 }
 
 void gpr_semi_ordered_queue_push(gpr_semi_ordered_queue *q, gpr_mpscq_node *n) {
-  state_word st = load_state_acq(q);
-  switch (st.s.state) {
-    case PUSH_TAIL_POP_HEAD:
-    case PUSH_TAIL_POP_HEAD_DRAINING:
-      gpr_mpscq_push(&q->tailq, n);
+  gpr_mpscq_push(&q->tailq, n);
+}
+
+static bool drain_then_pop(gpr_semi_ordered_queue *q, gpr_mpscq_node **out,
+                           state_word st) {
+  gpr_mpscq_node *n;
+  while (gpr_mpscq_pop(&q->tailq, &n)) {
+    if (n == NULL) {
       break;
-    case PUSH_HEAD_POP_HEAD:
-      // mpmcq stuff
-      abort();
+    }
+    while (!push_head(q, n, &st)) {
+      state_word stp = st;
+      stp.s.draining = 0;
+      if (cas_state_no_barrier(q, st, stp)) {
+        *out = n;
+        return true;
+      }
+      st = load_state_no_barrier(q);
+    }
   }
 }
 
-gpr_mpscq_node *gpr_semi_ordered_queue_pop(gpr_semi_ordered_queue *q) {
-  state_word st = load_state_acq(q);
+bool gpr_semi_ordered_queue_pop(gpr_semi_ordered_queue *q, gpr_mpscq_node **n) {
+  state_word st = load_state_no_barrier(q);
+  for (;;) {
+    if (st.s.count == 0) {
+      if (!st.s.draining) {
+        state_word stp = st;
+        stp.s.draining = 1;
+        if (cas_state_no_barrier(q, st, stp)) {
+          return drain_then_pop(q, n, stp);
+        }
+        st = load_state_no_barrier(q);
+        break;
+      }
+    }
+  }
 }

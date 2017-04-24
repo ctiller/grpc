@@ -40,22 +40,19 @@
 // Guarantees progress, but not strict FIFO ordering (some events may come
 // out-of-order)
 
-#define GPR_SEMI_ORDERED_QUEUE_HEADQ_SIZE 256
-
-typedef struct gpr_soq_cell {
-  gpr_mpscq_node *node;
-  gpr_atm seq;
-} gpr_soq_cell;
+#define GPR_SEMI_ORDERED_QUEUE_HEADQ_LOG2_SIZE 5
+#define GPR_SEMI_ORDERED_QUEUE_HEADQ_SIZE \
+  (1u << GPR_SEMI_ORDERED_QUEUE_HEADQ_LOG2_SIZE)
 
 typedef struct gpr_semi_ordered_queue {
   gpr_atm state;
   gpr_mpscq tailq;
-  gpr_mpscq_node headq[GPR_SEMI_ORDERED_QUEUE_HEADQ_SIZE];
+  gpr_atm headq[GPR_SEMI_ORDERED_QUEUE_HEADQ_SIZE];
 } gpr_semi_ordered_queue;
 
 void gpr_semi_ordered_queue_init(gpr_semi_ordered_queue *q);
 void gpr_semi_ordered_queue_destroy(gpr_semi_ordered_queue *q);
 void gpr_semi_ordered_queue_push(gpr_semi_ordered_queue *q, gpr_mpscq_node *n);
-gpr_mpscq_node *gpr_semi_ordered_queue_pop(gpr_semi_ordered_queue *q);
+bool gpr_semi_ordered_queue_pop(gpr_semi_ordered_queue *q, gpr_mpscq_node **n);
 
 #endif  // GRPC_CORE_LIB_SUPPORT_SEMI_ORDERED_QUEUE_H
