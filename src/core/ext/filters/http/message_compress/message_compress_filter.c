@@ -308,13 +308,18 @@ static void compress_start_transport_stream_op_batch(
       grpc_transport_stream_op_batch_finish_with_failure(exec_ctx, op, error);
       return;
     }
-    gpr_atm cur = gpr_atm_acq_load(&calld->send_initial_metadata_state);
+    gpr_atm cur;
+  retry_send_im:
+    cur = gpr_atm_acq_load(&calld->send_initial_metadata_state);
     GPR_ASSERT(cur != HAS_COMPRESSION_ALGORITHM &&
                cur != NO_COMPRESSION_ALGORITHM);
     if ((cur & CANCELLED_BIT) == 0) {
-      gpr_atm_rel_store(&calld->send_initial_metadata_state,
-                        has_compression_algorithm ? HAS_COMPRESSION_ALGORITHM
-                                                  : NO_COMPRESSION_ALGORITHM);
+      if (!gpr_atm_rel_cas(&calld->send_initial_metadata_state, cur,
+                           has_compression_algorithm
+                               ? HAS_COMPRESSION_ALGORITHM
+                               : NO_COMPRESSION_ALGORITHM)) {
+        goto retry_send_im;
+      }
       if (cur != INITIAL_METADATA_UNSEEN) {
         grpc_call_next_op(exec_ctx, elem,
                           (grpc_transport_stream_op_batch *)cur);
