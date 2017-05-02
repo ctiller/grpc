@@ -677,6 +677,7 @@ add_dependencies(buildtests_cxx golden_file_test)
 add_dependencies(buildtests_cxx grpc_cli)
 add_dependencies(buildtests_cxx grpc_tool_test)
 add_dependencies(buildtests_cxx grpclb_api_test)
+add_dependencies(buildtests_cxx grpclb_end2end_test)
 add_dependencies(buildtests_cxx grpclb_test)
 add_dependencies(buildtests_cxx health_service_end2end_test)
 if(_gRPC_PLATFORM_LINUX OR _gRPC_PLATFORM_MAC OR _gRPC_PLATFORM_POSIX)
@@ -987,6 +988,7 @@ add_library(grpc
   src/core/lib/iomgr/time_averaged_stats.c
   src/core/lib/iomgr/timer_generic.c
   src/core/lib/iomgr/timer_heap.c
+  src/core/lib/iomgr/timer_manager.c
   src/core/lib/iomgr/timer_uv.c
   src/core/lib/iomgr/udp_server.c
   src/core/lib/iomgr/unix_sockets_posix.c
@@ -1316,6 +1318,7 @@ add_library(grpc_cronet
   src/core/lib/iomgr/time_averaged_stats.c
   src/core/lib/iomgr/timer_generic.c
   src/core/lib/iomgr/timer_heap.c
+  src/core/lib/iomgr/timer_manager.c
   src/core/lib/iomgr/timer_uv.c
   src/core/lib/iomgr/udp_server.c
   src/core/lib/iomgr/unix_sockets_posix.c
@@ -1630,6 +1633,7 @@ add_library(grpc_test_util
   src/core/lib/iomgr/time_averaged_stats.c
   src/core/lib/iomgr/timer_generic.c
   src/core/lib/iomgr/timer_heap.c
+  src/core/lib/iomgr/timer_manager.c
   src/core/lib/iomgr/timer_uv.c
   src/core/lib/iomgr/udp_server.c
   src/core/lib/iomgr/unix_sockets_posix.c
@@ -1889,6 +1893,7 @@ add_library(grpc_unsecure
   src/core/lib/iomgr/time_averaged_stats.c
   src/core/lib/iomgr/timer_generic.c
   src/core/lib/iomgr/timer_heap.c
+  src/core/lib/iomgr/timer_manager.c
   src/core/lib/iomgr/timer_uv.c
   src/core/lib/iomgr/udp_server.c
   src/core/lib/iomgr/unix_sockets_posix.c
@@ -2311,6 +2316,7 @@ add_library(grpc++
   src/core/lib/iomgr/time_averaged_stats.c
   src/core/lib/iomgr/timer_generic.c
   src/core/lib/iomgr/timer_heap.c
+  src/core/lib/iomgr/timer_manager.c
   src/core/lib/iomgr/timer_uv.c
   src/core/lib/iomgr/udp_server.c
   src/core/lib/iomgr/unix_sockets_posix.c
@@ -2639,6 +2645,7 @@ add_library(grpc++_cronet
   src/core/lib/iomgr/time_averaged_stats.c
   src/core/lib/iomgr/timer_generic.c
   src/core/lib/iomgr/timer_heap.c
+  src/core/lib/iomgr/timer_manager.c
   src/core/lib/iomgr/timer_uv.c
   src/core/lib/iomgr/udp_server.c
   src/core/lib/iomgr/unix_sockets_posix.c
@@ -3295,8 +3302,6 @@ foreach(_hdr
   include/grpc/impl/codegen/sync_windows.h
   include/grpc++/impl/codegen/proto_utils.h
   include/grpc++/impl/codegen/config_protobuf.h
-  include/grpc++/impl/codegen/thrift_serializer.h
-  include/grpc++/impl/codegen/thrift_utils.h
 )
   string(REPLACE "include/" "" _path ${_hdr})
   get_filename_component(_path ${_path} PATH)
@@ -3413,6 +3418,7 @@ add_library(grpc++_unsecure
   src/core/lib/iomgr/time_averaged_stats.c
   src/core/lib/iomgr/timer_generic.c
   src/core/lib/iomgr/timer_heap.c
+  src/core/lib/iomgr/timer_manager.c
   src/core/lib/iomgr/timer_uv.c
   src/core/lib/iomgr/udp_server.c
   src/core/lib/iomgr/unix_sockets_posix.c
@@ -10800,6 +10806,55 @@ target_link_libraries(grpclb_api_test
   grpc_test_util
   grpc++
   grpc
+  ${_gRPC_GFLAGS_LIBRARIES}
+)
+
+endif (gRPC_BUILD_TESTS)
+if (gRPC_BUILD_TESTS)
+
+add_executable(grpclb_end2end_test
+  ${_gRPC_PROTO_GENS_DIR}/src/proto/grpc/lb/v1/load_balancer.pb.cc
+  ${_gRPC_PROTO_GENS_DIR}/src/proto/grpc/lb/v1/load_balancer.grpc.pb.cc
+  ${_gRPC_PROTO_GENS_DIR}/src/proto/grpc/lb/v1/load_balancer.pb.h
+  ${_gRPC_PROTO_GENS_DIR}/src/proto/grpc/lb/v1/load_balancer.grpc.pb.h
+  test/cpp/end2end/grpclb_end2end_test.cc
+  third_party/googletest/googletest/src/gtest-all.cc
+  third_party/googletest/googlemock/src/gmock-all.cc
+)
+
+protobuf_generate_grpc_cpp(
+  src/proto/grpc/lb/v1/load_balancer.proto
+)
+
+target_include_directories(grpclb_end2end_test
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+  PRIVATE ${BORINGSSL_ROOT_DIR}/include
+  PRIVATE ${PROTOBUF_ROOT_DIR}/src
+  PRIVATE ${BENCHMARK_ROOT_DIR}/include
+  PRIVATE ${ZLIB_ROOT_DIR}
+  PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/third_party/zlib
+  PRIVATE ${CARES_BUILD_INCLUDE_DIR}
+  PRIVATE ${CARES_INCLUDE_DIR}
+  PRIVATE ${CARES_PLATFORM_INCLUDE_DIR}
+  PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/third_party/cares/cares
+  PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/third_party/gflags/include
+  PRIVATE third_party/googletest/googletest/include
+  PRIVATE third_party/googletest/googletest
+  PRIVATE third_party/googletest/googlemock/include
+  PRIVATE third_party/googletest/googlemock
+  PRIVATE ${_gRPC_PROTO_GENS_DIR}
+)
+
+target_link_libraries(grpclb_end2end_test
+  ${_gRPC_PROTOBUF_LIBRARIES}
+  ${_gRPC_ALLTARGETS_LIBRARIES}
+  grpc++_test_util
+  grpc_test_util
+  grpc++
+  grpc
+  gpr_test_util
+  gpr
   ${_gRPC_GFLAGS_LIBRARIES}
 )
 

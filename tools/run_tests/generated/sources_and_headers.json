@@ -3306,6 +3306,29 @@
     ], 
     "is_filegroup": false, 
     "language": "c++", 
+    "name": "grpclb_end2end_test", 
+    "src": [
+      "test/cpp/end2end/grpclb_end2end_test.cc"
+    ], 
+    "third_party": false, 
+    "type": "target"
+  }, 
+  {
+    "deps": [
+      "gpr", 
+      "gpr_test_util", 
+      "grpc", 
+      "grpc++", 
+      "grpc++_test_util", 
+      "grpc_test_util"
+    ], 
+    "headers": [
+      "src/proto/grpc/lb/v1/load_balancer.grpc.pb.h", 
+      "src/proto/grpc/lb/v1/load_balancer.pb.h", 
+      "src/proto/grpc/lb/v1/load_balancer_mock.grpc.pb.h"
+    ], 
+    "is_filegroup": false, 
+    "language": "c++", 
     "name": "grpclb_test", 
     "src": [
       "test/cpp/grpclb/grpclb_test.cc"
@@ -6041,8 +6064,7 @@
       "grpc++_codegen_base_src", 
       "grpc++_codegen_proto", 
       "grpc++_config_proto", 
-      "grpc_test_util", 
-      "thrift_util"
+      "grpc_test_util"
     ], 
     "headers": [
       "src/proto/grpc/health/v1/health.grpc.pb.h", 
@@ -7788,6 +7810,7 @@
       "src/core/lib/iomgr/timer.h", 
       "src/core/lib/iomgr/timer_generic.h", 
       "src/core/lib/iomgr/timer_heap.h", 
+      "src/core/lib/iomgr/timer_manager.h", 
       "src/core/lib/iomgr/timer_uv.h", 
       "src/core/lib/iomgr/udp_server.h", 
       "src/core/lib/iomgr/unix_sockets_posix.h", 
@@ -7982,6 +8005,8 @@
       "src/core/lib/iomgr/timer_generic.h", 
       "src/core/lib/iomgr/timer_heap.c", 
       "src/core/lib/iomgr/timer_heap.h", 
+      "src/core/lib/iomgr/timer_manager.c", 
+      "src/core/lib/iomgr/timer_manager.h", 
       "src/core/lib/iomgr/timer_uv.c", 
       "src/core/lib/iomgr/timer_uv.h", 
       "src/core/lib/iomgr/udp_server.c", 
@@ -9152,24 +9177,6 @@
     "src": [
       "include/grpc++/test/mock_stream.h", 
       "include/grpc++/test/server_context_test_spouse.h"
-    ], 
-    "third_party": false, 
-    "type": "filegroup"
-  }, 
-  {
-    "deps": [
-      "grpc++_codegen_base"
-    ], 
-    "headers": [
-      "include/grpc++/impl/codegen/thrift_serializer.h", 
-      "include/grpc++/impl/codegen/thrift_utils.h"
-    ], 
-    "is_filegroup": true, 
-    "language": "c++", 
-    "name": "thrift_util", 
-    "src": [
-      "include/grpc++/impl/codegen/thrift_serializer.h", 
-      "include/grpc++/impl/codegen/thrift_utils.h"
     ], 
     "third_party": false, 
     "type": "filegroup"

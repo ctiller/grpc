@@ -1155,6 +1155,7 @@ grpc_python_plugin: $(BINDIR)/$(CONFIG)/grpc_python_plugin
 grpc_ruby_plugin: $(BINDIR)/$(CONFIG)/grpc_ruby_plugin
 grpc_tool_test: $(BINDIR)/$(CONFIG)/grpc_tool_test
 grpclb_api_test: $(BINDIR)/$(CONFIG)/grpclb_api_test
+grpclb_end2end_test: $(BINDIR)/$(CONFIG)/grpclb_end2end_test
 grpclb_test: $(BINDIR)/$(CONFIG)/grpclb_test
 health_service_end2end_test: $(BINDIR)/$(CONFIG)/health_service_end2end_test
 http2_client: $(BINDIR)/$(CONFIG)/http2_client
@@ -1579,6 +1580,7 @@ buildtests_cxx: privatelibs_cxx \
   $(BINDIR)/$(CONFIG)/grpc_cli \
   $(BINDIR)/$(CONFIG)/grpc_tool_test \
   $(BINDIR)/$(CONFIG)/grpclb_api_test \
+  $(BINDIR)/$(CONFIG)/grpclb_end2end_test \
   $(BINDIR)/$(CONFIG)/grpclb_test \
   $(BINDIR)/$(CONFIG)/health_service_end2end_test \
   $(BINDIR)/$(CONFIG)/http2_client \
@@ -1700,6 +1702,7 @@ buildtests_cxx: privatelibs_cxx \
   $(BINDIR)/$(CONFIG)/grpc_cli \
   $(BINDIR)/$(CONFIG)/grpc_tool_test \
   $(BINDIR)/$(CONFIG)/grpclb_api_test \
+  $(BINDIR)/$(CONFIG)/grpclb_end2end_test \
   $(BINDIR)/$(CONFIG)/grpclb_test \
   $(BINDIR)/$(CONFIG)/health_service_end2end_test \
   $(BINDIR)/$(CONFIG)/http2_client \
@@ -2082,6 +2085,8 @@ test_cxx: buildtests_cxx
 	$(Q) $(BINDIR)/$(CONFIG)/grpc_tool_test || ( echo test grpc_tool_test failed ; exit 1 )
 	$(E) "[RUN]     Testing grpclb_api_test"
 	$(Q) $(BINDIR)/$(CONFIG)/grpclb_api_test || ( echo test grpclb_api_test failed ; exit 1 )
+	$(E) "[RUN]     Testing grpclb_end2end_test"
+	$(Q) $(BINDIR)/$(CONFIG)/grpclb_end2end_test || ( echo test grpclb_end2end_test failed ; exit 1 )
 	$(E) "[RUN]     Testing grpclb_test"
 	$(Q) $(BINDIR)/$(CONFIG)/grpclb_test || ( echo test grpclb_test failed ; exit 1 )
 	$(E) "[RUN]     Testing health_service_end2end_test"
@@ -2966,6 +2971,7 @@ LIBGRPC_SRC = \
     src/core/lib/iomgr/time_averaged_stats.c \
     src/core/lib/iomgr/timer_generic.c \
     src/core/lib/iomgr/timer_heap.c \
+    src/core/lib/iomgr/timer_manager.c \
     src/core/lib/iomgr/timer_uv.c \
     src/core/lib/iomgr/udp_server.c \
     src/core/lib/iomgr/unix_sockets_posix.c \
@@ -3293,6 +3299,7 @@ LIBGRPC_CRONET_SRC = \
     src/core/lib/iomgr/time_averaged_stats.c \
     src/core/lib/iomgr/timer_generic.c \
     src/core/lib/iomgr/timer_heap.c \
+    src/core/lib/iomgr/timer_manager.c \
     src/core/lib/iomgr/timer_uv.c \
     src/core/lib/iomgr/udp_server.c \
     src/core/lib/iomgr/unix_sockets_posix.c \
@@ -3606,6 +3613,7 @@ LIBGRPC_TEST_UTIL_SRC = \
     src/core/lib/iomgr/time_averaged_stats.c \
     src/core/lib/iomgr/timer_generic.c \
     src/core/lib/iomgr/timer_heap.c \
+    src/core/lib/iomgr/timer_manager.c \
     src/core/lib/iomgr/timer_uv.c \
     src/core/lib/iomgr/udp_server.c \
     src/core/lib/iomgr/unix_sockets_posix.c \
@@ -3837,6 +3845,7 @@ LIBGRPC_UNSECURE_SRC = \
     src/core/lib/iomgr/time_averaged_stats.c \
     src/core/lib/iomgr/timer_generic.c \
     src/core/lib/iomgr/timer_heap.c \
+    src/core/lib/iomgr/timer_manager.c \
     src/core/lib/iomgr/timer_uv.c \
     src/core/lib/iomgr/udp_server.c \
     src/core/lib/iomgr/unix_sockets_posix.c \
@@ -4236,6 +4245,7 @@ LIBGRPC++_SRC = \
     src/core/lib/iomgr/time_averaged_stats.c \
     src/core/lib/iomgr/timer_generic.c \
     src/core/lib/iomgr/timer_heap.c \
+    src/core/lib/iomgr/timer_manager.c \
     src/core/lib/iomgr/timer_uv.c \
     src/core/lib/iomgr/udp_server.c \
     src/core/lib/iomgr/unix_sockets_posix.c \
@@ -4572,6 +4582,7 @@ LIBGRPC++_CRONET_SRC = \
     src/core/lib/iomgr/time_averaged_stats.c \
     src/core/lib/iomgr/timer_generic.c \
     src/core/lib/iomgr/timer_heap.c \
+    src/core/lib/iomgr/timer_manager.c \
     src/core/lib/iomgr/timer_uv.c \
     src/core/lib/iomgr/udp_server.c \
     src/core/lib/iomgr/unix_sockets_posix.c \
@@ -5176,8 +5187,6 @@ PUBLIC_HEADERS_CXX += \
     include/grpc/impl/codegen/sync_windows.h \
     include/grpc++/impl/codegen/proto_utils.h \
     include/grpc++/impl/codegen/config_protobuf.h \
-    include/grpc++/impl/codegen/thrift_serializer.h \
-    include/grpc++/impl/codegen/thrift_utils.h \
 
 LIBGRPC++_TEST_UTIL_OBJS = $(addprefix $(OBJDIR)/$(CONFIG)/, $(addsuffix .o, $(basename $(LIBGRPC++_TEST_UTIL_SRC))))
 
@@ -5336,6 +5345,7 @@ LIBGRPC++_UNSECURE_SRC = \
     src/core/lib/iomgr/time_averaged_stats.c \
     src/core/lib/iomgr/timer_generic.c \
     src/core/lib/iomgr/timer_heap.c \
+    src/core/lib/iomgr/timer_manager.c \
     src/core/lib/iomgr/timer_uv.c \
     src/core/lib/iomgr/udp_server.c \
     src/core/lib/iomgr/unix_sockets_posix.c \
@@ -15146,6 +15156,53 @@ ifneq ($(NO_DEPS),true)
 endif
 endif
 $(OBJDIR)/$(CONFIG)/test/cpp/grpclb/grpclb_api_test.o: $(GENDIR)/src/proto/grpc/lb/v1/load_balancer.pb.cc $(GENDIR)/src/proto/grpc/lb/v1/load_balancer.grpc.pb.cc
+
+
+GRPCLB_END2END_TEST_SRC = \
+    $(GENDIR)/src/proto/grpc/lb/v1/load_balancer.pb.cc $(GENDIR)/src/proto/grpc/lb/v1/load_balancer.grpc.pb.cc \
+    test/cpp/end2end/grpclb_end2end_test.cc \
+
+GRPCLB_END2END_TEST_OBJS = $(addprefix $(OBJDIR)/$(CONFIG)/, $(addsuffix .o, $(basename $(GRPCLB_END2END_TEST_SRC))))
+ifeq ($(NO_SECURE),true)
+
+# You can't build secure targets if you don't have OpenSSL.
+
+$(BINDIR)/$(CONFIG)/grpclb_end2end_test: openssl_dep_error
+
+else
+
+
+
+
+ifeq ($(NO_PROTOBUF),true)
+
+# You can't build the protoc plugins or protobuf-enabled targets if you don't have protobuf 3.0.0+.
+
+$(BINDIR)/$(CONFIG)/grpclb_end2end_test: protobuf_dep_error
+
+else
+
+$(BINDIR)/$(CONFIG)/grpclb_end2end_test: $(PROTOBUF_DEP) $(GRPCLB_END2END_TEST_OBJS) $(LIBDIR)/$(CONFIG)/libgrpc++_test_util.a $(LIBDIR)/$(CONFIG)/libgrpc_test_util.a $(LIBDIR)/$(CONFIG)/libgrpc++.a $(LIBDIR)/$(CONFIG)/libgrpc.a $(LIBDIR)/$(CONFIG)/libgpr_test_util.a $(LIBDIR)/$(CONFIG)/libgpr.a
+	$(E) "[LD]      Linking $@"
+	$(Q) mkdir -p `dirname $@`
+	$(Q) $(LDXX) $(LDFLAGS) $(GRPCLB_END2END_TEST_OBJS) $(LIBDIR)/$(CONFIG)/libgrpc++_test_util.a $(LIBDIR)/$(CONFIG)/libgrpc_test_util.a $(LIBDIR)/$(CONFIG)/libgrpc++.a $(LIBDIR)/$(CONFIG)/libgrpc.a $(LIBDIR)/$(CONFIG)/libgpr_test_util.a $(LIBDIR)/$(CONFIG)/libgpr.a $(LDLIBSXX) $(LDLIBS_PROTOBUF) $(LDLIBS) $(LDLIBS_SECURE) $(GTEST_LIB) -o $(BINDIR)/$(CONFIG)/grpclb_end2end_test
+
+endif
+
+endif
+
+$(OBJDIR)/$(CONFIG)/src/proto/grpc/lb/v1/load_balancer.o:  $(LIBDIR)/$(CONFIG)/libgrpc++_test_util.a $(LIBDIR)/$(CONFIG)/libgrpc_test_util.a $(LIBDIR)/$(CONFIG)/libgrpc++.a $(LIBDIR)/$(CONFIG)/libgrpc.a $(LIBDIR)/$(CONFIG)/libgpr_test_util.a $(LIBDIR)/$(CONFIG)/libgpr.a
+
+$(OBJDIR)/$(CONFIG)/test/cpp/end2end/grpclb_end2end_test.o:  $(LIBDIR)/$(CONFIG)/libgrpc++_test_util.a $(LIBDIR)/$(CONFIG)/libgrpc_test_util.a $(LIBDIR)/$(CONFIG)/libgrpc++.a $(LIBDIR)/$(CONFIG)/libgrpc.a $(LIBDIR)/$(CONFIG)/libgpr_test_util.a $(LIBDIR)/$(CONFIG)/libgpr.a
+
+deps_grpclb_end2end_test: $(GRPCLB_END2END_TEST_OBJS:.o=.dep)
+
+ifneq ($(NO_SECURE),true)
+ifneq ($(NO_DEPS),true)
+-include $(GRPCLB_END2END_TEST_OBJS:.o=.dep)
+endif
+endif
+$(OBJDIR)/$(CONFIG)/test/cpp/end2end/grpclb_end2end_test.o: $(GENDIR)/src/proto/grpc/lb/v1/load_balancer.pb.cc $(GENDIR)/src/proto/grpc/lb/v1/load_balancer.grpc.pb.cc
 
 
 GRPCLB_TEST_SRC = \
