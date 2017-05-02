@@ -60,6 +60,7 @@ static void timer_thread(void *unused);
 static void gc_completed_threads(void) {
   if (g_completed_threads != NULL) {
     completed_thread *to_gc = g_completed_threads;
+    g_completed_threads = NULL;
     gpr_mu_unlock(&g_mu);
     while (to_gc != NULL) {
       gpr_thd_join(to_gc->t);
