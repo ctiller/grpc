@@ -964,7 +964,7 @@ static grpc_error *pollset_work(grpc_exec_ctx *exec_ctx, grpc_pollset *pollset,
       pollset->fd_count = fd_count;
       gpr_mu_unlock(&pollset->mu);
 
-      for (i = 2; i < pfd_count; i++) {
+      for (i = 1; i < pfd_count; i++) {
         grpc_fd *fd = watchers[i].fd;
         pfds[i].events = (short)fd_begin_poll(fd, pollset, &worker, POLLIN,
                                               POLLOUT, &watchers[i]);
@@ -982,7 +982,7 @@ static grpc_error *pollset_work(grpc_exec_ctx *exec_ctx, grpc_pollset *pollset,
           work_combine_error(&error, GRPC_OS_ERROR(errno, "poll"));
         }
 
-        for (i = 2; i < pfd_count; i++) {
+        for (i = 1; i < pfd_count; i++) {
           if (watchers[i].fd == NULL) {
             fd_end_poll(exec_ctx, &watchers[i], 0, 0, NULL);
           } else {
@@ -992,7 +992,7 @@ static grpc_error *pollset_work(grpc_exec_ctx *exec_ctx, grpc_pollset *pollset,
           }
         }
       } else if (r == 0) {
-        for (i = 2; i < pfd_count; i++) {
+        for (i = 1; i < pfd_count; i++) {
           fd_end_poll(exec_ctx, &watchers[i], 0, 0, NULL);
         }
       } else {
@@ -1000,7 +1000,7 @@ static grpc_error *pollset_work(grpc_exec_ctx *exec_ctx, grpc_pollset *pollset,
           work_combine_error(
               &error, grpc_wakeup_fd_consume_wakeup(&worker.wakeup_fd->fd));
         }
-        for (i = 2; i < pfd_count; i++) {
+        for (i = 1; i < pfd_count; i++) {
           if (watchers[i].fd == NULL) {
             fd_end_poll(exec_ctx, &watchers[i], 0, 0, NULL);
           } else {
