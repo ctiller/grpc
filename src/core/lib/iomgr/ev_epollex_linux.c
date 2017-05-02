@@ -631,7 +631,6 @@ static grpc_error *pollset_global_init(void) {
   gpr_tls_init(&g_current_thread_pollset);
   gpr_tls_init(&g_current_thread_worker);
   grpc_error *error = GRPC_ERROR_NONE;
-  static const char *err_desc = "pollset_global_init";
   pollable_init(&g_empty_pollable, PO_EMPTY_POLLABLE);
   return error;
 }
