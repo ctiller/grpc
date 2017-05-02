@@ -127,6 +127,7 @@ class SynchronousUnaryClient final : public SynchronousClient {
     double start = UsageTimer::Now();
     GPR_TIMER_SCOPE("SynchronousUnaryClient::ThreadFunc", 0);
     grpc::ClientContext context;
+    context.set_deadline(gpr_time_from_millis(100, GPR_CLOCK_MONOTONIC));
     grpc::Status s =
         stub->UnaryCall(&context, request_, &responses_[thread_idx]);
     if (s.ok()) {
