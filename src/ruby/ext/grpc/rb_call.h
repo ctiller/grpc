@@ -38,6 +38,13 @@
 
 #include <grpc/grpc.h>
 
+// auxilliary, for converting grpc_metadata to/from ruby hashes
+typedef struct grpc_rb_metadata_array {
+  size_t count;
+  size_t capacity;
+  grpc_metadata *metadata;
+} grpc_rb_metadata_array;
+
 /* Gets the wrapped call from a VALUE. */
 grpc_call* grpc_rb_get_wrapped_call(VALUE v);
 
@@ -48,13 +55,13 @@ VALUE grpc_rb_wrap_call(grpc_call *c, grpc_completion_queue *q);
 const char* grpc_call_error_detail_of(grpc_call_error err);
 
 /* Converts a metadata array to a hash. */
-VALUE grpc_rb_md_ary_to_h(grpc_metadata_array *md_ary);
+VALUE grpc_rb_md_ary_to_h(grpc_rb_metadata_array *md_ary);
 
 /* grpc_rb_md_ary_convert converts a ruby metadata hash into
    a grpc_metadata_array.
 */
 void grpc_rb_md_ary_convert(VALUE md_ary_hash,
-                            grpc_metadata_array *md_ary);
+                            grpc_rb_metadata_array *md_ary);
 
 /* grpc_rb_eCallError is the ruby class of the exception thrown during call
    operations. */

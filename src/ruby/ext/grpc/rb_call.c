@@ -61,7 +61,7 @@ static VALUE grpc_rb_eOutOfTime = Qnil;
 static VALUE grpc_rb_sBatchResult;
 
 /* grpc_rb_cMdAry is the MetadataArray class whose instances proxy
- * grpc_metadata_array. */
+ * grpc_rb_metadata_array. */
 static VALUE grpc_rb_cMdAry;
 
 /* id_credentials is the name of the hidden ivar that preserves the value
@@ -117,8 +117,8 @@ static void grpc_rb_call_destroy(void *p) {
 }
 
 static size_t md_ary_datasize(const void *p) {
-  const grpc_metadata_array *const ary = (grpc_metadata_array *)p;
-  size_t i, datasize = sizeof(grpc_metadata_array);
+  const grpc_rb_metadata_array *const ary = (grpc_rb_metadata_array *)p;
+  size_t i, datasize = sizeof(grpc_rb_metadata_array);
   for (i = 0; i < ary->count; ++i) {
     const grpc_metadata *const md = &ary->metadata[i];
     datasize += GRPC_SLICE_LENGTH(md->key);
@@ -129,7 +129,7 @@ static size_t md_ary_datasize(const void *p) {
 }
 
 static const rb_data_type_t grpc_rb_md_ary_data_type = {
-    "grpc_metadata_array",
+    "grpc_rb_metadata_array",
     {GRPC_RB_GC_NOT_MARKED, GRPC_RB_GC_DONT_FREE, md_ary_datasize,
      {NULL, NULL}},
     NULL,
@@ -377,13 +377,13 @@ static VALUE grpc_rb_call_set_credentials(VALUE self, VALUE credentials) {
 }
 
 /* grpc_rb_md_ary_fill_hash_cb is the hash iteration callback used
-   to fill grpc_metadata_array.
+   to fill grpc_rb_metadata_array.
 
    it's capacity should have been computed via a prior call to
    grpc_rb_md_ary_fill_hash_cb
 */
 static int grpc_rb_md_ary_fill_hash_cb(VALUE key, VALUE val, VALUE md_ary_obj) {
-  grpc_metadata_array *md_ary = NULL;
+  grpc_rb_metadata_array *md_ary = NULL;
   long array_length;
   long i;
   grpc_slice key_slice;
@@ -407,7 +407,7 @@ static int grpc_rb_md_ary_fill_hash_cb(VALUE key, VALUE val, VALUE md_ary_obj) {
   }
 
   /* Construct a metadata object from key and value and add it */
-  TypedData_Get_Struct(md_ary_obj, grpc_metadata_array,
+  TypedData_Get_Struct(md_ary_obj, grpc_rb_metadata_array,
                        &grpc_rb_md_ary_data_type, md_ary);
 
   if (TYPE(val) == T_ARRAY) {
@@ -450,16 +450,16 @@ static int grpc_rb_md_ary_fill_hash_cb(VALUE key, VALUE val, VALUE md_ary_obj) {
 }
 
 /* grpc_rb_md_ary_capacity_hash_cb is the hash iteration callback used
-   to pre-compute the capacity a grpc_metadata_array.
+   to pre-compute the capacity a grpc_rb_metadata_array.
 */
 static int grpc_rb_md_ary_capacity_hash_cb(VALUE key, VALUE val,
                                            VALUE md_ary_obj) {
-  grpc_metadata_array *md_ary = NULL;
+  grpc_rb_metadata_array *md_ary = NULL;
 
   (void)key;
 
   /* Construct a metadata object from key and value and add it */
-  TypedData_Get_Struct(md_ary_obj, grpc_metadata_array,
+  TypedData_Get_Struct(md_ary_obj, grpc_rb_metadata_array,
                        &grpc_rb_md_ary_data_type, md_ary);
 
   if (TYPE(val) == T_ARRAY) {
@@ -472,10 +472,10 @@ static int grpc_rb_md_ary_capacity_hash_cb(VALUE key, VALUE val,
 }
 
 /* grpc_rb_md_ary_convert converts a ruby metadata hash into
-   a grpc_metadata_array.
+   a grpc_rb_metadata_array.
 */
 void grpc_rb_md_ary_convert(VALUE md_ary_hash,
-                                   grpc_metadata_array *md_ary) {
+                                   grpc_rb_metadata_array *md_ary) {
   VALUE md_ary_obj = Qnil;
   if (md_ary_hash == Qnil) {
     return; /* Do nothing if the expected has value is nil */
@@ -487,7 +487,7 @@ void grpc_rb_md_ary_convert(VALUE md_ary_hash,
   }
 
   /* Initialize the array, compute it's capacity, then fill it. */
-  grpc_metadata_array_init(md_ary);
+  MEMZERO(md_ary, sizeof(grpc_rb_metadata_array), 1);
   md_ary_obj =
       TypedData_Wrap_Struct(grpc_rb_cMdAry, &grpc_rb_md_ary_data_type, md_ary);
   rb_hash_foreach(md_ary_hash, grpc_rb_md_ary_capacity_hash_cb, md_ary_obj);
@@ -496,7 +496,7 @@ void grpc_rb_md_ary_convert(VALUE md_ary_hash,
 }
 
 /* Converts a metadata array to a hash. */
-VALUE grpc_rb_md_ary_to_h(grpc_metadata_array *md_ary) {
+VALUE grpc_rb_md_ary_to_h(grpc_rb_metadata_array *md_ary) {
   VALUE key = Qnil;
   VALUE new_ary = Qnil;
   VALUE value = Qnil;
@@ -557,7 +557,7 @@ static int grpc_rb_call_check_op_keys_hash_cb(VALUE key, VALUE val,
    struct to the 'send_status_from_server' portion of an op.
 */
 static void grpc_rb_op_update_status_from_server(grpc_op *op,
-                                                 grpc_metadata_array *md_ary,
+                                                 grpc_rb_metadata_array *md_ary,
                                                  grpc_slice *send_status_details,
                                                  VALUE status) {
   VALUE code = rb_struct_aref(status, sym_code);
@@ -593,13 +593,13 @@ typedef struct run_batch_stack {
   size_t op_num;  /* tracks the last added operation */
 
   /* Data being sent */
-  grpc_metadata_array send_metadata;
-  grpc_metadata_array send_trailing_metadata;
+  grpc_rb_metadata_array send_metadata;
+  grpc_rb_metadata_array send_trailing_metadata;
 
   /* Data being received */
   grpc_byte_buffer *recv_message;
-  grpc_metadata_array recv_metadata;
-  grpc_metadata_array recv_trailing_metadata;
+  grpc_rb_metadata_array recv_metadata;
+  grpc_rb_metadata_array recv_trailing_metadata;
   int recv_cancelled;
   grpc_status_code recv_status;
   grpc_slice recv_status_details;
@@ -612,10 +612,6 @@ typedef struct run_batch_stack {
 static void grpc_run_batch_stack_init(run_batch_stack *st,
                                       unsigned write_flag) {
   MEMZERO(st, run_batch_stack, 1);
-  grpc_metadata_array_init(&st->send_metadata);
-  grpc_metadata_array_init(&st->send_trailing_metadata);
-  grpc_metadata_array_init(&st->recv_metadata);
-  grpc_metadata_array_init(&st->recv_trailing_metadata);
   st->op_num = 0;
   st->write_flag = write_flag;
 }
@@ -625,10 +621,9 @@ static void grpc_run_batch_stack_init(run_batch_stack *st,
 static void grpc_run_batch_stack_cleanup(run_batch_stack *st) {
   size_t i = 0;
 
-  grpc_metadata_array_destroy(&st->send_metadata);
-  grpc_metadata_array_destroy(&st->send_trailing_metadata);
-  grpc_metadata_array_destroy(&st->recv_metadata);
-  grpc_metadata_array_destroy(&st->recv_trailing_metadata);
+  // received metadata owned by the grpc_call
+  gpr_free(st->send_metadata.metadata);
+  gpr_free(st->send_trailing_metadata.metadata);
 
   if (GRPC_SLICE_START_PTR(st->send_status_details) != NULL) {
     grpc_slice_unref(st->send_status_details);
@@ -690,15 +685,19 @@ static void grpc_run_batch_stack_fill_ops(run_batch_stack *st, VALUE ops_hash) {
             &st->ops[st->op_num], &st->send_trailing_metadata, &st->send_status_details, this_value);
         break;
       case GRPC_OP_RECV_INITIAL_METADATA:
-        st->ops[st->op_num].data.recv_initial_metadata.recv_initial_metadata =
-            &st->recv_metadata;
+        st->ops[st->op_num].data.recv_initial_metadata.initial_metadata =
+            &st->recv_metadata.metadata;
+        st->ops[st->op_num].data.recv_initial_metadata.count =
+            &st->recv_metadata.count;
         break;
       case GRPC_OP_RECV_MESSAGE:
         st->ops[st->op_num].data.recv_message.recv_message = &st->recv_message;
         break;
       case GRPC_OP_RECV_STATUS_ON_CLIENT:
         st->ops[st->op_num].data.recv_status_on_client.trailing_metadata =
-            &st->recv_trailing_metadata;
+            &st->recv_trailing_metadata.metadata;
+        st->ops[st->op_num].data.recv_status_on_client.trailing_metadata_count =
+            &st->recv_trailing_metadata.count;
         st->ops[st->op_num].data.recv_status_on_client.status =
             &st->recv_status;
         st->ops[st->op_num].data.recv_status_on_client.status_details =
@@ -740,6 +739,7 @@ static VALUE grpc_run_batch_stack_build_result(run_batch_stack *st) {
         rb_struct_aset(result, sym_send_status, Qtrue);
         break;
       case GRPC_OP_RECV_INITIAL_METADATA:
+        st->recv_metadata.capacity = st->recv_metadata.count;
         rb_struct_aset(result, sym_metadata,
                        grpc_rb_md_ary_to_h(&st->recv_metadata));
       case GRPC_OP_RECV_MESSAGE:
@@ -747,6 +747,7 @@ static VALUE grpc_run_batch_stack_build_result(run_batch_stack *st) {
                        grpc_rb_byte_buffer_to_s(st->recv_message));
         break;
       case GRPC_OP_RECV_STATUS_ON_CLIENT:
+        st->recv_trailing_metadata.capacity = st->recv_trailing_metadata.count;
         rb_struct_aset(
             result, sym_status,
             rb_struct_new(grpc_rb_sStatus, UINT2NUM(st->recv_status),

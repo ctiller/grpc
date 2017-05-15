@@ -107,11 +107,10 @@ static void grpc_rb_call_credentials_callback_with_gil(void *param) {
   VALUE callback_args = rb_ary_new();
   VALUE args = rb_hash_new();
   VALUE result;
-  grpc_metadata_array md_ary;
+  grpc_rb_metadata_array md_ary;
   grpc_status_code status;
   VALUE details;
   char *error_details;
-  grpc_metadata_array_init(&md_ary);
   rb_hash_aset(args, ID2SYM(rb_intern("jwt_aud_uri")), auth_uri);
   rb_ary_push(callback_args, params->get_metadata);
   rb_ary_push(callback_args, args);
@@ -124,7 +123,7 @@ static void grpc_rb_call_credentials_callback_with_gil(void *param) {
   error_details = StringValueCStr(details);
   params->callback(params->user_data, md_ary.metadata, md_ary.count, status,
                    error_details);
-  grpc_metadata_array_destroy(&md_ary);
+  gpr_free(md_ary.metadata);
   gpr_free(params);
 }
 
