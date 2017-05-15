@@ -40,6 +40,7 @@
 #include <grpc/support/atm.h>
 #include <grpc/grpc_security.h>
 #include <grpc/support/log.h>
+#include <grpc/support/alloc.h>
 #include "rb_call.h"
 #include "rb_channel_args.h"
 #include "rb_completion_queue.h"
@@ -158,21 +159,19 @@ static VALUE grpc_rb_server_init(VALUE self, VALUE channel_args) {
  * grpc_rb_server_request_call function */
 typedef struct request_call_stack {
   grpc_call_details details;
-  grpc_metadata_array md_ary;
+  grpc_rb_metadata_array md_ary;
 } request_call_stack;
 
 /* grpc_request_call_stack_init ensures the request_call_stack is properly
  * initialized */
 static void grpc_request_call_stack_init(request_call_stack* st) {
   MEMZERO(st, request_call_stack, 1);
-  grpc_metadata_array_init(&st->md_ary);
   grpc_call_details_init(&st->details);
 }
 
 /* grpc_request_call_stack_cleanup ensures the request_call_stack is properly
  * cleaned up */
 static void grpc_request_call_stack_cleanup(request_call_stack* st) {
-  grpc_metadata_array_destroy(&st->md_ary);
   grpc_call_details_destroy(&st->details);
 }
 
@@ -200,7 +199,7 @@ static VALUE grpc_rb_server_request_call(VALUE self) {
   /* call grpc_server_request_call, then wait for it to complete using
    * pluck_event */
   err = grpc_server_request_call(
-      s->wrapped, &call, &st.details, &st.md_ary,
+      s->wrapped, &call, &st.details, &st.md_ary.metadata, &st.md_ary.count,
       call_queue, s->queue, tag);
   if (err != GRPC_CALL_OK) {
     grpc_request_call_stack_cleanup(&st);
@@ -222,6 +221,7 @@ static VALUE grpc_rb_server_request_call(VALUE self) {
 
   /* build the NewServerRpc struct result */
   deadline = gpr_convert_clock_type(st.details.deadline, GPR_CLOCK_REALTIME);
+  st.md_ary.capacity = st.md_ary.count;
   result = rb_struct_new(
       grpc_rb_sNewServerRpc, grpc_rb_slice_to_ruby_string(st.details.method),
       grpc_rb_slice_to_ruby_string(st.details.host),
