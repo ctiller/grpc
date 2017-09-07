@@ -43,6 +43,10 @@ static void BuildAndDeleteService() {
   server = builder.BuildAndStart();
   server->Shutdown();
   cq->Shutdown();
+  void* ignored_tag;
+  bool ignored_ok;
+  while (cq->Next(&ignored_tag, &ignored_ok))
+    ;
 }
 
 TEST(Foo, First) { BuildAndDeleteService(); }
