@@ -28,8 +28,195 @@
 #include "src/core/lib/iomgr/pollset.h"
 #include "src/core/lib/iomgr/pollset_set.h"
 #include "src/core/lib/support/arena.h"
+#include "src/core/lib/support/atomic.h"
+#include "src/core/lib/support/manual_constructor.h"
 #include "src/core/lib/transport/byte_stream.h"
 #include "src/core/lib/transport/metadata_batch.h"
+
+namespace grpc_core {
+
+struct TransportOneWayStats {
+  uint64_t framing_bytes;
+  uint64_t data_bytes;
+  uint64_t header_bytes;
+};
+
+struct TransportStreamStats {
+  TransportOneWayStats incoming;
+  TransportOneWayStats outgoing;
+};
+
+class TransportStreamOpBatchBuilder;
+
+class TransportStreamOpBatch final {
+ public:
+  class Payload;
+
+  explicit TransportStreamOpBatch(Payload *payload, uint32_t has_bits)
+      : payload_(payload), has_bits_(has_bits) {}
+
+  char *DebugString();
+  void Fail(grpc_error *error);
+
+  class Payload final {
+    friend class TransportStreamOpBatch;
+    friend class TransportStreamOpBatchBuilder;
+
+    struct {
+      grpc_metadata_batch *send_initial_metadata;
+      /** Iff send_initial_metadata != NULL, flags associated with
+          send_initial_metadata: a bitfield of GRPC_INITIAL_METADATA_xxx */
+      uint32_t send_initial_metadata_flags;
+      grpc_closure *on_complete;
+    } send_initial_metadata_;
+
+    struct {
+      // If non-NULL, will be set by the transport to the peer string
+      // (a char*, which the caller takes ownership of).
+      atomic<char *> *peer_string;
+      grpc_closure *on_complete;
+    } get_peer_string_;
+
+    struct {
+      grpc_metadata_batch *send_trailing_metadata;
+      grpc_closure *on_complete;
+    } send_trailing_metadata_;
+
+    struct {
+      // The transport (or a filter that decides to return a failure before
+      // the op gets down to the transport) is responsible for calling
+      // grpc_byte_stream_destroy() on this.
+      // The batch's on_complete will not be called until after the byte
+      // stream is destroyed.
+      grpc_byte_stream *send_message;
+      grpc_closure *on_complete;
+    } send_message_;
+
+    struct {
+      grpc_metadata_batch *recv_initial_metadata;
+      uint32_t *recv_flags;
+      /** Should be enqueued when initial metadata is ready to be processed. */
+      grpc_closure *recv_initial_metadata_ready;
+      // If not NULL, will be set to true if trailing metadata is
+      // immediately available.  This may be a signal that we received a
+      // Trailers-Only response.
+      bool *trailing_metadata_available;
+      // If non-NULL, will be set by the transport to the peer string
+      // (a char*, which the caller takes ownership of).
+      gpr_atm *peer_string;
+      grpc_closure *on_complete;
+    } recv_initial_metadata_;
+
+    struct {
+      // Will be set by the transport to point to the byte stream
+      // containing a received message.
+      // The caller is responsible for calling grpc_byte_stream_destroy()
+      // on this byte stream.
+      grpc_byte_stream **recv_message;
+      /** Should be enqueued when one message is ready to be processed. */
+      grpc_closure *on_complete;
+    } recv_message_;
+
+    struct {
+      grpc_metadata_batch *recv_trailing_metadata;
+      grpc_closure *on_complete;
+    } recv_trailing_metadata_;
+
+    struct {
+      TransportStreamStats *collect_stats;
+      grpc_closure *on_complete;
+    } collect_stats_;
+
+    /** Forcefully close this stream.
+        The HTTP2 semantics should be:
+        - server side: if cancel_error has GRPC_ERROR_INT_GRPC_STATUS, and
+          trailing metadata has not been sent, send trailing metadata with
+       status
+          and message from cancel_error (use grpc_error_get_status) followed by
+          a RST_STREAM with error=GRPC_CHTTP2_NO_ERROR to force a full close
+        - at all other times: use grpc_error_get_status to get a status code,
+       and
+          convert to a HTTP2 error code using
+          grpc_chttp2_grpc_status_to_http2_error. Send a RST_STREAM with this
+          error. */
+    struct {
+      // Error contract: the transport that gets this op must cause cancel_error
+      //                 to be unref'ed after processing it
+      grpc_error *cancel_error;
+      grpc_closure *on_complete;
+    } cancel_stream_;
+
+    /* Indexes correspond to grpc_context_index enum values */
+    grpc_call_context_element *context_;
+  };
+
+ private:
+  friend class TransportStreamOpBatchBuilder;
+  Payload *const payload_;
+  uint32_t has_bits_;
+
+  enum {
+    kHasSendInitialMetadata = (1u << 0),
+    kHasGetPeerString = (1u << 1),
+    kHasSendTrailingMetadata = (1u << 2),
+  };
+};
+
+class TransportStreamOpBatchBuilder final {
+ public:
+  TransportStreamOpBatchBuilder(
+      ManualConstructor<TransportStreamOpBatch> *batch,
+      TransportStreamOpBatch::Payload *payload)
+      : batch_(batch), payload_(payload) {}
+
+  static void PrepareClosure(grpc_closure *closure) {
+    closure->next_data.scratch = 0;
+  }
+
+  TransportStreamOpBatchBuilder &SendInitialMetadata(
+      grpc_metadata_batch *metadata, uint32_t flags,
+      grpc_closure *on_complete) {
+    payload_->send_initial_metadata_.send_initial_metadata = metadata;
+    payload_->send_initial_metadata_.send_initial_metadata_flags = flags;
+    return FinishAdd(TransportStreamOpBatch::kHasSendInitialMetadata,
+                     on_complete, &payload_->send_initial_metadata_);
+  }
+
+  TransportStreamOpBatchBuilder &GetPeerString(atomic<char *> *target,
+                                               grpc_closure *on_complete) {
+    payload_->get_peer_string_.peer_string = target;
+    return FinishAdd(TransportStreamOpBatch::kHasGetPeerString, on_complete,
+                     &payload_->get_peer_string_);
+  }
+
+  TransportStreamOpBatchBuilder &SendTrailingMetadata(
+      grpc_metadata_batch *metadata, grpc_closure *on_complete) {
+    payload_->send_trailing_metadata_.send_trailing_metadata = metadata;
+    return FinishAdd(TransportStreamOpBatch::kHasSendTrailingMetadata,
+                     on_complete, &payload_->get_peer_string_);
+  }
+
+  TransportStreamOpBatch *Build() {
+    batch_->Init(payload_, has_bits_);
+    return batch_->get();
+  }
+
+ private:
+  template <class T>
+  TransportStreamOpBatchBuilder &FinishAdd(uint32_t has_bit,
+                                           grpc_closure *on_complete,
+                                           T *container) {
+    container->on_complete = on_complete;
+    on_complete->next_data.scratch++;
+    return *this;
+  }
+
+  uint32_t has_bits_ = 0;
+  ManualConstructor<TransportStreamOpBatch> *const batch_;
+  TransportStreamOpBatch::Payload *const payload_;
+};
+
+}  // namespace grpc_core
 
 #ifdef __cplusplus
 extern "C" {
@@ -80,148 +267,9 @@ grpc_slice grpc_slice_from_stream_owned_buffer(grpc_stream_refcount *refcount,
                                                void *buffer, size_t length);
 
 typedef struct {
-  uint64_t framing_bytes;
-  uint64_t data_bytes;
-  uint64_t header_bytes;
-} grpc_transport_one_way_stats;
-
-typedef struct grpc_transport_stream_stats {
-  grpc_transport_one_way_stats incoming;
-  grpc_transport_one_way_stats outgoing;
-} grpc_transport_stream_stats;
-
-void grpc_transport_move_one_way_stats(grpc_transport_one_way_stats *from,
-                                       grpc_transport_one_way_stats *to);
-
-void grpc_transport_move_stats(grpc_transport_stream_stats *from,
-                               grpc_transport_stream_stats *to);
-
-typedef struct {
   void *extra_arg;
   grpc_closure closure;
 } grpc_handler_private_op_data;
-
-typedef struct grpc_transport_stream_op_batch_payload
-    grpc_transport_stream_op_batch_payload;
-
-/* Transport stream op: a set of operations to perform on a transport
-   against a single stream */
-typedef struct grpc_transport_stream_op_batch {
-  /** Should be enqueued when all requested operations (excluding recv_message
-      and recv_initial_metadata which have their own closures) in a given batch
-      have been completed. */
-  grpc_closure *on_complete;
-
-  /** Values for the stream op (fields set are determined by flags above) */
-  grpc_transport_stream_op_batch_payload *payload;
-
-  /** Send initial metadata to the peer, from the provided metadata batch. */
-  bool send_initial_metadata : 1;
-
-  /** Send trailing metadata to the peer, from the provided metadata batch. */
-  bool send_trailing_metadata : 1;
-
-  /** Send message data to the peer, from the provided byte stream. */
-  bool send_message : 1;
-
-  /** Receive initial metadata from the stream, into provided metadata batch. */
-  bool recv_initial_metadata : 1;
-
-  /** Receive message data from the stream, into provided byte stream. */
-  bool recv_message : 1;
-
-  /** Receive trailing metadata from the stream, into provided metadata batch.
-   */
-  bool recv_trailing_metadata : 1;
-
-  /** Collect any stats into provided buffer, zero internal stat counters */
-  bool collect_stats : 1;
-
-  /** Cancel this stream with the provided error */
-  bool cancel_stream : 1;
-
-  /***************************************************************************
-   * remaining fields are initialized and used at the discretion of the
-   * current handler of the op */
-
-  grpc_handler_private_op_data handler_private;
-} grpc_transport_stream_op_batch;
-
-struct grpc_transport_stream_op_batch_payload {
-  struct {
-    grpc_metadata_batch *send_initial_metadata;
-    /** Iff send_initial_metadata != NULL, flags associated with
-        send_initial_metadata: a bitfield of GRPC_INITIAL_METADATA_xxx */
-    uint32_t send_initial_metadata_flags;
-    // If non-NULL, will be set by the transport to the peer string
-    // (a char*, which the caller takes ownership of).
-    gpr_atm *peer_string;
-  } send_initial_metadata;
-
-  struct {
-    grpc_metadata_batch *send_trailing_metadata;
-  } send_trailing_metadata;
-
-  struct {
-    // The transport (or a filter that decides to return a failure before
-    // the op gets down to the transport) is responsible for calling
-    // grpc_byte_stream_destroy() on this.
-    // The batch's on_complete will not be called until after the byte
-    // stream is destroyed.
-    grpc_byte_stream *send_message;
-  } send_message;
-
-  struct {
-    grpc_metadata_batch *recv_initial_metadata;
-    uint32_t *recv_flags;
-    /** Should be enqueued when initial metadata is ready to be processed. */
-    grpc_closure *recv_initial_metadata_ready;
-    // If not NULL, will be set to true if trailing metadata is
-    // immediately available.  This may be a signal that we received a
-    // Trailers-Only response.
-    bool *trailing_metadata_available;
-    // If non-NULL, will be set by the transport to the peer string
-    // (a char*, which the caller takes ownership of).
-    gpr_atm *peer_string;
-  } recv_initial_metadata;
-
-  struct {
-    // Will be set by the transport to point to the byte stream
-    // containing a received message.
-    // The caller is responsible for calling grpc_byte_stream_destroy()
-    // on this byte stream.
-    grpc_byte_stream **recv_message;
-    /** Should be enqueued when one message is ready to be processed. */
-    grpc_closure *recv_message_ready;
-  } recv_message;
-
-  struct {
-    grpc_metadata_batch *recv_trailing_metadata;
-  } recv_trailing_metadata;
-
-  struct {
-    grpc_transport_stream_stats *collect_stats;
-  } collect_stats;
-
-  /** Forcefully close this stream.
-      The HTTP2 semantics should be:
-      - server side: if cancel_error has GRPC_ERROR_INT_GRPC_STATUS, and
-        trailing metadata has not been sent, send trailing metadata with status
-        and message from cancel_error (use grpc_error_get_status) followed by
-        a RST_STREAM with error=GRPC_CHTTP2_NO_ERROR to force a full close
-      - at all other times: use grpc_error_get_status to get a status code, and
-        convert to a HTTP2 error code using
-        grpc_chttp2_grpc_status_to_http2_error. Send a RST_STREAM with this
-        error. */
-  struct {
-    // Error contract: the transport that gets this op must cause cancel_error
-    //                 to be unref'ed after processing it
-    grpc_error *cancel_error;
-  } cancel_stream;
-
-  /* Indexes correspond to grpc_context_index enum values */
-  grpc_call_context_element *context;
-};
 
 /** Transport op: a set of operations to perform on a transport as a whole */
 typedef struct grpc_transport_op {
@@ -298,11 +346,6 @@ void grpc_transport_destroy_stream(grpc_exec_ctx *exec_ctx,
                                    grpc_stream *stream,
                                    grpc_closure *then_schedule_closure);
 
-void grpc_transport_stream_op_batch_finish_with_failure(
-    grpc_exec_ctx *exec_ctx, grpc_transport_stream_op_batch *op,
-    grpc_error *error, grpc_call_combiner *call_combiner);
-
-char *grpc_transport_stream_op_batch_string(grpc_transport_stream_op_batch *op);
 char *grpc_transport_op_string(grpc_transport_op *op);
 
 /* Send a batch of operations on a transport
@@ -318,7 +361,7 @@ char *grpc_transport_op_string(grpc_transport_op *op);
 void grpc_transport_perform_stream_op(grpc_exec_ctx *exec_ctx,
                                       grpc_transport *transport,
                                       grpc_stream *stream,
-                                      grpc_transport_stream_op_batch *op);
+                                      grpc_core::TransportStreamOpBatch *op);
 
 void grpc_transport_perform_op(grpc_exec_ctx *exec_ctx,
                                grpc_transport *transport,
@@ -346,11 +389,6 @@ grpc_endpoint *grpc_transport_get_endpoint(grpc_exec_ctx *exec_ctx,
 /* Allocate a grpc_transport_op, and preconfigure the on_consumed closure to
    \a on_consumed and then delete the returned transport op */
 grpc_transport_op *grpc_make_transport_op(grpc_closure *on_consumed);
-/* Allocate a grpc_transport_stream_op_batch, and preconfigure the on_consumed
-   closure
-   to \a on_consumed and then delete the returned transport op */
-grpc_transport_stream_op_batch *grpc_make_transport_stream_op(
-    grpc_closure *on_consumed);
 
 #ifdef __cplusplus
 }
