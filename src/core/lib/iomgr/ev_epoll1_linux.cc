@@ -992,7 +992,8 @@ static grpc_error *pollset_kick(grpc_exec_ctx *exec_ctx, grpc_pollset *pollset,
                                 grpc_pollset_worker *specific_worker) {
   GPR_TIMER_BEGIN("pollset_kick", 0);
   GRPC_STATS_INC_POLLSET_KICK(exec_ctx);
-  if (grpc_is_this_an_executor_thread()) GRPC_STATS_INC_POLLSET_KICKED_FROM_EXECUTOR(exec_ctx);
+  if (grpc_is_this_an_executor_thread())
+    GRPC_STATS_INC_POLLSET_KICKED_FROM_EXECUTOR(exec_ctx);
   grpc_error *ret_err = GRPC_ERROR_NONE;
   if (GRPC_TRACER_ON(grpc_polling_trace)) {
     gpr_strvec log;

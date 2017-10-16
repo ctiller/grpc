@@ -223,11 +223,12 @@ static void executor_push(grpc_exec_ctx *exec_ctx, grpc_closure *closure,
     for (;;) {
       if (GRPC_TRACER_ON(executor_trace)) {
 #ifndef NDEBUG
-        gpr_log(
-            GPR_DEBUG,
-            "EXECUTOR: try to schedule %p (%s) (created %s:%d; initiated %s:%d) to thread %d",
-            closure, is_short ? "short" : "long", closure->file_created,
-            closure->line_created, closure->file_initiated, closure->line_initiated, (int)(ts - g_thread_state));
+        gpr_log(GPR_DEBUG,
+                "EXECUTOR: try to schedule %p (%s) (created %s:%d; initiated "
+                "%s:%d) to thread %d",
+                closure, is_short ? "short" : "long", closure->file_created,
+                closure->line_created, closure->file_initiated,
+                closure->line_initiated, (int)(ts - g_thread_state));
 #else
         gpr_log(GPR_DEBUG, "EXECUTOR: try to schedule %p (%s) to thread %d",
                 closure, is_short ? "short" : "long",
