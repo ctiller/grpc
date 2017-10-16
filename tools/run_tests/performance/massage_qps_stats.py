@@ -29,6 +29,7 @@ def massage_qps_stats(scenario_result):
     stats["core_syscall_poll"] = massage_qps_stats_helpers.counter(core_stats, "syscall_poll")
     stats["core_syscall_wait"] = massage_qps_stats_helpers.counter(core_stats, "syscall_wait")
     stats["core_pollset_kick"] = massage_qps_stats_helpers.counter(core_stats, "pollset_kick")
+    stats["core_pollset_kicked_from_executor"] = massage_qps_stats_helpers.counter(core_stats, "pollset_kicked_from_executor")
     stats["core_pollset_kicked_without_poller"] = massage_qps_stats_helpers.counter(core_stats, "pollset_kicked_without_poller")
     stats["core_pollset_kicked_again"] = massage_qps_stats_helpers.counter(core_stats, "pollset_kicked_again")
     stats["core_pollset_kick_wakeup_fd"] = massage_qps_stats_helpers.counter(core_stats, "pollset_kick_wakeup_fd")

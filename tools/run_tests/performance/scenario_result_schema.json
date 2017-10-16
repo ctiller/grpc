@@ -157,6 +157,11 @@
       }, 
       {
         "mode": "NULLABLE", 
+        "name": "core_pollset_kicked_from_executor", 
+        "type": "INTEGER"
+      }, 
+      {
+        "mode": "NULLABLE", 
         "name": "core_pollset_kicked_without_poller", 
         "type": "INTEGER"
       }, 
@@ -985,6 +990,11 @@
       {
         "mode": "NULLABLE", 
         "name": "core_pollset_kick", 
+        "type": "INTEGER"
+      }, 
+      {
+        "mode": "NULLABLE", 
+        "name": "core_pollset_kicked_from_executor", 
         "type": "INTEGER"
       }, 
       {

@@ -184,6 +184,10 @@ static void executor_thread(void *arg) {
   grpc_exec_ctx_finish(&exec_ctx);
 }
 
+bool grpc_is_this_an_executor_thread() {
+  return gpr_tls_get(&g_this_thread_state) != 0;
+}
+
 static void executor_push(grpc_exec_ctx *exec_ctx, grpc_closure *closure,
                           grpc_error *error, bool is_short) {
   bool retry_push;
@@ -221,9 +225,9 @@ static void executor_push(grpc_exec_ctx *exec_ctx, grpc_closure *closure,
 #ifndef NDEBUG
         gpr_log(
             GPR_DEBUG,
-            "EXECUTOR: try to schedule %p (%s) (created %s:%d) to thread %d",
+            "EXECUTOR: try to schedule %p (%s) (created %s:%d; initiated %s:%d) to thread %d",
             closure, is_short ? "short" : "long", closure->file_created,
-            closure->line_created, (int)(ts - g_thread_state));
+            closure->line_created, closure->file_initiated, closure->line_initiated, (int)(ts - g_thread_state));
 #else
         gpr_log(GPR_DEBUG, "EXECUTOR: try to schedule %p (%s) to thread %d",
                 closure, is_short ? "short" : "long",

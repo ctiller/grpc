@@ -49,6 +49,8 @@ bool grpc_executor_is_threaded();
    grpc_executor_shutdown */
 void grpc_executor_set_threading(grpc_exec_ctx *exec_ctx, bool enable);
 
+bool grpc_is_this_an_executor_thread();
+
 #ifdef __cplusplus
 }
 #endif

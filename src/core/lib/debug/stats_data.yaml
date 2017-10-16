@@ -44,6 +44,9 @@
 - counter: pollset_kick
   doc: How many polling wakeups were performed by the process
        (only valid for epoll1 right now)
+- counter: pollset_kicked_from_executor
+  doc: How many pollset kicks originated from the executor
+       (these are necesarily cross thread)
 - counter: pollset_kicked_without_poller
   doc: How many times was a polling wakeup requested without an active poller
        (only valid for epoll1 right now)

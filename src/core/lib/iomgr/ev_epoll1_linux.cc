@@ -42,6 +42,7 @@
 #include "src/core/lib/debug/stats.h"
 #include "src/core/lib/iomgr/block_annotate.h"
 #include "src/core/lib/iomgr/ev_posix.h"
+#include "src/core/lib/iomgr/executor.h"
 #include "src/core/lib/iomgr/iomgr_internal.h"
 #include "src/core/lib/iomgr/lockfree_event.h"
 #include "src/core/lib/iomgr/wakeup_fd_posix.h"
@@ -991,6 +992,7 @@ static grpc_error *pollset_kick(grpc_exec_ctx *exec_ctx, grpc_pollset *pollset,
                                 grpc_pollset_worker *specific_worker) {
   GPR_TIMER_BEGIN("pollset_kick", 0);
   GRPC_STATS_INC_POLLSET_KICK(exec_ctx);
+  if (grpc_is_this_an_executor_thread()) GRPC_STATS_INC_POLLSET_KICKED_FROM_EXECUTOR(exec_ctx);
   grpc_error *ret_err = GRPC_ERROR_NONE;
   if (GRPC_TRACER_ON(grpc_polling_trace)) {
     gpr_strvec log;
