@@ -125,26 +125,66 @@ struct SeqState<Traits, 0, Fs...> {
   GPR_NO_UNIQUE_ADDRESS typename Types::Next next_factory;
 };
 
+template <template <typename> class Traits, typename... Fs>
+struct FinalSeqState {
+  // The penultimate state contains all the preceding states too.
+  using PenultimateState = SeqState<Traits, sizeof...(Fs) - 2, Fs...>;
+  // The final state is simply the final promise, which is the next promise from
+  // the penultimate state.
+  using FinalPromise = typename PenultimateState::Types::Next::Promise;
+  union {
+    GPR_NO_UNIQUE_ADDRESS PenultimateState penultimate_state;
+    GPR_NO_UNIQUE_ADDRESS FinalPromise current_promise;
+  };
+  using FinalPromiseResult = typename FinalPromise::Result;
+  using Result = typename Traits<FinalPromiseResult>::WrappedType;
+};
+
 // Helper to get a specific state index.
 // Calls the prior state, unless it's this state, in which case it returns
 // that.
+template <char I, typename SeqState>
+struct GetSeqStateInner;
+
+template <char I, typename S>
+auto GetSeqState(S* p) -> decltype(GetSeqStateInner<I, S>::f(p)) {
+  return GetSeqStateInner<I, S>::f(p);
+}
+
 template <char I, template <typename> class Traits, char J, typename... Fs>
-struct GetSeqStateInner {
+struct GetSeqStateInner<I, SeqState<Traits, J, Fs...>> {
   static SeqState<Traits, I, Fs...>* f(SeqState<Traits, J, Fs...>* p) {
-    return GetSeqStateInner<I, Traits, J - 1, Fs...>::f(&p->prior);
+    return GetSeqState<I>(&p->prior);
   }
 };
 
 template <char I, template <typename> class Traits, typename... Fs>
-struct GetSeqStateInner<I, Traits, I, Fs...> {
+struct GetSeqStateInner<I, SeqState<Traits, I, Fs...>> {
   static SeqState<Traits, I, Fs...>* f(SeqState<Traits, I, Fs...>* p) {
     return p;
   }
 };
 
-template <char I, template <typename> class Traits, char J, typename... Fs>
-SeqState<Traits, I, Fs...>* GetSeqState(SeqState<Traits, J, Fs...>* p) {
-  return GetSeqStateInner<I, Traits, J, Fs...>::f(p);
+template <char I, template <typename> class Traits, typename... Fs>
+struct GetSeqStateInner<I, FinalSeqState<Traits, Fs...>> {
+  static constexpr char N = sizeof...(Fs);
+  static SeqState<Traits, I, Fs...>* f(
+      absl::enable_if_t < I >= 0 && I<N - 2, FinalSeqState<Traits, Fs...>*> p) {
+    return GetSeqState<I>(&p->penultimate_state);
+  }
+  static SeqState<Traits, I, Fs...>* f(
+      absl::enable_if_t<I == N - 2, FinalSeqState<Traits, Fs...>*> p) {
+    return &p->penultimate_state_;
+  }
+  static FinalSeqState<Traits, Fs...>* f(
+      absl::enable_if_t<I == N - 1, FinalSeqState<Traits, Fs...>*> p) {
+    return p;
+  }
+};
+
+template <char I, typename S>
+auto NextSeqPromise(S* p) -> decltype(&GetSeqState<I + 1>(p)->current_promise) {
+  return &GetSeqState<I + 1>(p)->current_promise;
 }
 
 template <template <typename> class Traits, char I, typename... Fs, typename T>
@@ -189,44 +229,8 @@ class BasicSeq {
 
   // Current state.
   static_assert(N < 128, "Long sequence... please revisit BasicSeq");
-  char state_ = 0;
-  // The penultimate state contains all the preceding states too.
-  using PenultimateState = SeqState<Traits, N - 2, Fs...>;
-  // The final state is simply the final promise, which is the next promise from
-  // the penultimate state.
-  using FinalPromise = typename PenultimateState::Types::Next::Promise;
-  union {
-    GPR_NO_UNIQUE_ADDRESS PenultimateState penultimate_state_;
-    GPR_NO_UNIQUE_ADDRESS FinalPromise final_promise_;
-  };
-  using FinalPromiseResult = typename FinalPromise::Result;
-  using Result = typename Traits<FinalPromiseResult>::WrappedType;
-
-  // Accessor for various pieces, by index.
-  template <char I>
-  struct Get {
-    // Get a state by index.
-    static SeqState<Traits, I, Fs...>* state(BasicSeq* s) {
-      return GetSeqState<I>(&s->penultimate_state_);
-    }
-
-    // Get the next state's promise.
-    static typename SeqState<Traits, I + 1, Fs...>::Types::Promise*
-    next_promise(BasicSeq* s) {
-      return &GetSeqState<I + 1>(&s->penultimate_state_)->current_promise;
-    }
-  };
-  // Specialization for the penultimate state since otherwise we hit overflow
-  // errors getting the next_promise.
-  template <>
-  struct Get<N - 2> {
-    static PenultimateState* state(BasicSeq* s) {
-      return &s->penultimate_state_;
-    }
-    static FinalPromise* next_promise(BasicSeq* s) {
-      return &s->final_promise_;
-    }
-  };
+  char current_ = 0;
+  FinalSeqState<Traits, Fs...> state_;
 
   // Callable to advance the state to the next one after I given the result from
   // state I.
@@ -234,8 +238,8 @@ class BasicSeq {
   struct RunNext {
     BasicSeq* s;
     template <typename T>
-    Poll<Result> operator()(T&& value) {
-      auto* prior = Get<I>::state(s);
+    Poll<Result> RunNext(T&& value) {
+      auto* prior = GetSeqState<I>(&s->state_);
       using StateType = absl::remove_reference_t<decltype(*prior)>;
       // Destroy the promise that just completed.
       Destruct(&prior->current_promise);
@@ -248,9 +252,9 @@ class BasicSeq {
       Destruct(&prior->next_factory);
       // Constructing the promise for the new state will use the memory
       // previously occupied by the promise & next factory of the old state.
-      Construct(Get<I>::next_promise(s), std::move(n));
+      Construct(NextSeqPromise<I>(&state_), std::move(n));
       // Store the state counter.
-      s->state_ = I + 1;
+      s->current_ = I + 1;
       // Recursively poll the new current state.
       return RunState<I + 1>{s}();
     }
@@ -260,9 +264,11 @@ class BasicSeq {
   template <char I>
   struct RunState {
     BasicSeq* s;
-    Poll<Result> operator()() {
+    struct RSEmpty {};
+    Poll<Result> operator()() { return Run({}); }
+    Poll<Result> Run(absl::enable_if_t<I < N-1, RSEmpty>) {
       // Get a pointer to the state object.
-      auto* state = Get<I>::state(s);
+      auto* state = GetSeqState<I>(&s->state_);
       // Poll the current promise in this state.
       auto r = state->current_promise();
       // If we are still pending, say so by returning.
@@ -278,13 +284,7 @@ class BasicSeq {
           template CheckResultAndRunNext<Result>(
               std::move(absl::get<kPollReadyIdx>(std::move(r))), RunNext<I>{s});
     }
-  };
-
-  // Specialization of RunState to run the final state.
-  template <>
-  struct RunState<N - 1> {
-    BasicSeq* s;
-    Poll<Result> operator()() {
+    Poll<Result> Run(absl::enable_if_t<I == N-1, RSEmpty>) {
       // Poll the final promise.
       auto r = s->final_promise_();
       // If we are still pending, say so by returning.
