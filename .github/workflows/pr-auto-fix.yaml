@@ -1,0 +1,39 @@
+name: PR AutoFix
+on: [push]
+jobs:
+  PRAutoFix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.9.1
+        with:
+          access_token: ${{ github.token }}
+      - name: Install Python Interpreter
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install Python Packages
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml mako
+          sudo apt-get install python-dev
+      - name: Check out repository code
+        uses: actions/checkout@v2
+        with:
+          submodules: True
+          fetch-depth: 0
+      - name: clang-tidy fixes
+        run: ${{ github.workspace }}/tools/distrib/clang_tidy_code.sh --fix --only-changed || true
+      - name: Run sanitize
+        run: ${{ github.workspace }}/tools/distrib/sanitize.sh
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          commit-message: "Automated change: Fix sanity tests"
+          body: |
+            PanCake to the rescue!
+
+            We noticed that our 'sanity' test was going to fail, but we
+            think we can fix that automatically, so we put together this
+            PR to do just that!
+

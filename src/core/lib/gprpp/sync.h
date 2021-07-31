@@ -58,17 +58,17 @@ inline gpr_mu* GetUnderlyingGprMu(Mutex* mutex) {
 
 class ABSL_LOCKABLE Mutex {
  public:
-  Mutex() { gpr_mu_init(&mu_); }
-  ~Mutex() { gpr_mu_destroy(&mu_); }
+Mutex() { gpr_mu_init(&mu_); }
+~Mutex() { gpr_mu_destroy(&mu_); }
 
-  Mutex(const Mutex&) = delete;
-  Mutex& operator=(const Mutex&) = delete;
+Mutex(const Mutex&) = delete;
+Mutex& operator=(const Mutex&) = delete;
 
-  void Lock() ABSL_EXCLUSIVE_LOCK_FUNCTION() { gpr_mu_lock(&mu_); }
-  void Unlock() ABSL_UNLOCK_FUNCTION() { gpr_mu_unlock(&mu_); }
-  bool TryLock() ABSL_EXCLUSIVE_TRYLOCK_FUNCTION(true) {
-    return gpr_mu_trylock(&mu_) != 0;
-  }
+void Lock() ABSL_EXCLUSIVE_LOCK_FUNCTION() { gpr_mu_lock(&mu_); }
+void Unlock() ABSL_UNLOCK_FUNCTION() { gpr_mu_unlock(&mu_); }
+bool TryLock() ABSL_EXCLUSIVE_TRYLOCK_FUNCTION(true) {
+  return gpr_mu_trylock(&mu_) != 0;
+}
 
  private:
   gpr_mu mu_;
