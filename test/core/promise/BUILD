@@ -15,6 +15,21 @@
 load("//bazel:grpc_build_system.bzl", "grpc_cc_test")
 
 grpc_cc_test(
+    name = "activity_test",
+    srcs = ["activity_test.cc"],
+    external_deps = ["gtest"],
+    language = "c++",
+    uses_polling = False,
+    deps = [
+        "//:activity",
+        "//:join",
+        "//:promise",
+        "//:seq",
+        "//:wait_set",
+    ],
+)
+
+grpc_cc_test(
     name = "poll_test",
     srcs = ["poll_test.cc"],
     external_deps = ["gtest"],
@@ -46,5 +61,14 @@ grpc_cc_test(
     language = "c++",
     uses_polling = False,
     deps = ["//:context"],
+)
+
+grpc_cc_test(
+    name = "promise_test",
+    srcs = ["promise_test.cc"],
+    external_deps = ["gtest"],
+    language = "c++",
+    uses_polling = False,
+    deps = ["//:promise"],
 )
 

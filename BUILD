@@ -867,6 +867,26 @@ grpc_cc_library(
 )
 
 grpc_cc_library(
+    name = "activity",
+    srcs = [
+        "src/core/lib/promise/activity.cc",
+    ],
+    language = "c++",
+    public_hdrs = [
+        "src/core/lib/promise/activity.h",
+    ],
+    deps = [
+        "construct_destruct",
+        "context",
+        "gpr_base",
+        "gpr_codegen",
+        "poll",
+        "promise_factory",
+        "promise_status",
+    ],
+)
+
+grpc_cc_library(
     name = "context",
     language = "c++",
     public_hdrs = [
