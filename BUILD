@@ -724,6 +724,17 @@ grpc_cc_library(
 )
 
 grpc_cc_library(
+<<<<<<< HEAD
+=======
+    name = "capture",
+    external_deps = ["absl/utility"],
+    language = "c++",
+    public_hdrs = ["src/core/lib/gprpp/capture.h"],
+    deps = ["gpr_platform"],
+)
+
+grpc_cc_library(
+>>>>>>> 6e9d294a42 (promises-squashed)
     name = "gpr_codegen",
     language = "c++",
     public_hdrs = [
@@ -850,7 +861,6 @@ grpc_cc_library(
     deps = ["gpr_platform"],
 )
 
-
 grpc_cc_library(
     name = "poll",
     external_deps = [
@@ -893,6 +903,22 @@ grpc_cc_library(
         "poll",
         "promise_factory",
         "promise_status",
+    ],
+)
+
+
+grpc_cc_library(
+    name = "wait_set",
+    external_deps = [
+        "absl/container:flat_hash_set",
+    ],
+    language = "c++",
+    public_hdrs = [
+        "src/core/lib/promise/wait_set.h",
+    ],
+    deps = [
+        "activity",
+        "gpr_platform",
     ],
 )
 
@@ -945,7 +971,6 @@ grpc_cc_library(
     ],
 )
 
-
 grpc_cc_library(
     name = "basic_seq",
     language = "c++",
@@ -962,6 +987,7 @@ grpc_cc_library(
 )
 
 grpc_cc_library(
+<<<<<<< HEAD
     name = "join",
     language = "c++",
     public_hdrs = [
@@ -969,11 +995,21 @@ grpc_cc_library(
     ],
     deps = [
         "basic_join",
+=======
+    name = "seq",
+    language = "c++",
+    public_hdrs = [
+        "src/core/lib/promise/seq.h",
+    ],
+    deps = [
+        "basic_seq",
+>>>>>>> 6e9d294a42 (promises-squashed)
         "gpr_platform",
     ],
 )
 
 grpc_cc_library(
+<<<<<<< HEAD
     name = "try_join",
     language = "c++",
     public_hdrs = [
@@ -981,11 +1017,21 @@ grpc_cc_library(
     ],
     deps = [
         "basic_join",
+=======
+    name = "try_seq",
+    language = "c++",
+    public_hdrs = [
+        "src/core/lib/promise/try_seq.h",
+    ],
+    deps = [
+        "basic_seq",
+>>>>>>> 6e9d294a42 (promises-squashed)
         "gpr_platform",
         "promise_status",
     ],
 )
 
+<<<<<<< HEAD
 
 grpc_cc_library(
     name = "seq",
@@ -996,10 +1042,36 @@ grpc_cc_library(
     deps = [
         "basic_seq",
         "gpr_platform",
+=======
+grpc_cc_library(
+    name = "promise_status",
+    external_deps = [
+        "absl/status",
+        "absl/status:statusor",
+    ],
+    language = "c++",
+    public_hdrs = [
+        "src/core/lib/promise/detail/status.h",
+    ],
+    deps = ["gpr_platform"],
+)
+
+grpc_cc_library(
+    name = "loop",
+    language = "c++",
+    public_hdrs = [
+        "src/core/lib/promise/loop.h",
+    ],
+    deps = [
+        "gpr_platform",
+        "poll",
+        "promise_factory",
+>>>>>>> 6e9d294a42 (promises-squashed)
     ],
 )
 
 grpc_cc_library(
+<<<<<<< HEAD
     name = "try_seq",
     language = "c++",
     public_hdrs = [
@@ -1009,6 +1081,85 @@ grpc_cc_library(
         "basic_seq",
         "gpr_platform",
         "promise_status",
+=======
+    name = "visitor",
+    language = "c++",
+    public_hdrs = [
+        "src/core/lib/promise/visitor.h",
+    ],
+    deps = [
+        "gpr_platform",
+        "overload",
+        "poll",
+        "promise_factory",
+    ],
+)
+
+grpc_cc_library(
+    name = "if",
+    external_deps = [
+        "absl/status:statusor",
+    ],
+    language = "c++",
+    public_hdrs = ["src/core/lib/promise/if.h"],
+    deps = [
+        "gpr_platform",
+        "poll",
+        "promise_factory",
+    ],
+)
+
+grpc_cc_library(
+    name = "for_each",
+    external_deps = [
+        "absl/status",
+        "absl/types:variant",
+    ],
+    language = "c++",
+    public_hdrs = ["src/core/lib/promise/for_each.h"],
+    deps = [
+        "gpr_platform",
+        "poll",
+        "promise_factory",
+    ],
+)
+
+grpc_cc_library(
+    name = "race",
+    language = "c++",
+    public_hdrs = ["src/core/lib/promise/race.h"],
+    deps = [
+        "gpr_platform",
+        "poll",
+        "promise_factory",
+    ],
+)
+
+grpc_cc_library(
+    name = "map",
+    language = "c++",
+    public_hdrs = ["src/core/lib/promise/map.h"],
+    deps = [
+        "gpr_platform",
+        "poll",
+        "promise_factory",
+    ],
+)
+
+grpc_cc_library(
+    name = "promise",
+    external_deps = [
+        "absl/types:optional",
+    ],
+    language = "c++",
+    public_hdrs = [
+        "src/core/lib/promise/promise.h",
+    ],
+    deps = [
+        "gpr_platform",
+        "poll",
+        "promise_like",
+>>>>>>> 6e9d294a42 (promises-squashed)
     ],
 )
 
