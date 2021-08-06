@@ -842,6 +842,16 @@ grpc_cc_library(
 )
 
 grpc_cc_library(
+    name = "switch",
+    language = "c++",
+    public_hdrs = [
+        "src/core/lib/promise/detail/switch.h",
+    ],
+    deps = ["gpr_platform"],
+)
+
+
+grpc_cc_library(
     name = "poll",
     external_deps = [
         "absl/types:variant",
@@ -935,6 +945,22 @@ grpc_cc_library(
     ],
 )
 
+
+grpc_cc_library(
+    name = "basic_seq",
+    language = "c++",
+    public_hdrs = [
+        "src/core/lib/promise/detail/basic_seq.h",
+    ],
+    deps = [
+        "construct_destruct",
+        "gpr_platform",
+        "poll",
+        "promise_factory",
+        "switch",
+    ],
+)
+
 grpc_cc_library(
     name = "join",
     language = "c++",
@@ -955,6 +981,32 @@ grpc_cc_library(
     ],
     deps = [
         "basic_join",
+        "gpr_platform",
+        "promise_status",
+    ],
+)
+
+
+grpc_cc_library(
+    name = "seq",
+    language = "c++",
+    public_hdrs = [
+        "src/core/lib/promise/seq.h",
+    ],
+    deps = [
+        "basic_seq",
+        "gpr_platform",
+    ],
+)
+
+grpc_cc_library(
+    name = "try_seq",
+    language = "c++",
+    public_hdrs = [
+        "src/core/lib/promise/try_seq.h",
+    ],
+    deps = [
+        "basic_seq",
         "gpr_platform",
         "promise_status",
     ],
