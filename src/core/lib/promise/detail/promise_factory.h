@@ -131,7 +131,7 @@ template <typename A, typename F>
 absl::enable_if_t<IsVoidCallable<ResultOf<F(A)>>(),
                   PromiseLike<decltype(std::declval<F>()(std::declval<A>()))>>
 PromiseFactoryImpl(F&& f, A&& arg) {
-  return f(std::move(arg));
+  return f(std::forward<A>(arg));
 }
 
 // Given a callable() -> Promise<T>, promote it to a
@@ -159,7 +159,7 @@ class PromiseFactory {
  public:
   using Arg = A;
 
-  PromiseFactory(F f) : f_(std::move(f)) {}
+  explicit PromiseFactory(F f) : f_(std::move(f)) {}
 
   auto Once(Arg&& a)
       -> decltype(PromiseFactoryImpl(std::move(f_), std::forward<Arg>(a))) {
@@ -180,7 +180,7 @@ class PromiseFactory<void, F> {
  public:
   using Arg = void;
 
-  PromiseFactory(F f) : f_(std::move(f)) {}
+  explicit PromiseFactory(F f) : f_(std::move(f)) {}
 
   auto Once() -> decltype(PromiseFactoryImpl(std::move(f_))) {
     return PromiseFactoryImpl(std::move(f_));
