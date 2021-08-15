@@ -3132,21 +3132,7 @@ grpc_cc_library(
     visibility = ["@grpc:public"],
     deps = [
         "grpc++_codegen_base",
-        "grpc++_config_proto",
     ],
-)
-
-grpc_cc_library(
-    name = "grpc++_config_proto",
-    external_deps = [
-        "protobuf_headers",
-    ],
-    language = "c++",
-    public_hdrs = [
-        "include/grpc++/impl/codegen/config_protobuf.h",
-        "include/grpcpp/impl/codegen/config_protobuf.h",
-    ],
-    visibility = ["@grpc:public"],
 )
 
 grpc_cc_library(

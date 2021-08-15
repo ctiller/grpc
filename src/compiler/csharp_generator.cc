@@ -25,6 +25,8 @@
 #include "src/compiler/csharp_generator.h"
 #include "src/compiler/csharp_generator_helpers.h"
 
+#include <google/protobuf/compiler/csharp/csharp_names.h>
+
 using grpc::protobuf::Descriptor;
 using grpc::protobuf::FileDescriptor;
 using grpc::protobuf::MethodDescriptor;
@@ -236,7 +238,7 @@ std::string GetMethodRequestParamMaybe(const MethodDescriptor* method,
   if (invocation_param) {
     return "request, ";
   }
-  return GRPC_CUSTOM_CSHARP_GETCLASSNAME(method->input_type()) + " request, ";
+  return ::google::protobuf::compiler::csharp::GetClassName(method->input_type()) + " request, ";
 }
 
 std::string GetAccessLevel(bool internal_access) {
@@ -247,20 +249,20 @@ std::string GetMethodReturnTypeClient(const MethodDescriptor* method) {
   if (method->client_streaming()) {
     if (method->server_streaming()) {
       return "grpc::AsyncDuplexStreamingCall<" +
-             GRPC_CUSTOM_CSHARP_GETCLASSNAME(method->input_type()) + ", " +
-             GRPC_CUSTOM_CSHARP_GETCLASSNAME(method->output_type()) + ">";
+             ::google::protobuf::compiler::csharp::GetClassName(method->input_type()) + ", " +
+             ::google::protobuf::compiler::csharp::GetClassName(method->output_type()) + ">";
     } else {
       return "grpc::AsyncClientStreamingCall<" +
-             GRPC_CUSTOM_CSHARP_GETCLASSNAME(method->input_type()) + ", " +
-             GRPC_CUSTOM_CSHARP_GETCLASSNAME(method->output_type()) + ">";
+             ::google::protobuf::compiler::csharp::GetClassName(method->input_type()) + ", " +
+             ::google::protobuf::compiler::csharp::GetClassName(method->output_type()) + ">";
     }
   } else {
     if (method->server_streaming()) {
       return "grpc::AsyncServerStreamingCall<" +
-             GRPC_CUSTOM_CSHARP_GETCLASSNAME(method->output_type()) + ">";
+             ::google::protobuf::compiler::csharp::GetClassName(method->output_type()) + ">";
     } else {
       return "grpc::AsyncUnaryCall<" +
-             GRPC_CUSTOM_CSHARP_GETCLASSNAME(method->output_type()) + ">";
+             ::google::protobuf::compiler::csharp::GetClassName(method->output_type()) + ">";
     }
   }
 }
@@ -268,10 +270,10 @@ std::string GetMethodReturnTypeClient(const MethodDescriptor* method) {
 std::string GetMethodRequestParamServer(const MethodDescriptor* method) {
   if (method->client_streaming()) {
     return "grpc::IAsyncStreamReader<" +
-           GRPC_CUSTOM_CSHARP_GETCLASSNAME(method->input_type()) +
+           ::google::protobuf::compiler::csharp::GetClassName(method->input_type()) +
            "> requestStream";
   }
-  return GRPC_CUSTOM_CSHARP_GETCLASSNAME(method->input_type()) + " request";
+  return ::google::protobuf::compiler::csharp::GetClassName(method->input_type()) + " request";
 }
 
 std::string GetMethodReturnTypeServer(const MethodDescriptor* method) {
@@ -279,13 +281,13 @@ std::string GetMethodReturnTypeServer(const MethodDescriptor* method) {
     return "global::System.Threading.Tasks.Task";
   }
   return "global::System.Threading.Tasks.Task<" +
-         GRPC_CUSTOM_CSHARP_GETCLASSNAME(method->output_type()) + ">";
+         ::google::protobuf::compiler::csharp::GetClassName(method->output_type()) + ">";
 }
 
 std::string GetMethodResponseStreamMaybe(const MethodDescriptor* method) {
   if (method->server_streaming()) {
     return ", grpc::IServerStreamWriter<" +
-           GRPC_CUSTOM_CSHARP_GETCLASSNAME(method->output_type()) +
+           ::google::protobuf::compiler::csharp::GetClassName(method->output_type()) +
            "> responseStream";
   }
   return "";
@@ -388,7 +390,7 @@ void GenerateMarshallerFields(Printer* out, const ServiceDescriptor* service) {
         "grpc::Marshallers.Create(__Helper_SerializeMessage, "
         "context => __Helper_DeserializeMessage(context, $type$.Parser));\n",
         "fieldname", GetMarshallerFieldName(message), "type",
-        GRPC_CUSTOM_CSHARP_GETCLASSNAME(message));
+        ::google::protobuf::compiler::csharp::GetClassName(message));
   }
   out->Print("\n");
 }
@@ -399,8 +401,8 @@ void GenerateStaticMethodField(Printer* out, const MethodDescriptor* method) {
       "static readonly grpc::Method<$request$, $response$> $fieldname$ = new "
       "grpc::Method<$request$, $response$>(\n",
       "fieldname", GetMethodFieldName(method), "request",
-      GRPC_CUSTOM_CSHARP_GETCLASSNAME(method->input_type()), "response",
-      GRPC_CUSTOM_CSHARP_GETCLASSNAME(method->output_type()));
+      ::google::protobuf::compiler::csharp::GetClassName(method->input_type()), "response",
+      ::google::protobuf::compiler::csharp::GetClassName(method->output_type()));
   out->Indent();
   out->Indent();
   out->Print("$methodtype$,\n", "methodtype", GetCSharpMethodType(method));
@@ -427,7 +429,7 @@ void GenerateServiceDescriptorProperty(Printer* out,
   out->Print("{\n");
   out->Print("  get { return $umbrella$.Descriptor.Services[$index$]; }\n",
              "umbrella",
-             GRPC_CUSTOM_CSHARP_GETREFLECTIONCLASSNAME(service->file()),
+             ::google::protobuf::compiler::csharp::GetReflectionClassName(service->file()),
              "index", index.str());
   out->Print("}\n");
   out->Print("\n");
@@ -536,8 +538,8 @@ void GenerateClientStub(Printer* out, const ServiceDescriptor* service) {
           "cancellationToken = "
           "default(global::System.Threading.CancellationToken))\n",
           "methodname", method->name(), "request",
-          GRPC_CUSTOM_CSHARP_GETCLASSNAME(method->input_type()), "response",
-          GRPC_CUSTOM_CSHARP_GETCLASSNAME(method->output_type()));
+          ::google::protobuf::compiler::csharp::GetClassName(method->input_type()), "response",
+          ::google::protobuf::compiler::csharp::GetClassName(method->output_type()));
       out->Print("{\n");
       out->Indent();
       out->Print(
@@ -555,8 +557,8 @@ void GenerateClientStub(Printer* out, const ServiceDescriptor* service) {
           "public virtual $response$ $methodname$($request$ request, "
           "grpc::CallOptions options)\n",
           "methodname", method->name(), "request",
-          GRPC_CUSTOM_CSHARP_GETCLASSNAME(method->input_type()), "response",
-          GRPC_CUSTOM_CSHARP_GETCLASSNAME(method->output_type()));
+          ::google::protobuf::compiler::csharp::GetClassName(method->input_type()), "response",
+          ::google::protobuf::compiler::csharp::GetClassName(method->output_type()));
       out->Print("{\n");
       out->Indent();
       out->Print(
@@ -723,8 +725,8 @@ void GenerateBindServiceWithBinderMethod(Printer* out,
         "serviceImpl.$methodname$));\n",
         "methodfield", GetMethodFieldName(method), "servermethodtype",
         GetCSharpServerMethodType(method), "inputtype",
-        GRPC_CUSTOM_CSHARP_GETCLASSNAME(method->input_type()), "outputtype",
-        GRPC_CUSTOM_CSHARP_GETCLASSNAME(method->output_type()), "methodname",
+        ::google::protobuf::compiler::csharp::GetClassName(method->input_type()), "outputtype",
+        ::google::protobuf::compiler::csharp::GetClassName(method->output_type()), "methodname",
         method->name());
   }
 
@@ -807,7 +809,7 @@ std::string GetServices(const FileDescriptor* file, bool generate_client,
     out.Print("using grpc = global::Grpc.Core;\n");
     out.Print("\n");
 
-    std::string file_namespace = GRPC_CUSTOM_CSHARP_GETFILENAMESPACE(file);
+    std::string file_namespace = google::protobuf::compiler::csharp::GetFileNamespace(file);
     if (file_namespace != "") {
       out.Print("namespace $namespace$ {\n", "namespace", file_namespace);
       out.Indent();

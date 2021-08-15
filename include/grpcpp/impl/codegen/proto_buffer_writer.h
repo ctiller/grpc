@@ -24,7 +24,6 @@
 #include <grpc/impl/codegen/grpc_types.h>
 #include <grpc/impl/codegen/slice.h>
 #include <grpcpp/impl/codegen/byte_buffer.h>
-#include <grpcpp/impl/codegen/config_protobuf.h>
 #include <grpcpp/impl/codegen/core_codegen_interface.h>
 #include <grpcpp/impl/codegen/serialization_traits.h>
 #include <grpcpp/impl/codegen/status.h>
@@ -50,7 +49,7 @@ const int kProtoBufferWriterMaxBufferLength = 1024 * 1024;
 ///
 /// Read more about ZeroCopyOutputStream interface here:
 /// https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.io.zero_copy_stream#ZeroCopyOutputStream
-class ProtoBufferWriter : public ::grpc::protobuf::io::ZeroCopyOutputStream {
+class ProtoBufferWriter : public ::google::protobuf::io::ZeroCopyOutputStream {
  public:
   /// Constructor for this derived class
   ///

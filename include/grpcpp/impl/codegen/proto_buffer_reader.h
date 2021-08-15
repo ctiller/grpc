@@ -25,7 +25,6 @@
 #include <grpc/impl/codegen/grpc_types.h>
 #include <grpc/impl/codegen/slice.h>
 #include <grpcpp/impl/codegen/byte_buffer.h>
-#include <grpcpp/impl/codegen/config_protobuf.h>
 #include <grpcpp/impl/codegen/core_codegen_interface.h>
 #include <grpcpp/impl/codegen/serialization_traits.h>
 #include <grpcpp/impl/codegen/status.h>
@@ -43,7 +42,7 @@ extern CoreCodegenInterface* g_core_codegen_interface;
 ///
 /// Read more about ZeroCopyInputStream interface here:
 /// https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.io.zero_copy_stream#ZeroCopyInputStream
-class ProtoBufferReader : public ::grpc::protobuf::io::ZeroCopyInputStream {
+class ProtoBufferReader : public ::google::protobuf::io::ZeroCopyInputStream {
  public:
   /// Constructs buffer reader from \a buffer. Will set \a status() to non ok
   /// if \a buffer is invalid (the internal buffer has not been initialized).

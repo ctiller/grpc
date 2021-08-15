@@ -23,7 +23,6 @@
 #include <grpc/grpc.h>
 #include <grpc/support/log.h>
 #include <grpcpp/impl/codegen/config.h>
-#include <grpcpp/impl/codegen/config_protobuf.h>
 #include <gtest/gtest.h>
 
 #include "src/core/lib/iomgr/error.h"
