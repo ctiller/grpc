@@ -785,6 +785,20 @@ grpc_cc_library(
 )
 
 grpc_cc_library(
+    name = "config",
+    srcs = [
+        "src/core/lib/config/core_configuration.cc",
+    ],
+    language = "c++",
+    public_hdrs = [
+        "src/core/lib/config/core_configuration.h",
+    ],
+    deps = [
+        "gpr_platform",
+    ],
+)
+
+grpc_cc_library(
     name = "debug_location",
     language = "c++",
     public_hdrs = ["src/core/lib/gprpp/debug_location.h"],
@@ -906,6 +920,20 @@ grpc_cc_library(
         "gpr_platform",
         "poll",
         "promise_like",
+    ],
+)
+
+grpc_cc_library(
+    name = "if",
+    external_deps = [
+        "absl/status:statusor",
+    ],
+    language = "c++",
+    public_hdrs = ["src/core/lib/promise/if.h"],
+    deps = [
+        "gpr_platform",
+        "poll",
+        "promise_factory",
     ],
 )
 
@@ -1309,6 +1337,7 @@ grpc_cc_library(
     public_hdrs = GRPC_PUBLIC_HDRS + GRPC_PUBLIC_EVENT_ENGINE_HDRS,
     visibility = ["@grpc:alt_grpc_base_legacy"],
     deps = [
+        "bitset",
         "dual_ref_counted",
         "gpr_base",
         "gpr_codegen",
