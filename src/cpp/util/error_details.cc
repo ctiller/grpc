@@ -17,4 +17,3 @@
  */
 
 #include <grpcpp/support/error_details.h>
-
