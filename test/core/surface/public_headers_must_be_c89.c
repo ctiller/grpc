@@ -16,6 +16,10 @@
  *
  */
 
+#include <grpc/support/port_platform.h>
+
+#include <stdio.h>
+
 #include <grpc/byte_buffer.h>
 #include <grpc/byte_buffer_reader.h>
 #include <grpc/census.h>
@@ -34,7 +38,6 @@
 #include <grpc/impl/codegen/gpr_types.h>
 #include <grpc/impl/codegen/grpc_types.h>
 #include <grpc/impl/codegen/log.h>
-#include <grpc/impl/codegen/port_platform.h>
 #include <grpc/impl/codegen/propagation_bits.h>
 #include <grpc/impl/codegen/slice.h>
 #include <grpc/impl/codegen/status.h>
@@ -50,7 +53,6 @@
 #include <grpc/support/atm.h>
 #include <grpc/support/cpu.h>
 #include <grpc/support/log.h>
-#include <grpc/support/port_platform.h>
 #include <grpc/support/string_util.h>
 #include <grpc/support/sync.h>
 #include <grpc/support/sync_abseil.h>
@@ -59,8 +61,6 @@
 #include <grpc/support/thd_id.h>
 #include <grpc/support/time.h>
 #include <grpc/support/workaround_list.h>
-
-#include <stdio.h>
 
 int main(int argc, char **argv) {
   /* Use the parameters to avoid unused-parameter warning.
