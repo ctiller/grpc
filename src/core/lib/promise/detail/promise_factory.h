@@ -97,7 +97,8 @@ class Curried {
 // Promote a callable(A) -> T | Poll<T> to a PromiseFactory(A) -> Promise<T> by
 // capturing A.
 template <typename A, typename F>
-absl::enable_if_t<!IsVoidCallable<ResultOf<F(A)>>::value, PromiseLike<Curried<A, F>>>
+absl::enable_if_t<!IsVoidCallable<ResultOf<F(A)>>::value,
+                  PromiseLike<Curried<A, F>>>
 PromiseFactoryImpl(F&& f, A&& arg) {
   return Curried<A, F>(std::forward<F>(f), std::forward<A>(arg));
 }
@@ -105,14 +106,16 @@ PromiseFactoryImpl(F&& f, A&& arg) {
 // Promote a callable() -> T|Poll<T> to a PromiseFactory(A) -> Promise<T>
 // by dropping the argument passed to the factory.
 template <typename A, typename F>
-absl::enable_if_t<!IsVoidCallable<ResultOf<F()>>::value, PromiseLike<RemoveCVRef<F>>>
+absl::enable_if_t<!IsVoidCallable<ResultOf<F()>>::value,
+                  PromiseLike<RemoveCVRef<F>>>
 PromiseFactoryImpl(F f, A&&) {
   return PromiseLike<F>(std::move(f));
 }
 
 // Promote a callable() -> T|Poll<T> to a PromiseFactory() -> Promise<T>
 template <typename F>
-absl::enable_if_t<!IsVoidCallable<ResultOf<F()>>::value, PromiseLike<RemoveCVRef<F>>>
+absl::enable_if_t<!IsVoidCallable<ResultOf<F()>>::value,
+                  PromiseLike<RemoveCVRef<F>>>
 PromiseFactoryImpl(F f) {
   return PromiseLike<F>(std::move(f));
 }
