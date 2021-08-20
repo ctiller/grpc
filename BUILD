@@ -1115,8 +1115,6 @@ grpc_cc_library(
         "gpr_platform",
     ],
 )
-
-
 grpc_cc_library(
     name = "ref_counted",
     language = "c++",
