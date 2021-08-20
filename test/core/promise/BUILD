@@ -185,5 +185,6 @@ grpc_cc_test(
         "//:promise",
         "//:seq",
         "//:wait_set",
+        "//test/core/util:grpc_suppressions",
     ],
 )
