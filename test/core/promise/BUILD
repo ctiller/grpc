@@ -126,6 +126,29 @@ grpc_cc_test(
 )
 
 grpc_cc_test(
+    name = "join_test",
+    srcs = ["join_test.cc"],
+    external_deps = ["gtest"],
+    language = "c++",
+    uses_polling = False,
+    deps = [
+        "//:join",
+        "//test/core/util:grpc_suppressions",
+    ],
+)
+
+grpc_cc_test(
+    name = "try_join_test",
+    srcs = ["try_join_test.cc"],
+    external_deps = ["gtest"],
+    language = "c++",
+    uses_polling = False,
+    deps = [
+        "//:try_join",
+        "//test/core/util:grpc_suppressions",
+    ],
+)
+grpc_cc_test(
     name = "seq_test",
     srcs = ["seq_test.cc"],
     external_deps = ["gtest"],
@@ -148,3 +171,4 @@ grpc_cc_test(
         "//test/core/util:grpc_suppressions",
     ],
 )
+
