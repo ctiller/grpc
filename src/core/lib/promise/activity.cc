@@ -14,8 +14,8 @@
 
 #include <grpc/impl/codegen/port_platform.h>
 
-#include "src/core/lib/promise/activity.h"
 #include "src/core/lib/gprpp/atomic_utils.h"
+#include "src/core/lib/promise/activity.h"
 
 namespace grpc_core {
 
@@ -88,9 +88,7 @@ class Activity::Handle final : public Wakeable {
 ///////////////////////////////////////////////////////////////////////////////
 // ACTIVITY IMPLEMENTATION
 
-bool Activity::RefIfNonzero() {
-  return IncrementIfNonzero(&refs_);
-}
+bool Activity::RefIfNonzero() { return IncrementIfNonzero(&refs_); }
 
 Activity::Handle* Activity::RefHandle() {
   if (handle_ == nullptr) {
