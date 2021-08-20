@@ -842,15 +842,6 @@ grpc_cc_library(
 )
 
 grpc_cc_library(
-    name = "switch",
-    language = "c++",
-    public_hdrs = [
-        "src/core/lib/promise/detail/switch.h",
-    ],
-    deps = ["gpr_platform"],
-)
-
-grpc_cc_library(
     name = "poll",
     external_deps = [
         "absl/types:variant",
@@ -863,17 +854,42 @@ grpc_cc_library(
 )
 
 grpc_cc_library(
-    name = "promise_status",
+    name = "context",
+    language = "c++",
+    public_hdrs = [
+        "src/core/lib/promise/context.h",
+    ],
+    deps = [
+        "gpr_platform",
+        "gpr_tls",
+    ],
+)
+
+grpc_cc_library(
+    name = "map",
+    language = "c++",
+    public_hdrs = ["src/core/lib/promise/map.h"],
+    deps = [
+        "gpr_platform",
+        "poll",
+        "promise_like",
+    ],
+)
+
+grpc_cc_library(
+    name = "promise",
     external_deps = [
-        "absl/status",
-        "absl/status:statusor",
+        "absl/types:optional",
     ],
     language = "c++",
     public_hdrs = [
-        "src/core/lib/promise/detail/status.h",
+        "src/core/lib/promise/promise.h",
     ],
-    deps = ["gpr_platform"],
-)
+    deps = [
+        "gpr_platform",
+        "poll",
+        "promise_like",
+    ],
 
 grpc_cc_library(
     name = "activity",
@@ -895,7 +911,6 @@ grpc_cc_library(
     ],
 )
 
-
 grpc_cc_library(
     name = "wait_set",
     external_deps = [
@@ -908,247 +923,6 @@ grpc_cc_library(
     deps = [
         "activity",
         "gpr_platform",
-    ],
-)
-
-grpc_cc_library(
-    name = "context",
-    language = "c++",
-    public_hdrs = [
-        "src/core/lib/promise/context.h",
-    ],
-    deps = ["gpr_platform"],
-)
-
-grpc_cc_library(
-    name = "promise_like",
-    language = "c++",
-    public_hdrs = [
-        "src/core/lib/promise/detail/promise_like.h",
-    ],
-    deps = [
-        "gpr_platform",
-        "poll",
-    ],
-)
-
-grpc_cc_library(
-    name = "promise_factory",
-    language = "c++",
-    public_hdrs = [
-        "src/core/lib/promise/detail/promise_factory.h",
-    ],
-    deps = [
-        "gpr_platform",
-        "poll",
-        "promise_like",
-    ],
-)
-
-grpc_cc_library(
-    name = "basic_join",
-    language = "c++",
-    public_hdrs = [
-        "src/core/lib/promise/detail/basic_join.h",
-    ],
-    deps = [
-        "bitset",
-        "construct_destruct",
-        "gpr_platform",
-        "poll",
-        "promise_factory",
-    ],
-)
-
-grpc_cc_library(
-    name = "basic_seq",
-    language = "c++",
-    public_hdrs = [
-        "src/core/lib/promise/detail/basic_seq.h",
-    ],
-    deps = [
-        "construct_destruct",
-        "gpr_platform",
-        "poll",
-        "promise_factory",
-        "switch",
-    ],
-)
-
-grpc_cc_library(
-<<<<<<< HEAD
-    name = "join",
-    language = "c++",
-    public_hdrs = [
-        "src/core/lib/promise/join.h",
-    ],
-    deps = [
-        "basic_join",
-=======
-    name = "seq",
-    language = "c++",
-    public_hdrs = [
-        "src/core/lib/promise/seq.h",
-    ],
-    deps = [
-        "basic_seq",
->>>>>>> 6e9d294a42 (promises-squashed)
-        "gpr_platform",
-    ],
-)
-
-grpc_cc_library(
-<<<<<<< HEAD
-    name = "try_join",
-    language = "c++",
-    public_hdrs = [
-        "src/core/lib/promise/try_join.h",
-    ],
-    deps = [
-        "basic_join",
-=======
-    name = "try_seq",
-    language = "c++",
-    public_hdrs = [
-        "src/core/lib/promise/try_seq.h",
-    ],
-    deps = [
-        "basic_seq",
->>>>>>> 6e9d294a42 (promises-squashed)
-        "gpr_platform",
-        "promise_status",
-    ],
-)
-
-<<<<<<< HEAD
-
-grpc_cc_library(
-    name = "seq",
-    language = "c++",
-    public_hdrs = [
-        "src/core/lib/promise/seq.h",
-    ],
-    deps = [
-        "basic_seq",
-        "gpr_platform",
-=======
-grpc_cc_library(
-    name = "promise_status",
-    external_deps = [
-        "absl/status",
-        "absl/status:statusor",
-    ],
-    language = "c++",
-    public_hdrs = [
-        "src/core/lib/promise/detail/status.h",
-    ],
-    deps = ["gpr_platform"],
-)
-
-grpc_cc_library(
-    name = "loop",
-    language = "c++",
-    public_hdrs = [
-        "src/core/lib/promise/loop.h",
-    ],
-    deps = [
-        "gpr_platform",
-        "poll",
-        "promise_factory",
->>>>>>> 6e9d294a42 (promises-squashed)
-    ],
-)
-
-grpc_cc_library(
-<<<<<<< HEAD
-    name = "try_seq",
-    language = "c++",
-    public_hdrs = [
-        "src/core/lib/promise/try_seq.h",
-    ],
-    deps = [
-        "basic_seq",
-        "gpr_platform",
-        "promise_status",
-=======
-    name = "visitor",
-    language = "c++",
-    public_hdrs = [
-        "src/core/lib/promise/visitor.h",
-    ],
-    deps = [
-        "gpr_platform",
-        "overload",
-        "poll",
-        "promise_factory",
-    ],
-)
-
-grpc_cc_library(
-    name = "if",
-    external_deps = [
-        "absl/status:statusor",
-    ],
-    language = "c++",
-    public_hdrs = ["src/core/lib/promise/if.h"],
-    deps = [
-        "gpr_platform",
-        "poll",
-        "promise_factory",
-    ],
-)
-
-grpc_cc_library(
-    name = "for_each",
-    external_deps = [
-        "absl/status",
-        "absl/types:variant",
-    ],
-    language = "c++",
-    public_hdrs = ["src/core/lib/promise/for_each.h"],
-    deps = [
-        "gpr_platform",
-        "poll",
-        "promise_factory",
-    ],
-)
-
-grpc_cc_library(
-    name = "race",
-    language = "c++",
-    public_hdrs = ["src/core/lib/promise/race.h"],
-    deps = [
-        "gpr_platform",
-        "poll",
-        "promise_factory",
-    ],
-)
-
-grpc_cc_library(
-    name = "map",
-    language = "c++",
-    public_hdrs = ["src/core/lib/promise/map.h"],
-    deps = [
-        "gpr_platform",
-        "poll",
-        "promise_factory",
-    ],
-)
-
-grpc_cc_library(
-    name = "promise",
-    external_deps = [
-        "absl/types:optional",
-    ],
-    language = "c++",
-    public_hdrs = [
-        "src/core/lib/promise/promise.h",
-    ],
-    deps = [
-        "gpr_platform",
-        "poll",
-        "promise_like",
->>>>>>> 6e9d294a42 (promises-squashed)
     ],
 )
 
