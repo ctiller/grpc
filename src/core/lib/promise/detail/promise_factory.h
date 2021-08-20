@@ -54,19 +54,13 @@ namespace promise_detail {
 
 // Helper trait: given a T, and T x, is calling x() legal?
 template <typename T, typename Ignored = void>
-struct IsVoidCallableT {
+struct IsVoidCallable {
   static constexpr bool value = false;
 };
 template <typename F>
-struct IsVoidCallableT<F, absl::void_t<decltype(std::declval<F>()())>> {
+struct IsVoidCallable<F, absl::void_t<decltype(std::declval<F>()())>> {
   static constexpr bool value = true;
 };
-
-// Wrap that trait in some nice syntax.
-template <typename T>
-constexpr bool IsVoidCallable() {
-  return IsVoidCallableT<T>::value;
-}
 
 // T -> T, const T& -> T
 template <typename T>
@@ -103,7 +97,8 @@ class Curried {
 // Promote a callable(A) -> T | Poll<T> to a PromiseFactory(A) -> Promise<T> by
 // capturing A.
 template <typename A, typename F>
-absl::enable_if_t<!IsVoidCallable<ResultOf<F(A)>>(), PromiseLike<Curried<F, A>>>
+absl::enable_if_t<!IsVoidCallable<ResultOf<F(A)>>::value,
+                  PromiseLike<Curried<F, A>>>
 PromiseFactoryImpl(F&& f, A&& arg) {
   return Curried<F, A>(std::forward<F>(f), std::forward<A>(arg));
 }
@@ -111,21 +106,23 @@ PromiseFactoryImpl(F&& f, A&& arg) {
 // Promote a callable() -> T|Poll<T> to a PromiseFactory(A) -> Promise<T>
 // by dropping the argument passed to the factory.
 template <typename A, typename F>
-absl::enable_if_t<!IsVoidCallable<ResultOf<F()>>(), PromiseLike<RemoveCVRef<F>>>
+absl::enable_if_t<!IsVoidCallable<ResultOf<F()>>::value,
+                  PromiseLike<RemoveCVRef<F>>>
 PromiseFactoryImpl(F f, A&&) {
   return PromiseLike<F>(std::move(f));
 }
 
 // Promote a callable() -> T|Poll<T> to a PromiseFactory() -> Promise<T>
 template <typename F>
-absl::enable_if_t<!IsVoidCallable<ResultOf<F()>>(), PromiseLike<RemoveCVRef<F>>>
+absl::enable_if_t<!IsVoidCallable<ResultOf<F()>>::value,
+                  PromiseLike<RemoveCVRef<F>>>
 PromiseFactoryImpl(F f) {
   return PromiseLike<F>(std::move(f));
 }
 
 // Given a callable(A) -> Promise<T>, name it a PromiseFactory and use it.
 template <typename A, typename F>
-absl::enable_if_t<IsVoidCallable<ResultOf<F(A)>>(),
+absl::enable_if_t<IsVoidCallable<ResultOf<F(A)>>::value,
                   PromiseLike<decltype(std::declval<F>()(std::declval<A>()))>>
 PromiseFactoryImpl(F&& f, A&& arg) {
   return f(std::forward<A>(arg));
@@ -134,7 +131,7 @@ PromiseFactoryImpl(F&& f, A&& arg) {
 // Given a callable() -> Promise<T>, promote it to a
 // PromiseFactory(A) -> Promise<T> by dropping the first argument.
 template <typename A, typename F>
-absl::enable_if_t<IsVoidCallable<ResultOf<F()>>(),
+absl::enable_if_t<IsVoidCallable<ResultOf<F()>>::value,
                   PromiseLike<decltype(std::declval<F>()())>>
 PromiseFactoryImpl(F&& f, A&&) {
   return f();
@@ -142,7 +139,7 @@ PromiseFactoryImpl(F&& f, A&&) {
 
 // Given a callable() -> Promise<T>, name it a PromiseFactory and use it.
 template <typename F>
-absl::enable_if_t<IsVoidCallable<ResultOf<F()>>(),
+absl::enable_if_t<IsVoidCallable<ResultOf<F()>>::value,
                   PromiseLike<decltype(std::declval<F>()())>>
 PromiseFactoryImpl(F&& f) {
   return f();

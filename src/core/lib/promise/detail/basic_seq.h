@@ -219,7 +219,8 @@ class BasicSeq {
   template <char I>
   auto next_promise() -> absl::enable_if_t<
       I != N - 2,
-      decltype(&GetSeqState<I + 1>(&penultimate_state_)->current_promise)> {
+      decltype(&GetSeqState<I + 1>(static_cast<PenultimateState*>(nullptr))
+                    ->current_promise)> {
     return &GetSeqState<I + 1>(&penultimate_state_)->current_promise;
   }
 
