@@ -15,6 +15,7 @@
 #include <grpc/impl/codegen/port_platform.h>
 
 #include "src/core/lib/promise/activity.h"
+#include "src/core/lib/gprpp/atomic_utils.h"
 
 namespace grpc_core {
 
@@ -52,7 +53,7 @@ class Activity::Handle final : public Wakeable {
     // Note that activity refcount can drop to zero, but we could win the lock
     // against DropActivity, so we need to only increase activities refcount if
     // it is non-zero.
-    if (activity_ && activity_->RefIfNonZero()) {
+    if (activity_ && activity_->RefIfNonzero()) {
       Activity* activity = activity_;
       mu_.Unlock();
       // Activity still exists and we have a reference: wake it up, which will
@@ -87,15 +88,8 @@ class Activity::Handle final : public Wakeable {
 ///////////////////////////////////////////////////////////////////////////////
 // ACTIVITY IMPLEMENTATION
 
-bool Activity::RefIfNonZero() {
-  auto value = refs_.load(std::memory_order_acquire);
-  do {
-    if (value == 0) {
-      return false;
-    }
-  } while (!refs_.compare_exchange_weak(
-      value, value + 1, std::memory_order_release, std::memory_order_relaxed));
-  return true;
+bool Activity::RefIfNonzero() {
+  return IncrementIfNonzero(&refs_);
 }
 
 Activity::Handle* Activity::RefHandle() {

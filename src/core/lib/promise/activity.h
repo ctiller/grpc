@@ -195,7 +195,7 @@ class Activity : private Wakeable {
   Handle* RefHandle() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_);
   // If our refcount is non-zero, ref and return true.
   // Otherwise, return false.
-  bool RefIfNonZero();
+  bool RefIfNonzero();
   // Drop the (proved existing) wait handle.
   void DropHandle() EXCLUSIVE_LOCKS_REQUIRED(mu_);
 

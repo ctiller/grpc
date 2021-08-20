@@ -1086,6 +1086,7 @@ grpc_cc_library(
         "src/core/lib/promise/activity.h",
     ],
     deps = [
+        "atomic_utils",
         "construct_destruct",
         "context",
         "gpr_base",
