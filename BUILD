@@ -17,7 +17,7 @@
 load(
     "//bazel:grpc_build_system.bzl",
     "grpc_cc_library",
-    "grpc_cc_binary",
+    "grpc_cc_test",
     "grpc_generate_one_off_targets",
     "grpc_upb_proto_library",
     "python_config_settings",
@@ -4439,7 +4439,7 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
-grpc_cc_binary(
+grpc_cc_test(
     name = "repro",
     srcs = ["repro.cc"],
     language = "c++",
@@ -4451,7 +4451,6 @@ grpc_cc_binary(
         "absl/status",
         "absl/status:statusor",
         "absl/container:flat_hash_set",
-        "gtest",
     ]
 )
 
