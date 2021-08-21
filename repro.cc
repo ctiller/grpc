@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <atomic>
 #include <functional>
 #include <utility>
+#include <stdlib.h>
 #include "absl/synchronization/mutex.h"
 #include "absl/container/flat_hash_set.h"
 
