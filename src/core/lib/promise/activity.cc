@@ -40,7 +40,7 @@ class Activity::Handle final : public Wakeable {
   // Activity is going away... drop its reference and sever the connection back.
   void DropActivity() {
     mu_.Lock();
-    assert(activity_ != nullptr);
+    GPR_ASSERT(activity_ != nullptr);
     activity_ = nullptr;
     mu_.Unlock();
     Unref();

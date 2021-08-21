@@ -18,6 +18,9 @@
 #include <grpc/impl/codegen/port_platform.h>
 
 #include <functional>
+
+#include <grpc/support/log.h>
+
 #include "src/core/lib/gprpp/construct_destruct.h"
 #include "src/core/lib/gprpp/sync.h"
 #include "src/core/lib/promise/context.h"
@@ -123,7 +126,7 @@ class Activity : private Wakeable {
   //   prohibitively expensive in non-debug builds)
   static Activity* current() ABSL_ASSERT_EXCLUSIVE_LOCK(current()->mu_) {
 #ifndef NDEBUG
-    assert(g_current_activity_);
+    GPR_ASSERT(g_current_activity_);
     if (g_current_activity_ != nullptr) {
       g_current_activity_->mu_.AssertHeld();
     }
@@ -168,7 +171,7 @@ class Activity : private Wakeable {
   class ScopedActivity {
    public:
     explicit ScopedActivity(Activity* activity) {
-      assert(g_current_activity_ == nullptr);
+      GPR_ASSERT(g_current_activity_ == nullptr);
       g_current_activity_ = activity;
     }
     ~ScopedActivity() { g_current_activity_ = nullptr; }
@@ -274,7 +277,7 @@ class PromiseActivity final
     // We shouldn't destruct without calling Cancel() first, and that must get
     // us to be done_, so we assume that and have no logic to destruct the
     // promise here.
-    assert(done_);
+    GPR_ASSERT(done_);
   }
 
   size_t Size() override { return sizeof(*this); }
@@ -326,7 +329,7 @@ class PromiseActivity final
   // Notification that we're no longer executing - it's ok to destruct the
   // promise.
   void MarkDone() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_) {
-    assert(!done_);
+    GPR_ASSERT(!done_);
     done_ = true;
     Destruct(&promise_holder_.promise);
   }
@@ -372,10 +375,10 @@ class PromiseActivity final
   // Until there are no wakeups from within and the promise is incomplete: poll
   // the promise.
   absl::optional<absl::Status> StepLoop() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_) {
-    assert(is_current());
+    GPR_ASSERT(is_current());
     do {
       // Run the promise.
-      assert(!done_);
+      GPR_ASSERT(!done_);
       auto r = promise_holder_.promise();
       if (auto* status = absl::get_if<kPollReadyIdx>(&r)) {
         // If complete, destroy the promise, flag done, and exit this loop.
