@@ -18,25 +18,26 @@
 #include <grpc/impl/codegen/port_platform.h>
 
 #include "absl/types/variant.h"
+#include "src/core/lib/promise/detail/promise_like.h"
 #include "src/core/lib/promise/poll.h"
 
 namespace grpc_core {
 
-namespace map_detail {
+namespace promise_detail {
 
+// Implementation of mapping combinator - use this via the free function below!
+// Promise is the type of promise to poll on, Fn is a function that takes the
+// result of Promise and maps it to some new type.
 template <typename Promise, typename Fn>
 class Map {
  public:
   Map(Promise promise, Fn fn)
       : promise_(std::move(promise)), fn_(std::move(fn)) {}
 
-  using PromiseResult =
-      typename PollTraits<decltype(std::declval<Promise>()())>::Type;
-  using Result = absl::remove_reference_t<decltype(
-      std::declval<Fn>()(std::declval<PromiseResult>()))>;
+  using Result = typename PromiseLike<Promise>::Result;
 
   Poll<Result> operator()() {
-    auto r = promise_();
+    Poll<Result> r = promise_();
     if (auto* p = absl::get_if<kPollReadyIdx>(&r)) {
       return fn_(std::move(*p));
     }
@@ -44,28 +45,19 @@ class Map {
   }
 
  private:
-  Promise promise_;
+  PromiseLike<Promise> promise_;
   Fn fn_;
 };
 
-}  // namespace map_detail
+}  // namespace promise_detail
 
 // Mapping combinator.
-// Takes a promise, and a synchronous function to mutate it's result, and
+// Takes a promise, and a synchronous function to mutate its result, and
 // returns a promise.
 template <typename Promise, typename Fn>
-map_detail::Map<Promise, Fn> Map(Promise promise, Fn fn) {
-  return map_detail::Map<Promise, Fn>(std::move(promise), std::move(fn));
+promise_detail::Map<Promise, Fn> Map(Promise promise, Fn fn) {
+  return promise_detail::Map<Promise, Fn>(std::move(promise), std::move(fn));
 }
-
-// Map functor to take the N-th element of a tuple
-template <size_t N>
-struct JustElem {
-  template <typename... Types>
-  auto operator()(std::tuple<Types...>&& t) -> decltype(std::get<N>(t)) {
-    return std::get<N>(t);
-  }
-};
 
 }  // namespace grpc_core
 

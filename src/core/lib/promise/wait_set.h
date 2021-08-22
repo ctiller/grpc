@@ -58,7 +58,7 @@ class WaitSet final {
     WakerSet wakeup_;
   };
 
-  [[nodiscard]] WakeupSet TakeWakeupSet() {
+  GRPC_MUST_USE_RESULT WakeupSet TakeWakeupSet() {
     return WakeupSet(std::move(pending_));
   }
 

@@ -156,7 +156,6 @@ TYPED_TEST(BarrierTest, Barrier) {
   // Clearing the barrier should let the activity proceed to return a result.
   EXPECT_CALL(on_done, Call(absl::OkStatus()));
   b.Clear();
-  puts("HERE");
 }
 
 TYPED_TEST(BarrierTest, BarrierPing) {
