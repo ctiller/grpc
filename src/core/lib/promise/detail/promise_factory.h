@@ -86,6 +86,8 @@ class Curried {
  public:
   Curried(F&& f, Arg&& arg)
       : f_(std::forward<F>(f)), arg_(std::forward<Arg>(arg)) {}
+  Curried(const F& f, Arg&& arg)
+      : f_(f), arg_(std::forward<Arg>(arg)) {}
   using Result = decltype(std::declval<F>()(std::declval<Arg>()));
   Result operator()() { return f_(arg_); }
 
@@ -98,9 +100,9 @@ class Curried {
 // capturing A.
 template <typename A, typename F>
 absl::enable_if_t<!IsVoidCallable<ResultOf<F(A)>>::value,
-                  PromiseLike<Curried<F, A>>>
+                  PromiseLike<Curried<RemoveCVRef<F>, A>>>
 PromiseFactoryImpl(F&& f, A&& arg) {
-  return Curried<F, A>(std::forward<F>(f), std::forward<A>(arg));
+  return Curried<RemoveCVRef<F>, A>(std::forward<F>(f), std::forward<A>(arg));
 }
 
 // Promote a callable() -> T|Poll<T> to a PromiseFactory(A) -> Promise<T>
