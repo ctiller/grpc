@@ -189,3 +189,62 @@ grpc_cc_test(
     ],
 )
 
+grpc_cc_test(
+    name = "for_each_test",
+    srcs = ["for_each_test.cc"],
+    external_deps = ["gtest"],
+    language = "c++",
+    uses_polling = False,
+    deps = [
+        "//:for_each",
+        "//:join",
+        "//:map",
+        "//:observable",
+        "//:pipe",
+        "//:seq",
+        "//test/core/util:grpc_suppressions",
+    ],
+)
+
+grpc_cc_test(
+    name = "observable_test",
+    srcs = ["observable_test.cc"],
+    external_deps = ["gtest"],
+    language = "c++",
+    uses_polling = False,
+    deps = [
+        "//:observable",
+        "//:promise",
+        "//:seq",
+        "//test/core/util:grpc_suppressions",
+    ],
+)
+
+grpc_cc_test(
+    name = "pipe_test",
+    srcs = ["pipe_test.cc"],
+    external_deps = ["gtest"],
+    language = "c++",
+    uses_polling = False,
+    deps = [
+        "//:join",
+        "//:pipe",
+        "//:promise",
+        "//:seq",
+        "//test/core/util:grpc_suppressions",
+    ],
+)
+
+grpc_cc_test(
+    name = "latch_test",
+    srcs = ["latch_test.cc"],
+    external_deps = ["gtest"],
+    language = "c++",
+    uses_polling = False,
+    deps = [
+        "//:join",
+        "//:latch",
+        "//:seq",
+        "//test/core/util:grpc_suppressions",
+    ],
+)

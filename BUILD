@@ -1113,6 +1113,92 @@ grpc_cc_library(
 )
 
 grpc_cc_library(
+    name = "observable",
+    language = "c++",
+    public_hdrs = [
+        "src/core/lib/promise/observable.h",
+    ],
+    deps = [
+        "activity",
+        "gpr_platform",
+        "wait_set",
+    ],
+)
+
+grpc_cc_library(
+    name = "intra_activity_waiter",
+    language = "c++",
+    public_hdrs = [
+        "src/core/lib/promise/intra_activity_waiter.h",
+    ],
+    deps = [
+        "activity",
+        "gpr_platform",
+    ],
+)
+
+grpc_cc_library(
+    name = "pipe",
+    external_deps = [
+        "absl/status",
+    ],
+    language = "c++",
+    public_hdrs = [
+        "src/core/lib/promise/pipe.h",
+    ],
+    deps = [
+        "activity",
+        "gpr_platform",
+        "intra_activity_waiter",
+    ],
+)
+
+grpc_cc_library(
+    name = "latch",
+    external_deps = [
+        "absl/status",
+    ],
+    language = "c++",
+    public_hdrs = [
+        "src/core/lib/promise/latch.h",
+    ],
+    deps = [
+        "activity",
+        "gpr_platform",
+        "intra_activity_waiter",
+    ],
+)
+
+grpc_cc_library(
+    name = "visitor",
+    language = "c++",
+    public_hdrs = [
+        "src/core/lib/promise/visitor.h",
+    ],
+    deps = [
+        "gpr_platform",
+        "overload",
+        "poll",
+        "promise_factory",
+    ],
+)
+
+grpc_cc_library(
+    name = "for_each",
+    external_deps = [
+        "absl/status",
+        "absl/types:variant",
+    ],
+    language = "c++",
+    public_hdrs = ["src/core/lib/promise/for_each.h"],
+    deps = [
+        "gpr_platform",
+        "poll",
+        "promise_factory",
+    ],
+)
+
+grpc_cc_library(
     name = "ref_counted",
     language = "c++",
     public_hdrs = ["src/core/lib/gprpp/ref_counted.h"],
