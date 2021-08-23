@@ -86,8 +86,7 @@ class Curried {
  public:
   Curried(F&& f, Arg&& arg)
       : f_(std::forward<F>(f)), arg_(std::forward<Arg>(arg)) {}
-  Curried(const F& f, Arg&& arg)
-      : f_(f), arg_(std::forward<Arg>(arg)) {}
+  Curried(const F& f, Arg&& arg) : f_(f), arg_(std::forward<Arg>(arg)) {}
   using Result = decltype(std::declval<F>()(std::declval<Arg>()));
   Result operator()() { return f_(arg_); }
 
