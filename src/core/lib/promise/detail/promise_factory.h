@@ -62,10 +62,6 @@ struct IsVoidCallable<F, absl::void_t<decltype(std::declval<F>()())>> {
   static constexpr bool value = true;
 };
 
-// T -> T, const T& -> T
-template <typename T>
-using RemoveCVRef = absl::remove_cv_t<absl::remove_reference_t<T>>;
-
 // Given F(A,B,C,...), what's the return type?
 template <typename T, typename Ignored = void>
 struct ResultOfT;
