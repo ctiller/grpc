@@ -66,11 +66,13 @@ promise_detail::Map<Promise, Fn> Map(Promise promise, Fn fn) {
 template <size_t kElem>
 struct JustElem {
   template <typename... A>
-  auto operator()(std::tuple<A...>&& t) const -> decltype(std::get<kElem>(std::forward<std::tuple<A...>>(t))) {
+  auto operator()(std::tuple<A...>&& t) const
+      -> decltype(std::get<kElem>(std::forward<std::tuple<A...>>(t))) {
     return std::get<kElem>(std::forward<std::tuple<A...>>(t));
   }
   template <typename... A>
-  auto operator()(const std::tuple<A...>& t) const -> decltype(std::get<kElem>(t)) {
+  auto operator()(const std::tuple<A...>& t) const
+      -> decltype(std::get<kElem>(t)) {
     return std::get<kElem>(t);
   }
 };
