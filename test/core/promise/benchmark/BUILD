@@ -18,7 +18,6 @@ load("//bazel:grpc_build_system.bzl", "grpc_cc_library", "grpc_cc_test", "grpc_p
 
 grpc_cc_test(
     name = "competition",
-    uses_polling = False,
     srcs = [
         "competition.cc",
         "filter_stack.cc",
@@ -32,6 +31,7 @@ grpc_cc_test(
         "no_mac",
         "no_windows",
     ],
+    uses_polling = False,
     deps = [
         "//:activity",
         "//:for_each",
