@@ -37,7 +37,8 @@ class Map {
       : promise_(std::move(promise)), fn_(std::move(fn)) {}
 
   using PromiseResult = typename PromiseLike<Promise>::Result;
-  using Result = RemoveCVRef<decltype(std::declval<Fn>()(std::declval<PromiseResult>()))>;
+  using Result =
+      RemoveCVRef<decltype(std::declval<Fn>()(std::declval<PromiseResult>()))>;
 
   Poll<Result> operator()() {
     Poll<PromiseResult> r = promise_();
