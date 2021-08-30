@@ -65,7 +65,7 @@ class TcpServerFdHandler {
 typedef struct grpc_tcp_server_vtable {
   grpc_error_handle (*create)(
       grpc_closure* shutdown_complete, const grpc_channel_args* args,
-      grpc_slice_allocator_factory* slice_allocator_factory,
+      grpc_core::MemoryUserPtr memory_user,
       grpc_tcp_server** server);
   void (*start)(grpc_tcp_server* server,
                 const std::vector<grpc_pollset*>* pollsets,
@@ -89,7 +89,7 @@ typedef struct grpc_tcp_server_vtable {
    Takes ownership of the slice_allocator_factory. */
 grpc_error_handle grpc_tcp_server_create(
     grpc_closure* shutdown_complete, const grpc_channel_args* args,
-    grpc_slice_allocator_factory* slice_allocator_factory,
+    grpc_core::MemoryUserPtr memory_user,
     grpc_tcp_server** server);
 
 /* Start listening to bound ports */

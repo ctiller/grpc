@@ -77,12 +77,12 @@ struct grpc_tcp_server {
   bool shutdown;
   bool so_reuseport;
 
-  grpc_slice_allocator_factory* slice_allocator_factory;
+  grpc_core::MemoryUserPtr memory_user;
 };
 
 static grpc_error_handle tcp_server_create(
     grpc_closure* shutdown_complete, const grpc_channel_args* args,
-    grpc_slice_allocator_factory* slice_allocator_factory,
+    grpc_core::MemoryUserPtr memory_user,
     grpc_tcp_server** server) {
   grpc_tcp_server* s =
       static_cast<grpc_tcp_server*>(gpr_malloc(sizeof(grpc_tcp_server)));
@@ -98,7 +98,7 @@ static grpc_error_handle tcp_server_create(
   s->shutdown_starting.tail = nullptr;
   s->shutdown_complete = shutdown_complete;
   s->shutdown = false;
-  s->slice_allocator_factory = slice_allocator_factory;
+  s->memory_user = std::move(s->memory_user);
   *server = s;
   return GRPC_ERROR_NONE;
 }
@@ -128,7 +128,7 @@ static void finish_shutdown(grpc_tcp_server* s) {
     sp->next = nullptr;
     gpr_free(sp);
   }
-  grpc_slice_allocator_factory_destroy(s->slice_allocator_factory);
+  auto memory_user = std::move(s->memory_user);
   gpr_free(s);
 }
 

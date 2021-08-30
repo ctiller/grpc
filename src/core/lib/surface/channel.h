@@ -41,7 +41,7 @@ grpc_channel* grpc_channel_create(const char* target,
                                   const grpc_channel_args* args,
                                   grpc_channel_stack_type channel_stack_type,
                                   grpc_transport* optional_transport,
-                                  grpc_resource_user* resource_user,
+                                  grpc_core::MemoryUserPtr memory_user,
                                   size_t preallocated_bytes,
                                   grpc_error_handle* error);
 

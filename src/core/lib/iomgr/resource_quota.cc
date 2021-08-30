@@ -40,6 +40,7 @@
 
 grpc_core::TraceFlag grpc_resource_quota_trace(false, "resource_quota");
 
+#if 0
 #define MEMORY_USAGE_ESTIMATION_MAX 65536
 
 /* Internal linked list pointers for a resource user */
@@ -1102,3 +1103,5 @@ void grpc_slice_allocator_factory_destroy(
   grpc_resource_quota_unref_internal(slice_allocator_factory->resource_quota);
   delete slice_allocator_factory;
 }
+#endif
+

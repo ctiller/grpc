@@ -23,12 +23,12 @@
 grpc_tcp_client_vtable* grpc_tcp_client_impl;
 
 void grpc_tcp_client_connect(grpc_closure* on_connect, grpc_endpoint** endpoint,
-                             grpc_slice_allocator* slice_allocator,
+                             grpc_core::MemoryUserPtr memory_user,
                              grpc_pollset_set* interested_parties,
                              const grpc_channel_args* channel_args,
                              const grpc_resolved_address* addr,
                              grpc_millis deadline) {
-  grpc_tcp_client_impl->connect(on_connect, endpoint, slice_allocator,
+  grpc_tcp_client_impl->connect(on_connect, endpoint, std::move(memory_user),
                                 interested_parties, channel_args, addr,
                                 deadline);
 }

@@ -43,7 +43,7 @@ struct grpc_custom_tcp_connect {
   grpc_endpoint** endpoint;
   int refs;
   std::string addr_name;
-  grpc_slice_allocator* slice_allocator;
+  grpc_core::MemoryUserPtr memory_user;
 };
 
 static void custom_tcp_connect_cleanup(grpc_custom_tcp_connect* connect) {

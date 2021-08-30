@@ -59,18 +59,17 @@ grpc_endpoint_pair grpc_iomgr_create_endpoint_pair(const char* name,
   create_sockets(sv);
   grpc_core::ExecCtx exec_ctx;
   std::string final_name = absl::StrCat(name, ":client");
-  grpc_resource_quota* resource_quota =
-      grpc_resource_quota_from_channel_args(args, true);
+  grpc_core::ResourceQuotaPtr resource_quota =
+      grpc_core::ResourceQuota::FromChannelArgs(args);
   p.client = grpc_tcp_create(
       grpc_fd_create(sv[1], final_name.c_str(), false), args,
       "socketpair-server",
-      grpc_slice_allocator_create(resource_quota, "server_endpoint", args));
+      resource_quota->CreateMemoryUser("server_endpoint"));
   final_name = absl::StrCat(name, ":server");
   p.server = grpc_tcp_create(
       grpc_fd_create(sv[0], final_name.c_str(), false), args,
       "socketpair-client",
-      grpc_slice_allocator_create(resource_quota, "client_endpoint", args));
-  grpc_resource_quota_unref_internal(resource_quota);
+      resource_quota->CreateMemoryUser("client_endpoint"));
   return p;
 }
 
