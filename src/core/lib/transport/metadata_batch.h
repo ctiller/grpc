@@ -137,7 +137,7 @@ inline bool grpc_metadata_batch_is_empty(grpc_metadata_batch* batch) {
 }
 
 /* Returns the transport size of the batch. */
-size_t grpc_metadata_batch_size(grpc_metadata_batch* batch) {
+inline size_t grpc_metadata_batch_size(grpc_metadata_batch* batch) {
   return (*batch)->TransportSize();
 }
 
@@ -212,9 +212,9 @@ inline GRPC_MUST_USE_RESULT grpc_error_handle grpc_metadata_batch_link_tail(
     lifetime of batch. This usually means it should be around
     for the lifetime of the call.
     Takes ownership of \a elem_to_add */
-grpc_error_handle grpc_metadata_batch_add_head(grpc_metadata_batch* batch,
-                                               grpc_linked_mdelem* storage,
-                                               grpc_mdelem elem_to_add) {
+inline grpc_error_handle grpc_metadata_batch_add_head(
+    grpc_metadata_batch* batch, grpc_linked_mdelem* storage,
+    grpc_mdelem elem_to_add) {
   return (*batch)->AddHead(storage, elem_to_add);
 }
 
@@ -299,9 +299,9 @@ inline void grpc_metadata_batch_copy(grpc_metadata_batch* src,
   (*dst)->CopyFrom(&**src, storage);
 }
 
-void grpc_metadata_batch_move(grpc_metadata_batch* src,
-                              grpc_metadata_batch* dst) {
-  **dst = std::move(**src);
+inline void grpc_metadata_batch_move(grpc_metadata_batch* src,
+                                     grpc_metadata_batch* dst) {
+  **dst = **src;
 }
 
 #endif /* GRPC_CORE_LIB_TRANSPORT_METADATA_BATCH_H */
