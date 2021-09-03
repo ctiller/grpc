@@ -1394,7 +1394,7 @@ void Server::CallData::RecvInitialMetadataReady(void* arg,
   } else {
     GRPC_ERROR_REF(error);
   }
-  op_deadline = calld->recv_initial_metadata_->deadline;
+  op_deadline = calld->recv_initial_metadata_->deadline();
   if (op_deadline != GRPC_MILLIS_INF_FUTURE) {
     calld->deadline_ = op_deadline;
   }

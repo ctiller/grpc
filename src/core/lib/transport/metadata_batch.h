@@ -49,42 +49,114 @@ typedef struct grpc_mdelem_list {
   grpc_linked_mdelem* tail;
 } grpc_mdelem_list;
 
-typedef struct grpc_metadata_batch {
-  /** Metadata elements in this batch */
-  grpc_mdelem_list list;
-  grpc_metadata_batch_callouts idx;
-  /** Used to calculate grpc-timeout at the point of sending,
-      or GRPC_MILLIS_INF_FUTURE if this batch does not need to send a
-      grpc-timeout */
-  grpc_millis deadline;
+namespace grpc_core {
+
+class MetadataMap {
+ public:
+  MetadataMap();
+  ~MetadataMap();
 
   template <typename Encoder>
   void Encode(Encoder* encoder) const {
-    for (auto* l = list.head; l; l = l->next) {
+    for (auto* l = list_.head; l; l = l->next) {
       encoder->Encode(l->md);
     }
-    if (deadline != GRPC_MILLIS_INF_FUTURE) encoder->EncodeDeadline(deadline);
+    if (deadline_ != GRPC_MILLIS_INF_FUTURE) encoder->EncodeDeadline(deadline_);
   }
-} grpc_metadata_batch;
 
-void grpc_metadata_batch_init(grpc_metadata_batch* batch);
-void grpc_metadata_batch_destroy(grpc_metadata_batch* batch);
-void grpc_metadata_batch_clear(grpc_metadata_batch* batch);
-bool grpc_metadata_batch_is_empty(grpc_metadata_batch* batch);
+  void Clear();
+  bool empty();
+
+  size_t TransportSize() const;
+
+  void Remove(grpc_linked_mdelem* storage);
+  void Remove(grpc_metadata_batch_callouts_index idx);
+
+  grpc_error_handle Substitute(grpc_linked_mdelem* storage,
+                               grpc_mdelem new_mdelem);
+
+  absl::optional<absl::string_view> GetValue(absl::string_view target_key,
+                                             std::string* concatenated_value);
+
+  grpc_error_handle LinkHead(grpc_linked_mdelem* storage) GRPC_MUST_USE_RESULT;
+  grpc_error_handle LinkHead(grpc_linked_mdelem* storage,
+                             grpc_metadata_batch_callouts_index idx)
+      GRPC_MUST_USE_RESULT;
+  grpc_error_handle LinkTail(grpc_linked_mdelem* storage) GRPC_MUST_USE_RESULT;
+  grpc_error_handle LinkTail(grpc_linked_mdelem* storage,
+                             grpc_metadata_batch_callouts_index idx)
+      GRPC_MUST_USE_RESULT;
+
+  grpc_error_handle AddHead(grpc_linked_mdelem* storage) GRPC_MUST_USE_RESULT;
+  grpc_error_handle AddHead(grpc_linked_mdelem* storage,
+                            grpc_mdelem elem_to_add) GRPC_MUST_USE_RESULT;
+  grpc_error_handle AddTail(grpc_linked_mdelem* storage) GRPC_MUST_USE_RESULT;
+  grpc_error_handle AddTail(grpc_linked_mdelem* storage,
+                            grpc_mdelem elem_to_add) GRPC_MUST_USE_RESULT;
+
+  void CopyFrom(MetadataMap* src, grpc_linked_mdelem* storage);
+
+#ifndef NDEBUG
+  void AssertOk();
+#else
+  void AssertOk() {}
+#endif
+
+  grpc_millis deadline() const { return deadline_; }
+  void SetDeadline(grpc_millis deadline) { deadline_ = deadline; }
+  void ClearDeadline() { SetDeadline(GRPC_MILLIS_INF_FUTURE); }
+
+  grpc_metadata_batch_callouts* legacy_index() { return &idx_; }
+
+ private:
+  /** Metadata elements in this batch */
+  grpc_mdelem_list list_;
+  grpc_metadata_batch_callouts idx_;
+  /** Used to calculate grpc-timeout at the point of sending,
+      or GRPC_MILLIS_INF_FUTURE if this batch does not need to send a
+      grpc-timeout */
+  grpc_millis deadline_;
+};
+
+}  // namespace grpc_core
+
+using grpc_metadata_batch =
+    grpc_core::ManualConstructor<grpc_core::MetadataMap>;
+
+inline void grpc_metadata_batch_init(grpc_metadata_batch* batch) {
+  batch->Init();
+}
+inline void grpc_metadata_batch_destroy(grpc_metadata_batch* batch) {
+  batch->Destroy();
+}
+inline void grpc_metadata_batch_clear(grpc_metadata_batch* batch) {
+  (*batch)->Clear();
+}
+inline bool grpc_metadata_batch_is_empty(grpc_metadata_batch* batch) {
+  return (*batch)->empty();
+}
 
 /* Returns the transport size of the batch. */
-size_t grpc_metadata_batch_size(grpc_metadata_batch* batch);
+size_t grpc_metadata_batch_size(grpc_metadata_batch* batch) {
+  return (*batch)->TransportSize();
+}
 
 /** Remove \a storage from the batch, unreffing the mdelem contained */
-void grpc_metadata_batch_remove(grpc_metadata_batch* batch,
-                                grpc_linked_mdelem* storage);
-void grpc_metadata_batch_remove(grpc_metadata_batch* batch,
-                                grpc_metadata_batch_callouts_index idx);
+inline void grpc_metadata_batch_remove(grpc_metadata_batch* batch,
+                                       grpc_linked_mdelem* storage) {
+  (*batch)->Remove(storage);
+}
+inline void grpc_metadata_batch_remove(grpc_metadata_batch* batch,
+                                       grpc_metadata_batch_callouts_index idx) {
+  (*batch)->Remove(idx);
+}
 
 /** Substitute a new mdelem for an old value */
-grpc_error_handle grpc_metadata_batch_substitute(grpc_metadata_batch* batch,
-                                                 grpc_linked_mdelem* storage,
-                                                 grpc_mdelem new_mdelem);
+inline grpc_error_handle grpc_metadata_batch_substitute(
+    grpc_metadata_batch* batch, grpc_linked_mdelem* storage,
+    grpc_mdelem new_mdelem) {
+  return (*batch)->Substitute(storage, new_mdelem);
+}
 
 void grpc_metadata_batch_set_value(grpc_linked_mdelem* storage,
                                    const grpc_slice& value);
@@ -96,33 +168,43 @@ void grpc_metadata_batch_set_value(grpc_linked_mdelem* storage,
     If the key is present more than once in the batch, constructs a
     comma-concatenated string of all values in concatenated_value and returns a
     string_view of that string. */
-absl::optional<absl::string_view> grpc_metadata_batch_get_value(
+inline absl::optional<absl::string_view> grpc_metadata_batch_get_value(
     grpc_metadata_batch* batch, absl::string_view target_key,
-    std::string* concatenated_value);
+    std::string* concatenated_value) {
+  return (*batch)->GetValue(target_key, concatenated_value);
+}
 
 /** Add \a storage to the beginning of \a batch. storage->md is
     assumed to be valid.
     \a storage is owned by the caller and must survive for the
     lifetime of batch. This usually means it should be around
     for the lifetime of the call. */
-grpc_error_handle grpc_metadata_batch_link_head(grpc_metadata_batch* batch,
-                                                grpc_linked_mdelem* storage)
-    GRPC_MUST_USE_RESULT;
-grpc_error_handle grpc_metadata_batch_link_head(
+inline GRPC_MUST_USE_RESULT grpc_error_handle grpc_metadata_batch_link_head(
+    grpc_metadata_batch* batch, grpc_linked_mdelem* storage) {
+  return (*batch)->LinkHead(storage);
+}
+
+inline GRPC_MUST_USE_RESULT grpc_error_handle grpc_metadata_batch_link_head(
     grpc_metadata_batch* batch, grpc_linked_mdelem* storage,
-    grpc_metadata_batch_callouts_index idx) GRPC_MUST_USE_RESULT;
+    grpc_metadata_batch_callouts_index idx) {
+  return (*batch)->LinkHead(storage, idx);
+}
 
 /** Add \a storage to the end of \a batch. storage->md is
     assumed to be valid.
     \a storage is owned by the caller and must survive for the
     lifetime of batch. This usually means it should be around
     for the lifetime of the call. */
-grpc_error_handle grpc_metadata_batch_link_tail(grpc_metadata_batch* batch,
-                                                grpc_linked_mdelem* storage)
-    GRPC_MUST_USE_RESULT;
-grpc_error_handle grpc_metadata_batch_link_tail(
+inline GRPC_MUST_USE_RESULT grpc_error_handle grpc_metadata_batch_link_tail(
+    grpc_metadata_batch* batch, grpc_linked_mdelem* storage) {
+  return (*batch)->LinkTail(storage);
+}
+
+inline GRPC_MUST_USE_RESULT grpc_error_handle grpc_metadata_batch_link_tail(
     grpc_metadata_batch* batch, grpc_linked_mdelem* storage,
-    grpc_metadata_batch_callouts_index idx) GRPC_MUST_USE_RESULT;
+    grpc_metadata_batch_callouts_index idx) {
+  return (*batch)->LinkTail(storage, idx);
+}
 
 /** Add \a elem_to_add as the first element in \a batch, using
     \a storage as backing storage for the linked list element.
@@ -130,9 +212,11 @@ grpc_error_handle grpc_metadata_batch_link_tail(
     lifetime of batch. This usually means it should be around
     for the lifetime of the call.
     Takes ownership of \a elem_to_add */
-grpc_error_handle grpc_metadata_batch_add_head(
-    grpc_metadata_batch* batch, grpc_linked_mdelem* storage,
-    grpc_mdelem elem_to_add) GRPC_MUST_USE_RESULT;
+grpc_error_handle grpc_metadata_batch_add_head(grpc_metadata_batch* batch,
+                                               grpc_linked_mdelem* storage,
+                                               grpc_mdelem elem_to_add) {
+  return (*batch)->AddHead(storage, elem_to_add);
+}
 
 // TODO(arjunroy, roth): Remove redundant methods.
 // add/link_head/tail are almost identical.
@@ -156,9 +240,11 @@ inline grpc_error_handle GRPC_MUST_USE_RESULT grpc_metadata_batch_add_head(
     lifetime of batch. This usually means it should be around
     for the lifetime of the call.
     Takes ownership of \a elem_to_add */
-grpc_error_handle grpc_metadata_batch_add_tail(
+inline GRPC_MUST_USE_RESULT grpc_error_handle grpc_metadata_batch_add_tail(
     grpc_metadata_batch* batch, grpc_linked_mdelem* storage,
-    grpc_mdelem elem_to_add) GRPC_MUST_USE_RESULT;
+    grpc_mdelem elem_to_add) {
+  return (*batch)->AddTail(storage, elem_to_add);
+}
 
 inline grpc_error_handle GRPC_MUST_USE_RESULT grpc_metadata_batch_add_tail(
     grpc_metadata_batch* batch, grpc_linked_mdelem* storage,
@@ -194,13 +280,9 @@ grpc_error_handle grpc_metadata_batch_filter(
     grpc_metadata_batch* batch, grpc_metadata_batch_filter_func func,
     void* user_data, const char* composite_error_string) GRPC_MUST_USE_RESULT;
 
-#ifndef NDEBUG
-void grpc_metadata_batch_assert_ok(grpc_metadata_batch* batch);
-#else
-#define grpc_metadata_batch_assert_ok(batch) \
-  do {                                       \
-  } while (0)
-#endif
+inline void grpc_metadata_batch_assert_ok(grpc_metadata_batch* batch) {
+  (*batch)->AssertOk();
+}
 
 /// Copies \a src to \a dst.  \a storage must point to an array of
 /// \a grpc_linked_mdelem structs of at least the same size as \a src.
@@ -211,11 +293,15 @@ void grpc_metadata_batch_assert_ok(grpc_metadata_batch* batch);
 /// mdelem that will hold its own refs to the key and value slices.
 ///
 /// Currently used only in the retry code.
-void grpc_metadata_batch_copy(grpc_metadata_batch* src,
-                              grpc_metadata_batch* dst,
-                              grpc_linked_mdelem* storage);
+inline void grpc_metadata_batch_copy(grpc_metadata_batch* src,
+                                     grpc_metadata_batch* dst,
+                                     grpc_linked_mdelem* storage) {
+  (*dst)->CopyFrom(&**src, storage);
+}
 
 void grpc_metadata_batch_move(grpc_metadata_batch* src,
-                              grpc_metadata_batch* dst);
+                              grpc_metadata_batch* dst) {
+  **dst = std::move(**src);
+}
 
 #endif /* GRPC_CORE_LIB_TRANSPORT_METADATA_BATCH_H */

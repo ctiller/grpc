@@ -77,19 +77,17 @@ static void assert_valid_callouts(grpc_metadata_batch* batch) {
 }
 
 #ifndef NDEBUG
-void grpc_metadata_batch_assert_ok(grpc_metadata_batch* batch) {
-  assert_valid_list(&batch->list);
-}
+void MetadataMap::AssertOk() { assert_valid_list(&batch->list); }
 #endif /* NDEBUG */
 
-void grpc_metadata_batch_init(grpc_metadata_batch* batch) {
-  memset(batch, 0, sizeof(*batch));
-  batch->deadline = GRPC_MILLIS_INF_FUTURE;
+MetadataMap::MetadataMap() {
+  memset(&list_, 0, sizeof(list_));
+  memset(&idx_, 0, sizeof(idx_));
+  deadline_ = GRPC_MILLIS_INF_FUTURE;
 }
 
-void grpc_metadata_batch_destroy(grpc_metadata_batch* batch) {
-  grpc_linked_mdelem* l;
-  for (l = batch->list.head; l; l = l->next) {
+MetadataMap::~MetadataMap() {
+  for (auto* l = batch->list.head; l; l = l->next) {
     GRPC_MDELEM_UNREF(l->md);
   }
 }
@@ -146,9 +144,8 @@ static void maybe_unlink_callout(grpc_metadata_batch* batch,
   batch->idx.array[idx] = nullptr;
 }
 
-grpc_error_handle grpc_metadata_batch_add_head(grpc_metadata_batch* batch,
-                                               grpc_linked_mdelem* storage,
-                                               grpc_mdelem elem_to_add) {
+grpc_error_handle MetadataMap::AddHead(grpc_linked_mdelem* storage,
+                                       grpc_mdelem elem_to_add) {
   GPR_DEBUG_ASSERT(!GRPC_MDISNULL(elem_to_add));
   storage->md = elem_to_add;
   return grpc_metadata_batch_link_head(batch, storage);
@@ -170,8 +167,7 @@ static void link_head(grpc_mdelem_list* list, grpc_linked_mdelem* storage) {
   assert_valid_list(list);
 }
 
-grpc_error_handle grpc_metadata_batch_link_head(grpc_metadata_batch* batch,
-                                                grpc_linked_mdelem* storage) {
+grpc_error_handle MetadataMap::LinkHead(grpc_linked_mdelem* storage) {
   assert_valid_callouts(batch);
   grpc_error_handle err = maybe_link_callout(batch, storage);
   if (err != GRPC_ERROR_NONE) {
@@ -186,9 +182,8 @@ grpc_error_handle grpc_metadata_batch_link_head(grpc_metadata_batch* batch,
 // TODO(arjunroy): Need to revisit this and see what guarantees exist between
 // C-core and the internal-metadata subsystem. E.g. can we ensure a particular
 // metadata is never added twice, even in the presence of user supplied data?
-grpc_error_handle grpc_metadata_batch_link_head(
-    grpc_metadata_batch* batch, grpc_linked_mdelem* storage,
-    grpc_metadata_batch_callouts_index idx) {
+grpc_error_handle MetadataMap::LinkHead(
+    grpc_linked_mdelem* storage, grpc_metadata_batch_callouts_index idx) {
   GPR_DEBUG_ASSERT(GRPC_BATCH_INDEX_OF(GRPC_MDKEY(storage->md)) == idx);
   assert_valid_callouts(batch);
   grpc_error_handle err = link_callout(batch, storage, idx);
@@ -201,9 +196,8 @@ grpc_error_handle grpc_metadata_batch_link_head(
   return GRPC_ERROR_NONE;
 }
 
-grpc_error_handle grpc_metadata_batch_add_tail(grpc_metadata_batch* batch,
-                                               grpc_linked_mdelem* storage,
-                                               grpc_mdelem elem_to_add) {
+grpc_error_handle MetadataMap::AddTail(grpc_linked_mdelem* storage,
+                                       grpc_mdelem elem_to_add) {
   GPR_DEBUG_ASSERT(!GRPC_MDISNULL(elem_to_add));
   storage->md = elem_to_add;
   return grpc_metadata_batch_link_tail(batch, storage);
@@ -225,8 +219,7 @@ static void link_tail(grpc_mdelem_list* list, grpc_linked_mdelem* storage) {
   assert_valid_list(list);
 }
 
-grpc_error_handle grpc_metadata_batch_link_tail(grpc_metadata_batch* batch,
-                                                grpc_linked_mdelem* storage) {
+grpc_error_handle MetadataMap::LinkTail(grpc_linked_mdelem* storage) {
   assert_valid_callouts(batch);
   grpc_error_handle err = maybe_link_callout(batch, storage);
   if (err != GRPC_ERROR_NONE) {
@@ -238,9 +231,8 @@ grpc_error_handle grpc_metadata_batch_link_tail(grpc_metadata_batch* batch,
   return GRPC_ERROR_NONE;
 }
 
-grpc_error_handle grpc_metadata_batch_link_tail(
-    grpc_metadata_batch* batch, grpc_linked_mdelem* storage,
-    grpc_metadata_batch_callouts_index idx) {
+grpc_error_handle MetadataMap::LinkTail(
+    grpc_linked_mdelem* storage, grpc_metadata_batch_callouts_index idx) {
   GPR_DEBUG_ASSERT(GRPC_BATCH_INDEX_OF(GRPC_MDKEY(storage->md)) == idx);
   assert_valid_callouts(batch);
   grpc_error_handle err = link_callout(batch, storage, idx);
@@ -270,8 +262,7 @@ static void unlink_storage(grpc_mdelem_list* list,
   assert_valid_list(list);
 }
 
-void grpc_metadata_batch_remove(grpc_metadata_batch* batch,
-                                grpc_linked_mdelem* storage) {
+void MetadataMap::Remove(grpc_linked_mdelem* storage) {
   assert_valid_callouts(batch);
   maybe_unlink_callout(batch, storage);
   unlink_storage(&batch->list, storage);
@@ -279,8 +270,7 @@ void grpc_metadata_batch_remove(grpc_metadata_batch* batch,
   assert_valid_callouts(batch);
 }
 
-void grpc_metadata_batch_remove(grpc_metadata_batch* batch,
-                                grpc_metadata_batch_callouts_index idx) {
+void MetadataMap::Remove(grpc_metadata_batch_callouts_index idx) {
   assert_valid_callouts(batch);
   grpc_linked_mdelem* storage = batch->idx.array[idx];
   GPR_DEBUG_ASSERT(storage != nullptr);
@@ -300,9 +290,8 @@ void grpc_metadata_batch_set_value(grpc_linked_mdelem* storage,
   GRPC_MDELEM_UNREF(old_mdelem);
 }
 
-absl::optional<absl::string_view> grpc_metadata_batch_get_value(
-    grpc_metadata_batch* batch, absl::string_view target_key,
-    std::string* concatenated_value) {
+absl::optional<absl::string_view> MetadataMap::GetValue(
+    absl::string_view target_key, std::string* concatenated_value) {
   // Find all values for the specified key.
   GPR_DEBUG_ASSERT(batch != nullptr);
   absl::InlinedVector<absl::string_view, 1> values;
@@ -324,9 +313,8 @@ absl::optional<absl::string_view> grpc_metadata_batch_get_value(
   return *concatenated_value;
 }
 
-grpc_error_handle grpc_metadata_batch_substitute(grpc_metadata_batch* batch,
-                                                 grpc_linked_mdelem* storage,
-                                                 grpc_mdelem new_mdelem) {
+grpc_error_handle MetadataMap::Substitute(grpc_linked_mdelem* storage,
+                                          grpc_mdelem new_mdelem) {
   assert_valid_callouts(batch);
   grpc_error_handle error = GRPC_ERROR_NONE;
   grpc_mdelem old_mdelem = storage->md;
@@ -346,19 +334,18 @@ grpc_error_handle grpc_metadata_batch_substitute(grpc_metadata_batch* batch,
   return error;
 }
 
-void grpc_metadata_batch_clear(grpc_metadata_batch* batch) {
-  grpc_metadata_batch_destroy(batch);
-  grpc_metadata_batch_init(batch);
+void MetadataMap::Clear() {
+  this->~MetadataMap();
+  new (this) MetadataMap();
 }
 
-bool grpc_metadata_batch_is_empty(grpc_metadata_batch* batch) {
-  return batch->list.head == nullptr &&
-         batch->deadline == GRPC_MILLIS_INF_FUTURE;
+bool MetadataMap::empty() {
+  return list_.head == nullptr && deadline_ == GRPC_MILLIS_INF_FUTURE;
 }
 
-size_t grpc_metadata_batch_size(grpc_metadata_batch* batch) {
+size_t MetadataMap::TransportSize() {
   size_t size = 0;
-  for (grpc_linked_mdelem* elem = batch->list.head; elem != nullptr;
+  for (grpc_linked_mdelem* elem = list_.head; elem != nullptr;
        elem = elem->next) {
     size += GRPC_MDELEM_LENGTH(elem->md);
   }
