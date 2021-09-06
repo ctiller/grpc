@@ -49,6 +49,17 @@ typedef struct grpc_mdelem_list {
   grpc_linked_mdelem* tail;
 } grpc_mdelem_list;
 
+struct grpc_filtered_mdelem {
+  grpc_error_handle error;
+  grpc_mdelem md;
+};
+#define GRPC_FILTERED_ERROR(error) \
+  { (error), GRPC_MDNULL }
+#define GRPC_FILTERED_MDELEM(md) \
+  { GRPC_ERROR_NONE, (md) }
+#define GRPC_FILTERED_REMOVE() \
+  { GRPC_ERROR_NONE, GRPC_MDNULL }
+
 namespace grpc_core {
 
 class MetadataMap {
@@ -64,13 +75,55 @@ class MetadataMap {
     if (deadline_ != GRPC_MILLIS_INF_FUTURE) encoder->EncodeDeadline(deadline_);
   }
 
+  template <typename F>
+  void ForEach(F f) const {
+    for (auto* l = list_.head; l; l = l->next) {
+      f(l->md);
+    }
+  }
+
+  template <typename F>
+  grpc_error_handle Filter(F f, const char* composite_error_string) {
+    grpc_linked_mdelem* l = list_.head;
+    grpc_error_handle error = GRPC_ERROR_NONE;
+    auto add_error = [&](grpc_error_handle new_error) {
+      if (new_error != GRPC_ERROR_NONE) return;
+      if (error == GRPC_ERROR_NONE) {
+        error = GRPC_ERROR_CREATE_FROM_COPIED_STRING(composite_error_string);
+      }
+      error = grpc_error_add_child(error, new_error);
+    };
+    while (l) {
+      grpc_linked_mdelem* next = l->next;
+      grpc_filtered_mdelem new_mdelem = f(l->md);
+      add_error(new_mdelem.error);
+      if (GRPC_MDISNULL(new_mdelem.md)) {
+        Remove(l);
+      } else if (new_mdelem.md.payload != l->md.payload) {
+        Substitute(l, new_mdelem.md);
+      }
+      l = next;
+    }
+    return error;
+  }
+
+  // Set key to value if it exists and return true, otherwise return false.
+  bool ReplaceIfExists(grpc_slice key, grpc_slice value);
+
   void Clear();
-  bool empty();
+  bool empty() const {
+    return deadline_ == GRPC_MILLIS_INF_FUTURE && list_.count == 0;
+  }
+
+  size_t non_deadline_count() const { return list_.count; }
+  size_t default_count() const { return list_.default_count; }
 
   size_t TransportSize() const;
 
   void Remove(grpc_linked_mdelem* storage);
   void Remove(grpc_metadata_batch_callouts_index idx);
+
+  absl::optional<grpc_slice> Remove(grpc_slice key);
 
   grpc_error_handle Substitute(grpc_linked_mdelem* storage,
                                grpc_mdelem new_mdelem);
@@ -106,9 +159,17 @@ class MetadataMap {
   void SetDeadline(grpc_millis deadline) { deadline_ = deadline; }
   void ClearDeadline() { SetDeadline(GRPC_MILLIS_INF_FUTURE); }
 
-  grpc_metadata_batch_callouts* legacy_index() { return &idx_; }
+  const grpc_metadata_batch_callouts* legacy_index() const { return &idx_; }
 
  private:
+  void AssertValidCallouts();
+  grpc_error_handle LinkCallout(grpc_linked_mdelem* storage,
+                                grpc_metadata_batch_callouts_index idx)
+      GRPC_MUST_USE_RESULT;
+  grpc_error_handle MaybeLinkCallout(grpc_linked_mdelem* storage)
+      GRPC_MUST_USE_RESULT;
+  void MaybeUnlinkCallout(grpc_linked_mdelem* storage);
+
   /** Metadata elements in this batch */
   grpc_mdelem_list list_;
   grpc_metadata_batch_callouts idx_;
@@ -263,22 +324,15 @@ inline grpc_error_handle GRPC_MUST_USE_RESULT grpc_metadata_batch_add_tail(
 grpc_error_handle grpc_attach_md_to_error(grpc_error_handle src,
                                           grpc_mdelem md);
 
-struct grpc_filtered_mdelem {
-  grpc_error_handle error;
-  grpc_mdelem md;
-};
-#define GRPC_FILTERED_ERROR(error) \
-  { (error), GRPC_MDNULL }
-#define GRPC_FILTERED_MDELEM(md) \
-  { GRPC_ERROR_NONE, (md) }
-#define GRPC_FILTERED_REMOVE() \
-  { GRPC_ERROR_NONE, GRPC_MDNULL }
-
 typedef grpc_filtered_mdelem (*grpc_metadata_batch_filter_func)(
     void* user_data, grpc_mdelem elem);
-grpc_error_handle grpc_metadata_batch_filter(
+inline GRPC_MUST_USE_RESULT grpc_error_handle grpc_metadata_batch_filter(
     grpc_metadata_batch* batch, grpc_metadata_batch_filter_func func,
-    void* user_data, const char* composite_error_string) GRPC_MUST_USE_RESULT;
+    void* user_data, const char* composite_error_string) {
+  return (*batch)->Filter(
+      [=](grpc_mdelem elem) { return func(user_data, elem); },
+      composite_error_string);
+}
 
 inline void grpc_metadata_batch_assert_ok(grpc_metadata_batch* batch) {
   (*batch)->AssertOk();
@@ -293,15 +347,13 @@ inline void grpc_metadata_batch_assert_ok(grpc_metadata_batch* batch) {
 /// mdelem that will hold its own refs to the key and value slices.
 ///
 /// Currently used only in the retry code.
-inline void grpc_metadata_batch_copy(grpc_metadata_batch* src,
-                                     grpc_metadata_batch* dst,
-                                     grpc_linked_mdelem* storage) {
-  (*dst)->CopyFrom(&**src, storage);
-}
+void grpc_metadata_batch_copy(grpc_metadata_batch* src,
+                              grpc_metadata_batch* dst,
+                              grpc_linked_mdelem* storage);
 
 void grpc_metadata_batch_move(grpc_metadata_batch* src,
                               grpc_metadata_batch* dst) {
-  **dst = std::move(**src);
+  dst->Init(std::move(**src));
 }
 
 #endif /* GRPC_CORE_LIB_TRANSPORT_METADATA_BATCH_H */

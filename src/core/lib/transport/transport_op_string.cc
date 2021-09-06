@@ -57,7 +57,7 @@ static void put_metadata_list(const grpc_metadata_batch& md,
   md->ForEach([&](grpc_mdelem elem) {
     if (!first) out->push_back(", ");
     first = false;
-    put_metadata(m->md, out);
+    put_metadata(elem, out);
   });
   if (md->deadline() != GRPC_MILLIS_INF_FUTURE) {
     out->push_back(absl::StrFormat(" deadline=%" PRId64, md->deadline()));
