@@ -85,7 +85,17 @@ MetadataMap::MetadataMap() {
   deadline_ = GRPC_MILLIS_INF_FUTURE;
 }
 
+MetadataMap::MetadataMap(MetadataMap&& other)  {
+  list_ = other.list_;
+  idx_ = other.idx_;
+  deadline_ = other.deadline_;
+  memset(&other.list_, 0, sizeof(list_));
+  memset(&other.idx_, 0, sizeof(idx_));
+  other.deadline_ = GRPC_MILLIS_INF_FUTURE;
+}
+
 MetadataMap::~MetadataMap() {
+  AssertValidCallouts();
   for (auto* l = list_.head; l; l = l->next) {
     GRPC_MDELEM_UNREF(l->md);
   }
@@ -109,12 +119,15 @@ absl::optional<grpc_slice> MetadataMap::Remove(grpc_slice key) {
 
 grpc_error_handle MetadataMap::LinkCallout(
     grpc_linked_mdelem* storage, grpc_metadata_batch_callouts_index idx) {
+  AssertValidCallouts();
   GPR_DEBUG_ASSERT(idx >= 0 && idx < GRPC_BATCH_CALLOUTS_COUNT);
   if (GPR_LIKELY(idx_.array[idx] == nullptr)) {
     ++list_.default_count;
     idx_.array[idx] = storage;
+    AssertValidCallouts();
     return GRPC_ERROR_NONE;
   }
+  AssertValidCallouts();
   return error_with_md(storage->md);
 }
 
@@ -128,6 +141,7 @@ grpc_error_handle MetadataMap::MaybeLinkCallout(grpc_linked_mdelem* storage) {
 }
 
 void MetadataMap::MaybeUnlinkCallout(grpc_linked_mdelem* storage) {
+  AssertValidCallouts();
   grpc_metadata_batch_callouts_index idx =
       GRPC_BATCH_INDEX_OF(GRPC_MDKEY(storage->md));
   if (idx == GRPC_BATCH_CALLOUTS_COUNT) {
@@ -136,6 +150,7 @@ void MetadataMap::MaybeUnlinkCallout(grpc_linked_mdelem* storage) {
   --list_.default_count;
   GPR_DEBUG_ASSERT(idx_.array[idx] != nullptr);
   idx_.array[idx] = nullptr;
+  AssertValidCallouts();
 }
 
 grpc_error_handle MetadataMap::AddHead(grpc_linked_mdelem* storage,
@@ -266,12 +281,11 @@ void MetadataMap::Remove(grpc_linked_mdelem* storage) {
 
 void MetadataMap::Remove(grpc_metadata_batch_callouts_index idx) {
   AssertValidCallouts();
-  grpc_linked_mdelem* storage = idx_.array[idx];
   if (idx_.array[idx] == nullptr) return;
   --list_.default_count;
+  unlink_storage(&list_, idx_.array[idx]);
+  GRPC_MDELEM_UNREF(idx_.array[idx]->md);
   idx_.array[idx] = nullptr;
-  unlink_storage(&list_, storage);
-  GRPC_MDELEM_UNREF(storage->md);
   AssertValidCallouts();
 }
 
@@ -332,13 +346,16 @@ size_t MetadataMap::TransportSize() const {
 }
 
 bool MetadataMap::ReplaceIfExists(grpc_slice key, grpc_slice value) {
+  AssertValidCallouts();
   for (grpc_linked_mdelem* l = list_.head; l != nullptr; l = l->next) {
     if (grpc_slice_eq(GRPC_MDKEY(l->md), key)) {
       GRPC_MDELEM_UNREF(l->md);
       l->md = grpc_mdelem_from_slices(key, value);
+      AssertValidCallouts();
       return true;
     }
   }
+  AssertValidCallouts();
   return false;
 }
 

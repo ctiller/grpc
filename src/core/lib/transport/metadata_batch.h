@@ -67,6 +67,11 @@ class MetadataMap {
   MetadataMap();
   ~MetadataMap();
 
+  MetadataMap(const MetadataMap&) = delete;
+  MetadataMap& operator=(const MetadataMap&) = delete;
+  MetadataMap(MetadataMap&&);
+  MetadataMap& operator=(MetadataMap&&);
+
   template <typename Encoder>
   void Encode(Encoder* encoder) const {
     for (auto* l = list_.head; l; l = l->next) {
