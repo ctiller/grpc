@@ -132,15 +132,13 @@ static void perform_stream_op(grpc_transport* gt, grpc_stream* gs,
     auto batch = op->payload->send_initial_metadata.send_initial_metadata;
     GPR_ASSERT(tx);
 
-    for (grpc_linked_mdelem* md = batch->list.head; md != nullptr;
-         md = md->next) {
-      absl::string_view key =
-          grpc_core::StringViewFromSlice(GRPC_MDKEY(md->md));
+    (*batch)->ForEach([&](grpc_mdelem md) {
+      absl::string_view key = grpc_core::StringViewFromSlice(GRPC_MDKEY(md));
       absl::string_view value =
-          grpc_core::StringViewFromSlice(GRPC_MDVALUE(md->md));
+          grpc_core::StringViewFromSlice(GRPC_MDVALUE(md));
       gpr_log(GPR_INFO, "send initial metatday key-value %s",
               absl::StrCat(key, " ", value).c_str());
-      if (grpc_slice_eq(GRPC_MDKEY(md->md), GRPC_MDSTR_PATH)) {
+      if (grpc_slice_eq(GRPC_MDKEY(md), GRPC_MDSTR_PATH)) {
         // TODO(b/192208403): Figure out if it is correct to simply drop '/'
         // prefix and treat it as rpc method name
         GPR_ASSERT(value[0] == '/');
@@ -152,7 +150,7 @@ static void perform_stream_op(grpc_transport* gt, grpc_stream* gs,
       } else {
         init_md.emplace_back(std::string(key), std::string(value));
       }
-    }
+    });
     tx->SetPrefix(init_md);
   }
   if (op->send_message && gbs->cancellation_error.ok()) {
@@ -179,25 +177,23 @@ static void perform_stream_op(grpc_transport* gt, grpc_stream* gs,
     grpc_binder::Metadata trailing_metadata;
     GPR_ASSERT(tx);
 
-    for (grpc_linked_mdelem* md = batch->list.head; md != nullptr;
-         md = md->next) {
+    (*batch)->ForEach([&](grpc_mdelem md) {
       // Client will not send trailing metadata.
       GPR_ASSERT(!gbt->is_client);
 
-      if (grpc_slice_eq(GRPC_MDKEY(md->md), GRPC_MDSTR_GRPC_STATUS)) {
-        int status = grpc_get_status_code_from_metadata(md->md);
+      if (grpc_slice_eq(GRPC_MDKEY(md), GRPC_MDSTR_GRPC_STATUS)) {
+        int status = grpc_get_status_code_from_metadata(md);
         gpr_log(GPR_INFO, "send trailing metadata status = %d", status);
         tx->SetStatus(status);
       } else {
-        absl::string_view key =
-            grpc_core::StringViewFromSlice(GRPC_MDKEY(md->md));
+        absl::string_view key = grpc_core::StringViewFromSlice(GRPC_MDKEY(md));
         absl::string_view value =
-            grpc_core::StringViewFromSlice(GRPC_MDVALUE(md->md));
+            grpc_core::StringViewFromSlice(GRPC_MDVALUE(md));
         gpr_log(GPR_INFO, "send trailing metatday key-value %s",
                 absl::StrCat(key, " ", value).c_str());
         trailing_metadata.emplace_back(std::string(key), std::string(value));
       }
-    }
+    });
     // TODO(mingcl): Will we ever has key-value pair here? According to
     // wireformat client suffix data is always empty.
     tx->SetSuffix(trailing_metadata);

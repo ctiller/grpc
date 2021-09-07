@@ -96,6 +96,17 @@ static grpc_error_handle GPR_ATTRIBUTE_NOINLINE error_with_md(grpc_mdelem md) {
       GRPC_ERROR_CREATE_FROM_STATIC_STRING("Unallowed duplicate metadata"), md);
 }
 
+absl::optional<grpc_slice> MetadataMap::Remove(grpc_slice key) {
+  for (auto* l = list_.head; l; l = l->next) {
+    if (grpc_slice_eq(GRPC_MDKEY(l->md), key)) {
+      auto out = grpc_slice_ref_internal(GRPC_MDVALUE(l->md));
+      Remove(l);
+      return out;
+    }
+  }
+  return {};
+}
+
 grpc_error_handle MetadataMap::LinkCallout(
     grpc_linked_mdelem* storage, grpc_metadata_batch_callouts_index idx) {
   GPR_DEBUG_ASSERT(idx >= 0 && idx < GRPC_BATCH_CALLOUTS_COUNT);
