@@ -69,8 +69,8 @@ class MetadataMap {
 
   MetadataMap(const MetadataMap&) = delete;
   MetadataMap& operator=(const MetadataMap&) = delete;
-  MetadataMap(MetadataMap&&);
-  MetadataMap& operator=(MetadataMap&&);
+  MetadataMap(MetadataMap&&) noexcept;
+  MetadataMap& operator=(MetadataMap&&) noexcept;
 
   template <typename Encoder>
   void Encode(Encoder* encoder) const {
