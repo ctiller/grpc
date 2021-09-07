@@ -1,5 +1,5 @@
-#!/bin/bash
-# Copyright 2016 gRPC authors.
+#! /bin/bash
+# Copyright 2021 The gRPC Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,19 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# Checks if any file contains "DO NOT SUBMIT"
 
-set -ex
-
-cd $(dirname $0)/../..
-
-tools/buildgen/generate_projects.sh
-tools/distrib/check_include_guards.py --fix
-tools/distrib/check_copyright.py --fix
-tools/distrib/check_trailing_newlines.sh --fix
-tools/run_tests/sanity/check_port_platform.py --fix
-tools/run_tests/sanity/check_include_style.py --fix || true
-tools/distrib/yapf_code.sh
-tools/distrib/isort_code.sh
-tools/distrib/clang_format_code.sh
-tools/distrib/buildifier_format_code.sh || true
-
+cd "$(dirname "$0")/../../.." || exit 1
+grep -Irn \
+  --exclude='check_do_not_submit.sh' \
+  --exclude-dir='.git/' \
+  --exclude-dir='third_party/' \
+  'DO NOT SUBMIT'
+test $? -eq 1 || exit 1
