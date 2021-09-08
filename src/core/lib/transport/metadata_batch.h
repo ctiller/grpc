@@ -116,10 +116,11 @@ class MetadataMap {
   bool ReplaceIfExists(grpc_slice key, grpc_slice value);
 
   void Clear();
-  bool empty() const {
-    return deadline_ == GRPC_MILLIS_INF_FUTURE && list_.count == 0;
-  }
+  bool empty() const { return count() == 0; }
 
+  size_t count() const {
+    return list_.count + (deadline_ == GRPC_MILLIS_INF_FUTURE ? 0 : 1);
+  }
   size_t non_deadline_count() const { return list_.count; }
   size_t default_count() const { return list_.default_count; }
 
