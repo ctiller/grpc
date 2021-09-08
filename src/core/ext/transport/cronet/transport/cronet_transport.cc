@@ -790,9 +790,9 @@ static void parse_grpc_header(const uint8_t* data, int* length,
   *length |= (*p++);
 }
 
-static bool header_has_authority(const grpc_metadata_batch& b) {
+static bool header_has_authority(const grpc_metadata_batch* b) {
   bool found = false;
-  b->ForEach([&](grpc_mdelem elem) {
+  (*b)->ForEach([&](grpc_mdelem elem) {
     if (grpc_slice_eq_static_interned(GRPC_MDKEY(head->md),
                                       GRPC_MDSTR_AUTHORITY)) {
       found = true;
