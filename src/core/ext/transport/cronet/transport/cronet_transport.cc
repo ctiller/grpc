@@ -738,7 +738,7 @@ static void convert_metadata_to_cronet_headers(
       /* Cronet populates these fields on its own */
       gpr_free(key);
       gpr_free(value);
-      continue;
+      return;
     }
     if (grpc_slice_eq_static_interned(GRPC_MDKEY(mdelem), GRPC_MDSTR_METHOD)) {
       if (grpc_slice_eq_static_interned(GRPC_MDVALUE(mdelem), GRPC_MDSTR_PUT)) {
@@ -749,14 +749,14 @@ static void convert_metadata_to_cronet_headers(
       }
       gpr_free(key);
       gpr_free(value);
-      continue;
+      return;
     }
     if (grpc_slice_eq_static_interned(GRPC_MDKEY(mdelem), GRPC_MDSTR_PATH)) {
       /* Create URL by appending :path value to the hostname */
       *pp_url = absl::StrCat("https://", host, value);
       gpr_free(key);
       gpr_free(value);
-      continue;
+      return;
     }
     CRONET_LOG(GPR_DEBUG, "header %s = %s", key, value);
     headers[num_headers].key = key;
@@ -767,7 +767,7 @@ static void convert_metadata_to_cronet_headers(
     char* key = grpc_slice_to_c_string(GRPC_MDSTR_GRPC_TIMEOUT);
     char* value =
         static_cast<char*>(gpr_malloc(GRPC_HTTP2_TIMEOUT_ENCODE_MIN_BUFSIZE));
-    grpc_http2_encode_timeout(deadline - grpc_core::ExecCtx::Get()->Now(),
+    grpc_http2_encode_timeout((*metadata)->deadline() - grpc_core::ExecCtx::Get()->Now(),
                               value);
     headers[num_headers].key = key;
     headers[num_headers].value = value;
@@ -793,7 +793,7 @@ static void parse_grpc_header(const uint8_t* data, int* length,
 static bool header_has_authority(const grpc_metadata_batch* b) {
   bool found = false;
   (*b)->ForEach([&](grpc_mdelem elem) {
-    if (grpc_slice_eq_static_interned(GRPC_MDKEY(head->md),
+    if (grpc_slice_eq_static_interned(GRPC_MDKEY(elem),
                                       GRPC_MDSTR_AUTHORITY)) {
       found = true;
     }
