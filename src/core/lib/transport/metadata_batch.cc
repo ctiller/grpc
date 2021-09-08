@@ -85,7 +85,7 @@ MetadataMap::MetadataMap() {
   deadline_ = GRPC_MILLIS_INF_FUTURE;
 }
 
-MetadataMap::MetadataMap(MetadataMap&& other) {
+MetadataMap::MetadataMap(MetadataMap&& other) noexcept {
   list_ = other.list_;
   idx_ = other.idx_;
   deadline_ = other.deadline_;
