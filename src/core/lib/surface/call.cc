@@ -1000,7 +1000,7 @@ static grpc_stream_compression_algorithm decode_stream_compression(
 
 static void publish_app_metadata(grpc_call* call, grpc_metadata_batch* b,
                                  int is_trailing) {
-  if ((*b)->empty()) return;
+  if ((*b)->non_deadline_count() == 0) return;
   if (!call->is_client && is_trailing) return;
   if (is_trailing && call->buffered_metadata[1] == nullptr) return;
   GPR_TIMER_SCOPE("publish_app_metadata", 0);

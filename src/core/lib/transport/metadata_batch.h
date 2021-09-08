@@ -92,7 +92,7 @@ class MetadataMap {
     grpc_linked_mdelem* l = list_.head;
     grpc_error_handle error = GRPC_ERROR_NONE;
     auto add_error = [&](grpc_error_handle new_error) {
-      if (new_error != GRPC_ERROR_NONE) return;
+      if (new_error == GRPC_ERROR_NONE) return;
       if (error == GRPC_ERROR_NONE) {
         error = GRPC_ERROR_CREATE_FROM_COPIED_STRING(composite_error_string);
       }
