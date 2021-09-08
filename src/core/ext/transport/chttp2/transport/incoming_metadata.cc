@@ -47,7 +47,8 @@ grpc_error_handle grpc_chttp2_incoming_metadata_buffer_replace_or_add(
     grpc_slice value) {
   if (buffer->batch->ReplaceIfExists(key, value)) return GRPC_ERROR_NONE;
   return grpc_chttp2_incoming_metadata_buffer_add(
-      buffer, grpc_mdelem_from_slices(key, value));
+      buffer, grpc_mdelem_from_slices(grpc_slice_ref_internal(key),
+                                      grpc_slice_ref_internal(value)));
 }
 
 void grpc_chttp2_incoming_metadata_buffer_set_deadline(

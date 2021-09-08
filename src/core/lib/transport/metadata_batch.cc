@@ -85,7 +85,7 @@ MetadataMap::MetadataMap() {
   deadline_ = GRPC_MILLIS_INF_FUTURE;
 }
 
-MetadataMap::MetadataMap(MetadataMap&& other)  {
+MetadataMap::MetadataMap(MetadataMap&& other) {
   list_ = other.list_;
   idx_ = other.idx_;
   deadline_ = other.deadline_;
@@ -347,8 +347,10 @@ bool MetadataMap::ReplaceIfExists(grpc_slice key, grpc_slice value) {
   AssertValidCallouts();
   for (grpc_linked_mdelem* l = list_.head; l != nullptr; l = l->next) {
     if (grpc_slice_eq(GRPC_MDKEY(l->md), key)) {
+      auto new_mdelem = grpc_mdelem_from_slices(grpc_slice_ref_internal(key),
+                                                grpc_slice_ref_internal(value));
       GRPC_MDELEM_UNREF(l->md);
-      l->md = grpc_mdelem_from_slices(key, value);
+      l->md = new_mdelem;
       AssertValidCallouts();
       return true;
     }
