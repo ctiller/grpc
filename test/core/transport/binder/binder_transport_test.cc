@@ -140,11 +140,12 @@ void VerifyMetadataEqual(const Metadata& md,
                          const grpc_metadata_batch& grpc_md) {
   size_t i = 0;
   grpc_md->ForEach([&](grpc_mdelem mdelm) {
-    i++;
     EXPECT_EQ(grpc_core::StringViewFromSlice(GRPC_MDKEY(mdelm)), md[i].first);
     EXPECT_EQ(grpc_core::StringViewFromSlice(GRPC_MDVALUE(mdelm)),
               md[i].second);
+    i++;
   });
+  EXPECT_EQ(md.size(), i);
 }
 
 // RAII helper classes for constructing gRPC metadata and receiving callbacks.
