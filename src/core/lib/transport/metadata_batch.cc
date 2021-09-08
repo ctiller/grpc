@@ -141,7 +141,6 @@ grpc_error_handle MetadataMap::MaybeLinkCallout(grpc_linked_mdelem* storage) {
 }
 
 void MetadataMap::MaybeUnlinkCallout(grpc_linked_mdelem* storage) {
-  AssertValidCallouts();
   grpc_metadata_batch_callouts_index idx =
       GRPC_BATCH_INDEX_OF(GRPC_MDKEY(storage->md));
   if (idx == GRPC_BATCH_CALLOUTS_COUNT) {
@@ -150,7 +149,6 @@ void MetadataMap::MaybeUnlinkCallout(grpc_linked_mdelem* storage) {
   --list_.default_count;
   GPR_DEBUG_ASSERT(idx_.array[idx] != nullptr);
   idx_.array[idx] = nullptr;
-  AssertValidCallouts();
 }
 
 grpc_error_handle MetadataMap::AddHead(grpc_linked_mdelem* storage,
