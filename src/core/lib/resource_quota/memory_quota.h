@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef GRPC_CORE_LIB_RESOURCE_QUOTA_RESOURCE_QUOTA_H
-#define GRPC_CORE_LIB_RESOURCE_QUOTA_RESOURCE_QUOTA_H
+#ifndef GRPC_CORE_LIB_RESOURCE_QUOTA_MEMORY_QUOTA_H
+#define GRPC_CORE_LIB_RESOURCE_QUOTA_MEMORY_QUOTA_H
 
 #include <grpc/support/port_platform.h>
 
@@ -66,7 +66,7 @@ class MemoryRequest {
  public:
   // Request a fixed amount of memory.
   // NOLINTNEXTLINE(runtime/explicit)
-  MemoryRequest(size_t n) : min_(n), max_(n) {}
+  explicit MemoryRequest(size_t n) : min_(n), max_(n) {}
   // Request a range of memory.
   MemoryRequest(size_t min, size_t max) : min_(std::min(min, max)), max_(max) {}
 
@@ -151,7 +151,7 @@ class ReclaimerQueue {
 class MemoryAllocator final : public InternallyRefCounted<MemoryAllocator> {
  public:
   explicit MemoryAllocator(RefCountedPtr<MemoryQuota> memory_quota);
-  ~MemoryAllocator();
+  ~MemoryAllocator() override;
 
   void Orphan() override;
 
@@ -189,7 +189,7 @@ class MemoryAllocator final : public InternallyRefCounted<MemoryAllocator> {
     // allocator.
     class Wrapper final : public T {
      public:
-      Wrapper(RefCountedPtr<MemoryAllocator> allocator, Args&&... args)
+      explicit Wrapper(RefCountedPtr<MemoryAllocator> allocator, Args&&... args)
           : T(std::forward<Args>(args)...), allocator_(std::move(allocator)) {}
       ~Wrapper() override { allocator_->Release(sizeof(*this)); }
 
@@ -220,7 +220,7 @@ class MemoryAllocator final : public InternallyRefCounted<MemoryAllocator> {
   // Primitive reservation function.
   ReserveResult TryReserve(MemoryRequest request) GRPC_MUST_USE_RESULT;
   // Replenish at least n bytes from the quota, without blocking, possibly
-  // entering overcommit.
+  // entering overcommiamount.
   void Replenish(size_t n) ABSL_LOCKS_EXCLUDED(memory_quota_mu_);
   // If we have not already, register a reclamation function against the quota
   // to sweep any free memory back to that quota.
@@ -290,11 +290,12 @@ class MemoryQuota final : public DualRefCounted<MemoryQuota> {
   friend class MemoryAllocator;
   friend class ReclamationSweep;
 
-  void Orphan();
+  void Orphan() override;
 
   // Forcefully take some memory from the quota, potentially entering
-  // overcommit.
-  void Take(size_t n);
+  amount  // overcommit.
+      void
+      Take(size_t n);
   // Finish reclamation pass.
   void FinishReclamation(uint64_t token);
   // Return some memory to the quota.
@@ -330,4 +331,4 @@ class MemoryQuota final : public DualRefCounted<MemoryQuota> {
 
 }  // namespace grpc_core
 
-#endif
+#endif  // GRPC_CORE_LIB_RESOURCE_QUOTA_MEMORY_QUOTA_H
