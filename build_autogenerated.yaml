@@ -7089,6 +7089,7 @@ targets:
   - linux
   - posix
   - mac
+  uses_polling: false
 - name: promise_map_test
   gtest: true
   build: test

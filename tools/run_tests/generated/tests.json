@@ -6016,7 +6016,7 @@
       "mac",
       "posix"
     ],
-    "uses_polling": true
+    "uses_polling": false
   },
   {
     "args": [],
