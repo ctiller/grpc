@@ -45,6 +45,7 @@ void grpc_metadata_batch_copy(grpc_metadata_batch* src,
                               grpc_metadata_batch* dst,
                               grpc_linked_mdelem* storage) {
   dst->Clear();
+  // TODO(ctiller): generate this with some meta-programming?
   if (auto* p = src->get_pointer(grpc_core::GrpcTimeoutMetadata())) {
     dst->Set(grpc_core::GrpcTimeoutMetadata(), *p);
   }
