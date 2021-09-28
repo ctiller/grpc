@@ -80,7 +80,6 @@ struct call_data {
   grpc_linked_mdelem scheme;
   grpc_linked_mdelem te_trailers;
   grpc_linked_mdelem content_type;
-  grpc_linked_mdelem user_agent;
   // State for handling recv_initial_metadata ops.
   grpc_metadata_batch* recv_initial_metadata;
   grpc_error_handle recv_initial_metadata_error = GRPC_ERROR_NONE;
@@ -104,8 +103,13 @@ struct call_data {
 };
 
 struct channel_data {
+  channel_data(grpc_mdelem static_scheme, grpc_core::Slice user_agent,
+               size_t max_payload_size_for_get)
+      : static_scheme(static_scheme),
+        user_agent(std::move(user_agent)),
+        max_payload_size_for_get(max_payload_size_for_get) {}
   grpc_mdelem static_scheme;
-  grpc_mdelem user_agent;
+  grpc_core::Slice user_agent;
   size_t max_payload_size_for_get;
 };
 }  // namespace
@@ -436,46 +440,29 @@ static void http_client_start_transport_stream_op_batch(
       method = GRPC_MDELEM_METHOD_PUT;
     }
 
-    remove_if_present(
-        batch->payload->send_initial_metadata.send_initial_metadata,
-        GRPC_BATCH_METHOD);
-    remove_if_present(
-        batch->payload->send_initial_metadata.send_initial_metadata,
-        GRPC_BATCH_SCHEME);
-    remove_if_present(
-        batch->payload->send_initial_metadata.send_initial_metadata,
-        GRPC_BATCH_TE);
-    remove_if_present(
-        batch->payload->send_initial_metadata.send_initial_metadata,
-        GRPC_BATCH_CONTENT_TYPE);
-    remove_if_present(
-        batch->payload->send_initial_metadata.send_initial_metadata,
-        GRPC_BATCH_USER_AGENT);
+    auto* b = batch->payload->send_initial_metadata.send_initial_metadata;
+    remove_if_present(b, GRPC_BATCH_METHOD);
+    remove_if_present(b, GRPC_BATCH_SCHEME);
+    remove_if_present(b, GRPC_BATCH_TE);
+    remove_if_present(b, GRPC_BATCH_CONTENT_TYPE);
 
     /* Send : prefixed headers, which have to be before any application
        layer headers. */
-    error = grpc_metadata_batch_add_head(
-        batch->payload->send_initial_metadata.send_initial_metadata,
-        &calld->method, method, GRPC_BATCH_METHOD);
+    error = grpc_metadata_batch_add_head(b, &calld->method, method,
+                                         GRPC_BATCH_METHOD);
     if (error != GRPC_ERROR_NONE) goto done;
     error = grpc_metadata_batch_add_head(
-        batch->payload->send_initial_metadata.send_initial_metadata,
-        &calld->scheme, channeld->static_scheme, GRPC_BATCH_SCHEME);
+        b, &calld->scheme, channeld->static_scheme, GRPC_BATCH_SCHEME);
     if (error != GRPC_ERROR_NONE) goto done;
     error = grpc_metadata_batch_add_tail(
-        batch->payload->send_initial_metadata.send_initial_metadata,
-        &calld->te_trailers, GRPC_MDELEM_TE_TRAILERS, GRPC_BATCH_TE);
+        b, &calld->te_trailers, GRPC_MDELEM_TE_TRAILERS, GRPC_BATCH_TE);
     if (error != GRPC_ERROR_NONE) goto done;
     error = grpc_metadata_batch_add_tail(
-        batch->payload->send_initial_metadata.send_initial_metadata,
-        &calld->content_type, GRPC_MDELEM_CONTENT_TYPE_APPLICATION_SLASH_GRPC,
+        b, &calld->content_type,
+        GRPC_MDELEM_CONTENT_TYPE_APPLICATION_SLASH_GRPC,
         GRPC_BATCH_CONTENT_TYPE);
     if (error != GRPC_ERROR_NONE) goto done;
-    error = grpc_metadata_batch_add_tail(
-        batch->payload->send_initial_metadata.send_initial_metadata,
-        &calld->user_agent, GRPC_MDELEM_REF(channeld->user_agent),
-        GRPC_BATCH_USER_AGENT);
-    if (error != GRPC_ERROR_NONE) goto done;
+    b->Set(grpc_core::UserAgentMetadata(), channeld->user_agent.Ref());
   }
 
 done:
@@ -539,8 +526,8 @@ static size_t max_payload_size_from_args(const grpc_channel_args* args) {
   return kMaxPayloadSizeForGet;
 }
 
-static grpc_core::ManagedMemorySlice user_agent_from_args(
-    const grpc_channel_args* args, const char* transport_name) {
+static grpc_core::Slice user_agent_from_args(const grpc_channel_args* args,
+                                             const char* transport_name) {
   std::vector<std::string> user_agent_fields;
 
   for (size_t i = 0; args && i < args->num_args; i++) {
@@ -569,8 +556,7 @@ static grpc_core::ManagedMemorySlice user_agent_from_args(
     }
   }
 
-  std::string user_agent_string = absl::StrJoin(user_agent_fields, " ");
-  return grpc_core::ManagedMemorySlice(user_agent_string.c_str());
+  return grpc_core::Slice::FromString(absl::StrJoin(user_agent_fields, " "));
 }
 
 /* Constructor for channel_data */
@@ -579,20 +565,18 @@ static grpc_error_handle http_client_init_channel_elem(
   channel_data* chand = static_cast<channel_data*>(elem->channel_data);
   GPR_ASSERT(!args->is_last);
   GPR_ASSERT(args->optional_transport != nullptr);
-  chand->static_scheme = scheme_from_args(args->channel_args);
-  chand->max_payload_size_for_get =
-      max_payload_size_from_args(args->channel_args);
-  chand->user_agent = grpc_mdelem_from_slices(
-      GRPC_MDSTR_USER_AGENT,
-      user_agent_from_args(args->channel_args,
-                           args->optional_transport->vtable->name));
+  new (chand)
+      channel_data(scheme_from_args(args->channel_args),
+                   user_agent_from_args(args->channel_args,
+                                        args->optional_transport->vtable->name),
+                   max_payload_size_from_args(args->channel_args));
   return GRPC_ERROR_NONE;
 }
 
 /* Destructor for channel data */
 static void http_client_destroy_channel_elem(grpc_channel_element* elem) {
   channel_data* chand = static_cast<channel_data*>(elem->channel_data);
-  GRPC_MDELEM_UNREF(chand->user_agent);
+  chand->~channel_data();
 }
 
 const grpc_channel_filter grpc_http_client_filter = {

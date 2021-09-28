@@ -372,7 +372,7 @@ typedef struct {
    over to the next priority. Default value is 10 seconds. */
 #define GRPC_ARG_PRIORITY_FAILOVER_TIMEOUT_MS \
   "grpc.priority_failover_timeout_ms"
-/** If non-zero, grpc server's cronet compression workaround will be enabled */
+/** Deprecated. No longer does anything. */
 #define GRPC_ARG_WORKAROUND_CRONET_COMPRESSION \
   "grpc.workaround.cronet_compression"
 /** String defining the optimization target for a channel.

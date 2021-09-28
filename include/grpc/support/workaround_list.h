@@ -24,6 +24,7 @@
  * /doc/workarounds.md
  */
 typedef enum {
+  /* Deprecated. No longer does anything. */
   GRPC_WORKAROUND_ID_CRONET_COMPRESSION = 0,
   GRPC_MAX_WORKAROUND_ID
 } grpc_workaround_list;

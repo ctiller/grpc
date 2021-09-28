@@ -32,6 +32,7 @@
 
 #include "src/core/lib/gprpp/table.h"
 #include "src/core/lib/iomgr/exec_ctx.h"
+#include "src/core/lib/slice/slice.h"
 #include "src/core/lib/transport/metadata.h"
 #include "src/core/lib/transport/static_metadata.h"
 
@@ -77,6 +78,12 @@ namespace grpc_core {
 struct GrpcTimeoutMetadata {
   using ValueType = grpc_millis;
   static const char* key() { return "grpc-timeout"; }
+};
+
+// user-agent metadata trait. ValueType is a Slice.
+struct UserAgentMetadata {
+  using ValueType = Slice;
+  static const char* key() { return "user-agent"; }
 };
 
 // MetadataMap encodes the mapping of metadata keys to metadata values.
@@ -269,6 +276,8 @@ class MetadataMap {
   struct Value {
     Value() = default;
     explicit Value(const typename Which::ValueType& value) : value(value) {}
+    explicit Value(typename Which::ValueType&& value)
+        : value(std::forward<typename Which::ValueType>(value)) {}
     Value(const Value&) = default;
     Value& operator=(const Value&) = default;
     Value(Value&&) noexcept = default;
@@ -667,7 +676,8 @@ bool MetadataMap<Traits...>::ReplaceIfExists(grpc_slice key, grpc_slice value) {
 }  // namespace grpc_core
 
 using grpc_metadata_batch =
-    grpc_core::MetadataMap<grpc_core::GrpcTimeoutMetadata>;
+    grpc_core::MetadataMap<grpc_core::GrpcTimeoutMetadata,
+                           grpc_core::UserAgentMetadata>;
 
 inline void grpc_metadata_batch_clear(grpc_metadata_batch* batch) {
   batch->Clear();
