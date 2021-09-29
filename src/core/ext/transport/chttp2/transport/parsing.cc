@@ -490,10 +490,10 @@ handle_metadata_add_failure(grpc_chttp2_transport* t, grpc_chttp2_stream* s,
   return GRPC_ERROR_NONE;
 }
 
-static grpc_error_handle on_initial_header(void* tp, grpc_mdelem md) {
+static grpc_error_handle on_initial_header(grpc_chttp2_transport* t,
+                                           grpc_mdelem md) {
   GPR_TIMER_SCOPE("on_initial_header", 0);
 
-  grpc_chttp2_transport* t = static_cast<grpc_chttp2_transport*>(tp);
   grpc_chttp2_stream* s = t->incoming_stream;
   GPR_DEBUG_ASSERT(s != nullptr);
 
@@ -524,10 +524,10 @@ static grpc_error_handle on_initial_header(void* tp, grpc_mdelem md) {
   return GRPC_ERROR_NONE;
 }
 
-static grpc_error_handle on_trailing_header(void* tp, grpc_mdelem md) {
+static grpc_error_handle on_trailing_header(grpc_chttp2_transport* t,
+                                            grpc_mdelem md) {
   GPR_TIMER_SCOPE("on_trailing_header", 0);
 
-  grpc_chttp2_transport* t = static_cast<grpc_chttp2_transport*>(tp);
   grpc_chttp2_stream* s = t->incoming_stream;
   GPR_DEBUG_ASSERT(s != nullptr);
 

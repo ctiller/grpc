@@ -86,6 +86,38 @@ struct UserAgentMetadata {
   static const char* key() { return "user-agent"; }
 };
 
+namespace metadata_map_detail {
+
+struct NameNotFound {};
+
+// Helper to set a specific value by name.
+template <typename... Traits>
+struct CallByName;
+
+template <typename Trait, typename... Traits>
+struct CallByName<Trait, Traits...> {
+  template <typename F>
+  static auto f(absl::string_view key, const Slice& value, F fn)
+      -> decltype(fn(Trait())) {
+    if (key == Trait::key()) {
+      return fn(Trait());
+    } else {
+      return CallByName<Traits...>::f(key, value, std::move(fn));
+    }
+  }
+};
+
+template <>
+struct CallByName<> {
+  template <typename F>
+  static auto f(absl::string_view key, const Slice& value, F fn)
+      -> decltype(fn(NameNotFound())) {
+    return fn(NameNotFound());
+  }
+};
+
+}  // namespace metadata_map_detail
+
 // MetadataMap encodes the mapping of metadata keys to metadata values.
 // Right now the API presented is the minimal one that will allow us to
 // substitute this type for grpc_metadata_batch in a relatively easy fashion. At
@@ -182,6 +214,11 @@ class MetadataMap {
   //
   // All APIs below this point are subject to change.
   //
+
+  bool SetIfBuiltin(absl::string_view key, const Slice& value) {
+    return metadata_map_detail::CallByName<Traits...>::f(
+        key, value, SetIfBuiltinCallable(this));
+  }
 
   template <typename F>
   void ForEach(F f) const {
