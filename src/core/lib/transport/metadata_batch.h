@@ -214,10 +214,12 @@ class MetadataMap {
     // Takes ownership of elem
     explicit Memento(grpc_mdelem elem) {
       static const VTable vtable = {
-        [](intptr_t value) { GRPC_MDELEM_UNREF(grpc_mdelem{uintptr_t(value)}); },
-        [](intptr_t value, MetadataMap* map) {
-          return map->Append(GRPC_MDELEM_REF(grpc_mdelem{uintptr_t(value)}));
-        },
+          [](intptr_t value) {
+            GRPC_MDELEM_UNREF(grpc_mdelem{uintptr_t(value)});
+          },
+          [](intptr_t value, MetadataMap* map) {
+            return map->Append(GRPC_MDELEM_REF(grpc_mdelem{uintptr_t(value)}));
+          },
       };
       vtable_ = &vtable;
       value_ = static_cast<intptr_t>(elem.payload);
@@ -245,8 +247,9 @@ class MetadataMap {
       grpc_error_handle (*set)(intptr_t value, MetadataMap* map);
     };
     static const VTable* EmptyVTable() {
-      static const VTable vtable = {[](intptr_t) {},
-                                    [](intptr_t, MetadataMap*) { return GRPC_ERROR_NONE; }};
+      static const VTable vtable = {
+          [](intptr_t) {},
+          [](intptr_t, MetadataMap*) { return GRPC_ERROR_NONE; }};
       return &vtable;
     }
     const VTable* vtable_;
