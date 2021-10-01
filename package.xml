@@ -220,10 +220,6 @@
     <file baseinstalldir="/" name="src/core/ext/filters/max_age/max_age_filter.h" role="src" />
     <file baseinstalldir="/" name="src/core/ext/filters/message_size/message_size_filter.cc" role="src" />
     <file baseinstalldir="/" name="src/core/ext/filters/message_size/message_size_filter.h" role="src" />
-    <file baseinstalldir="/" name="src/core/ext/filters/workarounds/workaround_cronet_compression_filter.cc" role="src" />
-    <file baseinstalldir="/" name="src/core/ext/filters/workarounds/workaround_cronet_compression_filter.h" role="src" />
-    <file baseinstalldir="/" name="src/core/ext/filters/workarounds/workaround_utils.cc" role="src" />
-    <file baseinstalldir="/" name="src/core/ext/filters/workarounds/workaround_utils.h" role="src" />
     <file baseinstalldir="/" name="src/core/ext/transport/chttp2/alpn/alpn.cc" role="src" />
     <file baseinstalldir="/" name="src/core/ext/transport/chttp2/alpn/alpn.h" role="src" />
     <file baseinstalldir="/" name="src/core/ext/transport/chttp2/client/authority.cc" role="src" />
@@ -1147,6 +1143,7 @@
     <file baseinstalldir="/" name="src/core/lib/slice/percent_encoding.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/slice/percent_encoding.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/slice/slice.cc" role="src" />
+    <file baseinstalldir="/" name="src/core/lib/slice/slice.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/slice/slice_api.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/slice/slice_buffer.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/slice/slice_intern.cc" role="src" />

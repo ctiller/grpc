@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef GRPC_CORE_LIB_SLICE_H
-#define GRPC_CORE_LIB_SLICE_H
+#ifndef GRPC_CORE_LIB_SLICE_SLICE_H
+#define GRPC_CORE_LIB_SLICE_SLICE_H
 
 #include <grpc/impl/codegen/port_platform.h>
 
@@ -73,4 +73,4 @@ class Slice {
 
 }  // namespace grpc_core
 
-#endif  // GRPC_CORE_LIB_SLICE_H
+#endif  // GRPC_CORE_LIB_SLICE_SLICE_H
