@@ -1376,9 +1376,9 @@ grpc_cc_library(
         "src/core/lib/slice/slice_string_helpers.cc",
     ],
     hdrs = [
+        "src/core/lib/slice/slice.h",
         "src/core/lib/slice/slice_internal.h",
         "src/core/lib/slice/slice_string_helpers.h",
-        "src/core/lib/slice/slice.h",
     ],
     deps = [
         "gpr_base",
