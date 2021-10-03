@@ -109,7 +109,7 @@ struct HasSimpleMemento {
       sizeof(typename Which::MementoType) <= sizeof(intptr_t);
 };
 
-}
+}  // namespace metadata_detail
 
 // MetadataMap encodes the mapping of metadata keys to metadata values.
 // Right now the API presented is the minimal one that will allow us to
