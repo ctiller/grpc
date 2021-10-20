@@ -426,13 +426,11 @@ RegisteredCall::RegisteredCall(const char* method_arg, const char* host_arg)
     : method(method_arg != nullptr ? method_arg : ""),
       host(host_arg != nullptr ? host_arg : ""),
       path(grpc_mdelem_from_slices(
-          GRPC_MDSTR_PATH,
-          grpc_slice_from_copied_string(method.c_str()))),
-      authority(!host.empty()
-                    ? grpc_mdelem_from_slices(
-                          GRPC_MDSTR_AUTHORITY,
-                          grpc_slice_from_copied_string(host.c_str()))
-                    : GRPC_MDNULL) {}
+          GRPC_MDSTR_PATH, grpc_slice_from_copied_string(method.c_str()))),
+      authority(!host.empty() ? grpc_mdelem_from_slices(
+                                    GRPC_MDSTR_AUTHORITY,
+                                    grpc_slice_from_copied_string(host.c_str()))
+                              : GRPC_MDNULL) {}
 
 // TODO(vjpai): Delete copy-constructor when allowed by all supported compilers.
 RegisteredCall::RegisteredCall(const RegisteredCall& other)
