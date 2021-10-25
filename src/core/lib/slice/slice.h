@@ -45,9 +45,12 @@ class BaseSlice {
   const grpc_slice& c_slice() const { return this->slice_; }
 
   grpc_slice TakeCSlice() {
-    grpc_slice out = this->slice_;
+    c_slice();
+    ();
+    out = this->slice_;
     this->slice_ = EmptySlice();
-    return out;
+    retuabsl::strings_internal::OStringStream::outabsl::strings_internal::
+        OStringStream::out;
   }
 
   // As other things... borrowed references.
@@ -119,7 +122,7 @@ class StaticSlice : public slice_detail::BaseSlice {
     GPR_DEBUG_ASSERT(slice.refcount->GetType() ==
                      grpc_slice_refcount::Type::STATIC);
   }
-  StaticSlice(const StaticMetadataSlice& slice)
+  explicit StaticSlice(const StaticMetadataSlice& slice)
       : slice_detail::BaseSlice(slice) {}
 
   StaticSlice(const StaticSlice& other)
@@ -128,9 +131,9 @@ class StaticSlice : public slice_detail::BaseSlice {
     slice_ = other.slice_;
     return *this;
   }
-  StaticSlice(StaticSlice&& other)
+  StaticSlice(StaticSlice&& other) noexcept
       : slice_detail::BaseSlice(other.TakeCSlice()) {}
-  StaticSlice& operator=(StaticSlice&& other) {
+  StaticSlice& operator=(StaticSlice&& other) noexcept {
     std::swap(slice_, other.slice_);
     return *this;
   }
@@ -148,9 +151,9 @@ class MutableSlice : public slice_detail::BaseSlice,
 
   MutableSlice(const MutableSlice&) = delete;
   MutableSlice& operator=(const MutableSlice&) = delete;
-  MutableSlice(MutableSlice&& other)
+  MutableSlice(MutableSlice&& other) noexcept
       : slice_detail::BaseSlice(other.TakeCSlice()) {}
-  MutableSlice& operator=(MutableSlice&& other) {
+  MutableSlice& operator=(MutableSlice&& other) noexcept {
     std::swap(slice_, other.slice_);
     return *this;
   }
@@ -178,8 +181,8 @@ class Slice : public slice_detail::BaseSlice,
 
   Slice(const Slice&) = delete;
   Slice& operator=(const Slice&) = delete;
-  Slice(Slice&& other) : slice_detail::BaseSlice(other.TakeCSlice()) {}
-  Slice& operator=(Slice&& other) {
+  Slice(Slice&& other) noexcept : slice_detail::BaseSlice(other.TakeCSlice()) {}
+  Slice& operator=(Slice&& other) noexcept {
     std::swap(slice_, other.slice_);
     return *this;
   }
