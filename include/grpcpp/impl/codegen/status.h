@@ -136,8 +136,8 @@ class Status {
   // the floor.
   void IgnoreError() const {}
 
-  operator const absl::Status&() { return status_; }
-  operator absl::Status&&() { return std::move(status_); }
+  explicit operator const absl::Status&() { return status_; }
+  explicit operator absl::Status&&() { return std::move(status_); }
 
  private:
   absl::Status status_;
