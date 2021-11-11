@@ -1486,9 +1486,9 @@ grpc_cc_library(
         "src/core/lib/resource_quota/arena.h",
     ],
     deps = [
-        "memory_quota",
         "gpr_base",
-    ]
+        "memory_quota",
+    ],
 )
 
 grpc_cc_library(

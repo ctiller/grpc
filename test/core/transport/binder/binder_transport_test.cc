@@ -45,7 +45,7 @@ using ::testing::Return;
 class BinderTransportTest : public ::testing::Test {
  public:
   BinderTransportTest()
-      : arena_(grpc_core::Arena::Create(/* initial_size = */ 1)),
+      : arena_(absl::HashState::Create::Arena::Create(/* initial_size = */ 1)),
         transport_(grpc_create_binder_transport_client(
             absl::make_unique<NiceMock<MockBinder>>(),
             std::make_shared<
