@@ -107,7 +107,7 @@ static grpc_error_handle hs_filter_outgoing_metadata(grpc_metadata_batch* b) {
   if (grpc_core::Slice* grpc_message =
           b->get_pointer(grpc_core::GrpcMessageMetadata())) {
     *grpc_message = grpc_core::PercentEncodeSlice(
-        std::move(*grpc_message), grpc_core::PercentEncodingType::Compatible);
+        *grpc_message, grpc_core::PercentEncodingType::Compatible);
   }
   return GRPC_ERROR_NONE;
 }
