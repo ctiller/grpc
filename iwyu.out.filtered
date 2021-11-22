@@ -1,0 +1,367 @@
+
+src/core/lib/promise/context.h should add these lines:
+
+src/core/lib/promise/context.h should remove these lines:
+- namespace grpc_core { template <typename T> struct ContextType; }  // lines 31-32
+
+The full include-list for src/core/lib/promise/context.h:
+#include <type_traits>             // for declval
+#include <utility>                 // for move
+#include "src/core/lib/gpr/tls.h"  // for GPR_THREAD_LOCAL
+---
+
+
+src/core/lib/promise/detail/switch.h should add these lines:
+
+src/core/lib/promise/detail/switch.h should remove these lines:
+
+The full include-list for src/core/lib/promise/detail/switch.h:
+#include <stdlib.h>  // for abort
+---
+
+
+src/core/lib/promise/detail/basic_join.h should add these lines:
+
+src/core/lib/promise/detail/basic_join.h should remove these lines:
+- #include "src/core/lib/promise/detail/promise_factory.h"  // lines 33-33
+
+The full include-list for src/core/lib/promise/detail/basic_join.h:
+#include <assert.h>                                    // for assert
+#include <stddef.h>                                    // for size_t
+#include <array>                                       // for tuple_element
+#include <tuple>                                       // for tuple
+#include <type_traits>                                 // for declval
+#include <utility>                                     // for forward
+#include "absl/types/variant.h"                        // for get_if
+#include "absl/utility/utility.h"                      // for index_sequence
+#include "src/core/lib/gprpp/bitset.h"                 // for BitSet
+#include "src/core/lib/gprpp/construct_destruct.h"     // for Construct, Des...
+#include "src/core/lib/promise/detail/promise_like.h"  // for PromiseLike
+#include "src/core/lib/promise/poll.h"                 // for Poll, Pending
+---
+
+
+src/core/lib/promise/join.h should add these lines:
+
+src/core/lib/promise/join.h should remove these lines:
+
+The full include-list for src/core/lib/promise/join.h:
+#include "absl/meta/type_traits.h"                   // for remove_reference_t
+#include "src/core/lib/promise/detail/basic_join.h"  // for BasicJoin
+---
+
+
+(src/core/lib/promise/detail/basic_seq.h has correct #includes/fwd-decls)
+
+
+(src/core/lib/promise/detail/promise_like.h has correct #includes/fwd-decls)
+
+
+src/core/lib/promise/detail/promise_factory.h should add these lines:
+
+src/core/lib/promise/detail/promise_factory.h should remove these lines:
+- #include "src/core/lib/promise/poll.h"  // lines 26-26
+
+The full include-list for src/core/lib/promise/detail/promise_factory.h:
+#include <type_traits>                                 // for declval
+#include <utility>                                     // for forward
+#include "absl/meta/type_traits.h"                     // for enable_if_t
+#include "src/core/lib/promise/detail/promise_like.h"  // for RemoveCVRef
+---
+
+
+src/core/lib/promise/arena_promise.h should add these lines:
+
+src/core/lib/promise/arena_promise.h should remove these lines:
+- #include <grpc/support/log.h>  // lines 27-27
+- #include "src/core/lib/gprpp/arena.h"  // lines 29-29
+
+The full include-list for src/core/lib/promise/arena_promise.h:
+#include <stdlib.h>                      // for abort
+#include <type_traits>                   // for is_empty
+#include <utility>                       // for forward
+#include "absl/meta/type_traits.h"       // for enable_if_t
+#include "src/core/lib/promise/poll.h"   // for Poll, Pending
+---
+
+
+(src/core/lib/promise/loop.h has correct #includes/fwd-decls)
+
+
+src/core/lib/promise/map.h should add these lines:
+
+src/core/lib/promise/map.h should remove these lines:
+
+The full include-list for src/core/lib/promise/map.h:
+#include <stddef.h>                                    // for size_t
+#include <tuple>                                       // for tuple
+#include <type_traits>                                 // for declval
+#include <utility>                                     // for forward
+#include "absl/types/variant.h"                        // for get_if
+#include "src/core/lib/promise/detail/promise_like.h"  // for PromiseLike
+#include "src/core/lib/promise/poll.h"                 // for Poll, Pending
+---
+
+
+src/core/lib/promise/poll.h should add these lines:
+
+src/core/lib/promise/poll.h should remove these lines:
+
+The full include-list for src/core/lib/promise/poll.h:
+#include <stddef.h>              // for size_t
+#include "absl/types/variant.h"  // for variant
+---
+
+
+src/core/lib/promise/promise.h should add these lines:
+
+src/core/lib/promise/promise.h should remove these lines:
+
+The full include-list for src/core/lib/promise/promise.h:
+#include <functional>                                  // for function
+#include <type_traits>                                 // for enable_if, is_...
+#include "absl/types/optional.h"                       // for optional
+#include "absl/types/variant.h"                        // for get_if
+#include "src/core/lib/promise/detail/promise_like.h"  // for PromiseLike
+#include "src/core/lib/promise/poll.h"                 // for Poll, Pending
+---
+
+
+src/core/lib/promise/race.h should add these lines:
+
+src/core/lib/promise/race.h should remove these lines:
+- #include <tuple>  // lines 20-20
+
+The full include-list for src/core/lib/promise/race.h:
+#include <type_traits>                  // for declval
+#include "absl/types/variant.h"         // for get, holds_alternative
+#include "src/core/lib/promise/poll.h"  // for Pending (ptr only), kPollRead...
+---
+
+
+src/core/lib/promise/seq.h should add these lines:
+
+src/core/lib/promise/seq.h should remove these lines:
+- #include "absl/types/variant.h"  // lines 22-22
+
+The full include-list for src/core/lib/promise/seq.h:
+#include <utility>                                  // for forward
+#include "src/core/lib/promise/detail/basic_seq.h"  // for BasicSeq
+#include "src/core/lib/promise/poll.h"              // for Poll
+---
+
+
+src/core/lib/promise/detail/status.h should add these lines:
+
+src/core/lib/promise/detail/status.h should remove these lines:
+
+The full include-list for src/core/lib/promise/detail/status.h:
+#include <utility>                 // for move
+#include "absl/status/status.h"    // for Status
+#include "absl/status/statusor.h"  // for StatusOr
+---
+
+
+src/core/lib/promise/exec_ctx_wakeup_scheduler.h should add these lines:
+
+src/core/lib/promise/exec_ctx_wakeup_scheduler.h should remove these lines:
+
+The full include-list for src/core/lib/promise/exec_ctx_wakeup_scheduler.h:
+#include "src/core/lib/gprpp/debug_location.h"  // for DEBUG_LOCATION
+#include "src/core/lib/iomgr/closure.h"         // for GRPC_CLOSURE_INIT
+#include "src/core/lib/iomgr/error.h"           // for grpc_error_handle
+#include "src/core/lib/iomgr/exec_ctx.h"        // for ExecCtx
+---
+
+
+src/core/lib/promise/if.h should add these lines:
+
+src/core/lib/promise/if.h should remove these lines:
+
+The full include-list for src/core/lib/promise/if.h:
+#include <type_traits>                                    // for declval
+#include "absl/status/statusor.h"                         // for StatusOr
+#include "absl/types/variant.h"                           // for get_if, hol...
+#include "src/core/lib/promise/detail/promise_factory.h"  // for PromiseFactory
+#include "src/core/lib/promise/detail/promise_like.h"     // for PromiseLike
+#include "src/core/lib/promise/poll.h"                    // for Poll, Pending
+---
+
+
+src/core/lib/promise/latch.h should add these lines:
+
+src/core/lib/promise/latch.h should remove these lines:
+- #include "src/core/lib/promise/activity.h"  // lines 22-22
+
+The full include-list for src/core/lib/promise/latch.h:
+#include <grpc/support/log.h>                            // for GPR_DEBUG_AS...
+#include "src/core/lib/promise/intra_activity_waiter.h"  // for IntraActivit...
+#include "src/core/lib/promise/poll.h"                   // for Poll
+---
+
+
+src/core/lib/promise/intra_activity_waiter.h should add these lines:
+
+src/core/lib/promise/intra_activity_waiter.h should remove these lines:
+
+The full include-list for src/core/lib/promise/intra_activity_waiter.h:
+#include "src/core/lib/promise/activity.h"  // for Activity
+#include "src/core/lib/promise/poll.h"      // for Pending
+---
+
+
+src/core/lib/promise/activity.h should add these lines:
+
+src/core/lib/promise/activity.h should remove these lines:
+- #include <functional>  // lines 25-25
+
+The full include-list for src/core/lib/promise/activity.h:
+#include <grpc/support/log.h>                             // for GPR_ASSERT
+#include <stddef.h>                                       // for size_t
+#include <stdint.h>                                       // for uint32_t
+#include <algorithm>                                      // for max
+#include <atomic>                                         // for atomic, mem...
+#include <memory>                                         // for unique_ptr
+#include <utility>                                        // for swap
+#include "absl/base/thread_annotations.h"                 // for ABSL_EXCLUS...
+#include "absl/status/status.h"                           // for Status, Can...
+#include "absl/types/optional.h"                          // for optional
+#include "absl/types/variant.h"                           // for get_if
+#include "absl/utility/utility.h"                         // for exchange
+#include "src/core/lib/gpr/tls.h"                         // for GPR_THREAD_...
+#include "src/core/lib/gprpp/construct_destruct.h"        // for Construct
+#include "src/core/lib/gprpp/sync.h"                      // for Mutex, Mute...
+#include "src/core/lib/promise/context.h"                 // for Context
+#include "src/core/lib/promise/detail/promise_factory.h"  // for PromiseFactory
+#include "src/core/lib/promise/detail/status.h"           // for IntoStatus
+#include "src/core/lib/promise/poll.h"                    // for kPollReadyIdx
+---
+
+
+src/core/lib/promise/for_each.h should add these lines:
+
+src/core/lib/promise/for_each.h should remove these lines:
+
+The full include-list for src/core/lib/promise/for_each.h:
+#include <type_traits>                                    // for remove_refe...
+#include <utility>                                        // for move
+#include "absl/status/status.h"                           // for OkStatus
+#include "absl/types/variant.h"                           // for get_if, var...
+#include "src/core/lib/promise/detail/promise_factory.h"  // for PromiseFactory
+#include "src/core/lib/promise/poll.h"                    // for Poll, Pending
+---
+
+
+src/core/lib/promise/activity.h should add these lines:
+
+src/core/lib/promise/activity.h should remove these lines:
+- #include <functional>  // lines 25-25
+
+The full include-list for src/core/lib/promise/activity.h:
+#include <grpc/support/log.h>                             // for GPR_ASSERT
+#include <stddef.h>                                       // for size_t
+#include <stdint.h>                                       // for uint32_t
+#include <algorithm>                                      // for max
+#include <atomic>                                         // for atomic, mem...
+#include <memory>                                         // for unique_ptr
+#include <utility>                                        // for swap
+#include "absl/base/thread_annotations.h"                 // for ABSL_EXCLUS...
+#include "absl/status/status.h"                           // for Status, Can...
+#include "absl/types/optional.h"                          // for optional
+#include "absl/types/variant.h"                           // for get_if
+#include "absl/utility/utility.h"                         // for exchange
+#include "src/core/lib/gpr/tls.h"                         // for GPR_THREAD_...
+#include "src/core/lib/gprpp/construct_destruct.h"        // for Construct
+#include "src/core/lib/gprpp/sync.h"                      // for Mutex, Mute...
+#include "src/core/lib/promise/context.h"                 // for Context
+#include "src/core/lib/promise/detail/promise_factory.h"  // for PromiseFactory
+#include "src/core/lib/promise/detail/status.h"           // for IntoStatus
+#include "src/core/lib/promise/poll.h"                    // for kPollReadyIdx
+---
+
+src/core/lib/promise/activity.cc should add these lines:
+
+src/core/lib/promise/activity.cc should remove these lines:
+
+The full include-list for src/core/lib/promise/activity.cc:
+#include "src/core/lib/promise/activity.h"
+#include "src/core/lib/gprpp/atomic_utils.h"  // for IncrementIfNonzero
+---
+
+
+src/core/lib/promise/pipe.h should add these lines:
+
+src/core/lib/promise/pipe.h should remove these lines:
+- #include "absl/status/statusor.h"  // lines 30-30
+- namespace grpc_core { template <typename T> class PipeSender; }  // lines 43-44
+
+The full include-list for src/core/lib/promise/pipe.h:
+#include <assert.h>                                       // for assert
+#include <stddef.h>                                       // for size_t
+#include <stdint.h>                                       // for uintptr_t
+#include <new>                                            // for operator new
+#include <type_traits>                                    // for remove_refe...
+#include <utility>                                        // for move
+#include "absl/container/inlined_vector.h"                // for InlinedVector
+#include "absl/status/status.h"                           // for OkStatus
+#include "absl/types/optional.h"                          // for optional
+#include "absl/types/variant.h"                           // for get_if
+#include "src/core/lib/promise/activity.h"                // for Activity
+#include "src/core/lib/promise/detail/promise_factory.h"  // for PromiseFactory
+#include "src/core/lib/promise/intra_activity_waiter.h"   // for IntraActivi...
+#include "src/core/lib/promise/poll.h"                    // for Pending, Poll
+---
+
+
+src/core/lib/promise/try_join.h should add these lines:
+
+src/core/lib/promise/try_join.h should remove these lines:
+
+The full include-list for src/core/lib/promise/try_join.h:
+#include <type_traits>                               // for declval
+#include "absl/meta/type_traits.h"                   // for remove_reference_t
+#include "absl/status/status.h"                      // for Status
+#include "absl/status/statusor.h"                    // for StatusOr
+#include "src/core/lib/promise/detail/basic_join.h"  // for BasicJoin
+#include "src/core/lib/promise/detail/status.h"      // for IntoStatus
+#include "src/core/lib/promise/poll.h"               // for PollTraits
+---
+
+
+src/core/lib/promise/try_seq.h should add these lines:
+
+src/core/lib/promise/try_seq.h should remove these lines:
+- #include <tuple>  // lines 20-20
+- #include "absl/types/variant.h"  // lines 25-25
+
+The full include-list for src/core/lib/promise/try_seq.h:
+#include <utility>                                  // for move, forward
+#include "absl/status/status.h"                     // for Status
+#include "absl/status/statusor.h"                   // for StatusOr
+#include "src/core/lib/promise/detail/basic_seq.h"  // for BasicSeq
+#include "src/core/lib/promise/poll.h"              // for Poll
+---
+
+
+src/core/lib/promise/observable.h should add these lines:
+
+src/core/lib/promise/observable.h should remove these lines:
+
+The full include-list for src/core/lib/promise/observable.h:
+#include <stdint.h>                                    // for uint64_t
+#include <limits>                                      // for numeric_limits
+#include <memory>                                      // for shared_ptr
+#include <type_traits>                                 // for declval
+#include "absl/base/thread_annotations.h"              // for ABSL_GUARDED_BY
+#include "absl/synchronization/mutex.h"                // for Mutex, MutexLock
+#include "absl/types/optional.h"                       // for optional, nullopt
+#include "absl/types/variant.h"                        // for get_if
+#include "src/core/lib/promise/activity.h"             // for Activity
+#include "src/core/lib/promise/detail/promise_like.h"  // for PromiseLike
+#include "src/core/lib/promise/poll.h"                 // for Poll, Pending
+#include "src/core/lib/promise/wait_set.h"             // for WaitSet, WaitS...
+---
+
+
+(src/core/lib/promise/wait_set.h has correct #includes/fwd-decls)
+
