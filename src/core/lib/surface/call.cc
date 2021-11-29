@@ -204,14 +204,14 @@ struct grpc_call {
   grpc_call_final_info final_info;
 
   /* Compression algorithm for *incoming* data */
-  grpc_message_compression_algorithm incoming_message_compression_algorithm =
-      GRPC_MESSAGE_COMPRESS_NONE;
+  grpc_compression_algorithm incoming_message_compression_algorithm =
+      GRPC_COMPRESS_NONE;
   /* Stream compression algorithm for *incoming* data */
-  grpc_stream_compression_algorithm incoming_stream_compression_algorithm =
-      GRPC_STREAM_COMPRESS_NONE;
+  grpc_compression_algorithm incoming_stream_compression_algorithm =
+      GRPC_COMPRESS_NONE;
   /* Supported encodings (compression algorithms), a bitset.
    * Always support no compression. */
-  uint32_t encodings_accepted_by_peer = 1 << GRPC_MESSAGE_COMPRESS_NONE;
+  uint32_t encodings_accepted_by_peer = 1 << GRPC_COMPRESS_NONE;
   /* Supported stream encodings (stream compression algorithms), a bitset */
   uint32_t stream_encodings_accepted_by_peer = 0;
 
@@ -771,14 +771,14 @@ static void set_final_status(grpc_call* call, grpc_error_handle error) {
  */
 
 static void set_incoming_message_compression_algorithm(
-    grpc_call* call, grpc_message_compression_algorithm algo) {
-  GPR_ASSERT(algo < GRPC_MESSAGE_COMPRESS_ALGORITHMS_COUNT);
+    grpc_call* call, grpc_compression_algorithm algo) {
+  GPR_ASSERT(algo < GRPC_COMPRESS_ALGORITHMS_COUNT);
   call->incoming_message_compression_algorithm = algo;
 }
 
 static void set_incoming_stream_compression_algorithm(
-    grpc_call* call, grpc_stream_compression_algorithm algo) {
-  GPR_ASSERT(algo < GRPC_STREAM_COMPRESS_ALGORITHMS_COUNT);
+    grpc_call* call, grpc_compression_algorithm algo) {
+  GPR_ASSERT(algo < GRPC_COMPRESS_ALGORITHMS_COUNT);
   call->incoming_stream_compression_algorithm = algo;
 }
 
@@ -835,13 +835,13 @@ static void set_encodings_accepted_by_peer(grpc_call* /*call*/,
     int r;
     grpc_slice accept_encoding_entry_slice = accept_encoding_parts.slices[i];
     if (!stream_encoding) {
-      r = grpc_message_compression_algorithm_parse(
+      r = grpc_compression_algorithm_parse(
           accept_encoding_entry_slice,
-          reinterpret_cast<grpc_message_compression_algorithm*>(&algorithm));
+          reinterpret_cast<grpc_compression_algorithm*>(&algorithm));
     } else {
-      r = grpc_stream_compression_algorithm_parse(
+      r = grpc_compression_algorithm_parse(
           accept_encoding_entry_slice,
-          reinterpret_cast<grpc_stream_compression_algorithm*>(&algorithm));
+          reinterpret_cast<grpc_compression_algorithm*>(&algorithm));
     }
     if (r) {
       grpc_core::SetBit(encodings_accepted_by_peer, algorithm);
@@ -869,8 +869,8 @@ uint32_t grpc_call_test_only_get_encodings_accepted_by_peer(grpc_call* call) {
   return encodings_accepted_by_peer;
 }
 
-grpc_stream_compression_algorithm
-grpc_call_test_only_get_incoming_stream_encodings(grpc_call* call) {
+grpc_compression_algorithm grpc_call_test_only_get_incoming_stream_encodings(
+    grpc_call* call) {
   return call->incoming_stream_compression_algorithm;
 }
 
@@ -913,8 +913,7 @@ static int prepare_application_metadata(grpc_call* call, int count,
   return 1;
 }
 
-static grpc_message_compression_algorithm decode_message_compression(
-    grpc_mdelem md) {
+static grpc_compression_algorithm decode_message_compression(grpc_mdelem md) {
   grpc_message_compression_algorithm algorithm =
       grpc_message_compression_algorithm_from_slice(GRPC_MDVALUE(md));
   if (algorithm == GRPC_MESSAGE_COMPRESS_ALGORITHMS_COUNT) {

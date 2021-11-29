@@ -21,26 +21,29 @@
 
 #include <grpc/support/port_platform.h>
 
+#include "absl/strings/string_view.h"
+#include "absl/types/optional.h"
+
 #include <grpc/compression.h>
-#include <grpc/slice.h>
 #include <grpc/impl/codegen/grpc_types.h>
+#include <grpc/slice.h>
 
 #include "src/core/lib/gprpp/bitset.h"
-#include "absl/types/optional.h"
-#include "absl/strings/string_view.h"
 
 namespace grpc_core {
 
-absl::optional<grpc_compression_algorithm> ParseCompressionAlgorithm(absl::string_view algorithm);
-const char *CompressionAlgorithmAsString(grpc_compression_algorithm algorithm);
+absl::optional<grpc_compression_algorithm> ParseCompressionAlgorithm(
+    absl::string_view algorithm);
+const char* CompressionAlgorithmAsString(grpc_compression_algorithm algorithm);
 
 class CompressionAlgorithmSet {
  public:
- static CompressionAlgorithmSet FromUint32(uint32_t value);
+  static CompressionAlgorithmSet FromUint32(uint32_t value);
   static CompressionAlgorithmSet FromChannelArgs(const grpc_channel_args* args);
 
-  grpc_compression_algorithm CompressionAlgorithmForLevel(grpc_compression_level level)const;
-  bool IsSet(grpc_compression_algorithm algorithm)const;
+  grpc_compression_algorithm CompressionAlgorithmForLevel(
+      grpc_compression_level level) const;
+  bool IsSet(grpc_compression_algorithm algorithm) const;
 
  private:
   BitSet<GRPC_COMPRESS_ALGORITHMS_COUNT> set_;
