@@ -38,7 +38,8 @@ namespace grpc_core {
 absl::optional<grpc_compression_algorithm> ParseCompressionAlgorithm(
     absl::string_view algorithm);
 const char* CompressionAlgorithmAsString(grpc_compression_algorithm algorithm);
-absl::optional<grpc_compression_algorithm> DefaultCompressionAlgorithmFromChannelArgs(const grpc_channel_args* args);
+absl::optional<grpc_compression_algorithm>
+DefaultCompressionAlgorithmFromChannelArgs(const grpc_channel_args* args);
 
 class CompressionAlgorithmSet {
  public:
@@ -64,6 +65,5 @@ class CompressionAlgorithmSet {
 };
 
 }  // namespace grpc_core
-
 
 #endif /* GRPC_CORE_LIB_COMPRESSION_COMPRESSION_INTERNAL_H */
