@@ -2022,7 +2022,6 @@ add_library(grpc
   src/core/lib/slice/slice_refcount.cc
   src/core/lib/slice/slice_split.cc
   src/core/lib/slice/slice_string_helpers.cc
-  src/core/lib/slice/static_slice.cc
   src/core/lib/surface/api_trace.cc
   src/core/lib/surface/builtins.cc
   src/core/lib/surface/byte_buffer.cc
@@ -2607,7 +2606,6 @@ add_library(grpc_unsecure
   src/core/lib/slice/slice_refcount.cc
   src/core/lib/slice/slice_split.cc
   src/core/lib/slice/slice_string_helpers.cc
-  src/core/lib/slice/static_slice.cc
   src/core/lib/surface/api_trace.cc
   src/core/lib/surface/builtins.cc
   src/core/lib/surface/byte_buffer.cc
@@ -5995,7 +5993,6 @@ if(_gRPC_PLATFORM_LINUX OR _gRPC_PLATFORM_POSIX)
     src/core/lib/slice/slice.cc
     src/core/lib/slice/slice_refcount.cc
     src/core/lib/slice/slice_string_helpers.cc
-    src/core/lib/slice/static_slice.cc
     test/core/resource_quota/memory_quota_stress_test.cc
   )
 
@@ -6782,7 +6779,6 @@ add_executable(slice_string_helpers_test
   src/core/lib/slice/slice.cc
   src/core/lib/slice/slice_refcount.cc
   src/core/lib/slice/slice_string_helpers.cc
-  src/core/lib/slice/static_slice.cc
   test/core/slice/slice_string_helpers_test.cc
 )
 
@@ -10483,7 +10479,6 @@ add_executable(exec_ctx_wakeup_scheduler_test
   src/core/lib/slice/slice.cc
   src/core/lib/slice/slice_refcount.cc
   src/core/lib/slice/slice_string_helpers.cc
-  src/core/lib/slice/static_slice.cc
   test/core/promise/exec_ctx_wakeup_scheduler_test.cc
   third_party/googletest/googletest/src/gtest-all.cc
   third_party/googletest/googlemock/src/gmock-all.cc
@@ -12886,7 +12881,6 @@ add_executable(memory_quota_test
   src/core/lib/slice/slice.cc
   src/core/lib/slice/slice_refcount.cc
   src/core/lib/slice/slice_string_helpers.cc
-  src/core/lib/slice/static_slice.cc
   test/core/resource_quota/memory_quota_test.cc
   third_party/googletest/googletest/src/gtest-all.cc
   third_party/googletest/googlemock/src/gmock-all.cc
@@ -14277,7 +14271,6 @@ add_executable(resource_quota_test
   src/core/lib/slice/slice.cc
   src/core/lib/slice/slice_refcount.cc
   src/core/lib/slice/slice_string_helpers.cc
-  src/core/lib/slice/static_slice.cc
   test/core/resource_quota/resource_quota_test.cc
   third_party/googletest/googletest/src/gtest-all.cc
   third_party/googletest/googlemock/src/gmock-all.cc
@@ -15632,7 +15625,6 @@ add_executable(test_core_slice_slice_test
   src/core/lib/slice/slice.cc
   src/core/lib/slice/slice_refcount.cc
   src/core/lib/slice/slice_string_helpers.cc
-  src/core/lib/slice/static_slice.cc
   test/core/slice/slice_test.cc
   test/core/util/build.cc
   third_party/googletest/googletest/src/gtest-all.cc

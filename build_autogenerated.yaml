@@ -914,7 +914,6 @@ libs:
   - src/core/lib/slice/slice_split.h
   - src/core/lib/slice/slice_string_helpers.h
   - src/core/lib/slice/slice_utils.h
-  - src/core/lib/slice/static_slice.h
   - src/core/lib/surface/api_trace.h
   - src/core/lib/surface/builtins.h
   - src/core/lib/surface/call.h
@@ -1499,7 +1498,6 @@ libs:
   - src/core/lib/slice/slice_refcount.cc
   - src/core/lib/slice/slice_split.cc
   - src/core/lib/slice/slice_string_helpers.cc
-  - src/core/lib/slice/static_slice.cc
   - src/core/lib/surface/api_trace.cc
   - src/core/lib/surface/builtins.cc
   - src/core/lib/surface/byte_buffer.cc
@@ -1950,7 +1948,6 @@ libs:
   - src/core/lib/slice/slice_split.h
   - src/core/lib/slice/slice_string_helpers.h
   - src/core/lib/slice/slice_utils.h
-  - src/core/lib/slice/static_slice.h
   - src/core/lib/surface/api_trace.h
   - src/core/lib/surface/builtins.h
   - src/core/lib/surface/call.h
@@ -2230,7 +2227,6 @@ libs:
   - src/core/lib/slice/slice_refcount.cc
   - src/core/lib/slice/slice_split.cc
   - src/core/lib/slice/slice_string_helpers.cc
-  - src/core/lib/slice/static_slice.cc
   - src/core/lib/surface/api_trace.cc
   - src/core/lib/surface/builtins.cc
   - src/core/lib/surface/byte_buffer.cc
@@ -3731,7 +3727,6 @@ targets:
   - src/core/lib/slice/slice_refcount_base.h
   - src/core/lib/slice/slice_string_helpers.h
   - src/core/lib/slice/slice_utils.h
-  - src/core/lib/slice/static_slice.h
   src:
   - src/core/lib/debug/trace.cc
   - src/core/lib/event_engine/memory_allocator.cc
@@ -3746,7 +3741,6 @@ targets:
   - src/core/lib/slice/slice.cc
   - src/core/lib/slice/slice_refcount.cc
   - src/core/lib/slice/slice_string_helpers.cc
-  - src/core/lib/slice/static_slice.cc
   - test/core/resource_quota/memory_quota_stress_test.cc
   deps:
   - absl/status:statusor
@@ -4049,13 +4043,11 @@ targets:
   - src/core/lib/slice/slice_refcount_base.h
   - src/core/lib/slice/slice_string_helpers.h
   - src/core/lib/slice/slice_utils.h
-  - src/core/lib/slice/static_slice.h
   src:
   - src/core/lib/debug/trace.cc
   - src/core/lib/slice/slice.cc
   - src/core/lib/slice/slice_refcount.cc
   - src/core/lib/slice/slice_string_helpers.cc
-  - src/core/lib/slice/static_slice.cc
   - test/core/slice/slice_string_helpers_test.cc
   deps:
   - gpr
@@ -5735,7 +5727,6 @@ targets:
   - src/core/lib/slice/slice_refcount_base.h
   - src/core/lib/slice/slice_string_helpers.h
   - src/core/lib/slice/slice_utils.h
-  - src/core/lib/slice/static_slice.h
   src:
   - src/core/lib/debug/trace.cc
   - src/core/lib/iomgr/combiner.cc
@@ -5747,7 +5738,6 @@ targets:
   - src/core/lib/slice/slice.cc
   - src/core/lib/slice/slice_refcount.cc
   - src/core/lib/slice/slice_string_helpers.cc
-  - src/core/lib/slice/static_slice.cc
   - test/core/promise/exec_ctx_wakeup_scheduler_test.cc
   deps:
   - absl/status:statusor
@@ -6782,7 +6772,6 @@ targets:
   - src/core/lib/slice/slice_refcount_base.h
   - src/core/lib/slice/slice_string_helpers.h
   - src/core/lib/slice/slice_utils.h
-  - src/core/lib/slice/static_slice.h
   - test/core/resource_quota/call_checker.h
   src:
   - src/core/lib/debug/trace.cc
@@ -6798,7 +6787,6 @@ targets:
   - src/core/lib/slice/slice.cc
   - src/core/lib/slice/slice_refcount.cc
   - src/core/lib/slice/slice_string_helpers.cc
-  - src/core/lib/slice/static_slice.cc
   - test/core/resource_quota/memory_quota_test.cc
   deps:
   - absl/status:statusor
@@ -7470,7 +7458,6 @@ targets:
   - src/core/lib/slice/slice_refcount_base.h
   - src/core/lib/slice/slice_string_helpers.h
   - src/core/lib/slice/slice_utils.h
-  - src/core/lib/slice/static_slice.h
   src:
   - src/core/lib/debug/trace.cc
   - src/core/lib/event_engine/memory_allocator.cc
@@ -7487,7 +7474,6 @@ targets:
   - src/core/lib/slice/slice.cc
   - src/core/lib/slice/slice_refcount.cc
   - src/core/lib/slice/slice_string_helpers.cc
-  - src/core/lib/slice/static_slice.cc
   - test/core/resource_quota/resource_quota_test.cc
   deps:
   - absl/status:statusor
@@ -7924,14 +7910,12 @@ targets:
   - src/core/lib/slice/slice_refcount_base.h
   - src/core/lib/slice/slice_string_helpers.h
   - src/core/lib/slice/slice_utils.h
-  - src/core/lib/slice/static_slice.h
   - test/core/util/build.h
   src:
   - src/core/lib/debug/trace.cc
   - src/core/lib/slice/slice.cc
   - src/core/lib/slice/slice_refcount.cc
   - src/core/lib/slice/slice_string_helpers.cc
-  - src/core/lib/slice/static_slice.cc
   - test/core/slice/slice_test.cc
   - test/core/util/build.cc
   deps:

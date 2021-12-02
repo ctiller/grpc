@@ -180,8 +180,8 @@ class StaticSlice : public slice_detail::BaseSlice {
   StaticSlice() = default;
   explicit StaticSlice(const grpc_slice& slice)
       : slice_detail::BaseSlice(slice) {
-    GPR_DEBUG_ASSERT(
-        slice.refcount->GetType() == grpc_slice_refcount::Type::NOP);
+    GPR_DEBUG_ASSERT(slice.refcount->GetType() ==
+                     grpc_slice_refcount::Type::NOP);
   }
   explicit StaticSlice(const StaticMetadataSlice& slice)
       : slice_detail::BaseSlice(slice) {}
