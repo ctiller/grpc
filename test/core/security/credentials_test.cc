@@ -312,7 +312,7 @@ static void test_empty_md_array(void) {
   grpc_core::CredentialsMetadataArray md_array;
   md_array = {};
   GPR_ASSERT(md_array.md == nullptr);
-  GPR_ASSERT(md_array.size == 0);
+  GPR_ASSERT(md_array.empty());
   grpc_credentials_mdelem_array_destroy(&md_array);
 }
 

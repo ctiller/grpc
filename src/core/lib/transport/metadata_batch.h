@@ -717,8 +717,8 @@ class MetadataMap {
 
   // Similar to Encode, but targeted at logging: for each metadatum,
   // call f(key, value) as absl::string_views.
-  void Log(
-      absl::FunctionRef<void(absl::string_view, absl::string_view)> f) const;
+  void Log(absl::FunctionRef<void(absl::string_view, absl::string_view)> log_fn)
+      const;
 
   // Get the pointer to the value of some known metadata.
   // Returns nullptr if the metadata is not present.
@@ -880,7 +880,7 @@ class MetadataMap {
     }
 
     template <class T>
-    void Encode(T trait, const grpc_core::Slice& value) {
+    void Encode(T trait, const Slice& value) {
       dst_->Set(trait, std::move(value.AsOwned()));
     }
 
