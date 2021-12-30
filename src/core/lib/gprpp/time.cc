@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <grpc/support/port_platform.h>
+
 #include "src/core/lib/gprpp/time.h"
 
 #include <limits>
@@ -23,7 +25,7 @@ namespace grpc_core {
 namespace {
 
 gpr_timespec MillisecondsAsTimespec(int64_t millis, gpr_clock_type clock_type) {
-  // special-case infinities as grpc_core::Timestamp can be 32bit on some
+  // special-case infinities as Timestamp can be 32bit on some
   // platforms while gpr_time_from_millis always takes an int64_t.
   if (millis == std::numeric_limits<int64_t>::max()) {
     return gpr_inf_future(clock_type);
