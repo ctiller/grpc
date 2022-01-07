@@ -207,9 +207,9 @@ grpc_cc_test(
     language = "c++",
     uses_polling = False,
     deps = [
-        "//:try_seq",
-        "//:grpc_base",
         "//:grpc",
+        "//:grpc_base",
+        "//:try_seq",
         "//test/core/util:grpc_suppressions",
     ],
 )
