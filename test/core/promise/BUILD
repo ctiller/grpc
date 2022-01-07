@@ -201,6 +201,20 @@ grpc_cc_test(
 )
 
 grpc_cc_test(
+    name = "try_seq_metadata_test",
+    srcs = ["try_seq_metadata_test.cc"],
+    external_deps = ["gtest"],
+    language = "c++",
+    uses_polling = False,
+    deps = [
+        "//:try_seq",
+        "//:grpc_base",
+        "//:grpc",
+        "//test/core/util:grpc_suppressions",
+    ],
+)
+
+grpc_cc_test(
     name = "activity_test",
     srcs = ["activity_test.cc"],
     external_deps = ["gtest"],
