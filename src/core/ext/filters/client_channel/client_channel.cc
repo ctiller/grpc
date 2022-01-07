@@ -48,13 +48,10 @@
 #include "src/core/ext/filters/client_channel/lb_policy_registry.h"
 #include "src/core/ext/filters/client_channel/local_subchannel_pool.h"
 #include "src/core/ext/filters/client_channel/proxy_mapper_registry.h"
-#include "src/core/ext/filters/client_channel/resolver_registry.h"
 #include "src/core/ext/filters/client_channel/resolver_result_parsing.h"
 #include "src/core/ext/filters/client_channel/retry_filter.h"
 #include "src/core/ext/filters/client_channel/subchannel.h"
 #include "src/core/ext/filters/deadline/deadline_filter.h"
-#include "src/core/ext/service_config/service_config.h"
-#include "src/core/ext/service_config/service_config_call_data.h"
 #include "src/core/lib/backoff/backoff.h"
 #include "src/core/lib/channel/channel_args.h"
 #include "src/core/lib/channel/connected_channel.h"
@@ -65,6 +62,9 @@
 #include "src/core/lib/iomgr/polling_entity.h"
 #include "src/core/lib/iomgr/work_serializer.h"
 #include "src/core/lib/profiling/timers.h"
+#include "src/core/lib/resolver/resolver_registry.h"
+#include "src/core/lib/service_config/service_config.h"
+#include "src/core/lib/service_config/service_config_call_data.h"
 #include "src/core/lib/slice/slice_internal.h"
 #include "src/core/lib/slice/slice_string_helpers.h"
 #include "src/core/lib/surface/channel.h"
@@ -2406,7 +2406,16 @@ class ClientChannel::LoadBalancedCall::Metadata
   explicit Metadata(grpc_metadata_batch* batch) : batch_(batch) {}
 
   void Add(absl::string_view key, absl::string_view value) override {
-    batch_->Append(key, Slice::FromCopiedString(value),
+    // Gross, egregious hack to support legacy grpclb behavior.
+    // TODO(ctiller): Use a promise context for this once that plumbing is done.
+    if (key == GrpcLbClientStatsMetadata::key()) {
+      batch_->Set(
+          GrpcLbClientStatsMetadata(),
+          const_cast<GrpcLbClientStats*>(
+              reinterpret_cast<const GrpcLbClientStats*>(value.data())));
+      return;
+    }
+    batch_->Append(key, Slice::FromStaticString(value),
                    [key](absl::string_view error, const Slice& value) {
                      gpr_log(GPR_ERROR, "%s",
                              absl::StrCat(error, " key:", key,
@@ -2431,7 +2440,8 @@ class ClientChannel::LoadBalancedCall::Metadata
   class Encoder {
    public:
     void Encode(const Slice& key, const Slice& value) {
-      out_.emplace_back(key.as_string_view(), value.as_string_view());
+      out_.emplace_back(std::string(key.as_string_view()),
+                        std::string(value.as_string_view()));
     }
 
     template <class Which>
@@ -2443,6 +2453,8 @@ class ClientChannel::LoadBalancedCall::Metadata
 
     void Encode(GrpcTimeoutMetadata, grpc_millis) {}
     void Encode(HttpPathMetadata, const Slice&) {}
+    void Encode(HttpMethodMetadata,
+                const typename HttpMethodMetadata::ValueType&) {}
 
     std::vector<std::pair<std::string, std::string>> Take() {
       return std::move(out_);

@@ -138,7 +138,7 @@ class ParsedMetadata {
   // Construct metadata from a string key, slice value pair.
   ParsedMetadata(Slice key, Slice value)
       : vtable_(ParsedMetadata::KeyValueVTable(key.as_string_view())),
-        transport_size_(value.size()) {
+        transport_size_(key.size() + value.size() + 32) {
     value_.pointer =
         new std::pair<Slice, Slice>(std::move(key), std::move(value));
   }
@@ -265,9 +265,11 @@ ParsedMetadata<MetadataContainer>::TrivialTraitVTable() {
       metadata_detail::DestroyTrivialMemento,
       // set
       [](const Buffer& value, MetadataContainer* map) {
-        map->Set(Which(),
-                 metadata_detail::FieldFromTrivial<typename Which::MementoType>(
-                     value));
+        map->Set(
+            Which(),
+            Which::MementoToValue(
+                metadata_detail::FieldFromTrivial<typename Which::MementoType>(
+                    value)));
       },
       // with_new_value
       WithNewValueSetTrivial<typename Which::MementoType, Which::ParseMemento>,
@@ -355,14 +357,14 @@ ParsedMetadata<MetadataContainer>::KeyValueVTable(absl::string_view key) {
     auto* p = static_cast<KV*>(value.pointer);
     map->AppendUnknown(p->first.as_string_view(), p->second.Ref());
   };
-  static const auto with_new_value =
-      [](Slice* value, MetadataParseErrorFn on_error, ParsedMetadata* result) {
-        auto* p = new KV{
-            static_cast<KV*>(result->value_.pointer)->first.Ref(),
-            std::move(*value),
-        };
-        result->value_.pointer = p;
-      };
+  static const auto with_new_value = [](Slice* value, MetadataParseErrorFn,
+                                        ParsedMetadata* result) {
+    auto* p = new KV{
+        static_cast<KV*>(result->value_.pointer)->first.Ref(),
+        std::move(*value),
+    };
+    result->value_.pointer = p;
+  };
   static const auto debug_string = [](const Buffer& value) {
     auto* p = static_cast<KV*>(value.pointer);
     return absl::StrCat(p->first.as_string_view(), ": ",

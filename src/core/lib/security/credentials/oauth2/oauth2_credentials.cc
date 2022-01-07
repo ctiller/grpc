@@ -210,7 +210,7 @@ grpc_oauth2_token_fetcher_credentials_parse_server_response(
   }
 
 end:
-  *token_value = absl::nullopt;
+  if (status != GRPC_CREDENTIALS_OK) *token_value = absl::nullopt;
   gpr_free(null_terminated_body);
   return status;
 }
@@ -703,8 +703,6 @@ grpc_call_credentials* grpc_sts_credentials_create(
 //
 // Oauth2 Access Token credentials.
 //
-
-grpc_access_token_credentials::~grpc_access_token_credentials() = default;
 
 bool grpc_access_token_credentials::get_request_metadata(
     grpc_polling_entity* /*pollent*/, grpc_auth_metadata_context /*context*/,

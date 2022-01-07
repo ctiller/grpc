@@ -115,14 +115,15 @@ void ServerLoadReportingCallData::StartTransportStreamOpBatch(
     original_recv_initial_metadata_ready_ = op->recv_initial_metadata_ready();
     // Substitute the original closure for the wrapper closure.
     op->set_recv_initial_metadata_ready(&recv_initial_metadata_ready_);
-  } else if (op->send_trailing_metadata() != nullptr) {
-    auto cost = op->send_trailing_metadata()->batch()->Take(
+  }
+  if (op->send_trailing_metadata() != nullptr) {
+    const auto& costs = op->send_trailing_metadata()->batch()->Take(
         grpc_core::LbCostBinMetadata());
-    if (cost.has_value()) {
+    for (const auto& cost : costs) {
       ServerLoadReportingChannelData* chand =
           reinterpret_cast<ServerLoadReportingChannelData*>(elem->channel_data);
       opencensus::stats::Record(
-          {{::grpc::load_reporter::MeasureOtherCallMetric(), cost->cost}},
+          {{::grpc::load_reporter::MeasureOtherCallMetric(), cost.cost}},
           {{::grpc::load_reporter::TagKeyToken(),
             {client_ip_and_lr_token_, client_ip_and_lr_token_len_}},
            {::grpc::load_reporter::TagKeyHost(),
@@ -130,10 +131,10 @@ void ServerLoadReportingCallData::StartTransportStreamOpBatch(
            {::grpc::load_reporter::TagKeyUserId(),
             {chand->peer_identity(), chand->peer_identity_len()}},
            {::grpc::load_reporter::TagKeyMetricName(),
-            {cost->name.data(), cost->name.length()}}});
+            {cost.name.data(), cost.name.length()}}});
     }
-    grpc_call_next_op(elem, op->op());
   }
+  grpc_call_next_op(elem, op->op());
 }
 
 std::string ServerLoadReportingCallData::GetCensusSafeClientIpString() {
@@ -235,14 +236,13 @@ void ServerLoadReportingCallData::RecvInitialMetadataReady(
       calld->target_host_ = absl::AsciiStrToLower(authority->as_string_view());
     }
     std::string buffer;
-    auto lb_token = calld->recv_initial_metadata_->GetStringValue(
-        grpc_core::kGrpcLbLbTokenMetadataKey, &buffer);
+    auto lb_token =
+        calld->recv_initial_metadata_->Take(grpc_core::LbTokenMetadata());
     if (lb_token.has_value()) {
       if (calld->client_ip_and_lr_token_ == nullptr) {
-        calld->StoreClientIpAndLrToken(lb_token->data(), lb_token->size());
+        calld->StoreClientIpAndLrToken(
+            reinterpret_cast<const char*>(lb_token->data()), lb_token->size());
       }
-      calld->recv_initial_metadata_->Remove(
-          grpc_core::kGrpcLbLbTokenMetadataKey);
     }
     // If the LB token was not found in the recv_initial_metadata, only the
     // client IP part will be recorded (with an empty LB token).

@@ -132,6 +132,11 @@ class ChunkedVector {
       }
       return *this;
     }
+    ForwardIterator& operator++(int) {
+      ForwardIterator tmp = *this;
+      ++*this;
+      return tmp;
+    }
     bool operator==(const ForwardIterator& other) const {
       return chunk_ == other.chunk_ && n_ == other.n_;
     }
@@ -162,6 +167,11 @@ class ChunkedVector {
         n_ = 0;
       }
       return *this;
+    }
+    ConstForwardIterator& operator++(int) {
+      ConstForwardIterator tmp = *this;
+      ++*this;
+      return tmp;
     }
     bool operator==(const ConstForwardIterator& other) const {
       return chunk_ == other.chunk_ && n_ == other.n_;
@@ -205,10 +215,10 @@ class ChunkedVector {
   void SetEnd(ForwardIterator it) {
     if (it == end()) return;
     Chunk* chunk = it.chunk_;
-    for (size_t i = it.n_ + 1; i < chunk->count; i++) {
+    for (size_t i = it.n_; i < chunk->count; i++) {
       chunk->data[i].Destroy();
     }
-    chunk->count = it.n_ + 1;
+    chunk->count = it.n_;
     append_ = chunk;
     while ((chunk = chunk->next) != nullptr) {
       for (size_t i = 0; i < chunk->count; i++) {
