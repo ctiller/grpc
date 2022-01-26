@@ -18,6 +18,7 @@
 #include <grpc/support/port_platform.h>
 
 #include <algorithm>
+#include <atomic>
 #include <cstddef>
 #include <limits>
 #include <memory>
@@ -27,6 +28,7 @@
 #include <grpc/event_engine/memory_allocator.h>
 #include <grpc/slice.h>
 
+#include "src/core/lib/gprpp/mpscq.h"
 #include "src/core/lib/gprpp/orphanable.h"
 #include "src/core/lib/gprpp/sync.h"
 #include "src/core/lib/promise/activity.h"
@@ -113,11 +115,52 @@ using ReclamationFunction =
 
 class ReclaimerQueue {
  public:
-  using Index = size_t;
+  class Handle : public InternallyRefCounted<Handle> {
+   public:
+    Handle() = default;
+    template <typename F>
+    explicit Handle(F reclaimer)
+        : sweep_(new SweepFn<F>{std::move(reclaimer)}) {}
+    ~Handle() override {
+      GPR_DEBUG_ASSERT(sweep_.load(std::memory_order_relaxed) == nullptr);
+    }
 
-  // An invalid index usable as an empty value.
-  // This value will not be returned from Insert ever.
-  static constexpr Index kInvalidIndex = std::numeric_limits<Index>::max();
+    Handle(const Handle&) = delete;
+    Handle& operator=(const Handle&) = delete;
+
+    void Orphan() final;
+    void Run(ReclamationSweep reclamation_sweep);
+    void Requeue(ReclaimerQueue* new_queue);
+
+   private:
+    friend class ReclaimerQueue;
+    using InternallyRefCounted<Handle>::Ref;
+
+    class Sweep {
+     public:
+      virtual void RunAndDelete(absl::optional<ReclamationSweep> sweep) = 0;
+
+     protected:
+      ~Sweep() = default;
+    };
+
+    template <typename F>
+    class SweepFn final : public Sweep {
+     public:
+      explicit SweepFn(F&& f) : f_(std::move(f)) {}
+      void RunAndDelete(absl::optional<ReclamationSweep> sweep) override {
+        f_(std::move(sweep));
+        delete this;
+      }
+
+     private:
+      F f_;
+    };
+
+    std::atomic<Sweep*> sweep_{nullptr};
+  };
+
+  ~ReclaimerQueue();
 
   // Insert a new element at the back of the queue.
   // If there is already an element from allocator at *index, then it is
@@ -125,55 +168,37 @@ class ReclaimerQueue {
   // then *index is set to the index of the newly queued entry.
   // Associates the reclamation function with an allocator, and keeps that
   // allocator alive, so that we can use the pointer as an ABA guard.
-  void Insert(std::shared_ptr<EventEngineMemoryAllocatorImpl> allocator,
-              ReclamationFunction reclaimer, Index* index)
-      ABSL_LOCKS_EXCLUDED(mu_);
-  // Cancel a reclamation function - returns the function if cancelled
-  // successfully, or nullptr if the reclamation was already begun and could not
-  // be cancelled. allocator must be the same as was passed to Insert.
-  ReclamationFunction Cancel(Index index,
-                             EventEngineMemoryAllocatorImpl* allocator)
-      ABSL_LOCKS_EXCLUDED(mu_);
+  GRPC_MUST_USE_RESULT OrphanablePtr<Handle> Insert(
+      ReclamationFunction reclaimer);
   // Poll to see if an entry is available: returns Pending if not, or the
   // removed reclamation function if so.
-  Poll<ReclamationFunction> PollNext() ABSL_LOCKS_EXCLUDED(mu_);
+  Poll<RefCountedPtr<Handle>> PollNext();
 
   // This callable is the promise backing Next - it resolves when there is an
   // entry available. This really just redirects to calling PollNext().
   class NextPromise {
    public:
     explicit NextPromise(ReclaimerQueue* queue) : queue_(queue) {}
-    Poll<ReclamationFunction> operator()() { return queue_->PollNext(); }
+    Poll<RefCountedPtr<Handle>> operator()() { return queue_->PollNext(); }
 
    private:
     // Borrowed ReclaimerQueue backing this promise.
     ReclaimerQueue* queue_;
   };
-  NextPromise Next() { return NextPromise(this); }
+  GRPC_MUST_USE_RESULT NextPromise Next() { return NextPromise(this); }
 
  private:
-  // One entry in the reclaimer queue
-  struct Entry {
-    Entry(std::shared_ptr<EventEngineMemoryAllocatorImpl> allocator,
-          ReclamationFunction reclaimer)
-        : allocator(std::move(allocator)), reclaimer(reclaimer) {}
-    // The allocator we'd be reclaiming for.
-    std::shared_ptr<EventEngineMemoryAllocatorImpl> allocator;
-    // The reclamation function to call.
-    ReclamationFunction reclaimer;
+  struct QueuedNode : public MultiProducerSingleConsumerQueue::Node {
+    explicit QueuedNode(RefCountedPtr<Handle> reclaimer_handle)
+        : reclaimer_handle(std::move(reclaimer_handle)) {}
+    RefCountedPtr<Handle> reclaimer_handle;
   };
-  // Guarding mutex.
-  Mutex mu_;
-  // Entries in the queue (or empty entries waiting to be queued).
-  // We actually queue indices into this vector - and do this so that
-  // we can use the memory allocator pointer as an ABA protection.
-  std::vector<Entry> entries_ ABSL_GUARDED_BY(mu_);
-  // Which entries in entries_ are not allocated right now.
-  std::vector<size_t> free_entries_ ABSL_GUARDED_BY(mu_);
-  // Allocated entries waiting to be consumed.
-  std::queue<Index> queue_ ABSL_GUARDED_BY(mu_);
-  // Potentially one activity can be waiting for new entries on the queue.
-  Waker waker_ ABSL_GUARDED_BY(mu_);
+
+  void Enqueue(RefCountedPtr<Handle> handle);
+
+  MultiProducerSingleConsumerQueue queue_;
+  Mutex waker_mu_;
+  Waker waker_ ABSL_GUARDED_BY(waker_mu_);
 };
 
 class BasicMemoryQuota final
@@ -201,19 +226,8 @@ class BasicMemoryQuota final
   // Instantaneous memory pressure approximation.
   std::pair<double, size_t>
   InstantaneousPressureAndMaxRecommendedAllocationSize() const;
-  // Cancel a reclaimer
-  ReclamationFunction CancelReclaimer(
-      size_t reclaimer, typename ReclaimerQueue::Index index,
-      EventEngineMemoryAllocatorImpl* allocator) {
-    return reclaimers_[reclaimer].Cancel(index, allocator);
-  }
-  // Insert a reclaimer
-  void InsertReclaimer(
-      size_t reclaimer,
-      std::shared_ptr<EventEngineMemoryAllocatorImpl> allocator,
-      ReclamationFunction fn, ReclaimerQueue::Index* index) {
-    reclaimers_[reclaimer].Insert(std::move(allocator), std::move(fn), index);
-  }
+  // Get a reclamation queue
+  ReclaimerQueue* reclaimer_queue(size_t i) { return &reclaimers_[i]; }
 
   // The name of this quota
   absl::string_view name() const { return name_; }
@@ -301,6 +315,8 @@ class GrpcMemoryAllocatorImpl final : public EventEngineMemoryAllocatorImpl {
   void MaybeRegisterReclaimer() ABSL_LOCKS_EXCLUDED(memory_quota_mu_);
   void MaybeRegisterReclaimerLocked()
       ABSL_EXCLUSIVE_LOCKS_REQUIRED(memory_quota_mu_);
+  void InsertReclaimer(size_t pass, ReclamationFunction fn)
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(memory_quota_mu_);
 
   // Amount of memory this allocator has cached for its own use: to avoid quota
   // contention, each MemoryAllocator can keep some memory in addition to what
@@ -316,13 +332,12 @@ class GrpcMemoryAllocatorImpl final : public EventEngineMemoryAllocatorImpl {
   size_t taken_bytes_ ABSL_GUARDED_BY(memory_quota_mu_) =
       sizeof(GrpcMemoryAllocatorImpl);
   bool shutdown_ ABSL_GUARDED_BY(memory_quota_mu_) = false;
+  bool registered_reclaimer_ ABSL_GUARDED_BY(memory_quota_mu_) = false;
   // Indices into the various reclaimer queues, used so that we can cancel
   // reclamation should we shutdown or get rebound.
-  ReclaimerQueue::Index
-      reclamation_indices_[kNumReclamationPasses] ABSL_GUARDED_BY(
-          memory_quota_mu_) = {
-          ReclaimerQueue::kInvalidIndex, ReclaimerQueue::kInvalidIndex,
-          ReclaimerQueue::kInvalidIndex, ReclaimerQueue::kInvalidIndex};
+  OrphanablePtr<ReclaimerQueue::Handle>
+      reclamation_handles_[kNumReclamationPasses] ABSL_GUARDED_BY(
+          memory_quota_mu_);
   // Name of this allocator.
   std::string name_;
 };
