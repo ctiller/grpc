@@ -272,8 +272,7 @@ void GrpcMemoryAllocatorImpl::Rebind(
   if (memory_quota_ == memory_quota) return;
   // Return memory to the original memory quota.
   memory_quota_->Return(taken_bytes_);
-  // Fetch back any reclaimers that are queued.
-  ReclamationFunction reclaimers[kNumReclamationPasses];
+  // Reassign any queued reclaimers
   for (size_t i = 0; i < kNumReclamationPasses; i++) {
     if (reclamation_handles_[i] != nullptr) {
       reclamation_handles_[i]->Requeue(memory_quota->reclaimer_queue(i));
@@ -287,11 +286,6 @@ void GrpcMemoryAllocatorImpl::Rebind(
   taken_bytes_ -= free_bytes_.exchange(0, std::memory_order_acq_rel);
   // And let the new quota know how much we're already using.
   memory_quota_->Take(taken_bytes_);
-  // Reinsert active reclaimers.
-  for (size_t i = 0; i < kNumReclamationPasses; i++) {
-    if (reclaimers[i] == nullptr) continue;
-    InsertReclaimer(i, std::move(reclaimers[i]));
-  }
 }
 
 void GrpcMemoryAllocatorImpl::PostReclaimer(ReclamationPass pass,
