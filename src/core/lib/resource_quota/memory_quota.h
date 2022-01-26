@@ -110,9 +110,6 @@ class ReclamationSweep {
   uint64_t sweep_token_;
 };
 
-using ReclamationFunction =
-    std::function<void(absl::optional<ReclamationSweep>)>;
-
 class ReclaimerQueue {
  public:
   class Handle : public InternallyRefCounted<Handle> {
@@ -168,8 +165,13 @@ class ReclaimerQueue {
   // then *index is set to the index of the newly queued entry.
   // Associates the reclamation function with an allocator, and keeps that
   // allocator alive, so that we can use the pointer as an ABA guard.
-  GRPC_MUST_USE_RESULT OrphanablePtr<Handle> Insert(
-      ReclamationFunction reclaimer);
+  template <typename F>
+  GRPC_MUST_USE_RESULT OrphanablePtr<Handle> Insert(F reclaimer) {
+    auto p = MakeOrphanable<Handle>(std::move(reclaimer));
+    Enqueue(p->Ref());
+    return p;
+  }
+
   // Poll to see if an entry is available: returns Pending if not, or the
   // removed reclamation function if so.
   Poll<RefCountedPtr<Handle>> PollNext();
@@ -289,7 +291,12 @@ class GrpcMemoryAllocatorImpl final : public EventEngineMemoryAllocatorImpl {
   }
 
   // Post a reclamation function.
-  void PostReclaimer(ReclamationPass pass, ReclamationFunction fn);
+  template <typename F>
+  void PostReclaimer(ReclamationPass pass, F fn) {
+    MutexLock lock(&memory_quota_mu_);
+    GPR_ASSERT(!shutdown_);
+    InsertReclaimer(static_cast<size_t>(pass), std::move(fn));
+  }
 
   // Shutdown the allocator.
   void Shutdown() override;
@@ -315,8 +322,12 @@ class GrpcMemoryAllocatorImpl final : public EventEngineMemoryAllocatorImpl {
   void MaybeRegisterReclaimer() ABSL_LOCKS_EXCLUDED(memory_quota_mu_);
   void MaybeRegisterReclaimerLocked()
       ABSL_EXCLUSIVE_LOCKS_REQUIRED(memory_quota_mu_);
-  void InsertReclaimer(size_t pass, ReclamationFunction fn)
-      ABSL_EXCLUSIVE_LOCKS_REQUIRED(memory_quota_mu_);
+  template <typename F>
+  void InsertReclaimer(size_t pass, F fn)
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(memory_quota_mu_) {
+    reclamation_handles_[pass] =
+        memory_quota_->reclaimer_queue(pass)->Insert(std::move(fn));
+  }
 
   // Amount of memory this allocator has cached for its own use: to avoid quota
   // contention, each MemoryAllocator can keep some memory in addition to what
@@ -358,7 +369,8 @@ class MemoryOwner final : public MemoryAllocator {
       : MemoryAllocator(std::move(allocator)) {}
 
   // Post a reclaimer for some reclamation pass.
-  void PostReclaimer(ReclamationPass pass, ReclamationFunction fn) {
+  template <typename F>
+  void PostReclaimer(ReclamationPass pass, F fn) {
     impl()->PostReclaimer(pass, std::move(fn));
   }
 

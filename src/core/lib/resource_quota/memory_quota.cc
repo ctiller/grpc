@@ -71,13 +71,6 @@ ReclaimerQueue::~ReclaimerQueue() {
   } while (!empty);
 }
 
-OrphanablePtr<ReclaimerQueue::Handle> ReclaimerQueue::Insert(
-    ReclamationFunction reclaimer) {
-  auto p = MakeOrphanable<Handle>(std::move(reclaimer));
-  Enqueue(p->Ref());
-  return p;
-}
-
 void ReclaimerQueue::Enqueue(RefCountedPtr<Handle> handle) {
   if (queue_.Push(new QueuedNode(std::move(handle)))) {
     MutexLock lock(&waker_mu_);
@@ -259,12 +252,6 @@ void GrpcMemoryAllocatorImpl::MaybeRegisterReclaimerLocked() {
   });
 }
 
-void GrpcMemoryAllocatorImpl::InsertReclaimer(size_t pass,
-                                              ReclamationFunction fn) {
-  reclamation_handles_[pass] =
-      memory_quota_->reclaimer_queue(pass)->Insert(std::move(fn));
-}
-
 void GrpcMemoryAllocatorImpl::Rebind(
     std::shared_ptr<BasicMemoryQuota> memory_quota) {
   MutexLock lock(&memory_quota_mu_);
@@ -286,13 +273,6 @@ void GrpcMemoryAllocatorImpl::Rebind(
   taken_bytes_ -= free_bytes_.exchange(0, std::memory_order_acq_rel);
   // And let the new quota know how much we're already using.
   memory_quota_->Take(taken_bytes_);
-}
-
-void GrpcMemoryAllocatorImpl::PostReclaimer(ReclamationPass pass,
-                                            ReclamationFunction fn) {
-  MutexLock lock(&memory_quota_mu_);
-  GPR_ASSERT(!shutdown_);
-  InsertReclaimer(static_cast<size_t>(pass), std::move(fn));
 }
 
 //
