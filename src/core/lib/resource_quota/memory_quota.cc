@@ -18,6 +18,7 @@
 
 #include "src/core/lib/gpr/useful.h"
 #include "src/core/lib/promise/exec_ctx_wakeup_scheduler.h"
+#include "src/core/lib/promise/join.h"
 #include "src/core/lib/promise/loop.h"
 #include "src/core/lib/promise/map.h"
 #include "src/core/lib/promise/race.h"
@@ -361,11 +362,30 @@ void BasicMemoryQuota::Start() {
         return Continue{};
       }));
 
-  reclaimer_activity_ =
-      MakeActivity(std::move(reclamation_loop), ExecCtxWakeupScheduler(),
-                   [](absl::Status status) {
-                     GPR_ASSERT(status.code() == absl::StatusCode::kCancelled);
-                   });
+  auto make_cycler = [self](size_t pass) {
+    grpc_millis timeout = 1000;
+    return [pass, timeout, self]() mutable {
+      Loop(Seq([&timeout] { return Sleep(ExecCtx::Get()->Now() + timeout); },
+               [&timeout, pass, self]() -> LoopCtl<absl::Status> {
+                 if (self->reclaimers_[pass].TryCycle()) {
+                   // Found a cancelled reclaimer: speed up our timeout.
+                   timeout /= 2;
+                 } else if (timeout < 60000) {
+                   // No cancelled reclaimer: slow down our polling.
+                   timeout += 1;
+                 }
+                 return Continue{};
+               }));
+    };
+  };
+
+  auto main_loop = Join(std::move(reclamation_loop), make_cycler(0),
+                        make_cycler(1), make_cycler(2), make_cycler(3));
+
+  reclaimer_activity_ = MakeActivity(
+      std::move(main_loop), ExecCtxWakeupScheduler(), [](absl::Status status) {
+        GPR_ASSERT(status.code() == absl::StatusCode::kCancelled);
+      });
 }
 
 void BasicMemoryQuota::Stop() { reclaimer_activity_.reset(); }

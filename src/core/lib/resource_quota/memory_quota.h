@@ -189,6 +189,15 @@ class ReclaimerQueue {
   };
   GRPC_MUST_USE_RESULT NextPromise Next() { return NextPromise(this); }
 
+  // Instantaneously: Take the first element from the queue.
+  // If it's been cancelled, remove it and return true.
+  // If it's still active, add it back at the end of the queue and return false.
+  // If the queue was empty, return false.
+  // We use this to periodically flush out cancelled reclaimers from the queue
+  // even when we are not reclaiming memory - it violates FIFO a little, but
+  // it's expected in a way that doesn't totally throw away fairness.
+  bool TryCycle();
+
  private:
   struct QueuedNode : public MultiProducerSingleConsumerQueue::Node {
     explicit QueuedNode(RefCountedPtr<Handle> reclaimer_handle)
