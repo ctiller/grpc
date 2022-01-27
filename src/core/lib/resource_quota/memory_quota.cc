@@ -23,6 +23,7 @@
 #include "src/core/lib/promise/map.h"
 #include "src/core/lib/promise/race.h"
 #include "src/core/lib/promise/seq.h"
+#include "src/core/lib/promise/sleep.h"
 #include "src/core/lib/resource_quota/trace.h"
 
 namespace grpc_core {
