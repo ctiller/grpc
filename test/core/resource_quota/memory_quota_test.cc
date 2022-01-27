@@ -18,6 +18,8 @@
 
 #include "absl/synchronization/notification.h"
 
+#include <grpc/grpc.h>
+
 #include "src/core/lib/iomgr/exec_ctx.h"
 #include "src/core/lib/slice/slice_refcount.h"
 #include "test/core/resource_quota/call_checker.h"
@@ -55,14 +57,22 @@ TEST(MemoryRequestTest, MinMax) {
 // MemoryQuotaTest
 //
 
-TEST(MemoryQuotaTest, NoOp) { MemoryQuota("foo"); }
+TEST(MemoryQuotaTest, NoOp) {
+  ExecCtx exec_ctx;
+
+  MemoryQuota("foo");
+}
 
 TEST(MemoryQuotaTest, CreateAllocatorNoOp) {
+  ExecCtx exec_ctx;
+
   MemoryQuota memory_quota("foo");
   auto memory_allocator = memory_quota.CreateMemoryAllocator("bar");
 }
 
 TEST(MemoryQuotaTest, CreateObjectFromAllocator) {
+  ExecCtx exec_ctx;
+
   MemoryQuota memory_quota("foo");
   auto memory_allocator = memory_quota.CreateMemoryAllocator("bar");
   auto object = memory_allocator.MakeUnique<Sized<4096>>();
@@ -144,6 +154,8 @@ TEST(MemoryQuotaTest, BasicRebind) {
 }
 
 TEST(MemoryQuotaTest, ReserveRangeNoPressure) {
+  ExecCtx exec_ctx;
+
   MemoryQuota memory_quota("foo");
   auto memory_allocator = memory_quota.CreateMemoryAllocator("bar");
   size_t total = 0;
@@ -156,6 +168,8 @@ TEST(MemoryQuotaTest, ReserveRangeNoPressure) {
 }
 
 TEST(MemoryQuotaTest, MakeSlice) {
+  ExecCtx exec_ctx;
+
   MemoryQuota memory_quota("foo");
   auto memory_allocator = memory_quota.CreateMemoryAllocator("bar");
   std::vector<grpc_slice> slices;
@@ -170,6 +184,8 @@ TEST(MemoryQuotaTest, MakeSlice) {
 }
 
 TEST(MemoryQuotaTest, ContainerAllocator) {
+  ExecCtx exec_ctx;
+
   MemoryQuota memory_quota("foo");
   auto memory_allocator = memory_quota.CreateMemoryAllocator("bar");
   Vector<int> vec(&memory_allocator);
@@ -181,11 +197,10 @@ TEST(MemoryQuotaTest, ContainerAllocator) {
 }  // namespace testing
 }  // namespace grpc_core
 
-// Hook needed to run ExecCtx outside of iomgr.
-void grpc_set_default_iomgr_platform() {}
-
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
-  gpr_log_verbosity_init();
-  return RUN_ALL_TESTS();
+  grpc_init();
+  auto r = RUN_ALL_TESTS();
+  grpc_shutdown();
+  return r;
 }

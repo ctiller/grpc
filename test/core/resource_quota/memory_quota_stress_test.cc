@@ -15,6 +15,8 @@
 #include <random>
 #include <thread>
 
+#include <grpc/grpc.h>
+
 #include "src/core/lib/iomgr/exec_ctx.h"
 #include "src/core/lib/resource_quota/memory_quota.h"
 
@@ -25,6 +27,7 @@ class StressTest {
  public:
   // Create a stress test with some size.
   StressTest(size_t num_quotas, size_t num_allocators) {
+    ExecCtx exec_ctx;
     for (size_t i = 0; i < num_quotas; ++i) {
       quotas_.emplace_back(absl::StrCat("quota[", i, "]"));
     }
@@ -34,6 +37,12 @@ class StressTest {
       allocators_.emplace_back(quotas_[dist(g)].CreateMemoryOwner(
           absl::StrCat("allocator[", i, "]")));
     }
+  }
+
+  ~StressTest() {
+    ExecCtx exec_ctx;
+    quotas_.clear();
+    allocators_.clear();
   }
 
   // Run the thread for some period of time.
@@ -220,5 +229,7 @@ int main(int, char**) {
         "platform independent, we simply skip this test in 32-bit builds.");
     return 0;
   }
+  grpc_init();
   grpc_core::StressTest(16, 64).Run(8);
+  grpc_shutdown();
 }

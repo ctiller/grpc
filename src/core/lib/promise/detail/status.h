@@ -22,6 +22,8 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 
+#include "src/core/lib/promise/poll.h"
+
 // Helpers for dealing with absl::Status/StatusOr generically
 
 namespace grpc_core {
@@ -38,12 +40,39 @@ inline absl::Status IntoStatus(absl::Status* status) {
   return std::move(*status);
 }
 
+// Given a promise that returns a StatusOr<T>, return a promise that returns a
+// Status.
+template <typename Promise>
+class FlattenStatus {
+ public:
+  explicit FlattenStatus(Promise&& promise) : promise_(std::move(promise)) {}
+
+  Poll<absl::Status> operator()() {
+    auto r = promise_();
+    if (absl::holds_alternative<Pending>(r)) {
+      return Pending{};
+    }
+    return absl::get<kPollReadyIdx>(r).status();
+  }
+
+ private:
+  Promise promise_;
+};
+
 }  // namespace promise_detail
-}  // namespace grpc_core
+
+// Given a promise that returns a StatusOr<T>, return a promise that returns a
+// Status.
+template <typename Promise>
+promise_detail::FlattenStatus<Promise> FlattenStatus(Promise promise) {
+  return promise_detail::FlattenStatus<Promise>(std::move(promise));
+}
 
 // Return true if the status represented by the argument is ok, false if not.
 // By implementing this function for other, non-absl::Status types, those types
 // can participate in TrySeq as result types that affect control flow.
 inline bool IsStatusOk(const absl::Status& status) { return status.ok(); }
+
+}  // namespace grpc_core
 
 #endif  // GRPC_CORE_LIB_PROMISE_DETAIL_STATUS_H

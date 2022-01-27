@@ -1088,7 +1088,7 @@ grpc_cc_library(
     deps = [
         "activity",
         "gpr_platform",
-        "grpc_base",
+        "iomgr_timer",
         "poll",
     ],
 )
@@ -1508,7 +1508,6 @@ grpc_cc_library(
         "event_engine_memory_allocator",
         "exec_ctx_wakeup_scheduler",
         "gpr_base",
-        "join",
         "loop",
         "map",
         "orphanable",
@@ -1519,6 +1518,7 @@ grpc_cc_library(
         "seq",
         "sleep",
         "slice_refcount",
+        "try_join",
         "useful",
     ],
 )

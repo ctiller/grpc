@@ -64,7 +64,6 @@ class Immediate {
  private:
   T value_;
 };
-
 }  // namespace promise_detail
 
 // Return \a value immediately

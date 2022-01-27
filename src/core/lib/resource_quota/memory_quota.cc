@@ -18,12 +18,12 @@
 
 #include "src/core/lib/gpr/useful.h"
 #include "src/core/lib/promise/exec_ctx_wakeup_scheduler.h"
-#include "src/core/lib/promise/join.h"
 #include "src/core/lib/promise/loop.h"
 #include "src/core/lib/promise/map.h"
 #include "src/core/lib/promise/race.h"
 #include "src/core/lib/promise/seq.h"
 #include "src/core/lib/promise/sleep.h"
+#include "src/core/lib/promise/try_join.h"
 #include "src/core/lib/resource_quota/trace.h"
 
 namespace grpc_core {
@@ -41,7 +41,7 @@ static constexpr size_t kMinReplenishBytes = 4096;
 
 ReclamationSweep::~ReclamationSweep() {
   if (memory_quota_ != nullptr) {
-    memory_quota_->FinishReclamation(sweep_token_);
+    memory_quota_->FinishReclamation(sweep_token_, std::move(waker_));
   }
 }
 
@@ -62,8 +62,13 @@ void ReclaimerQueue::Handle::Run(ReclamationSweep reclamation_sweep) {
   }
 }
 
-void ReclaimerQueue::Handle::Requeue(ReclaimerQueue* new_queue) {
-  new_queue->Enqueue(Ref());
+bool ReclaimerQueue::Handle::Requeue(ReclaimerQueue* new_queue) {
+  if (sweep_.load(std::memory_order_relaxed)) {
+    new_queue->Enqueue(Ref());
+    return true;
+  } else {
+    return false;
+  }
 }
 
 ReclaimerQueue::~ReclaimerQueue() {
@@ -108,6 +113,14 @@ Poll<RefCountedPtr<ReclaimerQueue::Handle>> ReclaimerQueue::PollNext() {
     }
   }
   return Pending{};
+}
+
+bool ReclaimerQueue::MaybeCycle() {
+  bool empty = false;
+  std::unique_ptr<QueuedNode> node(
+      static_cast<QueuedNode*>(queue_.PopAndCheckEnd(&empty)));
+  if (node == nullptr) return false;
+  return node->reclaimer_handle->Requeue(this);
 }
 
 //
@@ -352,7 +365,8 @@ void BasicMemoryQuota::Start() {
         const uint64_t token =
             self->reclamation_counter_.fetch_add(1, std::memory_order_relaxed) +
             1;
-        reclaimer->Run(ReclamationSweep(self, token));
+        reclaimer->Run(ReclamationSweep(
+            self, token, Activity::current()->MakeNonOwningWaker()));
         // Return a promise that will wait for our barrier. This will be
         // awoken by the token above being destroyed. So, once that token is
         // destroyed, we'll be able to proceed.
@@ -364,24 +378,26 @@ void BasicMemoryQuota::Start() {
       }));
 
   auto make_cycler = [self](size_t pass) {
-    grpc_millis timeout = 1000;
-    return [pass, timeout, self]() mutable {
-      Loop(Seq([&timeout] { return Sleep(ExecCtx::Get()->Now() + timeout); },
-               [&timeout, pass, self]() -> LoopCtl<absl::Status> {
-                 if (self->reclaimers_[pass].TryCycle()) {
-                   // Found a cancelled reclaimer: speed up our timeout.
-                   timeout /= 2;
-                 } else if (timeout < 60000) {
-                   // No cancelled reclaimer: slow down our polling.
-                   timeout += 1;
-                 }
-                 return Continue{};
-               }));
-    };
+    auto timeout = std::make_shared<grpc_millis>(1000);
+    return Loop([timeout, pass, self] {
+      return Seq(Sleep(ExecCtx::Get()->Now() + *timeout),
+                 [timeout, pass, self]() -> LoopCtl<absl::Status> {
+                   if (self->reclaimers_[pass].MaybeCycle()) {
+                     // Found a cancelled reclaimer: speed up our timeout.
+                     *timeout = std::max(*timeout * 3 / 2,
+                                         static_cast<grpc_millis>(1));
+                   } else if (*timeout < 60000) {
+                     // No cancelled reclaimer: slow down our polling.
+                     *timeout += 1;
+                   }
+                   return Continue{};
+                 });
+    });
   };
 
-  auto main_loop = Join(std::move(reclamation_loop), make_cycler(0),
-                        make_cycler(1), make_cycler(2), make_cycler(3));
+  auto main_loop =
+      FlattenStatus(TryJoin(std::move(reclamation_loop), make_cycler(0),
+                            make_cycler(1), make_cycler(2), make_cycler(3)));
 
   reclaimer_activity_ = MakeActivity(
       std::move(main_loop), ExecCtxWakeupScheduler(), [](absl::Status status) {
@@ -414,7 +430,7 @@ void BasicMemoryQuota::Take(size_t amount) {
   }
 }
 
-void BasicMemoryQuota::FinishReclamation(uint64_t token) {
+void BasicMemoryQuota::FinishReclamation(uint64_t token, Waker waker) {
   uint64_t current = reclamation_counter_.load(std::memory_order_relaxed);
   if (current != token) return;
   if (reclamation_counter_.compare_exchange_strong(current, current + 1,
@@ -423,7 +439,7 @@ void BasicMemoryQuota::FinishReclamation(uint64_t token) {
     if (GRPC_TRACE_FLAG_ENABLED(grpc_resource_quota_trace)) {
       gpr_log(GPR_INFO, "RQ: %s reclamation complete", name_.c_str());
     }
-    if (reclaimer_activity_ != nullptr) reclaimer_activity_->ForceWakeup();
+    waker.Wakeup();
   }
 }
 

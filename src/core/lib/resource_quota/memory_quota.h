@@ -82,8 +82,10 @@ class ReclamationSweep {
  public:
   ReclamationSweep() = default;
   ReclamationSweep(std::shared_ptr<BasicMemoryQuota> memory_quota,
-                   uint64_t sweep_token)
-      : memory_quota_(std::move(memory_quota)), sweep_token_(sweep_token) {}
+                   uint64_t sweep_token, Waker waker)
+      : memory_quota_(std::move(memory_quota)),
+        sweep_token_(sweep_token),
+        waker_(std::move(waker)) {}
   ~ReclamationSweep();
 
   ReclamationSweep(const ReclamationSweep&) = delete;
@@ -108,6 +110,7 @@ class ReclamationSweep {
  private:
   std::shared_ptr<BasicMemoryQuota> memory_quota_;
   uint64_t sweep_token_;
+  Waker waker_;
 };
 
 class ReclaimerQueue {
@@ -127,7 +130,7 @@ class ReclaimerQueue {
 
     void Orphan() final;
     void Run(ReclamationSweep reclamation_sweep);
-    void Requeue(ReclaimerQueue* new_queue);
+    bool Requeue(ReclaimerQueue* new_queue);
 
    private:
     friend class ReclaimerQueue;
@@ -196,7 +199,7 @@ class ReclaimerQueue {
   // We use this to periodically flush out cancelled reclaimers from the queue
   // even when we are not reclaiming memory - it violates FIFO a little, but
   // it's expected in a way that doesn't totally throw away fairness.
-  bool TryCycle();
+  bool MaybeCycle();
 
  private:
   struct QueuedNode : public MultiProducerSingleConsumerQueue::Node {
@@ -231,7 +234,7 @@ class BasicMemoryQuota final
   // overcommit.
   void Take(size_t amount);
   // Finish reclamation pass.
-  void FinishReclamation(uint64_t token);
+  void FinishReclamation(uint64_t token, Waker waker);
   // Return some memory to the quota.
   void Return(size_t amount);
   // Instantaneous memory pressure approximation.

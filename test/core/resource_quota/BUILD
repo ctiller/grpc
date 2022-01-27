@@ -37,6 +37,7 @@ grpc_cc_test(
     uses_polling = False,
     deps = [
         "call_checker",
+        "//:grpc",
         "//:memory_quota",
         "//test/core/util:grpc_suppressions",
     ],
@@ -65,6 +66,7 @@ grpc_cc_test(
     language = "c++",
     uses_polling = False,
     deps = [
+        "//:grpc",
         "//:resource_quota",
         "//test/core/util:grpc_suppressions",
     ],
@@ -82,6 +84,7 @@ grpc_cc_test(
     ],
     uses_polling = False,
     deps = [
+        "//:grpc",
         "//:memory_quota",
         "//test/core/util:grpc_suppressions",
     ],
@@ -97,6 +100,7 @@ grpc_proto_fuzzer(
     uses_polling = False,
     deps = [
         "call_checker",
+        "//:grpc",
         "//:memory_quota",
         "//test/core/util:grpc_test_util",
     ],
