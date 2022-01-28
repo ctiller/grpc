@@ -7735,29 +7735,6 @@ endif()
 if(gRPC_BUILD_TESTS)
 
 add_executable(arena_promise_test
-  src/core/lib/debug/trace.cc
-  src/core/lib/event_engine/event_engine.cc
-  src/core/lib/event_engine/memory_allocator.cc
-  src/core/lib/iomgr/combiner.cc
-  src/core/lib/iomgr/error.cc
-  src/core/lib/iomgr/exec_ctx.cc
-  src/core/lib/iomgr/executor.cc
-  src/core/lib/iomgr/iomgr_internal.cc
-  src/core/lib/iomgr/time_averaged_stats.cc
-  src/core/lib/iomgr/timer.cc
-  src/core/lib/iomgr/timer_custom.cc
-  src/core/lib/iomgr/timer_generic.cc
-  src/core/lib/iomgr/timer_heap.cc
-  src/core/lib/promise/activity.cc
-  src/core/lib/promise/sleep.cc
-  src/core/lib/resource_quota/arena.cc
-  src/core/lib/resource_quota/memory_quota.cc
-  src/core/lib/resource_quota/resource_quota.cc
-  src/core/lib/resource_quota/thread_quota.cc
-  src/core/lib/resource_quota/trace.cc
-  src/core/lib/slice/slice.cc
-  src/core/lib/slice/slice_refcount.cc
-  src/core/lib/slice/slice_string_helpers.cc
   test/core/promise/arena_promise_test.cc
   third_party/googletest/googletest/src/gtest-all.cc
   third_party/googletest/googlemock/src/gmock-all.cc
@@ -7785,9 +7762,7 @@ target_include_directories(arena_promise_test
 target_link_libraries(arena_promise_test
   ${_gRPC_PROTOBUF_LIBRARIES}
   ${_gRPC_ALLTARGETS_LIBRARIES}
-  absl::statusor
-  absl::variant
-  gpr
+  grpc
 )
 
 
@@ -8955,29 +8930,6 @@ endif()
 if(gRPC_BUILD_TESTS)
 
 add_executable(chunked_vector_test
-  src/core/lib/debug/trace.cc
-  src/core/lib/event_engine/event_engine.cc
-  src/core/lib/event_engine/memory_allocator.cc
-  src/core/lib/iomgr/combiner.cc
-  src/core/lib/iomgr/error.cc
-  src/core/lib/iomgr/exec_ctx.cc
-  src/core/lib/iomgr/executor.cc
-  src/core/lib/iomgr/iomgr_internal.cc
-  src/core/lib/iomgr/time_averaged_stats.cc
-  src/core/lib/iomgr/timer.cc
-  src/core/lib/iomgr/timer_custom.cc
-  src/core/lib/iomgr/timer_generic.cc
-  src/core/lib/iomgr/timer_heap.cc
-  src/core/lib/promise/activity.cc
-  src/core/lib/promise/sleep.cc
-  src/core/lib/resource_quota/arena.cc
-  src/core/lib/resource_quota/memory_quota.cc
-  src/core/lib/resource_quota/resource_quota.cc
-  src/core/lib/resource_quota/thread_quota.cc
-  src/core/lib/resource_quota/trace.cc
-  src/core/lib/slice/slice.cc
-  src/core/lib/slice/slice_refcount.cc
-  src/core/lib/slice/slice_string_helpers.cc
   test/core/gprpp/chunked_vector_test.cc
   third_party/googletest/googletest/src/gtest-all.cc
   third_party/googletest/googlemock/src/gmock-all.cc
@@ -9005,10 +8957,7 @@ target_include_directories(chunked_vector_test
 target_link_libraries(chunked_vector_test
   ${_gRPC_PROTOBUF_LIBRARIES}
   ${_gRPC_ALLTARGETS_LIBRARIES}
-  absl::statusor
-  absl::variant
-  absl::utility
-  gpr
+  grpc
 )
 
 
@@ -10717,29 +10666,6 @@ endif()
 if(gRPC_BUILD_TESTS)
 
 add_executable(for_each_test
-  src/core/lib/debug/trace.cc
-  src/core/lib/event_engine/event_engine.cc
-  src/core/lib/event_engine/memory_allocator.cc
-  src/core/lib/iomgr/combiner.cc
-  src/core/lib/iomgr/error.cc
-  src/core/lib/iomgr/exec_ctx.cc
-  src/core/lib/iomgr/executor.cc
-  src/core/lib/iomgr/iomgr_internal.cc
-  src/core/lib/iomgr/time_averaged_stats.cc
-  src/core/lib/iomgr/timer.cc
-  src/core/lib/iomgr/timer_custom.cc
-  src/core/lib/iomgr/timer_generic.cc
-  src/core/lib/iomgr/timer_heap.cc
-  src/core/lib/promise/activity.cc
-  src/core/lib/promise/sleep.cc
-  src/core/lib/resource_quota/arena.cc
-  src/core/lib/resource_quota/memory_quota.cc
-  src/core/lib/resource_quota/resource_quota.cc
-  src/core/lib/resource_quota/thread_quota.cc
-  src/core/lib/resource_quota/trace.cc
-  src/core/lib/slice/slice.cc
-  src/core/lib/slice/slice_refcount.cc
-  src/core/lib/slice/slice_string_helpers.cc
   test/core/promise/for_each_test.cc
   third_party/googletest/googletest/src/gtest-all.cc
   third_party/googletest/googlemock/src/gmock-all.cc
@@ -10768,9 +10694,7 @@ target_link_libraries(for_each_test
   ${_gRPC_PROTOBUF_LIBRARIES}
   ${_gRPC_ALLTARGETS_LIBRARIES}
   absl::flat_hash_set
-  absl::statusor
-  absl::variant
-  gpr
+  grpc
 )
 
 
@@ -13387,29 +13311,6 @@ endif()
 if(gRPC_BUILD_TESTS)
 
 add_executable(pipe_test
-  src/core/lib/debug/trace.cc
-  src/core/lib/event_engine/event_engine.cc
-  src/core/lib/event_engine/memory_allocator.cc
-  src/core/lib/iomgr/combiner.cc
-  src/core/lib/iomgr/error.cc
-  src/core/lib/iomgr/exec_ctx.cc
-  src/core/lib/iomgr/executor.cc
-  src/core/lib/iomgr/iomgr_internal.cc
-  src/core/lib/iomgr/time_averaged_stats.cc
-  src/core/lib/iomgr/timer.cc
-  src/core/lib/iomgr/timer_custom.cc
-  src/core/lib/iomgr/timer_generic.cc
-  src/core/lib/iomgr/timer_heap.cc
-  src/core/lib/promise/activity.cc
-  src/core/lib/promise/sleep.cc
-  src/core/lib/resource_quota/arena.cc
-  src/core/lib/resource_quota/memory_quota.cc
-  src/core/lib/resource_quota/resource_quota.cc
-  src/core/lib/resource_quota/thread_quota.cc
-  src/core/lib/resource_quota/trace.cc
-  src/core/lib/slice/slice.cc
-  src/core/lib/slice/slice_refcount.cc
-  src/core/lib/slice/slice_string_helpers.cc
   test/core/promise/pipe_test.cc
   third_party/googletest/googletest/src/gtest-all.cc
   third_party/googletest/googlemock/src/gmock-all.cc
@@ -13437,9 +13338,7 @@ target_include_directories(pipe_test
 target_link_libraries(pipe_test
   ${_gRPC_PROTOBUF_LIBRARIES}
   ${_gRPC_ALLTARGETS_LIBRARIES}
-  absl::statusor
-  absl::variant
-  gpr
+  grpc
 )
 
 
