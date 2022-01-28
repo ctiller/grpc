@@ -16,10 +16,15 @@
 
 #include <gtest/gtest.h>
 
+#include <grpc/grpc.h>
+
+#include "src/core/lib/iomgr/exec_ctx.h"
+
 namespace grpc_core {
 namespace testing {
 
 TEST(ResourceQuotaTest, Works) {
+  ExecCtx exec_ctx;
   auto q = MakeRefCounted<ResourceQuota>("foo");
   EXPECT_NE(q->thread_quota(), nullptr);
   EXPECT_NE(q->memory_quota(), nullptr);
@@ -30,5 +35,8 @@ TEST(ResourceQuotaTest, Works) {
 
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+  grpc_init();
+  auto r = RUN_ALL_TESTS();
+  grpc_shutdown();
+  return r;
 }

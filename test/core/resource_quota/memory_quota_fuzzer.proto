@@ -40,6 +40,7 @@ message Action {
     int32 allocation = 3;
     oneof action_type {
         Empty flush_exec_ctx = 7;
+        uint32 increment_time = 8;
         Empty create_quota = 10;
         Empty delete_quota = 11;
         Empty create_allocator = 12;

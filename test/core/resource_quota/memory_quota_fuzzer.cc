@@ -16,6 +16,7 @@
 
 #include "src/core/lib/gpr/useful.h"
 #include "src/core/lib/iomgr/exec_ctx.h"
+#include "src/core/lib/iomgr/timer.h"
 #include "src/core/lib/resource_quota/memory_quota.h"
 #include "src/libfuzzer/libfuzzer_macro.h"
 #include "test/core/resource_quota/call_checker.h"
@@ -44,6 +45,8 @@ class Fuzzer {
  public:
   void Run(const memory_quota_fuzzer::Msg& msg) {
     ExecCtx exec_ctx;
+    exec_ctx.TestOnlySetNow(1);
+    grpc_timer_list_init();
     RunMsg(msg);
     do {
       memory_quotas_.clear();
@@ -52,6 +55,7 @@ class Fuzzer {
       exec_ctx.Flush();
     } while (!memory_quotas_.empty() || !memory_allocators_.empty() ||
              !allocations_.empty());
+    grpc_timer_list_shutdown();
   }
 
  private:
@@ -61,6 +65,11 @@ class Fuzzer {
       switch (action.action_type_case()) {
         case memory_quota_fuzzer::Action::kFlushExecCtx:
           ExecCtx::Get()->Flush();
+          break;
+        case memory_quota_fuzzer::Action::kIncrementTime:
+          ExecCtx::Get()->TestOnlySetNow(ExecCtx::Get()->Now() +
+                                         action.increment_time());
+          grpc_timer_check(nullptr);
           break;
         case memory_quota_fuzzer::Action::kCreateQuota:
           memory_quotas_.emplace(action.quota(),
@@ -175,8 +184,11 @@ class Fuzzer {
 
 static void dont_log(gpr_log_func_args* /*args*/) {}
 
+extern grpc_timer_vtable grpc_generic_timer_vtable;
+
 DEFINE_PROTO_FUZZER(const memory_quota_fuzzer::Msg& msg) {
   if (squelch) gpr_set_log_function(dont_log);
+  grpc_set_timer_impl(&grpc_generic_timer_vtable);
   gpr_log_verbosity_init();
   grpc_tracer_init();
   grpc_core::testing::Fuzzer().Run(msg);
