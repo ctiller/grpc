@@ -75,6 +75,7 @@ grpc_cc_test(
     uses_polling = False,
     deps = [
         "//:arena_promise",
+        "//:grpc",
         "//:resource_quota",
         "//test/core/util:grpc_suppressions",
     ],
@@ -270,6 +271,7 @@ grpc_cc_test(
     deps = [
         "test_wakeup_schedulers",
         "//:for_each",
+        "//:grpc",
         "//:join",
         "//:map",
         "//:observable",
@@ -288,6 +290,7 @@ grpc_cc_test(
     uses_polling = False,
     deps = [
         "test_wakeup_schedulers",
+        "//:grpc",
         "//:join",
         "//:pipe",
         "//:promise",

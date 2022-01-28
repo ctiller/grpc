@@ -134,6 +134,7 @@ class PhonyEndpoint : public grpc_endpoint {
 class Fixture {
  public:
   Fixture(const grpc::ChannelArguments& args, bool client) {
+    grpc_core::ExecCtx exec_ctx;
     grpc_channel_args c_args = args.c_channel_args();
     ep_ = new PhonyEndpoint;
     const grpc_channel_args* final_args = grpc_core::CoreConfiguration::Get()

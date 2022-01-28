@@ -25,6 +25,7 @@
 #include <grpc/support/time.h>
 
 #include "src/core/lib/config/core_configuration.h"
+#include "src/core/lib/iomgr/exec_ctx.h"
 #include "test/core/end2end/cq_verifier.h"
 #include "test/core/end2end/end2end_tests.h"
 
@@ -34,6 +35,7 @@ static grpc_end2end_test_fixture begin_test(grpc_end2end_test_config config,
                                             const char* test_name,
                                             grpc_channel_args* client_args,
                                             grpc_channel_args* server_args) {
+  grpc_core::ExecCtx exec_ctx;
   grpc_end2end_test_fixture f;
   gpr_log(GPR_INFO, "Running test: %s/%s", test_name, config.name);
   client_args =

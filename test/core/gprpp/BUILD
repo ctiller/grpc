@@ -306,6 +306,7 @@ grpc_cc_test(
     deps = [
         "//:chunked_vector",
         "//:gpr_base",
+        "//:grpc",
         "//:resource_quota",
         "//test/core/util:grpc_suppressions",
     ],
