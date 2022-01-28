@@ -192,7 +192,7 @@ class ReclaimerQueue {
   };
   GRPC_MUST_USE_RESULT NextPromise Next() { return NextPromise(this); }
 
-  // Instantaneously: Take the first element from the queue.
+  // Take the first element from the queue.
   // If it's been cancelled, remove it and return true.
   // If it's still active, add it back at the end of the queue and return false.
   // If the queue was empty, return false.
