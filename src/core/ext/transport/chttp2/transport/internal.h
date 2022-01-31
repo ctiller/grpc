@@ -216,9 +216,9 @@ class Chttp2IncomingByteStream : public ByteStream {
 
   void Orphan() override;
 
-  bool Next(size_t max_size_hint, grpc_closure* on_complete) override;
-  grpc_error_handle Pull(grpc_slice* slice) override;
-  void Shutdown(grpc_error_handle error) override;
+  bool Next(size_t max_size_hint, grpc_closure* on_complete);
+  grpc_error_handle Pull(grpc_slice* slice);
+  void Shutdown(grpc_error_handle error);
 
   // TODO(roth): When I converted this class to C++, I wanted to make it
   // inherit from RefCounted or InternallyRefCounted instead of continuing
