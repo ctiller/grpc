@@ -153,7 +153,7 @@ class ArenaPromise {
   template <typename Callable,
             typename Ignored =
                 absl::enable_if_t<!std::is_same<Callable, ArenaPromise>::value>>
-  ArenaPromise(Callable&& callable)
+  explicit ArenaPromise(Callable&& callable)
       : impl_(arena_promise_detail::MakeImplForCallable<T>(
             std::forward<Callable>(callable))) {}
 
