@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WAKE_ACTIVITY_CLOSURE_H
-#define WAKE_ACTIVITY_CLOSURE_H
+#ifndef GRPC_CORE_LIB_PROMISE_WAKE_ACTIVITY_CLOSURE_H
+#define GRPC_CORE_LIB_PROMISE_WAKE_ACTIVITY_CLOSURE_H
 
 #include <grpc/support/port_platform.h>
 
@@ -26,4 +26,4 @@ grpc_closure* MakeWakeActivityClosure();
 
 }  // namespace grpc_core
 
-#endif
+#endif  // GRPC_CORE_LIB_PROMISE_WAKE_ACTIVITY_CLOSURE_H
