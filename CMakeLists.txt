@@ -9705,6 +9705,7 @@ target_link_libraries(core_configuration_test
   ${_gRPC_ALLTARGETS_LIBRARIES}
   absl::base
   absl::core_headers
+  absl::flat_hash_map
   absl::memory
   absl::random_random
   absl::status

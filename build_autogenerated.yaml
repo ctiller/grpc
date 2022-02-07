@@ -5471,6 +5471,7 @@ targets:
   deps:
   - absl/base:base
   - absl/base:core_headers
+  - absl/container:flat_hash_map
   - absl/memory:memory
   - absl/random:random
   - absl/status:status
