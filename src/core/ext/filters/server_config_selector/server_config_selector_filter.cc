@@ -101,7 +101,7 @@ ArenaPromise<TrailingMetadata> ServerConfigSelectorFilter::MakeCallPromise(
   auto sel = config_selector();
   if (!sel.ok()) return Immediate(sel.status());
   auto call_config =
-      config_selector.value()->GetCallConfig(calld->recv_initial_metadata_);
+      config_selector().value()->GetCallConfig(calld->recv_initial_metadata_);
   if (call_config.error != GRPC_ERROR_NONE) {
     return grpc_error_to_absl_status(call_config.error);
   }
