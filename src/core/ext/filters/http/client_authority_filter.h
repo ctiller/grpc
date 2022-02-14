@@ -39,7 +39,7 @@ class ClientAuthorityFilter : public ChannelFilter {
   // Construct a promise for one call.
   ArenaPromise<TrailingMetadata> MakeCallPromise(
       ClientInitialMetadata initial_metadata,
-      NextPromiseFactory next_promise_factory);
+      NextPromiseFactory next_promise_factory) override;
 
  private:
   explicit ClientAuthorityFilter(Slice default_authority)
