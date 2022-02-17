@@ -68,10 +68,10 @@ class ChannelIdleFilter : public ChannelFilter {
       const grpc_channel_args* args, ChannelFilter::Args filter_args);
   ~ChannelIdleFilter() override = default;
 
-  ChannelIdleFilter(const ClientIdleFilter&) = delete;
-  ChannelIdleFilter& operator=(const ClientIdleFilter&) = delete;
-  ChannelIdleFilter(ClientIdleFilter&&) = default;
-  ChannelIdleFilter& operator=(ClientIdleFilter&&) = default;
+  ChannelIdleFilter(const ChannelIdleFilter&) = delete;
+  ChannelIdleFilter& operator=(const ChannelIdleFilter&) = delete;
+  ChannelIdleFilter(ChannelIdleFilter&&) = default;
+  ChannelIdleFilter& operator=(ChannelIdleFilter&&) = default;
 
   // Construct a promise for one call.
   ArenaPromise<TrailingMetadata> MakeCallPromise(
@@ -82,7 +82,7 @@ class ChannelIdleFilter : public ChannelFilter {
 
  private:
   ChannelIdleFilter(grpc_channel_stack* channel_stack,
-                   grpc_millis client_idle_timeout)
+                    grpc_millis client_idle_timeout)
       : channel_stack_(channel_stack),
         client_idle_timeout_(client_idle_timeout) {}
 
@@ -109,7 +109,7 @@ class ChannelIdleFilter : public ChannelFilter {
 absl::StatusOr<ChannelIdleFilter> ChannelIdleFilter::Create(
     const grpc_channel_args* args, ChannelFilter::Args filter_args) {
   ChannelIdleFilter filter(filter_args.channel_stack(),
-                          GetClientIdleTimeout(args));
+                           GetClientIdleTimeout(args));
   return absl::StatusOr<ChannelIdleFilter>(std::move(filter));
 }
 
