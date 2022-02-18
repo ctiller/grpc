@@ -26,7 +26,6 @@
 
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_format.h"
-#include "server_load_reporting_filter.h"
 
 #include <grpc/grpc_security.h>
 #include <grpc/slice.h>
@@ -35,6 +34,7 @@
 
 #include "src/core/ext/filters/client_channel/lb_policy/grpclb/grpclb.h"
 #include "src/core/ext/filters/load_reporting/registered_opencensus_objects.h"
+#include "src/core/ext/filters/load_reporting/server_load_reporting_filter.h"
 #include "src/core/lib/address_utils/parse_address.h"
 #include "src/core/lib/channel/channel_args.h"
 #include "src/core/lib/channel/channel_stack_builder.h"

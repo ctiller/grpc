@@ -22,7 +22,6 @@
 #include <grpc/support/port_platform.h>
 
 #include "absl/utility/utility.h"
-#include "channel_stack.h"
 
 #include <grpc/status.h>
 #include <grpc/support/log.h>
@@ -64,7 +63,7 @@ class CallFinalization {
     FuncFinalizer(F&& f, Finalizer* next)
         : next_(next), f_(std::forward<F>(f)) {}
 
-    void Run(const grpc_call_final_info& final_info) {
+    void Run(const grpc_call_final_info& final_info) override {
       f_(final_info);
       Finalizer* next = next_;
       this->~FuncFinalizer();
