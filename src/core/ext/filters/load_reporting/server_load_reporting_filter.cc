@@ -208,10 +208,9 @@ ServerLoadReportingFilter::MakeCallPromise(
                {::grpc::load_reporter::TagKeyMetricName(),
                 {cost.name.data(), cost.name.length()}}});
         }
-        trailing_metadata
-            ->GetOrCreatePointer(grpc_core::CallSerializationComplete())
-            ->emplace_back([this, client_ip_and_lr_token, target_host](
-                               const grpc_call_final_info& final_info) {
+        grpc_core::GetContext<grpc_core::CallFinalization>()->Add(
+            [this, client_ip_and_lr_token,
+             target_host](const grpc_call_final_info& final_info) {
               opencensus::stats::Record(
                   {{::grpc::load_reporter::MeasureEndCount(), 1},
                    {::grpc::load_reporter::MeasureEndBytesSent(),

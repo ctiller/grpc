@@ -530,15 +530,6 @@ struct PeerString {
   static std::string DisplayValue(ValueType x) { return std::string(x); }
 };
 
-// For trailing metadata: attachment point for callbacks to make once the call
-// has finished writing to the wire.
-struct CallSerializationComplete {
-  static absl::string_view DebugKey() { return "CallSerializationComplete"; }
-  static constexpr bool kRepeatable = true;
-  using ValueType = std::function<void(const grpc_call_final_info&)>;
-  static std::string DisplayValue(ValueType) { return "<callback>"; }
-};
-
 // Annotation added by various systems to describe the reason for a failure.
 struct GrpcStatusContext {
   static absl::string_view DebugKey() { return "GrpcStatusContext"; }
@@ -1369,7 +1360,7 @@ using grpc_metadata_batch_base = grpc_core::MetadataMap<
     grpc_core::LbCostBinMetadata, grpc_core::LbTokenMetadata,
     // Non-encodable things
     grpc_core::GrpcStreamNetworkState, grpc_core::PeerString,
-    grpc_core::CallSerializationComplete, grpc_core::GrpcStatusContext>;
+    grpc_core::GrpcStatusContext>;
 
 struct grpc_metadata_batch : public grpc_metadata_batch_base {
   using grpc_metadata_batch_base::grpc_metadata_batch_base;
