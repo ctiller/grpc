@@ -124,4 +124,4 @@ class ServiceConfigImpl final : public ServiceConfig {
 
 }  // namespace grpc_core
 
-#endif /* GRPC_CORE_LIB_SERVICE_CONFIG_SERVICE_CONFIG_H */
+#endif /* GRPC_CORE_LIB_SERVICE_CONFIG_SERVICE_CONFIG_IMPL_H */
