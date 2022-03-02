@@ -786,9 +786,7 @@
     "uses_polling": false
   },
   {
-    "args": [
-      "--resolver=ares"
-    ],
+    "args": [],
     "benchmark": false,
     "ci_platforms": [
       "linux",
@@ -812,9 +810,7 @@
     "uses_polling": true
   },
   {
-    "args": [
-      "--resolver=native"
-    ],
+    "args": [],
     "benchmark": false,
     "ci_platforms": [
       "linux",

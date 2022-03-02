@@ -3556,8 +3556,6 @@ targets:
   - test/core/client_channel/resolvers/dns_resolver_connectivity_test.cc
   deps:
   - grpc_test_util
-  args:
-  - --resolver=ares
 - name: dns_resolver_connectivity_using_native_test
   build: test
   language: c
@@ -3566,8 +3564,6 @@ targets:
   - test/core/client_channel/resolvers/dns_resolver_connectivity_test.cc
   deps:
   - grpc_test_util
-  args:
-  - --resolver=native
 - name: dns_resolver_cooldown_test
   build: test
   language: c
