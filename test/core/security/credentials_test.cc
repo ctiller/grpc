@@ -450,9 +450,9 @@ class RequestMetadataState : public RefCounted<RequestMetadataState> {
     activity_ = MakeActivity(
         [this, creds] {
           return Seq(creds->GetRequestMetadata(
-                         ClientInitialMetadata::TestOnlyWrap(&md_),
+                         ServerInitialMetadata::TestOnlyWrap(&md_),
                          &get_request_metadata_args_),
-                     [this](absl::StatusOr<ClientInitialMetadata> metadata) {
+                     [this](absl::StatusOr<ServerInitialMetadata> metadata) {
                        if (metadata.ok()) {
                          GPR_ASSERT(metadata->get() == &md_);
                        }

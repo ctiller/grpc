@@ -38,7 +38,7 @@ class GrpcServerAuthzFilter final : public ChannelFilter {
       RefCountedPtr<grpc_auth_context> auth_context, grpc_endpoint* endpoint,
       RefCountedPtr<grpc_authorization_policy_provider> provider);
 
-  bool IsAuthorized(const ClientInitialMetadata& initial_metadata);
+  bool IsAuthorized(const ServerInitialMetadata& initial_metadata);
 
   RefCountedPtr<grpc_auth_context> auth_context_;
   EvaluateArgs::PerChannelArgs per_channel_evaluate_args_;

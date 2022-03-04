@@ -49,7 +49,7 @@ absl::StatusOr<GrpcServerAuthzFilter> GrpcServerAuthzFilter::Create(
 }
 
 bool GrpcServerAuthzFilter::IsAuthorized(
-    const ClientInitialMetadata& initial_metadata) {
+    const ServerInitialMetadata& initial_metadata) {
   EvaluateArgs args(initial_metadata.get(), &per_channel_evaluate_args_);
   if (GRPC_TRACE_FLAG_ENABLED(grpc_authz_trace)) {
     gpr_log(GPR_DEBUG,

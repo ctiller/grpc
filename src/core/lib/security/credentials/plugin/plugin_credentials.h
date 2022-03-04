@@ -36,7 +36,7 @@ struct grpc_plugin_credentials final : public grpc_call_credentials {
   ~grpc_plugin_credentials() override;
 
   grpc_core::ArenaPromise<absl::StatusOr<grpc_core::ClientInitialMetadata>>
-  GetRequestMetadata(grpc_core::ClientInitialMetadata initial_metadata,
+  GetRequestMetadata(grpc_core::ServerInitialMetadata initial_metadata,
                      const GetRequestMetadataArgs* args) override;
 
   std::string debug_string() override;
@@ -45,7 +45,7 @@ struct grpc_plugin_credentials final : public grpc_call_credentials {
   class PendingRequest : public grpc_core::RefCounted<PendingRequest> {
    public:
     PendingRequest(grpc_core::RefCountedPtr<grpc_plugin_credentials> creds,
-                   grpc_core::ClientInitialMetadata initial_metadata,
+                   grpc_core::ServerInitialMetadata initial_metadata,
                    const grpc_call_credentials::GetRequestMetadataArgs* args)
         : call_creds_(std::move(creds)),
           context_(
@@ -80,7 +80,7 @@ struct grpc_plugin_credentials final : public grpc_call_credentials {
         grpc_core::Activity::current()->MakeNonOwningWaker()};
     grpc_core::RefCountedPtr<grpc_plugin_credentials> call_creds_;
     grpc_auth_metadata_context context_;
-    grpc_core::ClientInitialMetadata md_;
+    grpc_core::ServerInitialMetadata md_;
     // final status
     absl::InlinedVector<grpc_metadata, 2> metadata_;
     std::string error_details_;

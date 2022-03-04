@@ -33,7 +33,7 @@
 
 grpc_core::ArenaPromise<absl::StatusOr<grpc_core::ClientInitialMetadata>>
 grpc_google_iam_credentials::GetRequestMetadata(
-    grpc_core::ClientInitialMetadata initial_metadata,
+    grpc_core::ServerInitialMetadata initial_metadata,
     const grpc_call_credentials::GetRequestMetadataArgs*) {
   if (token_.has_value()) {
     initial_metadata->Append(

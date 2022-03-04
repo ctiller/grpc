@@ -79,7 +79,7 @@ struct grpc_oauth2_pending_get_request_metadata
   std::atomic<bool> done{false};
   grpc_core::Waker waker;
   grpc_polling_entity* pollent;
-  grpc_core::ClientInitialMetadata md;
+  grpc_core::ServerInitialMetadata md;
   struct grpc_oauth2_pending_get_request_metadata* next;
   absl::StatusOr<grpc_core::ClientInitialMetadata> result;
 };
@@ -95,7 +95,7 @@ class grpc_oauth2_token_fetcher_credentials : public grpc_call_credentials {
   ~grpc_oauth2_token_fetcher_credentials() override;
 
   grpc_core::ArenaPromise<absl::StatusOr<grpc_core::ClientInitialMetadata>>
-  GetRequestMetadata(grpc_core::ClientInitialMetadata initial_metadata,
+  GetRequestMetadata(grpc_core::ServerInitialMetadata initial_metadata,
                      const GetRequestMetadataArgs* args) override;
 
   void on_http_response(grpc_credentials_metadata_request* r,
@@ -153,7 +153,7 @@ class grpc_access_token_credentials final : public grpc_call_credentials {
   explicit grpc_access_token_credentials(const char* access_token);
 
   grpc_core::ArenaPromise<absl::StatusOr<grpc_core::ClientInitialMetadata>>
-  GetRequestMetadata(grpc_core::ClientInitialMetadata initial_metadata,
+  GetRequestMetadata(grpc_core::ServerInitialMetadata initial_metadata,
                      const GetRequestMetadataArgs* args) override;
 
   std::string debug_string() override;

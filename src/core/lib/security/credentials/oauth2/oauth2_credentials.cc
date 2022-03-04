@@ -283,7 +283,7 @@ void grpc_oauth2_token_fetcher_credentials::on_http_response(
 
 grpc_core::ArenaPromise<absl::StatusOr<grpc_core::ClientInitialMetadata>>
 grpc_oauth2_token_fetcher_credentials::GetRequestMetadata(
-    grpc_core::ClientInitialMetadata initial_metadata,
+    grpc_core::ServerInitialMetadata initial_metadata,
     const grpc_call_credentials::GetRequestMetadataArgs*) {
   // Check if we can use the cached token.
   absl::optional<grpc_core::Slice> cached_access_token_value;
@@ -698,7 +698,7 @@ grpc_call_credentials* grpc_sts_credentials_create(
 
 grpc_core::ArenaPromise<absl::StatusOr<grpc_core::ClientInitialMetadata>>
 grpc_access_token_credentials::GetRequestMetadata(
-    grpc_core::ClientInitialMetadata initial_metadata,
+    grpc_core::ServerInitialMetadata initial_metadata,
     const grpc_call_credentials::GetRequestMetadataArgs*) {
   initial_metadata->Append(
       GRPC_AUTHORIZATION_METADATA_KEY, access_token_value_.Ref(),

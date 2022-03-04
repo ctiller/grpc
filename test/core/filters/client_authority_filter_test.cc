@@ -72,7 +72,7 @@ TEST(ClientAuthorityFilterTest, PromiseCompletesImmediatelyAndSetsAuthority) {
   TestContext<Arena> context(arena.get());
   auto promise = filter.MakeCallPromise(
       CallArgs{
-          ClientInitialMetadata::TestOnlyWrap(&initial_metadata_batch),
+          ServerInitialMetadata::TestOnlyWrap(&initial_metadata_batch),
           nullptr,
       },
       [&](CallArgs call_args) {
@@ -104,7 +104,7 @@ TEST(ClientAuthorityFilterTest,
   TestContext<Arena> context(arena.get());
   auto promise = filter.MakeCallPromise(
       CallArgs{
-          ClientInitialMetadata::TestOnlyWrap(&initial_metadata_batch),
+          ServerInitialMetadata::TestOnlyWrap(&initial_metadata_batch),
           nullptr,
       },
       [&](CallArgs call_args) {

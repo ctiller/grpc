@@ -31,7 +31,7 @@ class grpc_google_iam_credentials : public grpc_call_credentials {
                               const char* authority_selector);
 
   grpc_core::ArenaPromise<absl::StatusOr<grpc_core::ClientInitialMetadata>>
-  GetRequestMetadata(grpc_core::ClientInitialMetadata initial_metadata,
+  GetRequestMetadata(grpc_core::ServerInitialMetadata initial_metadata,
                      const GetRequestMetadataArgs* args) override;
 
   std::string debug_string() override { return debug_string_; }

@@ -139,7 +139,7 @@ void grpc_plugin_credentials::PendingRequest::RequestMetadataReady(
 
 grpc_core::ArenaPromise<absl::StatusOr<grpc_core::ClientInitialMetadata>>
 grpc_plugin_credentials::GetRequestMetadata(
-    grpc_core::ClientInitialMetadata initial_metadata,
+    grpc_core::ServerInitialMetadata initial_metadata,
     const grpc_call_credentials::GetRequestMetadataArgs* args) {
   if (plugin_.get_metadata == nullptr) {
     return grpc_core::Immediate(std::move(initial_metadata));
