@@ -876,100 +876,6 @@ class RubyLanguage(object):
         return 'ruby'
 
 
-class CSharpLanguage(object):
-
-    def __init__(self):
-        self.platform = platform_string()
-
-    def configure(self, config, args):
-        self.config = config
-        self.args = args
-        _check_compiler(self.args.compiler, ['default', 'coreclr', 'mono'])
-        if self.args.compiler == 'default':
-            # test both runtimes by default
-            self.test_runtimes = ['coreclr', 'mono']
-        else:
-            # only test the specified runtime
-            self.test_runtimes = [self.args.compiler]
-
-        if self.platform == 'windows':
-            _check_arch(self.args.arch, ['default'])
-            self._cmake_arch_option = 'x64'
-        else:
-            self._docker_distro = 'debian11'
-
-    def test_specs(self):
-        with open('src/csharp/tests.json') as f:
-            tests_by_assembly = json.load(f)
-
-        msbuild_config = _MSBUILD_CONFIG[self.config.build_config]
-        nunit_args = ['--labels=All', '--noresult', '--workers=1']
-
-        specs = []
-        for test_runtime in self.test_runtimes:
-            if self.args.compiler == 'coreclr':
-                assembly_extension = '.dll'
-                assembly_subdir = 'bin/%s/netcoreapp3.1' % msbuild_config
-                runtime_cmd = ['dotnet', 'exec']
-            else:
-                assembly_extension = '.exe'
-                assembly_subdir = 'bin/%s/net45' % msbuild_config
-                if self.platform == 'windows':
-                    runtime_cmd = []
-                elif self.platform == 'mac':
-                    # mono before version 5.2 on MacOS defaults to 32bit runtime
-                    runtime_cmd = ['mono', '--arch=64']
-                else:
-                    runtime_cmd = ['mono']
-
-            for assembly in six.iterkeys(tests_by_assembly):
-                assembly_file = 'src/csharp/%s/%s/%s%s' % (
-                    assembly, assembly_subdir, assembly, assembly_extension)
-
-                # normally, run each test as a separate process
-                for test in tests_by_assembly[assembly]:
-                    cmdline = runtime_cmd + [assembly_file,
-                                             '--test=%s' % test] + nunit_args
-                    specs.append(
-                        self.config.job_spec(
-                            cmdline,
-                            shortname='csharp.%s.%s' % (test_runtime, test),
-                            environ=_FORCE_ENVIRON_FOR_WRAPPERS))
-        return specs
-
-    def pre_build_steps(self):
-        if self.platform == 'windows':
-            return [['tools\\run_tests\\helper_scripts\\pre_build_csharp.bat']]
-        else:
-            return [['tools/run_tests/helper_scripts/pre_build_csharp.sh']]
-
-    def build_steps(self):
-        if self.platform == 'windows':
-            return [['tools\\run_tests\\helper_scripts\\build_csharp.bat']]
-        else:
-            return [['tools/run_tests/helper_scripts/build_csharp.sh']]
-
-    def build_steps_environ(self):
-        """Extra environment variables set for pre_build_steps and build_steps jobs."""
-        if self.platform == 'windows':
-            return {'ARCHITECTURE': self._cmake_arch_option}
-        else:
-            return {}
-
-    def post_tests_steps(self):
-        if self.platform == 'windows':
-            return [['tools\\run_tests\\helper_scripts\\post_tests_csharp.bat']]
-        else:
-            return [['tools/run_tests/helper_scripts/post_tests_csharp.sh']]
-
-    def dockerfile_dir(self):
-        return 'tools/dockerfile/test/csharp_%s_%s' % (
-            self._docker_distro, _docker_arch_suffix(self.args.arch))
-
-    def __str__(self):
-        return 'csharp'
-
-
 class ObjCLanguage(object):
 
     def configure(self, config, args):
@@ -1200,7 +1106,6 @@ _LANGUAGES = {
     'php7': Php7Language(),
     'python': PythonLanguage(),
     'ruby': RubyLanguage(),
-    'csharp': CSharpLanguage(),
     'objc': ObjCLanguage(),
     'sanity': Sanity()
 }
