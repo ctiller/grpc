@@ -26,10 +26,10 @@ namespace grpc_core {
 namespace {
 
 const grpc_channel_filter* const kFilters[] = {
-    &grpc_core::ClientAuthorityFilter::kFilter,
-    &grpc_core::ClientAuthFilter::kFilter,
-    &grpc_core::HttpClientFilter::kFilter,
-    &grpc_core::GrpcServerAuthzFilter::kFilterVtable,
+    &ClientAuthorityFilter::kFilter,
+    &ClientAuthFilter::kFilter,
+    &HttpClientFilter::kFilter,
+    &GrpcServerAuthzFilter::kFilterVtable,
 };
 
 template <typename FuzzerChannelArgs>
@@ -46,7 +46,7 @@ ChannelArgs LoadChannelArgs(const FuzzerChannelArgs& fuzz_args) {
         args = args.Set(arg.key(), arg.i());
         break;
       case filter_fuzzer::ChannelArg::kResourceQuota: {
-        auto rq = grpc_core::MakeResourceQuota("test");
+        auto rq = MakeResourceQuota("test");
         rq->memory_quota()->SetSize(arg.resource_quota());
         args = args.SetObject(std::move(rq));
         break;
