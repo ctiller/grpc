@@ -70,7 +70,7 @@ ChannelArgs LoadChannelArgs(const FuzzerChannelArgs& fuzz_args) {
         args = args.Set(arg.key(), arg.i());
         break;
       case filter_fuzzer::ChannelArg::kResourceQuota: {
-        auto rq = grpc_core::MakeResourceQuota("test");
+        auto rq = MakeResourceQuota("test");
         rq->memory_quota()->SetSize(arg.resource_quota());
         args = args.SetObject(std::move(rq));
         break;
@@ -84,8 +84,9 @@ absl::StatusOr<std::unique_ptr<ChannelFilter>> CreateFilter(
     absl::string_view name, ChannelArgs channel_args,
     ChannelFilter::Args filter_args) {
   for (size_t i = 0; i < GPR_ARRAY_SIZE(kFilters); ++i) {
-    if (name == kFilters[i]->name)
+    if (name == kFilters[i]->name) {
       return kFilters[i]->create(std::move(channel_args), filter_args);
+    }
   }
   return absl::NotFoundError(absl::StrCat("Filter ", name, " not found"));
 }
@@ -94,7 +95,7 @@ class FuzzCall {};
 
 class MainLoop {
  public:
-  MainLoop(std::unique_ptr<ChannelFilter> filter)
+  explicit MainLoop(std::unique_ptr<ChannelFilter> filter)
       : filter_(std::move(filter)) {}
 
   void Run(const filter_fuzzer::Action& action) {
@@ -109,12 +110,12 @@ class MainLoop {
         break;
     }
     /*
-  auto activity = grpc_core::MakeActivity(
+  auto activity = MakeActivity(
       [&filter]() {
-        return (*filter)->MakeCallPromise(grpc_core::CallArgs{nullptr, nullptr},
-                                          [](grpc_core::CallArgs) { abort(); })
+        return (*filter)->MakeCallPromise(CallArgs{nullptr, nullptr},
+                                          [](CallArgs) { abort(); })
       },
-      ExecCtxWakeupScheduler(), [](grpc_core::ServerMetadataHandle) {});
+      ExecCtxWakeupScheduler(), [](ServerMetadataHandle) {});
 */
   }
 
