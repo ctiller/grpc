@@ -95,7 +95,6 @@ const Filter* const kFilters[] = {
     MAKE_FILTER(GrpcServerAuthzFilter),
 };
 
-
 template <typename FuzzerChannelArgs>
 ChannelArgs LoadChannelArgs(const FuzzerChannelArgs& fuzz_args,
                             GlobalObjects* globals) {
@@ -215,7 +214,7 @@ class MainLoop {
                                            &client_initial_metadata_)),
                    server_initial_metadata},
           [this](CallArgs call_args) -> ArenaPromise<ServerMetadataHandle> {
-            if (server_initial_metadata_.get()) {
+            if (server_initial_metadata_) {
               call_args.server_initial_metadata->Set(
                   server_initial_metadata_.get());
             } else {
