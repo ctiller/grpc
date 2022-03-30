@@ -48,7 +48,8 @@ grpc_connectivity_state grpc_channel_check_connectivity_state(
   grpc_core::ClientChannel* client_channel =
       grpc_core::ClientChannel::GetFromChannel(channel);
   if (GPR_UNLIKELY(client_channel == nullptr)) {
-    if (IsLameChannel(channel)) return GRPC_CHANNEL_TRANSIENT_FAILURE;
+    if (grpc_core::IsLameChannel(channel))
+      return GRPC_CHANNEL_TRANSIENT_FAILURE;
     gpr_log(GPR_ERROR,
             "grpc_channel_check_connectivity_state called on something that is "
             "not a client channel");
@@ -61,7 +62,7 @@ int grpc_channel_num_external_connectivity_watchers(grpc_channel* channel) {
   grpc_core::ClientChannel* client_channel =
       grpc_core::ClientChannel::GetFromChannel(channel);
   if (client_channel == nullptr) {
-    if (!IsLameChannel(channel)) {
+    if (!grpc_core::IsLameChannel(channel)) {
       gpr_log(GPR_ERROR,
               "grpc_channel_num_external_connectivity_watchers called on "
               "something that is not a client channel");

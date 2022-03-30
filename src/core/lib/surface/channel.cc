@@ -27,8 +27,6 @@
 
 #include <atomic>
 
-#include "channel.h"
-
 #include <grpc/compression.h>
 #include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
@@ -51,6 +49,7 @@
 #include "src/core/lib/slice/slice_internal.h"
 #include "src/core/lib/surface/api_trace.h"
 #include "src/core/lib/surface/call.h"
+#include "src/core/lib/surface/channel.h"
 #include "src/core/lib/surface/channel_stack_type.h"
 #include "src/core/lib/transport/error_utils.h"
 
@@ -413,7 +412,7 @@ void* grpc_channel_register_call(grpc_channel* channel, const char* method,
 namespace grpc_core {
 
 RegisteredCall* Channel::RegisterCall(const char* method, const char* host) {
-  grpc_core::MutexLock lock(&registration_table_.mu);
+  MutexLock lock(&registration_table_.mu);
   registration_table_.method_registration_attempts++;
   auto key = std::make_pair(std::string(host != nullptr ? host : ""),
                             std::string(method != nullptr ? method : ""));
@@ -422,7 +421,7 @@ RegisteredCall* Channel::RegisterCall(const char* method, const char* host) {
     return &rc_posn->second;
   }
   auto insertion_result = registration_table_.map.insert(
-      {std::move(key), grpc_core::RegisteredCall(method, host)});
+      {std::move(key), RegisteredCall(method, host)});
   return &insertion_result.first->second;
 }
 
@@ -464,7 +463,7 @@ namespace grpc_core {
 Channel::~Channel() {
   if (channelz_node_ != nullptr) {
     channelz_node_->AddTraceEvent(
-        grpc_core::channelz::ChannelTrace::Severity::Info,
+        channelz::ChannelTrace::Severity::Info,
         grpc_slice_from_static_string("Channel destroyed"));
   }
 }

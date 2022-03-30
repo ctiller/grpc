@@ -99,7 +99,7 @@ class Channel : public RefCounted<Channel>,
   Channel(bool is_client, std::string target, ChannelArgs channel_args,
           grpc_compression_options compression_options,
           RefCountedPtr<grpc_channel_stack> channel_stack);
-  ~Channel();
+  ~Channel() override;
 
   grpc_channel_stack* channel_stack() const { return channel_stack_.get(); }
 
@@ -133,8 +133,8 @@ class Channel : public RefCounted<Channel>,
   const grpc_compression_options compression_options_;
   std::atomic<size_t> call_size_estimate_;
   CallRegistrationTable registration_table_;
-  grpc_core::RefCountedPtr<grpc_core::channelz::ChannelNode> channelz_node_;
-  grpc_core::MemoryAllocator allocator_;
+  RefCountedPtr<channelz::ChannelNode> channelz_node_;
+  MemoryAllocator allocator_;
   std::string target_;
   const RefCountedPtr<grpc_channel_stack> channel_stack_;
 };
