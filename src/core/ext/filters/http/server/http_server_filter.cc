@@ -22,11 +22,10 @@
 
 #include <string.h>
 
-#include "http_server_filter.h"
-
 #include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
 
+#include "src/core/ext/filters/http/server/http_server_filter.h"
 #include "src/core/lib/channel/channel_args.h"
 #include "src/core/lib/gprpp/manual_constructor.h"
 #include "src/core/lib/profiling/timers.h"
@@ -51,10 +50,10 @@ absl::StatusOr<HttpServerFilter> HttpServerFilter::Create(ChannelArgs args,
 
 namespace {
 void FilterOutgoingMetadata(ServerMetadata* metadata) {
-  if (grpc_core::Slice* grpc_message =
-          metadata->get_pointer(grpc_core::GrpcMessageMetadata())) {
-    *grpc_message = grpc_core::PercentEncodeSlice(
-        std::move(*grpc_message), grpc_core::PercentEncodingType::Compatible);
+  if (Slice* grpc_message =
+          metadata->get_pointer(GrpcMessageMetadata())) {
+    *grpc_message = PercentEncodeSlice(
+        std::move(*grpc_message), PercentEncodingType::Compatible);
   }
 }
 }  // namespace
@@ -62,13 +61,13 @@ void FilterOutgoingMetadata(ServerMetadata* metadata) {
 ArenaPromise<ServerMetadataHandle> HttpServerFilter::MakeCallPromise(
     CallArgs call_args, NextPromiseFactory next_promise_factory) {
   auto* md = call_args.client_initial_metadata.get();
-  auto method = md->get(grpc_core::HttpMethodMetadata());
+  auto method = md->get(HttpMethodMetadata());
   if (method.has_value()) {
     switch (*method) {
-      case grpc_core::HttpMethodMetadata::kPost:
+      case HttpMethodMetadata::kPost:
         break;
-      case grpc_core::HttpMethodMetadata::kInvalid:
-      case grpc_core::HttpMethodMetadata::kGet:
+      case HttpMethodMetadata::kInvalid:
+      case HttpMethodMetadata::kGet:
         return Immediate(
             ServerMetadataHandle(absl::UnknownError("Bad method header")));
     }
@@ -77,8 +76,8 @@ ArenaPromise<ServerMetadataHandle> HttpServerFilter::MakeCallPromise(
         ServerMetadataHandle(absl::UnknownError("Missing method header")));
   }
 
-  auto te = md->Take(grpc_core::TeMetadata());
-  if (te == grpc_core::TeMetadata::kTrailers) {
+  auto te = md->Take(TeMetadata());
+  if (te == TeMetadata::kTrailers) {
     // Do nothing, ok.
   } else if (!te.has_value()) {
     return Immediate(
@@ -87,9 +86,9 @@ ArenaPromise<ServerMetadataHandle> HttpServerFilter::MakeCallPromise(
     return Immediate(ServerMetadataHandle(absl::UnknownError("Bad te header")));
   }
 
-  auto scheme = md->Take(grpc_core::HttpSchemeMetadata());
+  auto scheme = md->Take(HttpSchemeMetadata());
   if (scheme.has_value()) {
-    if (*scheme == grpc_core::HttpSchemeMetadata::kInvalid) {
+    if (*scheme == HttpSchemeMetadata::kInvalid) {
       return Immediate(
           ServerMetadataHandle(absl::UnknownError("Bad scheme header")));
     }
@@ -98,28 +97,28 @@ ArenaPromise<ServerMetadataHandle> HttpServerFilter::MakeCallPromise(
         ServerMetadataHandle(absl::UnknownError("Missing scheme header")));
   }
 
-  md->Remove(grpc_core::ContentTypeMetadata());
+  md->Remove(ContentTypeMetadata());
 
-  grpc_core::Slice* path_slice = md->get_pointer(grpc_core::HttpPathMetadata());
+  Slice* path_slice = md->get_pointer(HttpPathMetadata());
   if (path_slice == nullptr) {
     return Immediate(
         ServerMetadataHandle(absl::UnknownError("Missing path header")));
   }
 
-  if (md->get_pointer(grpc_core::HttpAuthorityMetadata()) == nullptr) {
-    absl::optional<grpc_core::Slice> host = md->Take(grpc_core::HostMetadata());
+  if (md->get_pointer(HttpAuthorityMetadata()) == nullptr) {
+    absl::optional<Slice> host = md->Take(HostMetadata());
     if (host.has_value()) {
-      md->Set(grpc_core::HttpAuthorityMetadata(), std::move(*host));
+      md->Set(HttpAuthorityMetadata(), std::move(*host));
     }
   }
 
-  if (md->get_pointer(grpc_core::HttpAuthorityMetadata()) == nullptr) {
+  if (md->get_pointer(HttpAuthorityMetadata()) == nullptr) {
     return Immediate(
         ServerMetadataHandle(absl::UnknownError("Missing authority header")));
   }
 
   if (!surface_user_agent_) {
-    md->Remove(grpc_core::UserAgentMetadata());
+    md->Remove(UserAgentMetadata());
   }
 
   auto* read_latch = GetContext<Arena>()->New<Latch<ServerMetadata*>>();
@@ -134,9 +133,9 @@ ArenaPromise<ServerMetadataHandle> HttpServerFilter::MakeCallPromise(
           }),
       Seq(read_latch->Wait(),
           [write_latch](ServerMetadata** md) -> absl::Status {
-            (*md)->Set(grpc_core::HttpStatusMetadata(), 200);
-            (*md)->Set(grpc_core::ContentTypeMetadata(),
-                       grpc_core::ContentTypeMetadata::kApplicationGrpc);
+            (*md)->Set(HttpStatusMetadata(), 200);
+            (*md)->Set(ContentTypeMetadata(),
+                       ContentTypeMetadata::kApplicationGrpc);
             FilterOutgoingMetadata(*md);
             write_latch->Set(*md);
             return absl::OkStatus();
