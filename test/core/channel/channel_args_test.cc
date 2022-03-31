@@ -51,7 +51,7 @@ TEST(ChannelArgsTest, SetGetRemove) {
   void* ptr = gpr_malloc(42);
 
   ChannelArgs a;
-  ChannelArgs b = a.Set("answer", 42);
+  ChannelArgs b = a.Set("answer", true);
   ChannelArgs c = b.Set("foo", "bar");
   ChannelArgs d = c.Set("ptr", ChannelArgs::Pointer(ptr, &malloc_vtable));
   ChannelArgs e = d.Set("alpha", "beta");
@@ -115,7 +115,7 @@ TEST(ChannelArgsTest, ToAndFromC) {
   };
   void* ptr = gpr_malloc(42);
   ChannelArgs a = ChannelArgs()
-                      .Set("answer", 42)
+                      .Set("answer", true)
                       .Set("foo", "bar")
                       .Set("ptr", ChannelArgs::Pointer(ptr, &malloc_vtable))
                       .Set("alpha", "beta");
