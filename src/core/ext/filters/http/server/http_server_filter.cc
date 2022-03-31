@@ -50,10 +50,9 @@ absl::StatusOr<HttpServerFilter> HttpServerFilter::Create(ChannelArgs args,
 
 namespace {
 void FilterOutgoingMetadata(ServerMetadata* metadata) {
-  if (Slice* grpc_message =
-          metadata->get_pointer(GrpcMessageMetadata())) {
-    *grpc_message = PercentEncodeSlice(
-        std::move(*grpc_message), PercentEncodingType::Compatible);
+  if (Slice* grpc_message = metadata->get_pointer(GrpcMessageMetadata())) {
+    *grpc_message = PercentEncodeSlice(std::move(*grpc_message),
+                                       PercentEncodingType::Compatible);
   }
 }
 }  // namespace
@@ -125,22 +124,21 @@ ArenaPromise<ServerMetadataHandle> HttpServerFilter::MakeCallPromise(
   auto* write_latch =
       absl::exchange(call_args.server_initial_metadata, read_latch);
 
-  return CallPushPull(
-      Seq(next_promise_factory(std::move(call_args)),
-          [](ServerMetadataHandle trailing_metadata) {
-            FilterOutgoingMetadata(trailing_metadata.get());
-            return trailing_metadata;
-          }),
-      Seq(read_latch->Wait(),
-          [write_latch](ServerMetadata** md) -> absl::Status {
-            (*md)->Set(HttpStatusMetadata(), 200);
-            (*md)->Set(ContentTypeMetadata(),
-                       ContentTypeMetadata::kApplicationGrpc);
-            FilterOutgoingMetadata(*md);
-            write_latch->Set(*md);
-            return absl::OkStatus();
-          }),
-      []() { return absl::OkStatus(); });
+  return CallPushPull(Seq(next_promise_factory(std::move(call_args)),
+                          [](ServerMetadataHandle trailing_metadata) {
+                            FilterOutgoingMetadata(trailing_metadata.get());
+                            return trailing_metadata;
+                          }),
+                      Seq(read_latch->Wait(),
+                          [write_latch](ServerMetadata** md) -> absl::Status {
+                            (*md)->Set(HttpStatusMetadata(), 200);
+                            (*md)->Set(ContentTypeMetadata(),
+                                       ContentTypeMetadata::kApplicationGrpc);
+                            FilterOutgoingMetadata(*md);
+                            write_latch->Set(*md);
+                            return absl::OkStatus();
+                          }),
+                      []() { return absl::OkStatus(); });
 }
 
 }  // namespace grpc_core
