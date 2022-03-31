@@ -160,6 +160,27 @@ void* ChannelArgs::GetVoidPointer(absl::string_view name) const {
   return absl::get<Pointer>(*v).c_pointer();
 }
 
+absl::optional<bool> ChannelArgs::GetBool(absl::string_view name) const {
+  auto* v = Get(name);
+  if (v == nullptr) return absl::nullopt;
+  auto* i = absl::get_if<int>(v);
+  if (i == nullptr) {
+    gpr_log(GPR_ERROR, "%s ignored: it must be an integer",
+            std::string(name).c_str());
+    return absl::nullopt;
+  }
+  switch (*i) {
+    case 0:
+      return false;
+    case 1:
+      return true;
+    default:
+      gpr_log(GPR_ERROR, "%s treated as bool but set to %d (assuming true)",
+              std::string(name).c_str(), *i);
+      return true;
+  }
+}
+
 }  // namespace grpc_core
 
 static grpc_arg copy_arg(const grpc_arg* src) {

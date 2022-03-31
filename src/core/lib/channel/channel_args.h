@@ -169,6 +169,7 @@ class ChannelArgs {
   }
   absl::optional<Duration> GetDurationFromIntMillis(
       absl::string_view name) const;
+  absl::optional<bool> GetBool(absl::string_view name) const;
 
   // Object based get/set.
   // Deal with the common case that we set a pointer to an object under

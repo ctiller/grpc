@@ -20,6 +20,8 @@
 
 #include <string.h>
 
+#include "server/http_server_filter.h"
+
 #include "src/core/ext/filters/http/client/http_client_filter.h"
 #include "src/core/ext/filters/http/message_compress/message_compress_filter.h"
 #include "src/core/ext/filters/http/message_compress/message_decompress_filter.h"
@@ -85,6 +87,6 @@ void RegisterHttpFilters(CoreConfiguration::Builder* builder) {
            GRPC_ARG_ENABLE_PER_MESSAGE_DECOMPRESSION, &MessageDecompressFilter);
   required(GRPC_CLIENT_SUBCHANNEL, &HttpClientFilter::kFilter);
   required(GRPC_CLIENT_DIRECT_CHANNEL, &HttpClientFilter::kFilter);
-  required(GRPC_SERVER_CHANNEL, &grpc_http_server_filter);
+  required(GRPC_SERVER_CHANNEL, &HttpServerFilter::kFilter);
 }
 }  // namespace grpc_core
