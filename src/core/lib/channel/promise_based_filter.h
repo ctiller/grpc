@@ -294,6 +294,9 @@ class ServerCallData : public BaseCallData {
     kCancelled
   };
 
+  // State tracking send initial metadata for those filters that intercept it.
+  struct SendInitialMetadata;
+
   // Handle cancellation.
   void Cancel(grpc_error_handle error);
   // Construct a promise that will "call" the next filter.
@@ -333,6 +336,8 @@ class ServerCallData : public BaseCallData {
   // Whether to forward the recv_initial_metadata op at the end of promise
   // wakeup.
   bool forward_recv_initial_metadata_callback_ = false;
+  // If we care about the send initial metadata op, then this tracks that state
+  SendInitialMetadata* send_initial_metadata_ = nullptr;
 };
 
 // Specific call data per channel filter.

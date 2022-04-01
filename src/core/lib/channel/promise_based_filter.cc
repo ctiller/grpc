@@ -18,6 +18,8 @@
 
 #include <cstdlib>
 
+#include "promise_based_filter.h"
+
 #include "src/core/lib/channel/channel_stack.h"
 
 namespace grpc_core {
@@ -753,6 +755,13 @@ void ClientCallData::OnWakeup() {
 ///////////////////////////////////////////////////////////////////////////////
 // ServerCallData
 
+struct ServerCallData::SendInitialMetadata {
+  enum State {
+    // No op, no latch
+    kInitial,
+  };
+};
+
 ServerCallData::ServerCallData(grpc_call_element* elem,
                                const grpc_call_element_args* args,
                                uint8_t flags)
@@ -805,16 +814,14 @@ void ServerCallData::StartBatch(grpc_transport_stream_op_batch* batch) {
     recv_initial_state_ = RecvInitialState::kForwarded;
   }
 
+  bool captured = false;
+
   // send_trailing_metadata
   if (batch->send_trailing_metadata) {
     switch (send_trailing_state_) {
       case SendTrailingState::kInitial:
         send_trailing_metadata_batch_ = batch;
         send_trailing_state_ = SendTrailingState::kQueued;
-        WakeInsideCombiner([this](grpc_error_handle error) {
-          GPR_ASSERT(send_trailing_state_ == SendTrailingState::kQueued);
-          Cancel(error);
-        });
         break;
       case SendTrailingState::kQueued:
       case SendTrailingState::kForwarded:
@@ -823,12 +830,24 @@ void ServerCallData::StartBatch(grpc_transport_stream_op_batch* batch) {
       case SendTrailingState::kCancelled:
         grpc_transport_stream_op_batch_finish_with_failure(
             batch, GRPC_ERROR_REF(cancelled_error_), call_combiner());
-        break;
+        return;  // early out
     }
-    return;
+    captured = true;
   }
 
-  grpc_call_next_op(elem(), batch);
+  // send_initial_metadata if we care about it
+  if (send_initial_metadata_ != nullptr && batch->send_initial_metadata) {
+    captured = true;
+  }
+
+  if (captured) {
+    WakeInsideCombiner([this](grpc_error_handle error) {
+      GPR_ASSERT(send_trailing_state_ == SendTrailingState::kQueued);
+      Cancel(error);
+    });
+  } else {
+    grpc_call_next_op(elem(), batch);
+  }
 }
 
 // Handle cancellation.
