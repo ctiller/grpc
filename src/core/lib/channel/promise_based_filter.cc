@@ -18,9 +18,8 @@
 
 #include <cstdlib>
 
-#include "promise_based_filter.h"
-
 #include "src/core/lib/channel/channel_stack.h"
+#include "src/core/lib/channel/promise_based_filter.h"
 
 namespace grpc_core {
 namespace promise_filter_detail {
