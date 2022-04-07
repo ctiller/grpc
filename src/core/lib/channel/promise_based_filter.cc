@@ -370,7 +370,7 @@ class ClientCallData::PollContext {
 
   void Repoll() { repoll_ = true; }
 
-  void ForwardSendInitialMetadata() { forward_send_initial_metadata_ = true; }
+  void ForwardSendInitialMetadata() { recv_initial_metadata_ = true; }
 
  private:
   ManualConstructor<ScopedActivity> scoped_activity_;
