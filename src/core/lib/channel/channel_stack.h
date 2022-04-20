@@ -216,6 +216,9 @@ struct grpc_channel_stack {
     IncrementRefCount();
     return grpc_core::RefCountedPtr<grpc_channel_stack>(this);
   }
+
+  grpc_core::ArenaPromise<grpc_core::ServerMetadataHandle> MakeCallPromise(
+      grpc_core::CallArgs call_args);
 };
 
 /* A call stack tracks a set of related filters for one call, and guarantees
