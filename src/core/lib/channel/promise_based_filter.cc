@@ -1111,7 +1111,8 @@ void ServerCallData::WakeInsideCombiner(Flusher* flusher) {
     Poll<ServerMetadataHandle> poll;
     poll = promise_();
     if (send_initial_metadata_ != nullptr &&
-        send_initial_metadata_->state == SendInitialMetadata::kQueued &&
+        send_initial_metadata_->state ==
+            absl::base_internal::PerThreadSynch::kQueued &&
         send_initial_metadata_->pull != nullptr) {
       Poll<ServerMetadata**> p = send_initial_metadata_->pull->Wait()();
       if (ServerMetadata*** ppp = absl::get_if<ServerMetadata**>(&p)) {
