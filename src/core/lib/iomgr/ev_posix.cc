@@ -40,7 +40,7 @@ GPR_GLOBAL_CONFIG_DEFINE_STRING(
     grpc_poll_strategy, "all",
     "Declares which polling engines to try when starting gRPC. "
     "This is a comma-separated list of engines, which are tried in priority "
-    "order first -> last.")
+    "order first -> last.");
 
 grpc_core::DebugOnlyTraceFlag grpc_polling_trace(
     false, "polling"); /* Disabled by default */

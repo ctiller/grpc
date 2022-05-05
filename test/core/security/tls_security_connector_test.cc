@@ -170,7 +170,7 @@ TEST_F(TlsSecurityConnectorTest,
   EXPECT_NE(tls_connector->ClientHandshakerFactoryForTesting(), nullptr);
   EXPECT_EQ(tls_connector->RootCertsForTesting(), root_cert_1_);
   EXPECT_EQ(tls_connector->KeyCertPairListForTesting(), identity_pairs_1_);
-  grpc_channel_args_destroy(new_args);
+  grpc_channel_destroy(new_args);
 }
 
 TEST_F(TlsSecurityConnectorTest,
@@ -188,7 +188,7 @@ TEST_F(TlsSecurityConnectorTest,
   TlsChannelSecurityConnector* tls_root_connector =
       static_cast<TlsChannelSecurityConnector*>(root_connector.get());
   EXPECT_NE(tls_root_connector->ClientHandshakerFactoryForTesting(), nullptr);
-  grpc_channel_args_destroy(root_new_args);
+  grpc_channel_destroy(root_new_args);
 }
 
 TEST_F(TlsSecurityConnectorTest,
@@ -221,7 +221,7 @@ TEST_F(TlsSecurityConnectorTest,
   distributor->SetKeyMaterials(kRootCertName, root_cert_1_, absl::nullopt);
   EXPECT_NE(tls_root_connector->ClientHandshakerFactoryForTesting(), nullptr);
   EXPECT_NE(tls_root_connector->RootCertsForTesting(), root_cert_1_);
-  grpc_channel_args_destroy(root_new_args);
+  grpc_channel_destroy(root_new_args);
 }
 
 TEST_F(TlsSecurityConnectorTest,
@@ -253,7 +253,7 @@ TEST_F(TlsSecurityConnectorTest,
   distributor->SetKeyMaterials(kRootCertName, root_cert_1_, absl::nullopt);
   EXPECT_NE(tls_root_connector->ClientHandshakerFactoryForTesting(), nullptr);
   EXPECT_EQ(tls_root_connector->RootCertsForTesting(), root_cert_1_);
-  grpc_channel_args_destroy(root_new_args);
+  grpc_channel_destroy(root_new_args);
 }
 
 TEST_F(TlsSecurityConnectorTest,

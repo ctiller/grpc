@@ -75,7 +75,7 @@ TEST_F(GrpcTlsCredentialsOptionsTest, ClientOptionsOnDefaultRootCerts) {
   grpc_channel_args* new_args = nullptr;
   auto connector = credentials->create_security_connector(
       nullptr, "random targets", nullptr, &new_args);
-  grpc_channel_args_destroy(new_args);
+  grpc_channel_destroy(new_args);
   ASSERT_NE(connector, nullptr);
   TlsChannelSecurityConnector* tls_connector =
       static_cast<TlsChannelSecurityConnector*>(connector.get());
@@ -99,7 +99,7 @@ TEST_F(GrpcTlsCredentialsOptionsTest,
   grpc_channel_args* new_args = nullptr;
   auto connector = credentials->create_security_connector(
       nullptr, "random targets", nullptr, &new_args);
-  grpc_channel_args_destroy(new_args);
+  grpc_channel_destroy(new_args);
   ASSERT_NE(connector, nullptr);
   TlsChannelSecurityConnector* tls_connector =
       static_cast<TlsChannelSecurityConnector*>(connector.get());
@@ -120,7 +120,7 @@ TEST_F(GrpcTlsCredentialsOptionsTest,
   grpc_channel_args* new_args = nullptr;
   auto connector = credentials->create_security_connector(
       nullptr, "random targets", nullptr, &new_args);
-  grpc_channel_args_destroy(new_args);
+  grpc_channel_destroy(new_args);
   ASSERT_NE(connector, nullptr);
   TlsChannelSecurityConnector* tls_connector =
       static_cast<TlsChannelSecurityConnector*>(connector.get());
@@ -141,7 +141,7 @@ TEST_F(GrpcTlsCredentialsOptionsTest,
   grpc_channel_args* new_args = nullptr;
   auto connector = credentials->create_security_connector(
       nullptr, "random targets", nullptr, &new_args);
-  grpc_channel_args_destroy(new_args);
+  grpc_channel_destroy(new_args);
   ASSERT_NE(connector, nullptr);
   TlsChannelSecurityConnector* tls_connector =
       static_cast<TlsChannelSecurityConnector*>(connector.get());
