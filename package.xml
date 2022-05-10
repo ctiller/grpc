@@ -1368,6 +1368,8 @@
     <file baseinstalldir="/" name="src/core/lib/slice/slice.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/slice/slice_api.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/slice/slice_buffer.cc" role="src" />
+    <file baseinstalldir="/" name="src/core/lib/slice/slice_buffer.h" role="src" />
+    <file baseinstalldir="/" name="src/core/lib/slice/slice_buffer_api.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/slice/slice_internal.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/slice/slice_refcount.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/slice/slice_refcount.h" role="src" />
@@ -1412,8 +1414,6 @@
     <file baseinstalldir="/" name="src/core/lib/surface/version.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/transport/bdp_estimator.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/transport/bdp_estimator.h" role="src" />
-    <file baseinstalldir="/" name="src/core/lib/transport/byte_stream.cc" role="src" />
-    <file baseinstalldir="/" name="src/core/lib/transport/byte_stream.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/transport/connectivity_state.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/transport/connectivity_state.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/transport/error_utils.cc" role="src" />

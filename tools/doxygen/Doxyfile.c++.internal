@@ -2368,6 +2368,8 @@ src/core/lib/slice/slice.cc \
 src/core/lib/slice/slice.h \
 src/core/lib/slice/slice_api.cc \
 src/core/lib/slice/slice_buffer.cc \
+src/core/lib/slice/slice_buffer.h \
+src/core/lib/slice/slice_buffer_api.cc \
 src/core/lib/slice/slice_internal.h \
 src/core/lib/slice/slice_refcount.cc \
 src/core/lib/slice/slice_refcount.h \
@@ -2412,8 +2414,6 @@ src/core/lib/surface/validate_metadata.h \
 src/core/lib/surface/version.cc \
 src/core/lib/transport/bdp_estimator.cc \
 src/core/lib/transport/bdp_estimator.h \
-src/core/lib/transport/byte_stream.cc \
-src/core/lib/transport/byte_stream.h \
 src/core/lib/transport/connectivity_state.cc \
 src/core/lib/transport/connectivity_state.h \
 src/core/lib/transport/error_utils.cc \
