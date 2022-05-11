@@ -28,7 +28,6 @@
 #include <grpc/impl/codegen/grpc_types.h>
 
 #include "src/core/lib/channel/channel_args.h"
-#include "src/core/lib/channel/channel_stack.h"
 #include "src/core/lib/channel/channel_stack_builder.h"
 #include "src/core/lib/channel/context.h"
 #include "src/core/lib/config/core_configuration.h"
