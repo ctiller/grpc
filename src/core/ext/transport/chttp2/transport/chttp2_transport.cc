@@ -1453,7 +1453,7 @@ static void perform_stream_op_locked(void* stream_op,
     GRPC_STATS_INC_HTTP2_OP_SEND_MESSAGE();
     t->num_messages_in_next_write++;
     GRPC_STATS_INC_HTTP2_SEND_MESSAGE_SIZE(
-        op->payload->send_message.send_message->length());
+        op->payload->send_message.send_message->Length());
     on_complete->next_data.scratch |= CLOSURE_BARRIER_MAY_COVER_WRITE;
     s->send_message_finished = add_closure_barrier(op->on_complete);
     const uint32_t flags = op_payload->send_message.flags;
@@ -1957,7 +1957,7 @@ void grpc_chttp2_maybe_complete_recv_initial_metadata(grpc_chttp2_transport* t,
       s->published_metadata[0] != GRPC_METADATA_NOT_PUBLISHED) {
     if (s->seen_error) {
       grpc_slice_buffer_reset_and_unref_internal(&s->frame_storage);
-      if (!s->pending_byte_stream) {
+      if (!s->sending_bytes) {
         grpc_slice_buffer_reset_and_unref_internal(
             &s->unprocessed_incoming_frames_buffer);
       }
@@ -1984,7 +1984,7 @@ void grpc_chttp2_maybe_complete_recv_message(grpc_chttp2_transport* /*t*/,
     if (s->final_metadata_requested && s->seen_error) {
       grpc_slice_buffer_reset_and_unref_internal(&s->frame_storage);
     }
-    if (!s->pending_byte_stream) {
+    if (!s->sending_bytes) {
       while (s->frame_storage.length > 0) {
         error = grpc_deframe_unprocessed_incoming_frames(
             &s->data_parser, s, &s->frame_storage, nullptr, s->recv_message);
@@ -2019,12 +2019,12 @@ void grpc_chttp2_maybe_complete_recv_trailing_metadata(grpc_chttp2_transport* t,
       s->write_closed) {
     if (s->seen_error || !t->is_client) {
       grpc_slice_buffer_reset_and_unref_internal(&s->frame_storage);
-      if (!s->pending_byte_stream) {
+      if (!s->sending_bytes) {
         grpc_slice_buffer_reset_and_unref_internal(
             &s->unprocessed_incoming_frames_buffer);
       }
     }
-    bool pending_data = s->pending_byte_stream ||
+    bool pending_data = s->reset_byte_stream ||
                         s->unprocessed_incoming_frames_buffer.length > 0;
     if (s->read_closed && s->frame_storage.length > 0 && !pending_data &&
         !s->seen_error && s->recv_trailing_metadata_finished != nullptr) {
@@ -2058,7 +2058,7 @@ static void remove_stream(grpc_chttp2_transport* t, uint32_t id,
     t->incoming_stream = nullptr;
     grpc_chttp2_parsing_become_skip_parser(t);
   }
-  if (s->pending_byte_stream) {
+  if (s->reset_byte_stream) {
     if (s->on_next != nullptr) {
       grpc_core::Chttp2IncomingByteStream* bs = s->data_parser.parsing_frame;
       if (error == GRPC_ERROR_NONE) {

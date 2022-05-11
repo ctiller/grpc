@@ -121,7 +121,7 @@ class CallData {
   bool seen_recv_message_ready_ = false;
   int max_recv_message_length_;
   grpc_compression_algorithm algorithm_ = GRPC_COMPRESS_NONE;
-  grpc_core::SliceBuffer* recv_message_ = nullptr;
+  SliceBuffer* recv_message_ = nullptr;
   uint32_t* recv_message_flags_ = nullptr;
   grpc_closure on_recv_message_ready_;
   grpc_closure* original_recv_message_ready_ = nullptr;
@@ -170,19 +170,19 @@ void CallData::OnRecvMessageReady(void* arg, grpc_error_handle error) {
       // recv_message can be NULL if trailing metadata is received instead of
       // message, or it's possible that the message was not compressed.
       if (*calld->recv_message_ == nullptr ||
-          (*calld->recv_message_)->length() == 0 ||
-          ((*calld->recv_message_)->flags() & GRPC_WRITE_INTERNAL_COMPRESS) ==
+          (*calld->recv_message_).length() == 0 ||
+          ((*calld->recv_message_).flags() & GRPC_WRITE_INTERNAL_COMPRESS) ==
               0) {
         return calld->ContinueRecvMessageReadyCallback(GRPC_ERROR_NONE);
       }
       if (calld->max_recv_message_length_ >= 0 &&
-          (*calld->recv_message_)->length() >
+          (*calld->recv_message_).Length() >
               static_cast<uint32_t>(calld->max_recv_message_length_)) {
         GPR_DEBUG_ASSERT(calld->error_ == GRPC_ERROR_NONE);
         calld->error_ = grpc_error_set_int(
             GRPC_ERROR_CREATE_FROM_CPP_STRING(
                 absl::StrFormat("Received message larger than max (%u vs. %d)",
-                                (*calld->recv_message_)->length(),
+                                (*calld->recv_message_).Length(),
                                 calld->max_recv_message_length_)),
             GRPC_ERROR_INT_GRPC_STATUS, GRPC_STATUS_RESOURCE_EXHAUSTED);
         return calld->ContinueRecvMessageReadyCallback(

@@ -234,7 +234,7 @@ void CallData::FinishSendMessage(grpc_call_element* elem) {
   // batch down.
   new (&replacement_stream_)
       grpc_core::SliceBufferByteStream(&slices_, send_flags);
-  send_message_batch_->payload->send_message.send_message.reset(
+  send_message_batch_->payload->send_message.send_message->reset(
       reinterpret_cast<grpc_core::SliceBufferByteStream*>(
           &replacement_stream_));
   original_send_message_on_complete_ = send_message_batch_->on_complete;

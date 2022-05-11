@@ -277,7 +277,7 @@ uint32_t StreamFlowControl::MaybeSendUpdate() {
   // In these cases, we want to make sure that bytes are still flowing.
   if (local_window_delta_ < GRPC_HEADER_SIZE_IN_BYTES) {
     if (s_->on_next != nullptr) {
-      GPR_DEBUG_ASSERT(s_->pending_byte_stream);
+      GPR_DEBUG_ASSERT(s_->sending_bytes);
       IncomingByteStreamUpdate(GRPC_HEADER_SIZE_IN_BYTES, 0);
     } else if (s_->recv_message != nullptr) {
       IncomingByteStreamUpdate(GRPC_HEADER_SIZE_IN_BYTES,

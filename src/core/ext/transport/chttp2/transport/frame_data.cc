@@ -204,7 +204,7 @@ grpc_error_handle grpc_deframe_unprocessed_incoming_frames(
           p->parsing_frame = nullptr;
           p->state = GRPC_CHTTP2_DATA_FH_0;
         }
-        s->pending_byte_stream = true;
+        s->sending_bytes = true;
         if (cur != end) {
           grpc_slice_buffer_sub_first(slices, static_cast<size_t>(cur - beg),
                                       static_cast<size_t>(end - beg));
@@ -286,7 +286,7 @@ grpc_error_handle grpc_chttp2_data_parser_parse(void* /*parser*/,
                                                 grpc_chttp2_stream* s,
                                                 const grpc_slice& slice,
                                                 int is_last) {
-  if (!s->pending_byte_stream) {
+  if (!s->sending_bytes) {
     grpc_slice_ref_internal(slice);
     grpc_slice_buffer_add(&s->frame_storage, slice);
     grpc_chttp2_maybe_complete_recv_message(t, s);
