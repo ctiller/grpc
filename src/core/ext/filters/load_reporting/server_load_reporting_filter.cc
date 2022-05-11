@@ -23,7 +23,6 @@
 #include <limits.h>
 #include <netinet/in.h>
 #include <stdint.h>
-#include <string.h>
 
 #include <functional>
 #include <string>

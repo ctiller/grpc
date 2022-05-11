@@ -26,7 +26,6 @@
 
 #include "src/core/ext/transport/binder/wire_format/binder_constants.h"
 #include "src/core/lib/channel/channel_args.h"
-#include "src/core/lib/channel/channel_stack_builder.h"
 #include "src/core/lib/channel/channelz.h"
 #include "src/core/lib/gprpp/debug_location.h"
 #include "src/core/lib/gprpp/orphanable.h"
@@ -34,6 +33,7 @@
 #include "src/core/lib/iomgr/closure.h"
 #include "src/core/lib/iomgr/error.h"
 #include "src/core/lib/iomgr/pollset.h"
+#include "src/core/lib/transport/transport.h"
 
 #ifndef GRPC_NO_BINDER
 
