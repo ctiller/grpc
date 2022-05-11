@@ -1131,7 +1131,7 @@ void FilterStackCall::BatchControl::ContinueReceivingSlices() {
   grpc_error_handle error;
   FilterStackCall* call = call_;
   for (;;) {
-    size_t remaining = call->receiving_stream_->length() -
+    size_t remaining = call->receiving_stream_.Length() -
                        (*call->receiving_buffer_)->data.raw.slice_buffer.length;
     if (remaining == 0) {
       call->receiving_message_ = false;
@@ -1139,9 +1139,9 @@ void FilterStackCall::BatchControl::ContinueReceivingSlices() {
       FinishStep();
       return;
     }
-    if (call->receiving_stream_->Next(remaining,
-                                      &call->receiving_slice_ready_)) {
-      error = call->receiving_stream_->Pull(&call->receiving_slice_);
+    if (call->receiving_stream_.Next(remaining,
+                                     &call->receiving_slice_ready_)) {
+      error = call->receiving_stream_.Pull(&call->receiving_slice_);
       if (error == GRPC_ERROR_NONE) {
         grpc_slice_buffer_add(
             &(*call->receiving_buffer_)->data.raw.slice_buffer,
@@ -1168,7 +1168,7 @@ void FilterStackCall::BatchControl::ReceivingSliceReady(
 
   if (error == GRPC_ERROR_NONE) {
     grpc_slice slice;
-    error = call->receiving_stream_->Pull(&slice);
+    error = call->receiving_stream_.Pull(&slice);
     if (error == GRPC_ERROR_NONE) {
       grpc_slice_buffer_add(&(*call->receiving_buffer_)->data.raw.slice_buffer,
                             slice);
@@ -1201,8 +1201,8 @@ void FilterStackCall::BatchControl::ProcessDataAfterMetadata() {
     call->receiving_message_ = false;
     FinishStep();
   } else {
-    call->test_only_last_message_flags_ = call->receiving_stream_->flags();
-    if ((call->receiving_stream_->flags() & GRPC_WRITE_INTERNAL_COMPRESS) &&
+    call->test_only_last_message_flags_ = call->receiving_stream_.flags();
+    if ((call->receiving_stream_.flags() & GRPC_WRITE_INTERNAL_COMPRESS) &&
         (call->incoming_compression_algorithm_ != GRPC_COMPRESS_NONE)) {
       *call->receiving_buffer_ = grpc_raw_compressed_byte_buffer_create(
           nullptr, 0, call->incoming_compression_algorithm_);

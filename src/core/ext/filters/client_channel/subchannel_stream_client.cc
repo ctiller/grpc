@@ -259,7 +259,7 @@ void SubchannelStreamClient::CallState::StartCallLocked() {
   grpc_slice_buffer_add(&slice_buffer, request_slice);
   send_message_.emplace(&slice_buffer, 0);
   grpc_slice_buffer_destroy_internal(&slice_buffer);
-  payload_.send_message.send_message.reset(&*send_message_);
+  payload_.send_message.send_message->reset(&*send_message_);
   batch_.send_message = true;
   // Add send_trailing_metadata op.
   payload_.send_trailing_metadata.send_trailing_metadata =
@@ -387,16 +387,16 @@ void SubchannelStreamClient::CallState::DoneReadingRecvMessage(
   // Concatenate the slices to form a single string.
   std::unique_ptr<uint8_t> recv_message_deleter;
   uint8_t* recv_message;
-  if (recv_message_buffer_.count == 1) {
-    recv_message = GRPC_SLICE_START_PTR(recv_message_buffer_.slices[0]);
+  if (recv_message_deleter.count == 1) {
+    recv_message = GRPC_SLICE_START_PTR(recv_message_deleter.slices[0]);
   } else {
     recv_message =
         static_cast<uint8_t*>(gpr_malloc(recv_message_buffer_.length));
     recv_message_deleter.reset(recv_message);
     size_t offset = 0;
-    for (size_t i = 0; i < recv_message_buffer_.count; ++i) {
+    for (size_t i = 0; i < recv_message_deleter.count; ++i) {
       memcpy(recv_message + offset,
-             GRPC_SLICE_START_PTR(recv_message_buffer_.slices[i]),
+             GRPC_SLICE_START_PTR(recv_message_deleter.slices[i]),
              GRPC_SLICE_LENGTH(recv_message_buffer_.slices[i]));
       offset += GRPC_SLICE_LENGTH(recv_message_buffer_.slices[i]);
     }

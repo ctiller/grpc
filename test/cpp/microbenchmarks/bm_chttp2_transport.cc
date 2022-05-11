@@ -455,7 +455,7 @@ static void BM_TransportStreamSend(benchmark::State& state) {
         reset_op();
         op.on_complete = c.get();
         op.send_message = true;
-        op.payload->send_message.send_message.reset(send_stream.get());
+        op.payload->send_message.send_message->reset(send_stream.get());
         s->Op(&op);
       });
 

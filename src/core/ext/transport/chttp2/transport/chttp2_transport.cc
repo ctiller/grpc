@@ -1352,9 +1352,9 @@ static void continue_fetching_send_locked(grpc_chttp2_transport* t,
     if (s->fetched_send_message_length == s->fetching_send_message->length()) {
       int64_t notify_offset = s->next_message_end_offset;
       if (notify_offset <= s->flow_controlled_bytes_written) {
-        grpc_chttp2_complete_closure_step(
-            t, s, &s->fetching_send_message_finished, GRPC_ERROR_NONE,
-            "fetching_send_message_finished");
+        grpc_chttp2_complete_closure_step(t, s, &s->send_message_finished,
+                                          GRPC_ERROR_NONE,
+                                          "fetching_send_message_finished");
       } else {
         grpc_chttp2_write_cb* cb = t->write_cb_pool;
         if (cb == nullptr) {
@@ -1363,8 +1363,8 @@ static void continue_fetching_send_locked(grpc_chttp2_transport* t,
           t->write_cb_pool = cb->next;
         }
         cb->call_at_byte = notify_offset;
-        cb->closure = s->fetching_send_message_finished;
-        s->fetching_send_message_finished = nullptr;
+        cb->closure = s->send_message_finished;
+        s->send_message_finished = nullptr;
         grpc_chttp2_write_cb** list =
             s->fetching_send_message->flags() & GRPC_WRITE_THROUGH
                 ? &s->on_write_finished_cbs

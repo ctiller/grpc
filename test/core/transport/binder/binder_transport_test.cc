@@ -251,7 +251,7 @@ struct MakeSendMessage {
     grpc_slice_buffer_destroy(&send_buffer);
 
     op->send_message = true;
-    op->payload->send_message.send_message.reset(send_stream.get());
+    op->payload->send_message.send_message->reset(send_stream.get());
   }
 
   grpc_core::ManualConstructor<grpc_core::SliceBufferByteStream> send_stream;
