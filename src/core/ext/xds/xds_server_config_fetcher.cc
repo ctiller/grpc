@@ -18,7 +18,6 @@
 
 #include <grpc/support/port_platform.h>
 
-#include <netinet/in.h>
 #include <string.h>
 
 #include <algorithm>
@@ -91,6 +90,8 @@
 #include "src/core/lib/transport/error_utils.h"
 #include "src/core/lib/transport/metadata_batch.h"
 #include "src/core/lib/uri/uri_parser.h"
+
+// IWYU pragma: no_include <netinet/in.h>
 
 namespace grpc_core {
 namespace {
