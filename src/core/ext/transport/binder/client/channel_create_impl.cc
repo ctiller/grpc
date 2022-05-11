@@ -25,10 +25,10 @@
 #include <grpc/support/sync.h>
 
 #include "src/core/lib/channel/channel_args_preconditioning.h"
+#include "src/core/lib/channel/channel_stack_builder.h"
 #include "src/core/lib/gprpp/ref_counted_ptr.h"
 #include "src/core/lib/iomgr/exec_ctx.h"
 #include "src/core/lib/surface/channel_stack_type.h"
-#include "src/core/lib/transport/transport.h"
 
 #ifndef GRPC_NO_BINDER
 
