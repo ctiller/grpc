@@ -14,11 +14,13 @@
 
 #include <grpc/support/port_platform.h>
 
-#include "src/core/ext/transport/binder/client/jni_utils.h"
-
 #ifndef GRPC_NO_BINDER
 
 #if defined(ANDROID) || defined(__ANDROID__)
+
+#include <grpc/support/log.h>
+
+#include "src/core/ext/transport/binder/client/jni_utils.h"
 
 namespace grpc_binder {
 
