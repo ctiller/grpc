@@ -18,7 +18,7 @@
 
 #include "src/core/ext/xds/xds_listener.h"
 
-#include <stddef.h>
+#include <stdint.h>
 
 #include <set>
 #include <type_traits>

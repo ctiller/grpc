@@ -20,8 +20,6 @@
 
 #include "src/core/ext/xds/xds_client_stats.h"
 
-#include <stdint.h>
-
 #include <grpc/support/log.h>
 
 #include "src/core/ext/xds/xds_client.h"
