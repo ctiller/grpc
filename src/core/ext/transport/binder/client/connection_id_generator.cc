@@ -16,6 +16,10 @@
 
 #include "src/core/ext/transport/binder/client/connection_id_generator.h"
 
+#include <ctype.h>
+
+#include <grpc/support/log.h>
+
 #ifndef GRPC_NO_BINDER
 
 #include "absl/strings/str_cat.h"

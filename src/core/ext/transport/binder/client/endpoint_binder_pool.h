@@ -18,8 +18,10 @@
 #include <grpc/support/port_platform.h>
 
 #include <functional>
+#include <memory>
 #include <string>
 
+#include "absl/base/thread_annotations.h"
 #include "absl/container/flat_hash_map.h"
 
 #include "src/core/ext/transport/binder/wire_format/binder.h"

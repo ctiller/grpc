@@ -21,6 +21,8 @@
 
 #include <grpc/support/port_platform.h>
 
+#include <grpc/impl/codegen/grpc_types.h>
+
 #include "src/core/lib/transport/transport.h"
 
 grpc_transport* grpc_create_cronet_transport(void* engine, const char* target,

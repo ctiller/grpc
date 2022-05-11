@@ -16,9 +16,11 @@
 
 #include "src/core/ext/transport/binder/client/endpoint_binder_pool.h"
 
-#ifndef GRPC_NO_BINDER
+#include <utility>
 
-#include "src/core/ext/transport/binder/client/jni_utils.h"
+#include <grpc/support/log.h>
+
+#ifndef GRPC_NO_BINDER
 
 #ifdef GPR_SUPPORT_BINDER_TRANSPORT
 

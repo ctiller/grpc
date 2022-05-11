@@ -14,9 +14,16 @@
 // limitations under the License.
 //
 
-#include <grpc/support/port_platform.h>
-
 #include "src/core/ext/xds/xds_http_rbac_filter.h"
+
+#include <grpc/support/port_platform.h>
+#include <stddef.h>
+#include <algorithm>
+#include <cstdint>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "absl/strings/str_format.h"
 #include "envoy/config/core/v3/address.upb.h"
@@ -30,11 +37,17 @@
 #include "envoy/type/matcher/v3/string.upb.h"
 #include "envoy/type/v3/range.upb.h"
 #include "google/protobuf/wrappers.upb.h"
-
 #include "src/core/ext/filters/rbac/rbac_filter.h"
 #include "src/core/ext/filters/rbac/rbac_service_config_parser.h"
 #include "src/core/ext/xds/upb_utils.h"
 #include "src/core/lib/channel/channel_args.h"
+#include "absl/status/status.h"
+#include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
+#include "src/core/lib/channel/channel_stack_builder.h"
+#include "src/core/lib/gprpp/debug_location.h"
+#include "src/core/lib/gprpp/status_helper.h"
+#include "src/core/lib/json/json.h"
 
 namespace grpc_core {
 

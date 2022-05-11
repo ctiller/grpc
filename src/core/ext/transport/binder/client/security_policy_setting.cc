@@ -14,6 +14,8 @@
 
 #include <grpc/support/port_platform.h>
 
+#include <grpc/support/log.h>
+
 #ifndef GRPC_NO_BINDER
 
 #include "src/core/ext/transport/binder/client/security_policy_setting.h"

@@ -17,18 +17,12 @@
 
 #include <grpc/support/port_platform.h>
 
-#include <memory>
-#include <utility>
-
-#include "absl/strings/string_view.h"
-#include "absl/strings/strip.h"
-
 #include <grpc/impl/codegen/grpc_types.h>
-#include <grpcpp/channel.h>
-#include <grpcpp/support/channel_arguments.h>
 
-#include "src/core/ext/filters/client_channel/client_channel.h"
 #include "src/core/ext/filters/client_channel/client_channel_factory.h"
+#include "src/core/ext/filters/client_channel/subchannel.h"
+#include "src/core/lib/gprpp/ref_counted_ptr.h"
+#include "src/core/lib/iomgr/resolved_address.h"
 
 namespace grpc_core {
 

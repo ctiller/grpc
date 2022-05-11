@@ -18,8 +18,10 @@
 #include <grpc/support/port_platform.h>
 
 #include <string>
+#include <utility>
 #include <vector>
 
+#include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
 
 #include <grpc/support/log.h>

@@ -12,17 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "src/core/ext/transport/binder/utils/transport_stream_receiver_impl.h"
+
 #include <grpc/support/port_platform.h>
 
-#include "src/core/ext/transport/binder/utils/transport_stream_receiver_impl.h"
+#include "absl/strings/string_view.h"
 
 #ifndef GRPC_NO_BINDER
 
+#include <grpc/support/log.h>
 #include <functional>
 #include <string>
 #include <utility>
-
-#include <grpc/support/log.h>
 
 namespace grpc_binder {
 

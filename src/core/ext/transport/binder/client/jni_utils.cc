@@ -18,8 +18,6 @@
 
 #ifndef GRPC_NO_BINDER
 
-#include <grpc/support/log.h>
-
 #if defined(ANDROID) || defined(__ANDROID__)
 
 namespace grpc_binder {

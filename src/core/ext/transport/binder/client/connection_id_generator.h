@@ -17,8 +17,11 @@
 
 #include <grpc/support/port_platform.h>
 
-#include <map>
+#include <stddef.h>
 
+#include <string>
+
+#include "absl/base/thread_annotations.h"
 #include "absl/strings/string_view.h"
 
 #include "src/core/lib/gprpp/sync.h"

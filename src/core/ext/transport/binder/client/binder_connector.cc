@@ -14,6 +14,22 @@
 
 #include <grpc/support/port_platform.h>
 
+#include <stddef.h>
+
+#include <memory>
+#include <string>
+#include <utility>
+
+#include <grpc/support/log.h>
+
+#include "src/core/lib/channel/channel_args.h"
+#include "src/core/lib/channel/channel_stack_builder.h"
+#include "src/core/lib/gprpp/debug_location.h"
+#include "src/core/lib/gprpp/orphanable.h"
+#include "src/core/lib/iomgr/closure.h"
+#include "src/core/lib/iomgr/error.h"
+#include "src/core/lib/iomgr/exec_ctx.h"
+
 #ifndef GRPC_NO_BINDER
 
 #include "src/core/ext/transport/binder/client/binder_connector.h"
@@ -24,9 +40,6 @@
 #endif
 
 #include <functional>
-#include <map>
-
-#include <grpcpp/security/binder_security_policy.h>
 
 #include "src/core/ext/filters/client_channel/connector.h"
 #include "src/core/ext/filters/client_channel/subchannel.h"

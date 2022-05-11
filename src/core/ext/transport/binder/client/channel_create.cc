@@ -16,8 +16,6 @@
 
 #ifndef GRPC_NO_BINDER
 
-#include <grpcpp/create_channel_binder.h>
-
 // The interface is only defined if GPR_ANDROID is defined, because some
 // arguments requires JNI.
 // Furthermore, the interface is non-phony only when

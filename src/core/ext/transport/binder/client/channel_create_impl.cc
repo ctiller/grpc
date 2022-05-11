@@ -16,6 +16,20 @@
 
 #include "src/core/ext/transport/binder/client/channel_create_impl.h"
 
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+
+#include <grpc/grpc.h>
+#include <grpc/status.h>
+#include <grpc/support/log.h>
+#include <grpc/support/sync.h>
+
+#include "src/core/lib/channel/channel_args_preconditioning.h"
+#include "src/core/lib/channel/channel_stack_builder.h"
+#include "src/core/lib/gprpp/ref_counted_ptr.h"
+#include "src/core/lib/iomgr/exec_ctx.h"
+#include "src/core/lib/surface/channel_stack_type.h"
+
 #ifndef GRPC_NO_BINDER
 
 #include <memory>
@@ -26,7 +40,6 @@
 #include "src/core/ext/transport/binder/wire_format/binder.h"
 #include "src/core/lib/channel/channel_args.h"
 #include "src/core/lib/config/core_configuration.h"
-#include "src/core/lib/surface/api_trace.h"
 #include "src/core/lib/surface/channel.h"
 
 namespace {

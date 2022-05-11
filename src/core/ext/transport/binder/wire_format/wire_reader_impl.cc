@@ -16,6 +16,14 @@
 
 #include "src/core/ext/transport/binder/wire_format/wire_reader_impl.h"
 
+#include <algorithm>
+#include <cstdint>
+#include <type_traits>
+
+#include "absl/hash/hash.h"
+
+#include "src/core/ext/transport/binder/wire_format/transaction.h"
+
 #ifndef GRPC_NO_BINDER
 
 #include <functional>
@@ -24,7 +32,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/memory/memory.h"
 #include "absl/status/statusor.h"
 
 #include <grpc/support/log.h>
