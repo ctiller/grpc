@@ -1075,7 +1075,7 @@ static enum e_op_result execute_stream_op(struct op_and_state* oas) {
       grpc_slice slice;
       grpc_slice_buffer_init(&write_slice_buffer);
       while (write_slice_buffer.length <
-             stream_op->payload->send_message.send_message->length()) {
+             stream_op->payload->send_message.send_message->Length()) {
         /* TODO(roth): When we add support for incremental sending,this code
          * will need to be changed to support asynchronous delivery of the
          * send_message payload. */
@@ -1122,7 +1122,7 @@ static enum e_op_result execute_stream_op(struct op_and_state* oas) {
     }
     stream_state->state_op_done[OP_SEND_MESSAGE] = true;
     oas->state.state_op_done[OP_SEND_MESSAGE] = true;
-    stream_op->payload->send_message.send_message.reset();
+    stream_op->payload->send_message.send_message->reset();
   } else if (stream_op->send_trailing_metadata &&
              op_can_be_run(stream_op, s, &oas->state,
                            OP_SEND_TRAILING_METADATA)) {
