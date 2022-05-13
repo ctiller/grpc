@@ -410,7 +410,7 @@ static void perform_stream_op_locked(void* stream_op,
   if (gbs->is_closed) {
     if (op->send_message) {
       // Reset the send_message payload to prevent memory leaks.
-      op->payload->send_message.send_message.reset();
+      op->payload->send_message.send_message->reset();
     }
     if (op->recv_initial_metadata) {
       grpc_core::ExecCtx::Run(
@@ -451,7 +451,7 @@ static void perform_stream_op_locked(void* stream_op,
   }
   if (op->send_message) {
     gpr_log(GPR_INFO, "send_message");
-    size_t remaining = op->payload->send_message.send_message->length();
+    size_t remaining = op->payload->send_message.send_message->Length();
     std::string message_data;
     while (remaining > 0) {
       grpc_slice message_slice;
@@ -471,7 +471,7 @@ static void perform_stream_op_locked(void* stream_op,
     tx.SetData(message_data);
     // TODO(b/192369787): Are we supposed to reset here to avoid
     // use-after-free issue in call.cc?
-    op->payload->send_message.send_message.reset();
+    op->payload->send_message.send_message->reset();
   }
 
   if (op->send_trailing_metadata) {
