@@ -11,4 +11,8 @@ jobs:
           fetch-depth: 0
       # Run the things!
       - name: pfft
-        run: cd ${{ github.workspace }} && git branch -a
+        run: |
+          cd ${{ github.workspace }}
+          git remote add upstream https://github.com:grpc/grpc.git
+          git fetch upstream/master
+          git diff upstream/master HEAD --name-only
