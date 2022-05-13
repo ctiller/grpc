@@ -1,0 +1,14 @@
+name: test-test-test
+on: [push]
+jobs:
+  PRAutoFix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+        with:
+          submodules: True
+          fetch-depth: 0
+      # Run the things!
+      - name: pfft
+        run: cd ${{ github.workspace }} && git branch -a
