@@ -6,9 +6,6 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
-        with:
-          submodules: True
-          fetch-depth: 0
       # Run the things!
       - name: pfft
         run: |
