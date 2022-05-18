@@ -13,11 +13,14 @@
 // limitations under the License.
 
 #include <grpc/support/port_platform.h>
+
 #include <stddef.h>
-#include <grpc/support/log.h>
+
 #include <memory>
 #include <string>
 #include <utility>
+
+#include <grpc/support/log.h>
 
 #include "src/core/lib/channel/channel_args.h"
 #include "src/core/lib/gprpp/debug_location.h"
@@ -30,7 +33,6 @@
 #ifndef GRPC_NO_BINDER
 
 #include "src/core/ext/transport/binder/client/binder_connector.h"
-
 #include "src/core/lib/iomgr/port.h"
 
 #ifdef GRPC_HAVE_UNIX_SOCKET

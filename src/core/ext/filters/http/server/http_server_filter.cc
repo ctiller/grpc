@@ -16,10 +16,10 @@
  *
  */
 
+#include <grpc/support/port_platform.h>
+
 #include "src/core/ext/filters/http/server/http_server_filter.h"
 
-#include <grpc/support/port_platform.h>
-#include <grpc/impl/codegen/grpc_types.h>
 #include <functional>
 #include <utility>
 
@@ -27,7 +27,11 @@
 #include "absl/status/status.h"
 #include "absl/types/optional.h"
 #include "absl/utility/utility.h"
+
+#include <grpc/impl/codegen/grpc_types.h>
+
 #include "src/core/lib/channel/channel_args.h"
+#include "src/core/lib/channel/channel_stack.h"
 #include "src/core/lib/promise/call_push_pull.h"
 #include "src/core/lib/promise/context.h"
 #include "src/core/lib/promise/detail/basic_seq.h"
@@ -39,7 +43,6 @@
 #include "src/core/lib/slice/percent_encoding.h"
 #include "src/core/lib/slice/slice.h"
 #include "src/core/lib/transport/metadata_batch.h"
-#include "src/core/lib/channel/channel_stack.h"
 
 namespace grpc_core {
 
