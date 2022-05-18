@@ -24,6 +24,7 @@
 #include <cstdint>
 #include <map>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 

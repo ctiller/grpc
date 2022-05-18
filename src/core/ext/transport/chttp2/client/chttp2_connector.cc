@@ -16,10 +16,18 @@
  *
  */
 
+#include <grpc/support/port_platform.h>
+
 #include "src/core/ext/transport/chttp2/client/chttp2_connector.h"
 
-#include <grpc/support/port_platform.h>
 #include <stdint.h>
+
+#include <string>
+
+#include "absl/container/inlined_vector.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+
 #include <grpc/grpc.h>
 #include <grpc/grpc_posix.h>
 #include <grpc/grpc_security.h>
@@ -28,11 +36,7 @@
 #include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
 #include <grpc/support/sync.h>
-#include <string>
 
-#include "absl/container/inlined_vector.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "src/core/ext/filters/client_channel/client_channel.h"
 #include "src/core/ext/filters/client_channel/client_channel_factory.h"
 #include "src/core/ext/filters/client_channel/connector.h"

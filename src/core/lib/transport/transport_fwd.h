@@ -17,4 +17,4 @@
 
 typedef struct grpc_transport grpc_transport;
 
-#endif
+#endif  // GRPC_CORE_LIB_TRANSPORT_TRANSPORT_FWD_H

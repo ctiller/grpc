@@ -23,4 +23,4 @@ typedef struct grpc_call_element grpc_call_element;
 
 typedef struct grpc_call_stack grpc_call_stack;
 
-#endif
+#endif  // GRPC_CORE_LIB_CHANNEL_CHANNEL_FWD_H

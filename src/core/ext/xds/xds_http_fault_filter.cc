@@ -14,11 +14,12 @@
 // limitations under the License.
 //
 
+#include <grpc/support/port_platform.h>
+
 #include "src/core/ext/xds/xds_http_fault_filter.h"
 
-#include <grpc/support/port_platform.h>
 #include <stdint.h>
-#include <grpc/status.h>
+
 #include <map>
 #include <string>
 #include <utility>
@@ -33,6 +34,9 @@
 #include "envoy/type/v3/percent.upb.h"
 #include "google/protobuf/wrappers.upb.h"
 #include "upb/def.h"
+
+#include <grpc/status.h>
+
 #include "src/core/ext/filters/fault_injection/fault_injection_filter.h"
 #include "src/core/ext/xds/xds_common_types.h"
 #include "src/core/ext/xds/xds_http_filters.h"
