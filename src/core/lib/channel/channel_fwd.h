@@ -15,11 +15,6 @@
 #ifndef GRPC_CORE_LIB_CHANNEL_CHANNEL_FWD_H
 #define GRPC_CORE_LIB_CHANNEL_CHANNEL_FWD_H
 
-struct grpc_call_element;
-struct grpc_call_stack;
-struct grpc_channel_element;
-struct grpc_channel_stack;
-
 typedef struct grpc_channel_stack grpc_channel_stack;
 typedef struct grpc_channel_filter grpc_channel_filter;
 

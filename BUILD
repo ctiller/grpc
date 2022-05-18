@@ -673,6 +673,7 @@ grpc_cc_library(
         "ref_counted_ptr",
         "slice",
         "slice_refcount",
+        "transport_fwd",
     ],
 )
 
@@ -2490,6 +2491,7 @@ grpc_cc_library(
         "table",
         "thread_quota",
         "time",
+        "transport_fwd",
         "uri_parser",
         "useful",
     ],
@@ -2827,6 +2829,7 @@ grpc_cc_library(
     visibility = ["@grpc:client_channel"],
     deps = [
         "arena",
+        "channel_fwd",
         "channel_init",
         "channel_stack_type",
         "chunked_vector",
@@ -3118,6 +3121,7 @@ grpc_cc_library(
         "grpc_security_base",
         "grpc_service_config",
         "json_util",
+        "transport_fwd",
     ],
 )
 
@@ -3151,6 +3155,7 @@ grpc_cc_library(
         "arena",
         "basic_seq",
         "call_push_pull",
+        "channel_fwd",
         "channel_init",
         "channel_stack_type",
         "config",
@@ -3167,6 +3172,7 @@ grpc_cc_library(
         "promise",
         "seq",
         "slice",
+        "transport_fwd",
     ],
 )
 
@@ -3388,6 +3394,7 @@ grpc_cc_library(
     language = "c++",
     deps = [
         "channel_creds_registry",
+        "channel_fwd",
         "config",
         "debug_location",
         "envoy_admin_upb",
@@ -3503,6 +3510,7 @@ grpc_cc_library(
     language = "c++",
     deps = [
         "channel_args_preconditioning",
+        "channel_fwd",
         "config",
         "gpr_base",
         "grpc_base",
@@ -3979,6 +3987,7 @@ grpc_cc_library(
     ],
     language = "c++",
     deps = [
+        "channel_fwd",
         "channel_init",
         "channel_stack_type",
         "config",
@@ -4363,6 +4372,7 @@ grpc_cc_library(
     language = "c++",
     deps = [
         "arena",
+        "channel_fwd",
         "config",
         "debug_location",
         "dual_ref_counted",
@@ -5433,6 +5443,7 @@ grpc_cc_library(
         "slice",
         "sockaddr_utils",
         "tcp_connect_handshaker",
+        "transport_fwd",
         "uri_parser",
     ],
 )
@@ -5479,6 +5490,7 @@ grpc_cc_library(
         "slice",
         "sockaddr_utils",
         "time",
+        "transport_fwd",
         "uri_parser",
         "useful",
     ],
@@ -5515,6 +5527,7 @@ grpc_cc_library(
         "ref_counted_ptr",
         "slice",
         "time",
+        "transport_fwd",
         "useful",
     ],
 )

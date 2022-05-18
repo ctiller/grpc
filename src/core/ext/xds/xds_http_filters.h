@@ -31,7 +31,7 @@
 
 #include <grpc/impl/codegen/grpc_types.h>
 
-#include "src/core/lib/channel/channel_stack.h"
+#include "src/core/lib/channel/channel_fwd.h"
 #include "src/core/lib/json/json.h"
 
 namespace grpc_core {

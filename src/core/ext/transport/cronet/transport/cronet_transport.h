@@ -23,7 +23,7 @@
 
 #include <grpc/impl/codegen/grpc_types.h>
 
-#include "src/core/lib/transport/transport.h"
+#include "src/core/lib/transport/transport_fwd.h"
 
 grpc_transport* grpc_create_cronet_transport(void* engine, const char* target,
                                              const grpc_channel_args* args,

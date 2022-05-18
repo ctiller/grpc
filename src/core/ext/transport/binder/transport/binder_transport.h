@@ -34,7 +34,7 @@
 #include "src/core/lib/gprpp/ref_counted.h"
 #include "src/core/lib/iomgr/combiner.h"
 #include "src/core/lib/transport/connectivity_state.h"
-#include "src/core/lib/transport/transport.h"
+#include "src/core/lib/transport/transport_fwd.h"
 #include "src/core/lib/transport/transport_impl.h"
 
 struct grpc_binder_stream;

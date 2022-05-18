@@ -37,7 +37,6 @@
 #include <grpc/slice_buffer.h>
 #include <grpc/support/log.h>
 
-#include "src/core/lib/channel/channel_stack_builder.h"
 #include "src/core/lib/compression/compression_internal.h"
 #include "src/core/lib/compression/message_compress.h"
 #include "src/core/lib/debug/trace.h"
