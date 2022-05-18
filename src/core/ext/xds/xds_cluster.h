@@ -34,8 +34,10 @@
 #include "envoy/extensions/transport_sockets/tls/v3/tls.upbdefs.h"
 #include "upb/def.h"
 
+#include "src/core/ext/filters/client_channel/lb_policy/outlier_detection/outlier_detection.h"
 #include "src/core/ext/xds/upb_utils.h"
 #include "src/core/ext/xds/xds_bootstrap.h"
+#include "src/core/ext/xds/xds_client.h"
 #include "src/core/ext/xds/xds_common_types.h"
 #include "src/core/ext/xds/xds_resource_type_impl.h"
 
@@ -70,6 +72,8 @@ struct XdsClusterResource {
   // Maximum number of outstanding requests can be made to the upstream
   // cluster.
   uint32_t max_concurrent_requests = 1024;
+
+  absl::optional<OutlierDetectionConfig> outlier_detection;
 
   bool operator==(const XdsClusterResource& other) const {
     return cluster_type == other.cluster_type &&
