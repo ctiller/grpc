@@ -44,6 +44,8 @@
 #include "absl/types/variant.h"
 #include "re2/re2.h"
 
+#include "src/core/lib/channel/channel_fwd.h"
+
 #define XXH_INLINE_ALL
 #include "xxhash.h"
 
@@ -62,7 +64,6 @@
 #include "src/core/ext/xds/xds_route_config.h"
 #include "src/core/ext/xds/xds_routing.h"
 #include "src/core/lib/channel/channel_args.h"
-#include "src/core/lib/channel/channel_stack_builder.h"
 #include "src/core/lib/channel/status_util.h"
 #include "src/core/lib/config/core_configuration.h"
 #include "src/core/lib/debug/trace.h"

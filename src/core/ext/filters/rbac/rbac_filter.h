@@ -21,6 +21,7 @@
 
 #include <stddef.h>
 
+#include "src/core/lib/channel/channel_fwd.h"
 #include "src/core/lib/channel/channel_stack.h"
 #include "src/core/lib/channel/context.h"
 #include "src/core/lib/iomgr/closure.h"
