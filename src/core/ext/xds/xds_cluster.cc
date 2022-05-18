@@ -41,6 +41,7 @@
 #include "envoy/extensions/clusters/aggregate/v3/cluster.upb.h"
 #include "envoy/extensions/transport_sockets/tls/v3/tls.upb.h"
 #include "google/protobuf/any.upb.h"
+#include "google/protobuf/duration.upb.h"
 #include "google/protobuf/wrappers.upb.h"
 #include "upb/text_encode.h"
 #include "upb/upb.h"
@@ -50,11 +51,11 @@
 
 #include "src/core/ext/xds/xds_common_types.h"
 #include "src/core/ext/xds/xds_resource_type.h"
-#include "src/core/ext/xds/xds_route_config.h"
 #include "src/core/lib/debug/trace.h"
 #include "src/core/lib/gpr/env.h"
 #include "src/core/lib/gpr/string.h"
 #include "src/core/lib/gprpp/host_port.h"
+#include "src/core/lib/gprpp/time.h"
 #include "src/core/lib/iomgr/error.h"
 
 namespace grpc_core {
