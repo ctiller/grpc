@@ -374,6 +374,28 @@ grpc_cc_library(
 )
 
 grpc_cc_library(
+    name = "channel_fwd",
+    hdrs = [
+        "src/core/lib/channel/channel_fwd.h",
+    ],
+    language = "c++",
+    deps = [
+        "gpr_platform",
+    ],
+)
+
+grpc_cc_library(
+    name = "transport_fwd",
+    hdrs = [
+        "src/core/lib/transport/transport_fwd.h",
+    ],
+    language = "c++",
+    deps = [
+        "gpr_platform",
+    ],
+)
+
+grpc_cc_library(
     name = "atomic_utils",
     language = "c++",
     public_hdrs = ["src/core/lib/gprpp/atomic_utils.h"],
@@ -2426,6 +2448,7 @@ grpc_cc_library(
         "bitset",
         "channel_args",
         "channel_args_preconditioning",
+        "channel_fwd",
         "channel_init",
         "channel_stack_builder",
         "channel_stack_type",
@@ -2528,10 +2551,12 @@ grpc_cc_library(
     visibility = ["@grpc:alt_grpc_base_legacy"],
     deps = [
         "channel_args",
+        "channel_fwd",
         "channel_stack_type",
         "closure",
         "error",
         "gpr_base",
+        "transport_fwd",
     ],
 )
 
