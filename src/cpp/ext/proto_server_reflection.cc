@@ -25,6 +25,7 @@
 
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/support/interceptor.h>
+#include <grpcpp/support/status_code_enum.h>
 
 using grpc::Status;
 using grpc::StatusCode;

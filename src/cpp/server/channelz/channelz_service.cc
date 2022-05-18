@@ -24,6 +24,7 @@
 
 #include <grpc/support/alloc.h>
 #include <grpcpp/impl/codegen/config_protobuf.h>
+#include <grpcpp/support/status_code_enum.h>
 
 namespace grpc {
 
