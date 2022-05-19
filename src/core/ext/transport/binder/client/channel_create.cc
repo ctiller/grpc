@@ -36,6 +36,7 @@
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 
+#include <grpcpp/create_channel_binder.h>  // IWYU pragma: keep
 #include <grpcpp/impl/grpc_library.h>
 #include <grpcpp/support/channel_arguments.h>  // IWYU pragma: keep
 

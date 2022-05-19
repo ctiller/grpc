@@ -24,8 +24,12 @@
 
 #ifndef GRPC_NO_BINDER
 
+#include "absl/memory/memory.h"
+
 #include <grpcpp/security/binder_security_policy.h>
 #include <grpcpp/security/server_credentials.h>
+
+#include "src/core/ext/transport/binder/server/binder_server.h"  // IWYU pragma: keep
 
 namespace grpc {
 namespace experimental {
