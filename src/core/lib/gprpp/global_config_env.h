@@ -23,7 +23,6 @@
 
 <<<<<<< HEAD
 #include <stdint.h>
-
 #include "src/core/lib/gprpp/global_config_generic.h"  // IWYU pragma: export
 =======
 #include "src/core/lib/gprpp/global_config_generic.h"
@@ -32,73 +31,73 @@
 
 namespace grpc_core {
 
-typedef void (*GlobalConfigEnvErrorFunctionType)(const char* error_message);
+  typedef void (*GlobalConfigEnvErrorFunctionType)(const char* error_message);
 
-/*
- * Set global_config_env_error_function which is called when config system
- * encounters errors such as parsing error. What the default function does
- * is logging error message.
- */
-void SetGlobalConfigEnvErrorFunction(GlobalConfigEnvErrorFunctionType func);
+  /*
+   * Set global_config_env_error_function which is called when config system
+   * encounters errors such as parsing error. What the default function does
+   * is logging error message.
+   */
+  void SetGlobalConfigEnvErrorFunction(GlobalConfigEnvErrorFunctionType func);
 
-// Base class for all classes to access environment variables.
-class GlobalConfigEnv {
- protected:
-  // `name` should be writable and alive after constructor is called.
-  constexpr explicit GlobalConfigEnv(char* name) : name_(name) {}
+  // Base class for all classes to access environment variables.
+  class GlobalConfigEnv {
+   protected:
+    // `name` should be writable and alive after constructor is called.
+    constexpr explicit GlobalConfigEnv(char* name) : name_(name) {}
 
- public:
-  // Returns the value of `name` variable.
-  UniquePtr<char> GetValue();
+   public:
+    // Returns the value of `name` variable.
+    UniquePtr<char> GetValue();
 
-  // Sets the value of `name` variable.
-  void SetValue(const char* value);
+    // Sets the value of `name` variable.
+    void SetValue(const char* value);
 
-  // Unsets `name` variable.
-  void Unset();
+    // Unsets `name` variable.
+    void Unset();
 
- protected:
-  char* GetName();
+   protected:
+    char* GetName();
 
- private:
-  char* name_;
-};
+   private:
+    char* name_;
+  };
 
-class GlobalConfigEnvBool : public GlobalConfigEnv {
- public:
-  constexpr GlobalConfigEnvBool(char* name, bool default_value)
-      : GlobalConfigEnv(name), default_value_(default_value) {}
+  class GlobalConfigEnvBool : public GlobalConfigEnv {
+   public:
+    constexpr GlobalConfigEnvBool(char* name, bool default_value)
+        : GlobalConfigEnv(name), default_value_(default_value) {}
 
-  bool Get();
-  void Set(bool value);
+    bool Get();
+    void Set(bool value);
 
- private:
-  bool default_value_;
-};
+   private:
+    bool default_value_;
+  };
 
-class GlobalConfigEnvInt32 : public GlobalConfigEnv {
- public:
-  constexpr GlobalConfigEnvInt32(char* name, int32_t default_value)
-      : GlobalConfigEnv(name), default_value_(default_value) {}
+  class GlobalConfigEnvInt32 : public GlobalConfigEnv {
+   public:
+    constexpr GlobalConfigEnvInt32(char* name, int32_t default_value)
+        : GlobalConfigEnv(name), default_value_(default_value) {}
 
-  int32_t Get();
-  void Set(int32_t value);
+    int32_t Get();
+    void Set(int32_t value);
 
- private:
-  int32_t default_value_;
-};
+   private:
+    int32_t default_value_;
+  };
 
-class GlobalConfigEnvString : public GlobalConfigEnv {
- public:
-  constexpr GlobalConfigEnvString(char* name, const char* default_value)
-      : GlobalConfigEnv(name), default_value_(default_value) {}
+  class GlobalConfigEnvString : public GlobalConfigEnv {
+   public:
+    constexpr GlobalConfigEnvString(char* name, const char* default_value)
+        : GlobalConfigEnv(name), default_value_(default_value) {}
 
-  UniquePtr<char> Get();
-  void Set(const char* value);
+    UniquePtr<char> Get();
+    void Set(const char* value);
 
- private:
-  const char* default_value_;
-};
+   private:
+    const char* default_value_;
+  };
 
 }  // namespace grpc_core
 
