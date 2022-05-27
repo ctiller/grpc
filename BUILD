@@ -2250,14 +2250,13 @@ grpc_cc_library(
     ],
     external_deps = [
         "absl/base:core_headers",
-        "absl/strings",
+        "absl/types:optional",
     ],
     tags = ["grpc-autodeps"],
     deps = [
         "event_engine_base_hdrs",
         "gpr_base",
-        "gpr_tls",
-        "grpc_trace",
+        "gpr_codegen",
         "iomgr_ee_time_averaged_stats",
         "time",
         "useful",
@@ -2270,11 +2269,15 @@ grpc_cc_library(
     hdrs = [
         "src/core/lib/event_engine/iomgr_engine/timer_manager.h",
     ],
-    external_deps = ["absl/base:core_headers"],
+    external_deps = [
+        "absl/base:core_headers",
+        "absl/time",
+        "absl/types:optional",
+    ],
     tags = ["grpc-autodeps"],
     deps = [
+        "event_engine_base_hdrs",
         "gpr_base",
-        "grpc_trace",
         "iomgr_ee_timer",
         "time",
     ],

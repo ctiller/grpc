@@ -16,8 +16,8 @@
  *
  */
 
-#ifndef GRPC_CORE_LIB_IOMGR_TIMER_H
-#define GRPC_CORE_LIB_IOMGR_TIMER_H
+#ifndef GRPC_CORE_LIB_EVENT_ENGINE_IOMGR_ENGINE_TIMER_H
+#define GRPC_CORE_LIB_EVENT_ENGINE_IOMGR_ENGINE_TIMER_H
 
 #include <grpc/support/port_platform.h>
 
@@ -25,9 +25,11 @@
 
 #include <atomic>
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 #include "absl/base/thread_annotations.h"
+#include "absl/types/optional.h"
 
 #include <grpc/event_engine/event_engine.h>
 
@@ -177,4 +179,4 @@ class TimerList {
 }  // namespace iomgr_engine
 }  // namespace grpc_event_engine
 
-#endif /* GRPC_CORE_LIB_IOMGR_TIMER_H */
+#endif /* GRPC_CORE_LIB_EVENT_ENGINE_IOMGR_ENGINE_TIMER_H */

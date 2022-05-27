@@ -20,13 +20,11 @@
 
 #include "src/core/lib/event_engine/iomgr_engine/timer_manager.h"
 
-#include <inttypes.h>
+#include <memory>
 
-#include <grpc/support/alloc.h>
-#include <grpc/support/log.h>
+#include "absl/time/time.h"
+#include "absl/types/optional.h"
 
-#include "src/core/lib/debug/trace.h"
-#include "src/core/lib/event_engine/iomgr_engine/timer.h"
 #include "src/core/lib/gprpp/thd.h"
 
 namespace grpc_event_engine {

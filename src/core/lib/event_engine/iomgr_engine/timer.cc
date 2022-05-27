@@ -20,23 +20,17 @@
 
 #include "src/core/lib/event_engine/iomgr_engine/timer.h"
 
-#include <inttypes.h>
-
+#include <algorithm>
 #include <atomic>
 #include <limits>
-#include <string>
+#include <type_traits>
+#include <utility>
 
-#include "absl/strings/str_cat.h"
-
-#include <grpc/support/alloc.h>
+#include <grpc/impl/codegen/gpr_types.h>
 #include <grpc/support/cpu.h>
-#include <grpc/support/log.h>
-#include <grpc/support/sync.h>
+#include <grpc/support/time.h>
 
-#include "src/core/lib/debug/trace.h"
 #include "src/core/lib/event_engine/iomgr_engine/timer_heap.h"
-#include "src/core/lib/gpr/spinlock.h"
-#include "src/core/lib/gpr/tls.h"
 #include "src/core/lib/gpr/useful.h"
 #include "src/core/lib/gprpp/time.h"
 

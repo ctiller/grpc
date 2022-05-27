@@ -118,7 +118,7 @@ EventEngine::TaskHandle IomgrEventEngine::RunAtInternal(
     absl::Time when, EventEngine::Closure* cb) {
   when = Clamp(when);
   auto* cd = new ClosureData;
-  cd->cb = std::move(cb);
+  cd->cb = cb;
   cd->engine = this;
   GRPC_CLOSURE_INIT(
       &cd->closure,
