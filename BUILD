@@ -5731,10 +5731,7 @@ grpc_cc_library(
     ],
     language = "c++",
     tags = ["grpc-autodeps"],
-    deps = [
-        "google_type_expr_upb",
-        "gpr_platform",
-    ],
+    deps = ["gpr_platform"],
 )
 
 # This target depends on RE2 and should not be linked into grpc by default for binary-size reasons.
