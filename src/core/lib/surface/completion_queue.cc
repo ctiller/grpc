@@ -22,15 +22,10 @@
 #include <inttypes.h>
 #include <stdio.h>
 
-#include <algorithm>
 #include <atomic>
 #include <new>
 #include <string>
 #include <utility>
-#include <vector>
-
-#include "absl/strings/str_format.h"
-#include "absl/strings/str_join.h"
 
 #include <grpc/grpc.h>
 #include <grpc/impl/codegen/gpr_types.h>
@@ -39,7 +34,7 @@
 #include <grpc/support/log.h>
 #include <grpc/support/sync.h>
 
-#include "src/core/lib/debug/stats.h"
+#include "src/core/lib/debug/stats_data.h"
 #include "src/core/lib/gpr/spinlock.h"
 #include "src/core/lib/gpr/tls.h"
 #include "src/core/lib/gprpp/atomic_utils.h"

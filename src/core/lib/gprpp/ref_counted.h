@@ -22,10 +22,7 @@
 #include <grpc/support/port_platform.h>
 
 #include <atomic>
-#include <cassert>
 #include <cinttypes>
-
-#include <grpc/support/log.h>
 
 #include "src/core/lib/gprpp/atomic_utils.h"
 #include "src/core/lib/gprpp/debug_location.h"

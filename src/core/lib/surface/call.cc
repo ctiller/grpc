@@ -54,7 +54,7 @@
 #include "src/core/lib/channel/channelz.h"
 #include "src/core/lib/channel/context.h"
 #include "src/core/lib/compression/compression_internal.h"
-#include "src/core/lib/debug/stats.h"
+#include "src/core/lib/debug/stats_data.h"
 #include "src/core/lib/gpr/alloc.h"
 #include "src/core/lib/gpr/time_precise.h"
 #include "src/core/lib/gprpp/cpp_impl_of.h"

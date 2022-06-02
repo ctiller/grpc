@@ -38,7 +38,6 @@
 #include "opencensus/tags/tag_key.h"
 #include "opencensus/tags/tag_map.h"
 #include "opencensus/trace/span.h"
-#include "opencensus/trace/span_context.h"
 #include "opencensus/trace/status_code.h"
 
 #include <grpc/impl/codegen/gpr_types.h>
