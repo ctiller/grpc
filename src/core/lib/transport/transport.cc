@@ -25,6 +25,7 @@
 #include <new>
 
 #include "src/core/lib/gpr/alloc.h"
+#include "src/core/lib/gprpp/debug_location.h"
 #include "src/core/lib/iomgr/exec_ctx.h"
 #include "src/core/lib/iomgr/executor.h"
 #include "src/core/lib/iomgr/iomgr.h"

@@ -1643,7 +1643,6 @@ grpc_cc_library(
     deps = [
         "atomic_utils",
         "debug_location",
-        "gpr_base",
         "gpr_platform",
         "ref_counted_ptr",
     ],
@@ -1656,7 +1655,6 @@ grpc_cc_library(
     tags = ["grpc-autodeps"],
     deps = [
         "debug_location",
-        "gpr_base",
         "gpr_platform",
         "orphanable",
         "ref_counted_ptr",
