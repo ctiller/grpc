@@ -20,7 +20,7 @@
 
 #include "src/core/lib/channel/connected_channel.h"
 
-#include <stdlib.h>
+#include <utility>
 
 #include <grpc/impl/codegen/grpc_types.h>
 #include <grpc/support/alloc.h>
@@ -34,6 +34,7 @@
 #include "src/core/lib/iomgr/error.h"
 #include "src/core/lib/iomgr/polling_entity.h"
 #include "src/core/lib/promise/arena_promise.h"
+#include "src/core/lib/promise/poll.h"
 #include "src/core/lib/transport/transport.h"
 #include "src/core/lib/transport/transport_fwd.h"
 #include "src/core/lib/transport/transport_impl.h"
