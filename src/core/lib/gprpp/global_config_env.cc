@@ -32,8 +32,8 @@
 #include <grpc/support/log.h>
 #include <grpc/support/string_util.h>
 
-#include "src/core/lib/gpr/env.h"
 #include "src/core/lib/gpr/string.h"
+#include "src/core/lib/gprpp/env.h"
 
 namespace grpc_core {
 
@@ -59,15 +59,15 @@ void SetGlobalConfigEnvErrorFunction(GlobalConfigEnvErrorFunctionType func) {
   g_global_config_env_error_func = func;
 }
 
-UniquePtr<char> GlobalConfigEnv::GetValue() {
-  return UniquePtr<char>(gpr_getenv(GetName()));
+absl::optional<std::string> GlobalConfigEnv::GetValue() {
+  return grpc_core::EnvGet(GetName());
 }
 
 void GlobalConfigEnv::SetValue(const char* value) {
-  gpr_setenv(GetName(), value);
+  grpc_core::EnvSet(GetName(), value);
 }
 
-void GlobalConfigEnv::Unset() { gpr_unsetenv(GetName()); }
+void GlobalConfigEnv::Unset() { grpc_core::EnvSet(GetName(), absl::nullopt); }
 
 char* GlobalConfigEnv::GetName() {
   // This makes sure that name_ is in a canonical form having uppercase
@@ -81,14 +81,14 @@ static_assert(std::is_trivially_destructible<GlobalConfigEnvBool>::value,
               "GlobalConfigEnvBool needs to be trivially destructible.");
 
 bool GlobalConfigEnvBool::Get() {
-  UniquePtr<char> str = GetValue();
-  if (str == nullptr) {
+  absl::optional<std::string> str = GetValue();
+  if (!str.has_value()) {
     return default_value_;
   }
   // parsing given value string.
   bool result = false;
-  if (!gpr_parse_bool_value(str.get(), &result)) {
-    LogParsingError(GetName(), str.get());
+  if (!gpr_parse_bool_value(str->c_str(), &result)) {
+    LogParsingError(GetName(), str->c_str());
     result = default_value_;
   }
   return result;
@@ -102,15 +102,15 @@ static_assert(std::is_trivially_destructible<GlobalConfigEnvInt32>::value,
               "GlobalConfigEnvInt32 needs to be trivially destructible.");
 
 int32_t GlobalConfigEnvInt32::Get() {
-  UniquePtr<char> str = GetValue();
-  if (str == nullptr) {
+  absl::optional<std::string> str = GetValue();
+  if (!str.has_value()) {
     return default_value_;
   }
   // parsing given value string.
-  char* end = str.get();
-  long result = strtol(str.get(), &end, 10);
+  char* end = const_cast<char*>(str->c_str());
+  long result = strtol(str->c_str(), &end, 10);
   if (*end != 0) {
-    LogParsingError(GetName(), str.get());
+    LogParsingError(GetName(), str->c_str());
     result = default_value_;
   }
   return static_cast<int32_t>(result);
@@ -125,12 +125,12 @@ void GlobalConfigEnvInt32::Set(int32_t value) {
 static_assert(std::is_trivially_destructible<GlobalConfigEnvString>::value,
               "GlobalConfigEnvString needs to be trivially destructible.");
 
-UniquePtr<char> GlobalConfigEnvString::Get() {
-  UniquePtr<char> str = GetValue();
-  if (str == nullptr) {
-    return UniquePtr<char>(gpr_strdup(default_value_));
+std::string GlobalConfigEnvString::Get() {
+  absl::optional<std::string> str = GetValue();
+  if (!str.has_value()) {
+    return default_value_;
   }
-  return str;
+  return std::move(*str);
 }
 
 void GlobalConfigEnvString::Set(const char* value) { SetValue(value); }

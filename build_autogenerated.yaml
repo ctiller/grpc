@@ -199,7 +199,7 @@ libs:
   - include/grpc/support/time.h
   headers:
   - src/core/lib/gpr/alloc.h
-  - src/core/lib/gpr/env.h
+  - src/core/lib/gprpp/env.h
   - src/core/lib/gpr/murmur_hash.h
   - src/core/lib/gpr/spinlock.h
   - src/core/lib/gpr/string.h
@@ -4345,7 +4345,7 @@ targets:
   language: c++
   headers:
   - src/core/lib/gpr/alloc.h
-  - src/core/lib/gpr/env.h
+  - src/core/lib/gprpp/env.h
   - src/core/lib/gpr/murmur_hash.h
   - src/core/lib/gpr/spinlock.h
   - src/core/lib/gpr/string.h
@@ -6619,7 +6619,7 @@ targets:
   language: c++
   headers:
   - src/core/lib/gpr/alloc.h
-  - src/core/lib/gpr/env.h
+  - src/core/lib/gprpp/env.h
   - src/core/lib/gpr/murmur_hash.h
   - src/core/lib/gpr/spinlock.h
   - src/core/lib/gpr/string.h
@@ -6961,7 +6961,7 @@ targets:
   language: c++
   headers:
   - src/core/lib/gpr/alloc.h
-  - src/core/lib/gpr/env.h
+  - src/core/lib/gprpp/env.h
   - src/core/lib/gpr/murmur_hash.h
   - src/core/lib/gpr/spinlock.h
   - src/core/lib/gpr/string.h
@@ -7912,7 +7912,7 @@ targets:
   language: c++
   headers:
   - src/core/lib/gpr/alloc.h
-  - src/core/lib/gpr/env.h
+  - src/core/lib/gprpp/env.h
   - src/core/lib/gpr/murmur_hash.h
   - src/core/lib/gpr/spinlock.h
   - src/core/lib/gpr/string.h
@@ -8174,7 +8174,7 @@ targets:
   language: c++
   headers:
   - src/core/lib/gpr/alloc.h
-  - src/core/lib/gpr/env.h
+  - src/core/lib/gprpp/env.h
   - src/core/lib/gpr/murmur_hash.h
   - src/core/lib/gpr/spinlock.h
   - src/core/lib/gpr/string.h
@@ -8352,7 +8352,7 @@ targets:
   language: c++
   headers:
   - src/core/lib/gpr/alloc.h
-  - src/core/lib/gpr/env.h
+  - src/core/lib/gprpp/env.h
   - src/core/lib/gpr/murmur_hash.h
   - src/core/lib/gpr/spinlock.h
   - src/core/lib/gpr/string.h

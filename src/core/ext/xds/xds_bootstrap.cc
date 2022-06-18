@@ -36,8 +36,8 @@
 #include "src/core/ext/xds/certificate_provider_factory.h"
 #include "src/core/ext/xds/certificate_provider_registry.h"
 #include "src/core/lib/config/core_configuration.h"
-#include "src/core/lib/gpr/env.h"
 #include "src/core/lib/gpr/string.h"
+#include "src/core/lib/gprpp/env.h"
 #include "src/core/lib/gprpp/ref_counted_ptr.h"
 #include "src/core/lib/json/json_util.h"
 #include "src/core/lib/security/credentials/channel_creds_registry.h"
@@ -47,7 +47,7 @@ namespace grpc_core {
 // TODO(donnadionne): check to see if federation is enabled, this will be
 // removed once federation is fully integrated and enabled by default.
 bool XdsFederationEnabled() {
-  char* value = gpr_getenv("GRPC_EXPERIMENTAL_XDS_FEDERATION");
+  char* value = grpc_core::EnvGet("GRPC_EXPERIMENTAL_XDS_FEDERATION");
   bool parsed_value;
   bool parse_succeeded = gpr_parse_bool_value(value, &parsed_value);
   gpr_free(value);

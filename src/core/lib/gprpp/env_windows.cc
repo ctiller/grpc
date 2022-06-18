@@ -26,21 +26,20 @@
 #include <grpc/support/log.h>
 #include <grpc/support/string_util.h>
 
-#include "src/core/lib/gpr/env.h"
 #include "src/core/lib/gpr/string.h"
 #include "src/core/lib/gpr/string_windows.h"
+#include "src/core/lib/gprpp/env.h"
 
-char* gpr_getenv(const char* name) {
-  char* result = NULL;
+absl::optional<std::string> EnvGet(absl::string_view name) {
   DWORD size;
   LPTSTR tresult = NULL;
-  LPTSTR tname = gpr_char_to_tchar(name);
+  LPTSTR tname = gpr_char_to_tchar(std::string(name).c_str());
   DWORD ret;
 
   ret = GetEnvironmentVariable(tname, NULL, 0);
   if (ret == 0) {
     gpr_free(tname);
-    return NULL;
+    return absl::nullopt;
   }
   size = ret * (DWORD)sizeof(TCHAR);
   tresult = (LPTSTR)gpr_malloc(size);
@@ -48,25 +47,26 @@ char* gpr_getenv(const char* name) {
   gpr_free(tname);
   if (ret == 0) {
     gpr_free(tresult);
-    return NULL;
+    return absl::nullopt;
   }
-  result = gpr_tchar_to_char(tresult);
+  char* result = gpr_tchar_to_char(tresult);
   gpr_free(tresult);
-  return result;
+  std::string out = result;
+  gpr_free(result);
+  return std::move(out);
 }
 
-void gpr_setenv(const char* name, const char* value) {
-  LPTSTR tname = gpr_char_to_tchar(name);
-  LPTSTR tvalue = gpr_char_to_tchar(value);
-  BOOL res = SetEnvironmentVariable(tname, tvalue);
-  gpr_free(tname);
-  gpr_free(tvalue);
-  GPR_ASSERT(res);
-}
-
-void gpr_unsetenv(const char* name) {
-  LPTSTR tname = gpr_char_to_tchar(name);
-  BOOL res = SetEnvironmentVariable(tname, NULL);
+void EnvSet(absl::string_view name, absl::optional<absl::string_view> value) {
+  LPTSTR tname = gpr_char_to_tchar(std::string(name).c_str());
+  BOOL res;
+  if (value.has_value()) {
+    LPTSTR tvalue = gpr_char_to_tchar(std::string(*value).c_str());
+    res = SetEnvironmentVariable(tname, tvalue);
+    gpr_free(tvalue);
+    GPR_ASSERT(res);
+  } else {
+    res = SetEnvironmentVariable(tname, NULL);
+  }
   gpr_free(tname);
   GPR_ASSERT(res);
 }

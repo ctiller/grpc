@@ -75,7 +75,7 @@ void grpc_set_ssl_roots_override_callback(grpc_ssl_roots_override_callback cb) {
 /* -- Cipher suites. -- */
 
 static gpr_once cipher_suites_once = GPR_ONCE_INIT;
-static const char* cipher_suites = nullptr;
+static std::string* cipher_suites = nullptr;
 
 // All cipher suites for default are compliant with HTTP2.
 GPR_GLOBAL_CONFIG_DEFINE_STRING(
@@ -90,16 +90,15 @@ GPR_GLOBAL_CONFIG_DEFINE_STRING(
     "A colon separated list of cipher suites to use with OpenSSL")
 
 static void init_cipher_suites(void) {
-  grpc_core::UniquePtr<char> value =
-      GPR_GLOBAL_CONFIG_GET(grpc_ssl_cipher_suites);
-  cipher_suites = value.release();
+  cipher_suites =
+      new std::string(GPR_GLOBAL_CONFIG_GET(grpc_ssl_cipher_suites));
 }
 
 /* --- Util --- */
 
 const char* grpc_get_ssl_cipher_suites(void) {
   gpr_once_init(&cipher_suites_once, init_cipher_suites);
-  return cipher_suites;
+  return cipher_suites->c_str();
 }
 
 tsi_client_certificate_request_type

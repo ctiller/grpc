@@ -28,8 +28,8 @@
 #include <grpc/slice.h>
 
 #include "src/core/ext/xds/certificate_provider_registry.h"
-#include "src/core/lib/gpr/env.h"
 #include "src/core/lib/gpr/tmpfile.h"
+#include "src/core/lib/gprpp/env.h"
 #include "test/core/util/test_config.h"
 
 namespace grpc_core {
@@ -37,7 +37,7 @@ namespace testing {
 namespace {
 
 TEST(XdsBootstrapTest, Basic) {
-  gpr_setenv("GRPC_EXPERIMENTAL_XDS_FEDERATION", "true");
+  grpc_core::EnvSet("GRPC_EXPERIMENTAL_XDS_FEDERATION", "true");
   const char* json_str =
       "{"
       "  \"xds_servers\": ["
@@ -170,7 +170,7 @@ TEST(XdsBootstrapTest, Basic) {
                           ::testing::Property(&Json::string_value, "1")))));
   EXPECT_EQ(bootstrap.server_listener_resource_name_template(),
             "example/resource");
-  gpr_unsetenv("GRPC_EXPERIMENTAL_XDS_FEDERATION");
+  grpc_core::EnvSet("GRPC_EXPERIMENTAL_XDS_FEDERATION", absl::nullopt);
 }
 
 TEST(XdsBootstrapTest, ValidWithoutNode) {
@@ -227,7 +227,7 @@ TEST(XdsBootstrapTest, GoogleDefaultCreds) {
   ASSERT_EQ(fwrite(token_str, 1, sizeof(token_str), creds_file),
             sizeof(token_str));
   fclose(creds_file);
-  gpr_setenv(GRPC_GOOGLE_CREDENTIALS_ENV_VAR, creds_file_name);
+  grpc_core::EnvSet(GRPC_GOOGLE_CREDENTIALS_ENV_VAR, creds_file_name);
   gpr_free(creds_file_name);
   // Now run test.
   const char* json_str =
@@ -520,7 +520,7 @@ TEST(XdsBootstrapTest, CertificateProvidersUnrecognizedPluginName) {
 }
 
 TEST(XdsBootstrapTest, AuthorityXdsServerInvalidResourceTemplate) {
-  gpr_setenv("GRPC_EXPERIMENTAL_XDS_FEDERATION", "true");
+  grpc_core::EnvSet("GRPC_EXPERIMENTAL_XDS_FEDERATION", "true");
   const char* json_str =
       "{"
       "  \"xds_servers\": ["
@@ -558,11 +558,11 @@ TEST(XdsBootstrapTest, AuthorityXdsServerInvalidResourceTemplate) {
                   "errors parsing authority xds.example.com.*"
                   "field must begin with \"xdstp://xds.example.com/\""));
   GRPC_ERROR_UNREF(error);
-  gpr_unsetenv("GRPC_EXPERIMENTAL_XDS_FEDERATION");
+  grpc_core::EnvSet("GRPC_EXPERIMENTAL_XDS_FEDERATION", absl::nullopt);
 }
 
 TEST(XdsBootstrapTest, AuthorityXdsServerMissingServerUri) {
-  gpr_setenv("GRPC_EXPERIMENTAL_XDS_FEDERATION", "true");
+  grpc_core::EnvSet("GRPC_EXPERIMENTAL_XDS_FEDERATION", "true");
   const char* json_str =
       "{"
       "  \"xds_servers\": ["
@@ -593,7 +593,7 @@ TEST(XdsBootstrapTest, AuthorityXdsServerMissingServerUri) {
                                "errors parsing xds server.*"
                                "field:server_uri error:does not exist."));
   GRPC_ERROR_UNREF(error);
-  gpr_unsetenv("GRPC_EXPERIMENTAL_XDS_FEDERATION");
+  grpc_core::EnvSet("GRPC_EXPERIMENTAL_XDS_FEDERATION", absl::nullopt);
 }
 
 class FakeCertificateProviderFactory : public CertificateProviderFactory {
@@ -739,7 +739,7 @@ TEST(XdsBootstrapTest, CertificateProvidersFakePluginEmptyConfig) {
 }
 
 TEST(XdsBootstrapTest, XdsServerToJsonAndParse) {
-  gpr_setenv("GRPC_EXPERIMENTAL_XDS_FEDERATION", "true");
+  grpc_core::EnvSet("GRPC_EXPERIMENTAL_XDS_FEDERATION", "true");
   const char* json_str =
       "    {"
       "      \"server_uri\": \"fake:///lb\","
@@ -761,7 +761,7 @@ TEST(XdsBootstrapTest, XdsServerToJsonAndParse) {
   XdsBootstrap::XdsServer output_xds_server =
       XdsBootstrap::XdsServer::Parse(output, &error);
   ASSERT_EQ(error, GRPC_ERROR_NONE) << grpc_error_std_string(error);
-  gpr_unsetenv("GRPC_EXPERIMENTAL_XDS_FEDERATION");
+  grpc_core::EnvSet("GRPC_EXPERIMENTAL_XDS_FEDERATION", absl::nullopt);
 }
 
 }  // namespace

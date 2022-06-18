@@ -69,8 +69,8 @@
 #include "src/core/ext/xds/xds_routing.h"
 #include "src/core/lib/channel/status_util.h"
 #include "src/core/lib/debug/trace.h"
-#include "src/core/lib/gpr/env.h"
 #include "src/core/lib/gpr/string.h"
+#include "src/core/lib/gprpp/env.h"
 #include "src/core/lib/gprpp/status_helper.h"
 #include "src/core/lib/gprpp/time.h"
 #include "src/core/lib/iomgr/error.h"
@@ -81,7 +81,7 @@ namespace grpc_core {
 
 // TODO(yashykt): Remove once RBAC is no longer experimental
 bool XdsRbacEnabled() {
-  char* value = gpr_getenv("GRPC_XDS_EXPERIMENTAL_RBAC");
+  char* value = grpc_core::EnvGet("GRPC_XDS_EXPERIMENTAL_RBAC");
   bool parsed_value;
   bool parse_succeeded = gpr_parse_bool_value(value, &parsed_value);
   gpr_free(value);
@@ -90,7 +90,7 @@ bool XdsRbacEnabled() {
 
 // TODO(donnadionne): Remove once RLS is no longer experimental
 bool XdsRlsEnabled() {
-  char* value = gpr_getenv("GRPC_EXPERIMENTAL_XDS_RLS_LB");
+  char* value = grpc_core::EnvGet("GRPC_EXPERIMENTAL_XDS_RLS_LB");
   bool parsed_value;
   bool parse_succeeded = gpr_parse_bool_value(value, &parsed_value);
   gpr_free(value);

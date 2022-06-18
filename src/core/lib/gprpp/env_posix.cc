@@ -23,24 +23,26 @@
 #include <stdlib.h>
 
 #include <grpc/support/log.h>
-#include <grpc/support/string_util.h>
 
-#include "src/core/lib/gpr/env.h"
-#include "src/core/lib/gpr/string.h"
+#include "src/core/lib/gprpp/env.h"
 
-char* gpr_getenv(const char* name) {
-  char* result = getenv(name);
-  return result == nullptr ? result : gpr_strdup(result);
+namespace grpc_core {
+
+absl::optional<std::string> EnvGet(absl::string_view name) {
+  char* result = getenv(std::string(name).c_str());
+  return result == nullptr ? absl::optional<std::string> : result;
 }
 
-void gpr_setenv(const char* name, const char* value) {
-  int res = setenv(name, value, 1);
+void EnvSet(absl::string_view name, absl::optional<absl::string_view> value) {
+  int res = 0;
+  if (value.has_value()) {
+    res = setenv(std::string(name).c_str(), std::string(*value).c_str(), 1);
+  } else {
+    res = unsetenv(std::string(name).c_str());
+  }
   GPR_ASSERT(res == 0);
 }
 
-void gpr_unsetenv(const char* name) {
-  int res = unsetenv(name);
-  GPR_ASSERT(res == 0);
-}
+}  // namespace grpc_core
 
 #endif /* GPR_POSIX_ENV */

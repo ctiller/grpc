@@ -36,7 +36,7 @@
 #include <grpc/support/log.h>
 #include <grpc/support/string_util.h>
 
-#include "src/core/lib/gpr/env.h"
+#include "src/core/lib/gprpp/env.h"
 #include "src/core/lib/gprpp/memory.h"
 #include "src/core/lib/http/httpcli_ssl_credentials.h"
 #include "src/core/lib/iomgr/closure.h"
@@ -237,9 +237,9 @@ void AwsExternalAccountCredentials::AddMetadataRequestHeaders(
 }
 
 void AwsExternalAccountCredentials::RetrieveRegion() {
-  UniquePtr<char> region_from_env(gpr_getenv(kRegionEnvVar));
+  UniquePtr<char> region_from_env(EnvGet(kRegionEnvVar));
   if (region_from_env == nullptr) {
-    region_from_env = UniquePtr<char>(gpr_getenv(kDefaultRegionEnvVar));
+    region_from_env = UniquePtr<char>(EnvGet(kDefaultRegionEnvVar));
   }
   if (region_from_env != nullptr) {
     region_ = std::string(region_from_env.get());
@@ -350,10 +350,9 @@ void AwsExternalAccountCredentials::OnRetrieveRoleNameInternal(
 }
 
 void AwsExternalAccountCredentials::RetrieveSigningKeys() {
-  UniquePtr<char> access_key_id_from_env(gpr_getenv(kAccessKeyIdEnvVar));
-  UniquePtr<char> secret_access_key_from_env(
-      gpr_getenv(kSecretAccessKeyEnvVar));
-  UniquePtr<char> token_from_env(gpr_getenv(kSessionTokenEnvVar));
+  UniquePtr<char> access_key_id_from_env(EnvGet(kAccessKeyIdEnvVar));
+  UniquePtr<char> secret_access_key_from_env(EnvGet(kSecretAccessKeyEnvVar));
+  UniquePtr<char> token_from_env(EnvGet(kSessionTokenEnvVar));
   if (access_key_id_from_env != nullptr &&
       secret_access_key_from_env != nullptr && token_from_env != nullptr) {
     access_key_id_ = std::string(access_key_id_from_env.get());

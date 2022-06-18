@@ -33,11 +33,9 @@
 #include <grpc/support/log.h>
 #include <grpc/support/string_util.h>
 
-#include "src/core/lib/gpr/env.h"
-#include "src/core/lib/gpr/string.h"
-#include "src/core/lib/gpr/useful.h"
+#include "src/core/lib/gprpp/env.h"
 
-char* gpr_getenv(const char* name) {
+absl::optional<std::string> EnvGet(absl::string_view name) {
   char* result = nullptr;
 #if defined(GPR_BACKWARDS_COMPATIBILITY_MODE)
   typedef char* (*getenv_type)(const char*);
@@ -53,22 +51,23 @@ char* gpr_getenv(const char* name) {
       }
     }
   }
-  result = getenv_func(name);
+  result = getenv_func(std::string(name).c_str());
 #elif __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 17)
-  result = secure_getenv(name);
+  result = secure_getenv(std::string(name).c_str());
 #else
-  result = getenv(name);
+  result = getenv(std::string(name).c_str());
 #endif
-  return result == nullptr ? result : gpr_strdup(result);
+  return result == nullptr ? absl::optional<std::string>() : result;
 }
 
-void gpr_setenv(const char* name, const char* value) {
-  int res = setenv(name, value, 1);
-  GPR_ASSERT(res == 0);
-}
-
-void gpr_unsetenv(const char* name) {
-  int res = unsetenv(name);
+void EnvSet(absl::string_view name, absl::optional<absl::string_view> value) {
+  int res = 0;
+  const std::string name_str(name);
+  if (value.has_value()) {
+    res = setenv(name_str.c_str(), std::string(*value).c_str(), 1);
+  } else {
+    res = unsetenv(name_str.c_str());
+  }
   GPR_ASSERT(res == 0);
 }
 

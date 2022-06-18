@@ -40,7 +40,7 @@
 #include <grpcpp/support/slice.h>
 #include <grpcpp/support/status.h>
 // TODO(yashykt): We shouldn't be including "src/core" headers.
-#include "src/core/lib/gpr/env.h"
+#include "src/core/lib/gprpp/env.h"
 #include "src/core/lib/iomgr/closure.h"
 #include "src/core/lib/iomgr/error.h"
 #include "src/core/lib/iomgr/executor.h"
@@ -223,7 +223,7 @@ grpc::Status StsCredentialsOptionsFromEnv(StsCredentialsOptions* options) {
   }
   ClearStsCredentialsOptions(options);
   grpc_slice json_string = grpc_empty_slice();
-  char* sts_creds_path = gpr_getenv("STS_CREDENTIALS");
+  char* sts_creds_path = grpc_core::EnvGet("STS_CREDENTIALS");
   grpc_error_handle error = GRPC_ERROR_NONE;
   grpc::Status status;
   // NOLINTNEXTLINE(clang-diagnostic-unused-lambda-capture)

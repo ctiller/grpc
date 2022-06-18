@@ -36,7 +36,7 @@
 #include <grpcpp/server_builder.h>
 #include <grpcpp/server_context.h>
 
-#include "src/core/lib/gpr/env.h"
+#include "src/core/lib/gprpp/env.h"
 #include "src/core/lib/iomgr/load_file.h"
 #include "src/proto/grpc/testing/echo.grpc.pb.h"
 #include "src/proto/grpc/testing/echo.pb.h"
@@ -1264,7 +1264,7 @@ TEST_F(GrpcToolTest, CallCommandWithBadMetadata) {
                         "grpc.testing.EchoTestService.Echo",
                         "message: 'Hello'"};
   absl::SetFlag(&FLAGS_protofiles, "src/proto/grpc/testing/echo.proto");
-  char* test_srcdir = gpr_getenv("TEST_SRCDIR");
+  char* test_srcdir = grpc_core::EnvGet("TEST_SRCDIR");
   if (test_srcdir != nullptr) {
     absl::SetFlag(&FLAGS_proto_path,
                   test_srcdir + std::string("/com_github_grpc_grpc"));

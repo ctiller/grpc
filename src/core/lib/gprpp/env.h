@@ -23,18 +23,23 @@
 
 #include <stdio.h>
 
+#include "absl/strings/string_view.h"
+#include "absl/types/optional.h"
+
 /* Env utility functions */
+
+namespace grpc_core {
 
 /* Gets the environment variable value with the specified name.
    Returns a newly allocated string. It is the responsibility of the caller to
    gpr_free the return value if not NULL (which means that the environment
    variable exists). */
-char* gpr_getenv(const char* name);
+absl::optional<std::string> EnvGet(absl::string_view name);
 
-/* Sets the environment with the specified name to the specified value. */
-void gpr_setenv(const char* name, const char* value);
+/* Sets the environment with the specified name to the specified value, or
+ * deletes it if value is nullopt. */
+void EnvSet(absl::string_view name, absl::optional<absl::string_view> value);
 
-/* Deletes the variable name from the environment. */
-void gpr_unsetenv(const char* name);
+}  // namespace grpc_core
 
 #endif /* GRPC_CORE_LIB_GPR_ENV_H */

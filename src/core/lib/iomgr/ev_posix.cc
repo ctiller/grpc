@@ -208,11 +208,11 @@ void grpc_register_event_engine_factory(const char* name,
 const char* grpc_get_poll_strategy_name() { return g_poll_strategy_name; }
 
 void grpc_event_engine_init(void) {
-  grpc_core::UniquePtr<char> value = GPR_GLOBAL_CONFIG_GET(grpc_poll_strategy);
+  std::string value = GPR_GLOBAL_CONFIG_GET(grpc_poll_strategy);
 
   char** strings = nullptr;
   size_t nstrings = 0;
-  split(value.get(), &strings, &nstrings);
+  split(value.c_str(), &strings, &nstrings);
 
   for (size_t i = 0; g_event_engine == nullptr && i < nstrings; i++) {
     try_engine(strings[i]);
@@ -225,7 +225,7 @@ void grpc_event_engine_init(void) {
 
   if (g_event_engine == nullptr) {
     gpr_log(GPR_ERROR, "No event engine could be initialized from %s",
-            value.get());
+            value.c_str());
     abort();
   }
 }

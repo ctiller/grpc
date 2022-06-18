@@ -58,9 +58,9 @@
 #include "src/core/lib/channel/channel_fwd.h"
 #include "src/core/lib/channel/channel_stack.h"
 #include "src/core/lib/config/core_configuration.h"
-#include "src/core/lib/gpr/env.h"
 #include "src/core/lib/gpr/useful.h"
 #include "src/core/lib/gprpp/debug_location.h"
+#include "src/core/lib/gprpp/env.h"
 #include "src/core/lib/gprpp/memory.h"
 #include "src/core/lib/gprpp/orphanable.h"
 #include "src/core/lib/gprpp/ref_counted_ptr.h"
@@ -2420,7 +2420,7 @@ namespace {
 std::string GetBootstrapContents(const char* fallback_config,
                                  grpc_error_handle* error) {
   // First, try GRPC_XDS_BOOTSTRAP env var.
-  UniquePtr<char> path(gpr_getenv("GRPC_XDS_BOOTSTRAP"));
+  UniquePtr<char> path(EnvGet("GRPC_XDS_BOOTSTRAP"));
   if (path != nullptr) {
     if (GRPC_TRACE_FLAG_ENABLED(grpc_xds_client_trace)) {
       gpr_log(GPR_INFO,
@@ -2437,7 +2437,7 @@ std::string GetBootstrapContents(const char* fallback_config,
     return contents_str;
   }
   // Next, try GRPC_XDS_BOOTSTRAP_CONFIG env var.
-  UniquePtr<char> env_config(gpr_getenv("GRPC_XDS_BOOTSTRAP_CONFIG"));
+  UniquePtr<char> env_config(EnvGet("GRPC_XDS_BOOTSTRAP_CONFIG"));
   if (env_config != nullptr) {
     if (GRPC_TRACE_FLAG_ENABLED(grpc_xds_client_trace)) {
       gpr_log(GPR_INFO,

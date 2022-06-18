@@ -968,7 +968,7 @@ Gem::Specification.new do |s|
   s.files += %w( src/core/lib/gpr/cpu_linux.cc )
   s.files += %w( src/core/lib/gpr/cpu_posix.cc )
   s.files += %w( src/core/lib/gpr/cpu_windows.cc )
-  s.files += %w( src/core/lib/gpr/env.h )
+  s.files += %w( src/core/lib/gprpp/env.h )
   s.files += %w( src/core/lib/gpr/env_linux.cc )
   s.files += %w( src/core/lib/gpr/env_posix.cc )
   s.files += %w( src/core/lib/gpr/env_windows.cc )

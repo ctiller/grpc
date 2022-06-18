@@ -23,6 +23,8 @@
 
 #include <stdint.h>
 
+#include "absl/types/optional.h"
+
 #include "src/core/lib/gprpp/global_config_generic.h"  // IWYU pragma: export
 #include "src/core/lib/gprpp/memory.h"
 
@@ -45,7 +47,7 @@ class GlobalConfigEnv {
 
  public:
   // Returns the value of `name` variable.
-  UniquePtr<char> GetValue();
+  absl::optional<std::string> GetValue();
 
   // Sets the value of `name` variable.
   void SetValue(const char* value);
@@ -89,7 +91,7 @@ class GlobalConfigEnvString : public GlobalConfigEnv {
   constexpr GlobalConfigEnvString(char* name, const char* default_value)
       : GlobalConfigEnv(name), default_value_(default_value) {}
 
-  UniquePtr<char> Get();
+  std::string Get();
   void Set(const char* value);
 
  private:
@@ -119,15 +121,13 @@ class GlobalConfigEnvString : public GlobalConfigEnv {
   int32_t gpr_global_config_get_##name() { return g_env_##name.Get(); }   \
   void gpr_global_config_set_##name(int32_t value) { g_env_##name.Set(value); }
 
-#define GPR_GLOBAL_CONFIG_DEFINE_STRING(name, default_value, help)         \
-  static char g_env_str_##name[] = #name;                                  \
-  static ::grpc_core::GlobalConfigEnvString g_env_##name(g_env_str_##name, \
-                                                         default_value);   \
-  ::grpc_core::UniquePtr<char> gpr_global_config_get_##name() {            \
-    return g_env_##name.Get();                                             \
-  }                                                                        \
-  void gpr_global_config_set_##name(const char* value) {                   \
-    g_env_##name.Set(value);                                               \
+#define GPR_GLOBAL_CONFIG_DEFINE_STRING(name, default_value, help)          \
+  static char g_env_str_##name[] = #name;                                   \
+  static ::grpc_core::GlobalConfigEnvString g_env_##name(g_env_str_##name,  \
+                                                         default_value);    \
+  std::string gpr_global_config_get_##name() { return g_env_##name.Get(); } \
+  void gpr_global_config_set_##name(const char* value) {                    \
+    g_env_##name.Set(value);                                                \
   }
 
 #endif /* GRPC_CORE_LIB_GPRPP_GLOBAL_CONFIG_ENV_H */

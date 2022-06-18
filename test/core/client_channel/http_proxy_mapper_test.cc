@@ -20,7 +20,7 @@
 
 #include "src/core/ext/filters/client_channel/http_proxy.h"
 #include "src/core/lib/channel/channel_args.h"
-#include "src/core/lib/gpr/env.h"
+#include "src/core/lib/gprpp/env.h"
 #include "src/core/lib/transport/http_connect_handshaker.h"
 #include "test/core/util/test_config.h"
 
@@ -30,7 +30,7 @@ namespace {
 
 // Test that an empty no_proxy works as expected, i.e., proxy is used.
 TEST(NoProxyTest, EmptyList) {
-  gpr_setenv("no_proxy", "");
+  grpc_core::EnvSet("no_proxy", "");
   grpc_arg proxy_arg = grpc_channel_arg_string_create(
       const_cast<char*>(GRPC_ARG_HTTP_PROXY),
       const_cast<char*>("http://proxy.google.com"));
@@ -45,12 +45,12 @@ TEST(NoProxyTest, EmptyList) {
                "test.google.com:443");
   gpr_free(name_to_resolve);
   grpc_channel_args_destroy(new_args);
-  gpr_unsetenv("no_proxy");
+  grpc_core::EnvSet("no_proxy", absl::nullopt);
 }
 
 // Test basic usage of 'no_proxy' to avoid using proxy for certain domain names.
 TEST(NoProxyTest, Basic) {
-  gpr_setenv("no_proxy", "google.com");
+  grpc_core::EnvSet("no_proxy", "google.com");
   grpc_arg proxy_arg = grpc_channel_arg_string_create(
       const_cast<char*>(GRPC_ARG_HTTP_PROXY),
       const_cast<char*>("http://proxy.google.com"));
@@ -65,12 +65,12 @@ TEST(NoProxyTest, Basic) {
             nullptr);
   gpr_free(name_to_resolve);
   grpc_channel_args_destroy(new_args);
-  gpr_unsetenv("no_proxy");
+  grpc_core::EnvSet("no_proxy", absl::nullopt);
 }
 
 // Test empty entries in 'no_proxy' list.
 TEST(NoProxyTest, EmptyEntries) {
-  gpr_setenv("no_proxy", "foo.com,,google.com,,");
+  grpc_core::EnvSet("no_proxy", "foo.com,,google.com,,");
   grpc_arg proxy_arg = grpc_channel_arg_string_create(
       const_cast<char*>(GRPC_ARG_HTTP_PROXY),
       const_cast<char*>("http://proxy.google.com"));
@@ -85,7 +85,7 @@ TEST(NoProxyTest, EmptyEntries) {
             nullptr);
   gpr_free(name_to_resolve);
   grpc_channel_args_destroy(new_args);
-  gpr_unsetenv("no_proxy");
+  grpc_core::EnvSet("no_proxy", absl::nullopt);
 }
 
 }  // namespace

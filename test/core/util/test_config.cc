@@ -35,9 +35,9 @@
 #include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
 
-#include "src/core/lib/gpr/env.h"
 #include "src/core/lib/gpr/string.h"
 #include "src/core/lib/gpr/useful.h"
+#include "src/core/lib/gprpp/env.h"
 #include "src/core/lib/gprpp/examine_stack.h"
 #include "src/core/lib/surface/init.h"
 #include "test/core/event_engine/test_init.h"
@@ -110,7 +110,7 @@ void ParseTestArgs(int* argc, char** argv) {
   int i = 1;
   while (i < *argc) {
     if (absl::StartsWith(argv[i], poller_flag)) {
-      gpr_setenv("GRPC_POLL_STRATEGY", argv[i] + poller_flag.length());
+      grpc_core::EnvSet("GRPC_POLL_STRATEGY", argv[i] + poller_flag.length());
       // remove the spent argv
       RmArg(i, argc, argv);
       continue;

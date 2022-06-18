@@ -950,7 +950,7 @@
     <file baseinstalldir="/" name="src/core/lib/gpr/cpu_linux.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/gpr/cpu_posix.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/gpr/cpu_windows.cc" role="src" />
-    <file baseinstalldir="/" name="src/core/lib/gpr/env.h" role="src" />
+    <file baseinstalldir="/" name="src/core/lib/gprpp/env.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/gpr/env_linux.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/gpr/env_posix.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/gpr/env_windows.cc" role="src" />

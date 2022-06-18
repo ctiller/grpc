@@ -34,7 +34,7 @@
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 
-#include "src/core/lib/gpr/env.h"
+#include "src/core/lib/gprpp/env.h"
 #include "src/core/lib/gprpp/host_port.h"
 #include "src/core/lib/profiling/timers.h"
 #include "src/proto/grpc/testing/worker_service.grpc.pb.h"
@@ -62,7 +62,7 @@ static std::string get_host(const std::string& worker) {
 
 static deque<string> get_workers(const string& env_name) {
   deque<string> out;
-  char* env = gpr_getenv(env_name.c_str());
+  char* env = grpc_core::EnvGet(env_name.c_str());
   if (!env) {
     env = gpr_strdup("");
   }

@@ -42,8 +42,8 @@
 #include "src/core/ext/xds/xds_client.h"
 #include "src/core/lib/channel/channel_args.h"
 #include "src/core/lib/config/core_configuration.h"
-#include "src/core/lib/gpr/env.h"
 #include "src/core/lib/gprpp/debug_location.h"
+#include "src/core/lib/gprpp/env.h"
 #include "src/core/lib/gprpp/memory.h"
 #include "src/core/lib/gprpp/orphanable.h"
 #include "src/core/lib/gprpp/ref_counted_ptr.h"
@@ -285,8 +285,8 @@ GoogleCloud2ProdResolver::GoogleCloud2ProdResolver(ResolverArgs args)
       // they may be talking to a completely different xDS server than we
       // want to.
       // TODO(roth): When we implement xDS federation, remove this constraint.
-      UniquePtr<char>(gpr_getenv("GRPC_XDS_BOOTSTRAP")) != nullptr ||
-      UniquePtr<char>(gpr_getenv("GRPC_XDS_BOOTSTRAP_CONFIG")) != nullptr) {
+      UniquePtr<char>(EnvGet("GRPC_XDS_BOOTSTRAP")) != nullptr ||
+      UniquePtr<char>(EnvGet("GRPC_XDS_BOOTSTRAP_CONFIG")) != nullptr) {
     using_dns_ = true;
     child_resolver_ =
         CoreConfiguration::Get().resolver_registry().CreateResolver(
@@ -374,8 +374,8 @@ void GoogleCloud2ProdResolver::StartXdsResolver() {
     };
   }
   // Allow the TD server uri to be overridden for testing purposes.
-  UniquePtr<char> override_server(
-      gpr_getenv("GRPC_TEST_ONLY_GOOGLE_C2P_RESOLVER_TRAFFIC_DIRECTOR_URI"));
+  UniquePtr<char> override_server(grpc_core::EnvGet(
+      "GRPC_TEST_ONLY_GOOGLE_C2P_RESOLVER_TRAFFIC_DIRECTOR_URI"));
   const char* server_uri =
       override_server != nullptr && strlen(override_server.get()) > 0
           ? override_server.get()

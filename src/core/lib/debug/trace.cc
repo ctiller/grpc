@@ -144,8 +144,8 @@ void grpc_tracer_init(const char* env_var_name) {
 }
 
 void grpc_tracer_init() {
-  grpc_core::UniquePtr<char> value = GPR_GLOBAL_CONFIG_GET(grpc_trace);
-  parse(value.get());
+  std::string value = GPR_GLOBAL_CONFIG_GET(grpc_trace);
+  parse(value.c_str());
 }
 
 void grpc_tracer_shutdown(void) {}

@@ -31,9 +31,9 @@
 #include <grpc/support/time.h>
 
 #include "src/core/lib/channel/channel_args.h"
-#include "src/core/lib/gpr/env.h"
 #include "src/core/lib/gpr/string.h"
 #include "src/core/lib/gpr/useful.h"
+#include "src/core/lib/gprpp/env.h"
 #include "test/core/memory_usage/memstats.h"
 #include "test/core/util/test_config.h"
 

@@ -16,7 +16,7 @@
  *
  */
 
-#include "src/core/lib/gpr/env.h"
+#include "src/core/lib/gprpp/env.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -36,8 +36,8 @@ static void test_setenv_getenv(void) {
 
   LOG_TEST_NAME("test_setenv_getenv");
 
-  gpr_setenv(name, value);
-  retrieved_value = gpr_getenv(name);
+  grpc_core::EnvSet(name, value);
+  retrieved_value = grpc_core::EnvGet(name);
   GPR_ASSERT(retrieved_value != nullptr);
   GPR_ASSERT(strcmp(value, retrieved_value) == 0);
   gpr_free(retrieved_value);
@@ -50,9 +50,9 @@ static void test_unsetenv(void) {
 
   LOG_TEST_NAME("test_unsetenv");
 
-  gpr_setenv(name, value);
-  gpr_unsetenv(name);
-  retrieved_value = gpr_getenv(name);
+  grpc_core::EnvSet(name, value);
+  grpc_core::EnvSet(name, absl::nullopt);
+  retrieved_value = grpc_core::EnvGet(name);
   GPR_ASSERT(retrieved_value == nullptr);
 }
 

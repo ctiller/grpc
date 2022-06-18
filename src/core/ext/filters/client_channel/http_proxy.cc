@@ -41,8 +41,8 @@
 
 #include "src/core/ext/filters/client_channel/proxy_mapper_registry.h"
 #include "src/core/lib/channel/channel_args.h"
-#include "src/core/lib/gpr/env.h"
 #include "src/core/lib/gpr/string.h"
+#include "src/core/lib/gprpp/env.h"
 #include "src/core/lib/gprpp/host_port.h"
 #include "src/core/lib/gprpp/memory.h"
 #include "src/core/lib/iomgr/resolve_address.h"
@@ -76,9 +76,9 @@ char* GetHttpProxyServer(const grpc_channel_args* args, char** user_cred) {
    */
   auto uri_str = UniquePtr<char>(
       gpr_strdup(grpc_channel_args_find_string(args, GRPC_ARG_HTTP_PROXY)));
-  if (uri_str == nullptr) uri_str = UniquePtr<char>(gpr_getenv("grpc_proxy"));
-  if (uri_str == nullptr) uri_str = UniquePtr<char>(gpr_getenv("https_proxy"));
-  if (uri_str == nullptr) uri_str = UniquePtr<char>(gpr_getenv("http_proxy"));
+  if (uri_str == nullptr) uri_str = UniquePtr<char>(EnvGet("grpc_proxy"));
+  if (uri_str == nullptr) uri_str = UniquePtr<char>(EnvGet("https_proxy"));
+  if (uri_str == nullptr) uri_str = UniquePtr<char>(EnvGet("http_proxy"));
   if (uri_str == nullptr) return nullptr;
   // an emtpy value means "don't use proxy"
   if (uri_str.get()[0] == '\0') return nullptr;
@@ -160,9 +160,9 @@ bool HttpProxyMapper::MapName(const char* server_uri,
     return no_use_proxy();
   }
   /* Prefer using 'no_grpc_proxy'. Fallback on 'no_proxy' if it is not set. */
-  auto no_proxy_str = UniquePtr<char>(gpr_getenv("no_grpc_proxy"));
+  auto no_proxy_str = UniquePtr<char>(EnvGet("no_grpc_proxy"));
   if (no_proxy_str == nullptr) {
-    no_proxy_str = UniquePtr<char>(gpr_getenv("no_proxy"));
+    no_proxy_str = UniquePtr<char>(EnvGet("no_proxy"));
   }
   if (no_proxy_str != nullptr) {
     bool use_proxy = true;

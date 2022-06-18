@@ -43,7 +43,7 @@
 #include "src/core/ext/filters/client_channel/resolver/fake/fake_resolver.h"
 #include "src/core/lib/address_utils/parse_address.h"
 #include "src/core/lib/channel/channel_args.h"
-#include "src/core/lib/gpr/env.h"
+#include "src/core/lib/gprpp/env.h"
 #include "src/core/lib/gprpp/host_port.h"
 #include "src/core/lib/gprpp/time.h"
 #include "src/core/lib/iomgr/sockaddr.h"
@@ -162,7 +162,7 @@ class FakeResolverResponseGeneratorWrapper {
 class RlsEnd2endTest : public ::testing::Test {
  protected:
   static void SetUpTestSuite() {
-    gpr_setenv("GRPC_EXPERIMENTAL_ENABLE_RLS_LB_POLICY", "true");
+    grpc_core::EnvSet("GRPC_EXPERIMENTAL_ENABLE_RLS_LB_POLICY", "true");
     GPR_GLOBAL_CONFIG_SET(grpc_client_channel_backup_poll_interval_ms, 1);
     grpc_init();
     grpc_core::RegisterFixedAddressLoadBalancingPolicy();
@@ -170,7 +170,7 @@ class RlsEnd2endTest : public ::testing::Test {
 
   static void TearDownTestSuite() {
     grpc_shutdown_blocking();
-    gpr_unsetenv("GRPC_EXPERIMENTAL_ENABLE_RLS_LB_POLICY");
+    grpc_core::EnvSet("GRPC_EXPERIMENTAL_ENABLE_RLS_LB_POLICY", absl::nullopt);
   }
 
   void SetUp() override {

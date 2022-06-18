@@ -35,7 +35,7 @@
 #include <sys/wait.h>
 #endif
 
-#include "src/core/lib/gpr/env.h"
+#include "src/core/lib/gprpp/env.h"
 #include "test/core/util/port.h"
 #include "test/core/util/test_config.h"
 #include "test/cpp/util/subprocess.h"
@@ -129,7 +129,7 @@ int main(int argc, char** argv) {
                     .empty());
     // Use bazel's TEST_SRCDIR environment variable to locate the "test data"
     // binaries.
-    char* test_srcdir = gpr_getenv("TEST_SRCDIR");
+    char* test_srcdir = grpc_core::EnvGet("TEST_SRCDIR");
     std::string const bin_dir =
         test_srcdir +
         absl::GetFlag(FLAGS_grpc_test_directory_relative_to_test_srcdir) +
