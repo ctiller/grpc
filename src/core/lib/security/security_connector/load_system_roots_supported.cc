@@ -18,13 +18,14 @@
 
 #include <grpc/support/port_platform.h>
 
+#include <string>
+
 #if defined(GPR_LINUX) || defined(GPR_ANDROID) || defined(GPR_FREEBSD) || \
     defined(GPR_APPLE)
 
 #include <dirent.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <string.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -36,7 +37,6 @@
 
 #include "src/core/lib/gpr/useful.h"
 #include "src/core/lib/gprpp/global_config.h"
-#include "src/core/lib/gprpp/memory.h"
 #include "src/core/lib/iomgr/error.h"
 #include "src/core/lib/iomgr/load_file.h"
 #include "src/core/lib/security/security_connector/load_system_roots.h"

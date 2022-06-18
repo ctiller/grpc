@@ -199,7 +199,6 @@ libs:
   - include/grpc/support/time.h
   headers:
   - src/core/lib/gpr/alloc.h
-  - src/core/lib/gprpp/env.h
   - src/core/lib/gpr/murmur_hash.h
   - src/core/lib/gpr/spinlock.h
   - src/core/lib/gpr/string.h
@@ -210,6 +209,7 @@ libs:
   - src/core/lib/gpr/useful.h
   - src/core/lib/gprpp/construct_destruct.h
   - src/core/lib/gprpp/debug_location.h
+  - src/core/lib/gprpp/env.h
   - src/core/lib/gprpp/examine_stack.h
   - src/core/lib/gprpp/fork.h
   - src/core/lib/gprpp/global_config.h
@@ -232,9 +232,6 @@ libs:
   - src/core/lib/gpr/cpu_linux.cc
   - src/core/lib/gpr/cpu_posix.cc
   - src/core/lib/gpr/cpu_windows.cc
-  - src/core/lib/gpr/env_linux.cc
-  - src/core/lib/gpr/env_posix.cc
-  - src/core/lib/gpr/env_windows.cc
   - src/core/lib/gpr/log.cc
   - src/core/lib/gpr/log_android.cc
   - src/core/lib/gpr/log_linux.cc
@@ -257,6 +254,9 @@ libs:
   - src/core/lib/gpr/tmpfile_posix.cc
   - src/core/lib/gpr/tmpfile_windows.cc
   - src/core/lib/gpr/wrap_memcpy.cc
+  - src/core/lib/gprpp/env_linux.cc
+  - src/core/lib/gprpp/env_posix.cc
+  - src/core/lib/gprpp/env_windows.cc
   - src/core/lib/gprpp/examine_stack.cc
   - src/core/lib/gprpp/fork.cc
   - src/core/lib/gprpp/global_config_env.cc
@@ -4345,7 +4345,6 @@ targets:
   language: c++
   headers:
   - src/core/lib/gpr/alloc.h
-  - src/core/lib/gprpp/env.h
   - src/core/lib/gpr/murmur_hash.h
   - src/core/lib/gpr/spinlock.h
   - src/core/lib/gpr/string.h
@@ -4358,6 +4357,7 @@ targets:
   - src/core/lib/gprpp/bitset.h
   - src/core/lib/gprpp/construct_destruct.h
   - src/core/lib/gprpp/debug_location.h
+  - src/core/lib/gprpp/env.h
   - src/core/lib/gprpp/examine_stack.h
   - src/core/lib/gprpp/fork.h
   - src/core/lib/gprpp/global_config.h
@@ -4397,9 +4397,6 @@ targets:
   - src/core/lib/gpr/cpu_linux.cc
   - src/core/lib/gpr/cpu_posix.cc
   - src/core/lib/gpr/cpu_windows.cc
-  - src/core/lib/gpr/env_linux.cc
-  - src/core/lib/gpr/env_posix.cc
-  - src/core/lib/gpr/env_windows.cc
   - src/core/lib/gpr/log.cc
   - src/core/lib/gpr/log_android.cc
   - src/core/lib/gpr/log_linux.cc
@@ -4422,6 +4419,9 @@ targets:
   - src/core/lib/gpr/tmpfile_posix.cc
   - src/core/lib/gpr/tmpfile_windows.cc
   - src/core/lib/gpr/wrap_memcpy.cc
+  - src/core/lib/gprpp/env_linux.cc
+  - src/core/lib/gprpp/env_posix.cc
+  - src/core/lib/gprpp/env_windows.cc
   - src/core/lib/gprpp/examine_stack.cc
   - src/core/lib/gprpp/fork.cc
   - src/core/lib/gprpp/global_config_env.cc
@@ -6619,7 +6619,6 @@ targets:
   language: c++
   headers:
   - src/core/lib/gpr/alloc.h
-  - src/core/lib/gprpp/env.h
   - src/core/lib/gpr/murmur_hash.h
   - src/core/lib/gpr/spinlock.h
   - src/core/lib/gpr/string.h
@@ -6632,6 +6631,7 @@ targets:
   - src/core/lib/gprpp/bitset.h
   - src/core/lib/gprpp/construct_destruct.h
   - src/core/lib/gprpp/debug_location.h
+  - src/core/lib/gprpp/env.h
   - src/core/lib/gprpp/examine_stack.h
   - src/core/lib/gprpp/fork.h
   - src/core/lib/gprpp/global_config.h
@@ -6671,9 +6671,6 @@ targets:
   - src/core/lib/gpr/cpu_linux.cc
   - src/core/lib/gpr/cpu_posix.cc
   - src/core/lib/gpr/cpu_windows.cc
-  - src/core/lib/gpr/env_linux.cc
-  - src/core/lib/gpr/env_posix.cc
-  - src/core/lib/gpr/env_windows.cc
   - src/core/lib/gpr/log.cc
   - src/core/lib/gpr/log_android.cc
   - src/core/lib/gpr/log_linux.cc
@@ -6696,6 +6693,9 @@ targets:
   - src/core/lib/gpr/tmpfile_posix.cc
   - src/core/lib/gpr/tmpfile_windows.cc
   - src/core/lib/gpr/wrap_memcpy.cc
+  - src/core/lib/gprpp/env_linux.cc
+  - src/core/lib/gprpp/env_posix.cc
+  - src/core/lib/gprpp/env_windows.cc
   - src/core/lib/gprpp/examine_stack.cc
   - src/core/lib/gprpp/fork.cc
   - src/core/lib/gprpp/global_config_env.cc
@@ -6961,7 +6961,6 @@ targets:
   language: c++
   headers:
   - src/core/lib/gpr/alloc.h
-  - src/core/lib/gprpp/env.h
   - src/core/lib/gpr/murmur_hash.h
   - src/core/lib/gpr/spinlock.h
   - src/core/lib/gpr/string.h
@@ -6973,6 +6972,7 @@ targets:
   - src/core/lib/gprpp/atomic_utils.h
   - src/core/lib/gprpp/construct_destruct.h
   - src/core/lib/gprpp/debug_location.h
+  - src/core/lib/gprpp/env.h
   - src/core/lib/gprpp/examine_stack.h
   - src/core/lib/gprpp/fork.h
   - src/core/lib/gprpp/global_config.h
@@ -7011,9 +7011,6 @@ targets:
   - src/core/lib/gpr/cpu_linux.cc
   - src/core/lib/gpr/cpu_posix.cc
   - src/core/lib/gpr/cpu_windows.cc
-  - src/core/lib/gpr/env_linux.cc
-  - src/core/lib/gpr/env_posix.cc
-  - src/core/lib/gpr/env_windows.cc
   - src/core/lib/gpr/log.cc
   - src/core/lib/gpr/log_android.cc
   - src/core/lib/gpr/log_linux.cc
@@ -7036,6 +7033,9 @@ targets:
   - src/core/lib/gpr/tmpfile_posix.cc
   - src/core/lib/gpr/tmpfile_windows.cc
   - src/core/lib/gpr/wrap_memcpy.cc
+  - src/core/lib/gprpp/env_linux.cc
+  - src/core/lib/gprpp/env_posix.cc
+  - src/core/lib/gprpp/env_windows.cc
   - src/core/lib/gprpp/examine_stack.cc
   - src/core/lib/gprpp/fork.cc
   - src/core/lib/gprpp/global_config_env.cc
@@ -7912,7 +7912,6 @@ targets:
   language: c++
   headers:
   - src/core/lib/gpr/alloc.h
-  - src/core/lib/gprpp/env.h
   - src/core/lib/gpr/murmur_hash.h
   - src/core/lib/gpr/spinlock.h
   - src/core/lib/gpr/string.h
@@ -7923,6 +7922,7 @@ targets:
   - src/core/lib/gpr/useful.h
   - src/core/lib/gprpp/construct_destruct.h
   - src/core/lib/gprpp/debug_location.h
+  - src/core/lib/gprpp/env.h
   - src/core/lib/gprpp/examine_stack.h
   - src/core/lib/gprpp/fork.h
   - src/core/lib/gprpp/global_config.h
@@ -7946,9 +7946,6 @@ targets:
   - src/core/lib/gpr/cpu_linux.cc
   - src/core/lib/gpr/cpu_posix.cc
   - src/core/lib/gpr/cpu_windows.cc
-  - src/core/lib/gpr/env_linux.cc
-  - src/core/lib/gpr/env_posix.cc
-  - src/core/lib/gpr/env_windows.cc
   - src/core/lib/gpr/log.cc
   - src/core/lib/gpr/log_android.cc
   - src/core/lib/gpr/log_linux.cc
@@ -7971,6 +7968,9 @@ targets:
   - src/core/lib/gpr/tmpfile_posix.cc
   - src/core/lib/gpr/tmpfile_windows.cc
   - src/core/lib/gpr/wrap_memcpy.cc
+  - src/core/lib/gprpp/env_linux.cc
+  - src/core/lib/gprpp/env_posix.cc
+  - src/core/lib/gprpp/env_windows.cc
   - src/core/lib/gprpp/examine_stack.cc
   - src/core/lib/gprpp/fork.cc
   - src/core/lib/gprpp/global_config_env.cc
@@ -8174,7 +8174,6 @@ targets:
   language: c++
   headers:
   - src/core/lib/gpr/alloc.h
-  - src/core/lib/gprpp/env.h
   - src/core/lib/gpr/murmur_hash.h
   - src/core/lib/gpr/spinlock.h
   - src/core/lib/gpr/string.h
@@ -8185,6 +8184,7 @@ targets:
   - src/core/lib/gpr/useful.h
   - src/core/lib/gprpp/construct_destruct.h
   - src/core/lib/gprpp/debug_location.h
+  - src/core/lib/gprpp/env.h
   - src/core/lib/gprpp/examine_stack.h
   - src/core/lib/gprpp/fork.h
   - src/core/lib/gprpp/global_config.h
@@ -8208,9 +8208,6 @@ targets:
   - src/core/lib/gpr/cpu_linux.cc
   - src/core/lib/gpr/cpu_posix.cc
   - src/core/lib/gpr/cpu_windows.cc
-  - src/core/lib/gpr/env_linux.cc
-  - src/core/lib/gpr/env_posix.cc
-  - src/core/lib/gpr/env_windows.cc
   - src/core/lib/gpr/log.cc
   - src/core/lib/gpr/log_android.cc
   - src/core/lib/gpr/log_linux.cc
@@ -8233,6 +8230,9 @@ targets:
   - src/core/lib/gpr/tmpfile_posix.cc
   - src/core/lib/gpr/tmpfile_windows.cc
   - src/core/lib/gpr/wrap_memcpy.cc
+  - src/core/lib/gprpp/env_linux.cc
+  - src/core/lib/gprpp/env_posix.cc
+  - src/core/lib/gprpp/env_windows.cc
   - src/core/lib/gprpp/examine_stack.cc
   - src/core/lib/gprpp/fork.cc
   - src/core/lib/gprpp/global_config_env.cc
@@ -8352,7 +8352,6 @@ targets:
   language: c++
   headers:
   - src/core/lib/gpr/alloc.h
-  - src/core/lib/gprpp/env.h
   - src/core/lib/gpr/murmur_hash.h
   - src/core/lib/gpr/spinlock.h
   - src/core/lib/gpr/string.h
@@ -8364,6 +8363,7 @@ targets:
   - src/core/lib/gprpp/atomic_utils.h
   - src/core/lib/gprpp/construct_destruct.h
   - src/core/lib/gprpp/debug_location.h
+  - src/core/lib/gprpp/env.h
   - src/core/lib/gprpp/examine_stack.h
   - src/core/lib/gprpp/fork.h
   - src/core/lib/gprpp/global_config.h
@@ -8389,9 +8389,6 @@ targets:
   - src/core/lib/gpr/cpu_linux.cc
   - src/core/lib/gpr/cpu_posix.cc
   - src/core/lib/gpr/cpu_windows.cc
-  - src/core/lib/gpr/env_linux.cc
-  - src/core/lib/gpr/env_posix.cc
-  - src/core/lib/gpr/env_windows.cc
   - src/core/lib/gpr/log.cc
   - src/core/lib/gpr/log_android.cc
   - src/core/lib/gpr/log_linux.cc
@@ -8414,6 +8411,9 @@ targets:
   - src/core/lib/gpr/tmpfile_posix.cc
   - src/core/lib/gpr/tmpfile_windows.cc
   - src/core/lib/gpr/wrap_memcpy.cc
+  - src/core/lib/gprpp/env_linux.cc
+  - src/core/lib/gprpp/env_posix.cc
+  - src/core/lib/gprpp/env_windows.cc
   - src/core/lib/gprpp/examine_stack.cc
   - src/core/lib/gprpp/fork.cc
   - src/core/lib/gprpp/global_config_env.cc

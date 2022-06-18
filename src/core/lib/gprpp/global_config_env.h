@@ -23,10 +23,11 @@
 
 #include <stdint.h>
 
+#include <string>
+
 #include "absl/types/optional.h"
 
 #include "src/core/lib/gprpp/global_config_generic.h"  // IWYU pragma: export
-#include "src/core/lib/gprpp/memory.h"
 
 namespace grpc_core {
 

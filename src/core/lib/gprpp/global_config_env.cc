@@ -23,14 +23,14 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-#include <memory>
 #include <string>
 #include <type_traits>
+#include <utility>
 
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 
 #include <grpc/support/log.h>
-#include <grpc/support/string_util.h>
 
 #include "src/core/lib/gpr/string.h"
 #include "src/core/lib/gprpp/env.h"
@@ -60,14 +60,12 @@ void SetGlobalConfigEnvErrorFunction(GlobalConfigEnvErrorFunctionType func) {
 }
 
 absl::optional<std::string> GlobalConfigEnv::GetValue() {
-  return grpc_core::EnvGet(GetName());
+  return EnvGet(GetName());
 }
 
-void GlobalConfigEnv::SetValue(const char* value) {
-  grpc_core::EnvSet(GetName(), value);
-}
+void GlobalConfigEnv::SetValue(const char* value) { EnvSet(GetName(), value); }
 
-void GlobalConfigEnv::Unset() { grpc_core::EnvSet(GetName(), absl::nullopt); }
+void GlobalConfigEnv::Unset() { EnvSet(GetName(), absl::nullopt); }
 
 char* GlobalConfigEnv::GetName() {
   // This makes sure that name_ is in a canonical form having uppercase
