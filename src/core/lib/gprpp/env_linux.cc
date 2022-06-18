@@ -23,17 +23,17 @@
 
 #include <grpc/support/port_platform.h>
 
+#include <string>
+
+#include "absl/strings/string_view.h"
+#include "absl/types/optional.h"
+
 #ifdef GPR_LINUX_ENV
 
-#include <dlfcn.h>
 #include <features.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include <grpc/support/log.h>
-#include <grpc/support/string_util.h>
-
-#include "src/core/lib/gprpp/env.h"
 
 absl::optional<std::string> EnvGet(absl::string_view name) {
   char* result = nullptr;

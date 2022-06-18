@@ -1514,7 +1514,7 @@ void set_google_default_creds_env_var_with_file_contents(
   GPR_ASSERT(creds_file != nullptr);
   GPR_ASSERT(fwrite(contents, 1, contents_len, creds_file) == contents_len);
   fclose(creds_file);
-  grpc_core::EnvSet(GRPC_GOOGLE_CREDENTIALS_ENV_VAR, creds_file_name);
+  EnvSet(GRPC_GOOGLE_CREDENTIALS_ENV_VAR, creds_file_name);
   gpr_free(creds_file_name);
 }
 
@@ -1553,7 +1553,7 @@ TEST(CredentialsTest, TestGoogleDefaultCredsAuthKey) {
       0);
   GPR_ASSERT(g_test_gce_tenancy_checker_called == false);
   creds->Unref();
-  grpc_core::EnvSet(GRPC_GOOGLE_CREDENTIALS_ENV_VAR, ""); /* Reset. */
+  EnvSet(GRPC_GOOGLE_CREDENTIALS_ENV_VAR, ""); /* Reset. */
   grpc_override_well_known_credentials_path_getter(nullptr);
 }
 
@@ -1577,7 +1577,7 @@ TEST(CredentialsTest, TestGoogleDefaultCredsRefreshToken) {
   GPR_ASSERT(strcmp(refresh->refresh_token().client_id,
                     "32555999999.apps.googleusercontent.com") == 0);
   creds->Unref();
-  grpc_core::EnvSet(GRPC_GOOGLE_CREDENTIALS_ENV_VAR, ""); /* Reset. */
+  EnvSet(GRPC_GOOGLE_CREDENTIALS_ENV_VAR, ""); /* Reset. */
   grpc_override_well_known_credentials_path_getter(nullptr);
 }
 
@@ -1600,7 +1600,7 @@ TEST(CredentialsTest, TestGoogleDefaultCredsExternalAccountCredentials) {
       reinterpret_cast<const ExternalAccountCredentials*>(creds->call_creds());
   GPR_ASSERT(external != nullptr);
   creds->Unref();
-  grpc_core::EnvSet(GRPC_GOOGLE_CREDENTIALS_ENV_VAR, ""); /* Reset. */
+  EnvSet(GRPC_GOOGLE_CREDENTIALS_ENV_VAR, ""); /* Reset. */
   grpc_override_well_known_credentials_path_getter(nullptr);
 }
 
@@ -1624,7 +1624,7 @@ TEST(CredentialsTest,
       reinterpret_cast<const ExternalAccountCredentials*>(creds->call_creds());
   GPR_ASSERT(external != nullptr);
   creds->Unref();
-  grpc_core::EnvSet(GRPC_GOOGLE_CREDENTIALS_ENV_VAR, ""); /* Reset. */
+  EnvSet(GRPC_GOOGLE_CREDENTIALS_ENV_VAR, ""); /* Reset. */
   grpc_override_well_known_credentials_path_getter(nullptr);
 }
 
@@ -1648,7 +1648,7 @@ TEST(CredentialsTest,
       reinterpret_cast<const ExternalAccountCredentials*>(creds->call_creds());
   GPR_ASSERT(external != nullptr);
   creds->Unref();
-  grpc_core::EnvSet(GRPC_GOOGLE_CREDENTIALS_ENV_VAR, ""); /* Reset. */
+  EnvSet(GRPC_GOOGLE_CREDENTIALS_ENV_VAR, ""); /* Reset. */
   grpc_override_well_known_credentials_path_getter(nullptr);
 }
 
@@ -1675,7 +1675,7 @@ TEST(CredentialsTest, TestGoogleDefaultCredsGce) {
       GRPC_ERROR_NONE,
       "authorization: Bearer ya29.AHES6ZRN3-HlhAPya30GnW_bHSb_");
   grpc_flush_cached_google_default_credentials();
-  grpc_core::EnvSet(GRPC_GOOGLE_CREDENTIALS_ENV_VAR, ""); /* Reset. */
+  EnvSet(GRPC_GOOGLE_CREDENTIALS_ENV_VAR, ""); /* Reset. */
   grpc_override_well_known_credentials_path_getter(
       null_well_known_creds_path_getter);
   set_gce_tenancy_checker_for_testing(test_gce_tenancy_checker);
@@ -1711,7 +1711,7 @@ TEST(CredentialsTest, TestGoogleDefaultCredsNonGce) {
       GRPC_ERROR_NONE,
       "authorization: Bearer ya29.AHES6ZRN3-HlhAPya30GnW_bHSb_");
   grpc_flush_cached_google_default_credentials();
-  grpc_core::EnvSet(GRPC_GOOGLE_CREDENTIALS_ENV_VAR, ""); /* Reset. */
+  EnvSet(GRPC_GOOGLE_CREDENTIALS_ENV_VAR, ""); /* Reset. */
   grpc_override_well_known_credentials_path_getter(
       null_well_known_creds_path_getter);
   set_gce_tenancy_checker_for_testing(test_gce_tenancy_checker);
@@ -1754,7 +1754,7 @@ int default_creds_gce_detection_httpcli_get_failure_override(
 
 TEST(CredentialsTest, TestNoGoogleDefaultCreds) {
   grpc_flush_cached_google_default_credentials();
-  grpc_core::EnvSet(GRPC_GOOGLE_CREDENTIALS_ENV_VAR, ""); /* Reset. */
+  EnvSet(GRPC_GOOGLE_CREDENTIALS_ENV_VAR, ""); /* Reset. */
   grpc_override_well_known_credentials_path_getter(
       null_well_known_creds_path_getter);
   set_gce_tenancy_checker_for_testing(test_gce_tenancy_checker);
@@ -1989,29 +1989,29 @@ TEST(CredentialsTest, TestMetadataPluginFailure) {
 }
 
 TEST(CredentialsTest, TestGetWellKnownGoogleCredentialsFilePath) {
-  char* home = grpc_core::EnvGet("HOME");
+  char* home = EnvGet("HOME");
   bool restore_home_env = false;
 #if defined(GRPC_BAZEL_BUILD) && \
     (defined(GPR_POSIX_ENV) || defined(GPR_LINUX_ENV))
   // when running under bazel locally, the HOME variable is not set
   // so we set it to some fake value
   restore_home_env = true;
-  grpc_core::EnvSet("HOME", "/fake/home/for/bazel");
+  EnvSet("HOME", "/fake/home/for/bazel");
 #endif /* defined(GRPC_BAZEL_BUILD) && (defined(GPR_POSIX_ENV) || \
           defined(GPR_LINUX_ENV)) */
   std::string path = grpc_get_well_known_google_credentials_file_path();
   GPR_ASSERT(!path.empty());
 #if defined(GPR_POSIX_ENV) || defined(GPR_LINUX_ENV)
   restore_home_env = true;
-  grpc_core::EnvSet("HOME", absl::nullopt);
+  EnvSet("HOME", absl::nullopt);
   path = grpc_get_well_known_google_credentials_file_path();
   GPR_ASSERT(path.empty());
 #endif /* GPR_POSIX_ENV || GPR_LINUX_ENV */
   if (restore_home_env) {
     if (home) {
-      grpc_core::EnvSet("HOME", home);
+      EnvSet("HOME", home);
     } else {
-      grpc_core::EnvSet("HOME", absl::nullopt);
+      EnvSet("HOME", absl::nullopt);
     }
   }
   gpr_free(home);
@@ -3003,7 +3003,7 @@ TEST(CredentialsTest, TestAwsImdsv2ExternalAccountCredsSuccess) {
 
 TEST(CredentialsTest, TestAwsExternalAccountCredsSuccessPathRegionEnvKeysUrl) {
   ExecCtx exec_ctx;
-  grpc_core::EnvSet("AWS_REGION", "test_regionz");
+  EnvSet("AWS_REGION", "test_regionz");
   grpc_error_handle error = GRPC_ERROR_NONE;
   Json credential_source = Json::Parse(
       valid_aws_external_account_creds_options_credential_source, &error);
@@ -3034,13 +3034,13 @@ TEST(CredentialsTest, TestAwsExternalAccountCredsSuccessPathRegionEnvKeysUrl) {
                                 kTestPath);
   ExecCtx::Get()->Flush();
   HttpRequest::SetOverride(nullptr, nullptr, nullptr);
-  grpc_core::EnvSet("AWS_REGION", absl::nullopt);
+  EnvSet("AWS_REGION", absl::nullopt);
 }
 
 TEST(CredentialsTest,
      TestAwsExternalAccountCredsSuccessPathDefaultRegionEnvKeysUrl) {
   ExecCtx exec_ctx;
-  grpc_core::EnvSet("AWS_DEFAULT_REGION", "test_regionz");
+  EnvSet("AWS_DEFAULT_REGION", "test_regionz");
   grpc_error_handle error = GRPC_ERROR_NONE;
   Json credential_source = Json::Parse(
       valid_aws_external_account_creds_options_credential_source, &error);
@@ -3071,15 +3071,15 @@ TEST(CredentialsTest,
                                 kTestPath);
   ExecCtx::Get()->Flush();
   HttpRequest::SetOverride(nullptr, nullptr, nullptr);
-  grpc_core::EnvSet("AWS_DEFAULT_REGION", absl::nullopt);
+  EnvSet("AWS_DEFAULT_REGION", absl::nullopt);
 }
 
 TEST(CredentialsTest,
      TestAwsExternalAccountCredsSuccessPathDuplicateRegionEnvKeysUrl) {
   ExecCtx exec_ctx;
   // Make sure that AWS_REGION gets used over AWS_DEFAULT_REGION
-  grpc_core::EnvSet("AWS_REGION", "test_regionz");
-  grpc_core::EnvSet("AWS_DEFAULT_REGION", "ERROR_REGION");
+  EnvSet("AWS_REGION", "test_regionz");
+  EnvSet("AWS_DEFAULT_REGION", "ERROR_REGION");
   grpc_error_handle error = GRPC_ERROR_NONE;
   Json credential_source = Json::Parse(
       valid_aws_external_account_creds_options_credential_source, &error);
@@ -3110,15 +3110,15 @@ TEST(CredentialsTest,
                                 kTestPath);
   ExecCtx::Get()->Flush();
   HttpRequest::SetOverride(nullptr, nullptr, nullptr);
-  grpc_core::EnvSet("AWS_REGION", absl::nullopt);
-  grpc_core::EnvSet("AWS_DEFAULT_REGION", absl::nullopt);
+  EnvSet("AWS_REGION", absl::nullopt);
+  EnvSet("AWS_DEFAULT_REGION", absl::nullopt);
 }
 
 TEST(CredentialsTest, TestAwsExternalAccountCredsSuccessPathRegionUrlKeysEnv) {
   ExecCtx exec_ctx;
-  grpc_core::EnvSet("AWS_ACCESS_KEY_ID", "test_access_key_id");
-  grpc_core::EnvSet("AWS_SECRET_ACCESS_KEY", "test_secret_access_key");
-  grpc_core::EnvSet("AWS_SESSION_TOKEN", "test_token");
+  EnvSet("AWS_ACCESS_KEY_ID", "test_access_key_id");
+  EnvSet("AWS_SECRET_ACCESS_KEY", "test_secret_access_key");
+  EnvSet("AWS_SESSION_TOKEN", "test_token");
   grpc_error_handle error = GRPC_ERROR_NONE;
   Json credential_source = Json::Parse(
       valid_aws_external_account_creds_options_credential_source, &error);
@@ -3149,17 +3149,17 @@ TEST(CredentialsTest, TestAwsExternalAccountCredsSuccessPathRegionUrlKeysEnv) {
                                 kTestPath);
   ExecCtx::Get()->Flush();
   HttpRequest::SetOverride(nullptr, nullptr, nullptr);
-  grpc_core::EnvSet("AWS_ACCESS_KEY_ID", absl::nullopt);
-  grpc_core::EnvSet("AWS_SECRET_ACCESS_KEY", absl::nullopt);
-  grpc_core::EnvSet("AWS_SESSION_TOKEN", absl::nullopt);
+  EnvSet("AWS_ACCESS_KEY_ID", absl::nullopt);
+  EnvSet("AWS_SECRET_ACCESS_KEY", absl::nullopt);
+  EnvSet("AWS_SESSION_TOKEN", absl::nullopt);
 }
 
 TEST(CredentialsTest, TestAwsExternalAccountCredsSuccessPathRegionEnvKeysEnv) {
   ExecCtx exec_ctx;
-  grpc_core::EnvSet("AWS_REGION", "test_regionz");
-  grpc_core::EnvSet("AWS_ACCESS_KEY_ID", "test_access_key_id");
-  grpc_core::EnvSet("AWS_SECRET_ACCESS_KEY", "test_secret_access_key");
-  grpc_core::EnvSet("AWS_SESSION_TOKEN", "test_token");
+  EnvSet("AWS_REGION", "test_regionz");
+  EnvSet("AWS_ACCESS_KEY_ID", "test_access_key_id");
+  EnvSet("AWS_SECRET_ACCESS_KEY", "test_secret_access_key");
+  EnvSet("AWS_SESSION_TOKEN", "test_token");
   grpc_error_handle error = GRPC_ERROR_NONE;
   Json credential_source = Json::Parse(
       valid_aws_external_account_creds_options_credential_source, &error);
@@ -3190,10 +3190,10 @@ TEST(CredentialsTest, TestAwsExternalAccountCredsSuccessPathRegionEnvKeysEnv) {
                                 kTestPath);
   ExecCtx::Get()->Flush();
   HttpRequest::SetOverride(nullptr, nullptr, nullptr);
-  grpc_core::EnvSet("AWS_REGION", absl::nullopt);
-  grpc_core::EnvSet("AWS_ACCESS_KEY_ID", absl::nullopt);
-  grpc_core::EnvSet("AWS_SECRET_ACCESS_KEY", absl::nullopt);
-  grpc_core::EnvSet("AWS_SESSION_TOKEN", absl::nullopt);
+  EnvSet("AWS_REGION", absl::nullopt);
+  EnvSet("AWS_ACCESS_KEY_ID", absl::nullopt);
+  EnvSet("AWS_SECRET_ACCESS_KEY", absl::nullopt);
+  EnvSet("AWS_SESSION_TOKEN", absl::nullopt);
 }
 
 TEST(CredentialsTest,
@@ -3201,10 +3201,10 @@ TEST(CredentialsTest,
   std::map<std::string, std::string> emd = {
       {"authorization", "Bearer token_exchange_access_token"}};
   ExecCtx exec_ctx;
-  grpc_core::EnvSet("AWS_DEFAULT_REGION", "test_regionz");
-  grpc_core::EnvSet("AWS_ACCESS_KEY_ID", "test_access_key_id");
-  grpc_core::EnvSet("AWS_SECRET_ACCESS_KEY", "test_secret_access_key");
-  grpc_core::EnvSet("AWS_SESSION_TOKEN", "test_token");
+  EnvSet("AWS_DEFAULT_REGION", "test_regionz");
+  EnvSet("AWS_ACCESS_KEY_ID", "test_access_key_id");
+  EnvSet("AWS_SECRET_ACCESS_KEY", "test_secret_access_key");
+  EnvSet("AWS_SESSION_TOKEN", "test_token");
   grpc_error_handle error = GRPC_ERROR_NONE;
   Json credential_source = Json::Parse(
       valid_aws_external_account_creds_options_credential_source, &error);
@@ -3235,21 +3235,21 @@ TEST(CredentialsTest,
                                 kTestPath);
   ExecCtx::Get()->Flush();
   HttpRequest::SetOverride(nullptr, nullptr, nullptr);
-  grpc_core::EnvSet("AWS_DEFAULT_REGION", absl::nullopt);
-  grpc_core::EnvSet("AWS_ACCESS_KEY_ID", absl::nullopt);
-  grpc_core::EnvSet("AWS_SECRET_ACCESS_KEY", absl::nullopt);
-  grpc_core::EnvSet("AWS_SESSION_TOKEN", absl::nullopt);
+  EnvSet("AWS_DEFAULT_REGION", absl::nullopt);
+  EnvSet("AWS_ACCESS_KEY_ID", absl::nullopt);
+  EnvSet("AWS_SECRET_ACCESS_KEY", absl::nullopt);
+  EnvSet("AWS_SESSION_TOKEN", absl::nullopt);
 }
 
 TEST(CredentialsTest,
      TestAwsExternalAccountCredsSuccessPathDuplicateRegionEnvKeysEnv) {
   ExecCtx exec_ctx;
   // Make sure that AWS_REGION gets used over AWS_DEFAULT_REGION
-  grpc_core::EnvSet("AWS_REGION", "test_regionz");
-  grpc_core::EnvSet("AWS_DEFAULT_REGION", "ERROR_REGION");
-  grpc_core::EnvSet("AWS_ACCESS_KEY_ID", "test_access_key_id");
-  grpc_core::EnvSet("AWS_SECRET_ACCESS_KEY", "test_secret_access_key");
-  grpc_core::EnvSet("AWS_SESSION_TOKEN", "test_token");
+  EnvSet("AWS_REGION", "test_regionz");
+  EnvSet("AWS_DEFAULT_REGION", "ERROR_REGION");
+  EnvSet("AWS_ACCESS_KEY_ID", "test_access_key_id");
+  EnvSet("AWS_SECRET_ACCESS_KEY", "test_secret_access_key");
+  EnvSet("AWS_SESSION_TOKEN", "test_token");
   grpc_error_handle error = GRPC_ERROR_NONE;
   Json credential_source = Json::Parse(
       valid_aws_external_account_creds_options_credential_source, &error);
@@ -3280,11 +3280,11 @@ TEST(CredentialsTest,
                                 kTestPath);
   ExecCtx::Get()->Flush();
   HttpRequest::SetOverride(nullptr, nullptr, nullptr);
-  grpc_core::EnvSet("AWS_REGION", absl::nullopt);
-  grpc_core::EnvSet("AWS_DEFAULT_REGION", absl::nullopt);
-  grpc_core::EnvSet("AWS_ACCESS_KEY_ID", absl::nullopt);
-  grpc_core::EnvSet("AWS_SECRET_ACCESS_KEY", absl::nullopt);
-  grpc_core::EnvSet("AWS_SESSION_TOKEN", absl::nullopt);
+  EnvSet("AWS_REGION", absl::nullopt);
+  EnvSet("AWS_DEFAULT_REGION", absl::nullopt);
+  EnvSet("AWS_ACCESS_KEY_ID", absl::nullopt);
+  EnvSet("AWS_SECRET_ACCESS_KEY", absl::nullopt);
+  EnvSet("AWS_SESSION_TOKEN", absl::nullopt);
 }
 
 TEST(CredentialsTest,

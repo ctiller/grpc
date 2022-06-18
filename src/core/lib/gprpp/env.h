@@ -16,12 +16,12 @@
  *
  */
 
-#ifndef GRPC_CORE_LIB_GPR_ENV_H
-#define GRPC_CORE_LIB_GPR_ENV_H
+#ifndef GRPC_CORE_LIB_GPRPP_ENV_H
+#define GRPC_CORE_LIB_GPRPP_ENV_H
 
 #include <grpc/support/port_platform.h>
 
-#include <stdio.h>
+#include <string>
 
 #include "absl/strings/string_view.h"
 #include "absl/types/optional.h"
@@ -42,4 +42,4 @@ void EnvSet(absl::string_view name, absl::optional<absl::string_view> value);
 
 }  // namespace grpc_core
 
-#endif /* GRPC_CORE_LIB_GPR_ENV_H */
+#endif /* GRPC_CORE_LIB_GPRPP_ENV_H */

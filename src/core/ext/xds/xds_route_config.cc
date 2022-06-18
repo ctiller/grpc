@@ -81,7 +81,7 @@ namespace grpc_core {
 
 // TODO(yashykt): Remove once RBAC is no longer experimental
 bool XdsRbacEnabled() {
-  char* value = grpc_core::EnvGet("GRPC_XDS_EXPERIMENTAL_RBAC");
+  char* value = EnvGet("GRPC_XDS_EXPERIMENTAL_RBAC");
   bool parsed_value;
   bool parse_succeeded = gpr_parse_bool_value(value, &parsed_value);
   gpr_free(value);
@@ -90,7 +90,7 @@ bool XdsRbacEnabled() {
 
 // TODO(donnadionne): Remove once RLS is no longer experimental
 bool XdsRlsEnabled() {
-  char* value = grpc_core::EnvGet("GRPC_EXPERIMENTAL_XDS_RLS_LB");
+  char* value = EnvGet("GRPC_EXPERIMENTAL_XDS_RLS_LB");
   bool parsed_value;
   bool parse_succeeded = gpr_parse_bool_value(value, &parsed_value);
   gpr_free(value);

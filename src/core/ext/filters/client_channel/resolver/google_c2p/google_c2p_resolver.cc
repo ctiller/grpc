@@ -374,8 +374,8 @@ void GoogleCloud2ProdResolver::StartXdsResolver() {
     };
   }
   // Allow the TD server uri to be overridden for testing purposes.
-  UniquePtr<char> override_server(grpc_core::EnvGet(
-      "GRPC_TEST_ONLY_GOOGLE_C2P_RESOLVER_TRAFFIC_DIRECTOR_URI"));
+  UniquePtr<char> override_server(
+      EnvGet("GRPC_TEST_ONLY_GOOGLE_C2P_RESOLVER_TRAFFIC_DIRECTOR_URI"));
   const char* server_uri =
       override_server != nullptr && strlen(override_server.get()) > 0
           ? override_server.get()

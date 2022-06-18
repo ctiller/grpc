@@ -22,6 +22,7 @@
 
 #include <string.h>
 
+#include <string>
 #include <type_traits>
 
 #include <grpc/grpc.h>

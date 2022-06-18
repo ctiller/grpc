@@ -21,7 +21,6 @@
 #include <grpc/support/port_platform.h>
 
 #include "src/core/lib/gprpp/global_config.h"
-#include "src/core/lib/gprpp/memory.h"
 
 GPR_GLOBAL_CONFIG_DECLARE_STRING(grpc_default_ssl_roots_file_path);
 GPR_GLOBAL_CONFIG_DECLARE_BOOL(grpc_not_use_system_ssl_roots);

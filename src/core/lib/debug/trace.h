@@ -32,7 +32,6 @@
 #endif
 
 #include "src/core/lib/gprpp/global_config.h"
-#include "src/core/lib/gprpp/memory.h"
 
 GPR_GLOBAL_CONFIG_DECLARE_STRING(grpc_trace);
 
