@@ -72,7 +72,7 @@ class AVL {
         return q == nullptr ? 0 : -1;
       }
       if (q == nullptr) return 1;
-      const int kv = grpc_core::QsortCompare(p->kv, q->kv);
+      const int kv = QsortCompare(p->kv, q->kv);
       if (kv != 0) return kv;
       a.MoveNext();
       b.MoveNext();
