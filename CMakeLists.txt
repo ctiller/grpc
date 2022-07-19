@@ -5969,6 +5969,7 @@ add_executable(arena_promise_test
   src/core/lib/slice/slice.cc
   src/core/lib/slice/slice_refcount.cc
   src/core/lib/slice/slice_string_helpers.cc
+  src/core/lib/transport/pid_controller.cc
   test/core/promise/arena_promise_test.cc
   third_party/googletest/googletest/src/gtest-all.cc
   third_party/googletest/googlemock/src/gmock-all.cc
@@ -5997,6 +5998,7 @@ target_link_libraries(arena_promise_test
   ${_gRPC_PROTOBUF_LIBRARIES}
   ${_gRPC_ALLTARGETS_LIBRARIES}
   absl::any_invocable
+  absl::function_ref
   absl::type_traits
   absl::statusor
   absl::variant
@@ -7598,6 +7600,7 @@ add_executable(chunked_vector_test
   src/core/lib/slice/slice.cc
   src/core/lib/slice/slice_refcount.cc
   src/core/lib/slice/slice_string_helpers.cc
+  src/core/lib/transport/pid_controller.cc
   test/core/gprpp/chunked_vector_test.cc
   third_party/googletest/googletest/src/gtest-all.cc
   third_party/googletest/googlemock/src/gmock-all.cc
@@ -7626,6 +7629,7 @@ target_link_libraries(chunked_vector_test
   ${_gRPC_PROTOBUF_LIBRARIES}
   ${_gRPC_ALLTARGETS_LIBRARIES}
   absl::any_invocable
+  absl::function_ref
   absl::type_traits
   absl::statusor
   absl::variant
@@ -9860,6 +9864,7 @@ add_executable(for_each_test
   src/core/lib/slice/slice.cc
   src/core/lib/slice/slice_refcount.cc
   src/core/lib/slice/slice_string_helpers.cc
+  src/core/lib/transport/pid_controller.cc
   test/core/promise/for_each_test.cc
   third_party/googletest/googletest/src/gtest-all.cc
   third_party/googletest/googlemock/src/gmock-all.cc
@@ -9889,6 +9894,7 @@ target_link_libraries(for_each_test
   ${_gRPC_ALLTARGETS_LIBRARIES}
   absl::flat_hash_set
   absl::any_invocable
+  absl::function_ref
   absl::hash
   absl::type_traits
   absl::statusor
@@ -12736,6 +12742,7 @@ if(_gRPC_PLATFORM_LINUX OR _gRPC_PLATFORM_POSIX)
     src/core/lib/slice/slice.cc
     src/core/lib/slice/slice_refcount.cc
     src/core/lib/slice/slice_string_helpers.cc
+    src/core/lib/transport/pid_controller.cc
     test/core/resource_quota/memory_quota_stress_test.cc
     third_party/googletest/googletest/src/gtest-all.cc
     third_party/googletest/googlemock/src/gmock-all.cc
@@ -12764,6 +12771,7 @@ if(_gRPC_PLATFORM_LINUX OR _gRPC_PLATFORM_POSIX)
     ${_gRPC_PROTOBUF_LIBRARIES}
     ${_gRPC_ALLTARGETS_LIBRARIES}
     absl::any_invocable
+    absl::function_ref
     absl::type_traits
     absl::statusor
     absl::variant
@@ -12797,6 +12805,7 @@ add_executable(memory_quota_test
   src/core/lib/slice/slice.cc
   src/core/lib/slice/slice_refcount.cc
   src/core/lib/slice/slice_string_helpers.cc
+  src/core/lib/transport/pid_controller.cc
   test/core/resource_quota/memory_quota_test.cc
   third_party/googletest/googletest/src/gtest-all.cc
   third_party/googletest/googlemock/src/gmock-all.cc
@@ -12825,6 +12834,7 @@ target_link_libraries(memory_quota_test
   ${_gRPC_PROTOBUF_LIBRARIES}
   ${_gRPC_ALLTARGETS_LIBRARIES}
   absl::any_invocable
+  absl::function_ref
   absl::type_traits
   absl::statusor
   absl::variant
@@ -13770,6 +13780,7 @@ target_link_libraries(periodic_update_test
   ${_gRPC_PROTOBUF_LIBRARIES}
   ${_gRPC_ALLTARGETS_LIBRARIES}
   absl::any_invocable
+  absl::function_ref
   absl::statusor
   gpr
   upb
@@ -13837,6 +13848,7 @@ add_executable(pipe_test
   src/core/lib/slice/slice.cc
   src/core/lib/slice/slice_refcount.cc
   src/core/lib/slice/slice_string_helpers.cc
+  src/core/lib/transport/pid_controller.cc
   test/core/promise/pipe_test.cc
   third_party/googletest/googletest/src/gtest-all.cc
   third_party/googletest/googlemock/src/gmock-all.cc
@@ -13865,6 +13877,7 @@ target_link_libraries(pipe_test
   ${_gRPC_PROTOBUF_LIBRARIES}
   ${_gRPC_ALLTARGETS_LIBRARIES}
   absl::any_invocable
+  absl::function_ref
   absl::type_traits
   absl::statusor
   absl::variant
@@ -14695,6 +14708,7 @@ add_executable(resource_quota_test
   src/core/lib/slice/slice.cc
   src/core/lib/slice/slice_refcount.cc
   src/core/lib/slice/slice_string_helpers.cc
+  src/core/lib/transport/pid_controller.cc
   test/core/resource_quota/resource_quota_test.cc
   third_party/googletest/googletest/src/gtest-all.cc
   third_party/googletest/googlemock/src/gmock-all.cc
@@ -14723,6 +14737,7 @@ target_link_libraries(resource_quota_test
   ${_gRPC_PROTOBUF_LIBRARIES}
   ${_gRPC_ALLTARGETS_LIBRARIES}
   absl::any_invocable
+  absl::function_ref
   absl::type_traits
   absl::statusor
   absl::variant
