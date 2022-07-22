@@ -1090,7 +1090,6 @@
         'absl/debugging:failure_signal_handler',
         'absl/debugging:stacktrace',
         'absl/debugging:symbolize',
-        'grpc',
         'grpc_unsecure',
       ],
       'sources': [
