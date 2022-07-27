@@ -29,7 +29,6 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 
-#include <grpc/support/alloc.h>
 #include <grpc/support/cpu.h>
 
 static const size_t g_num_cores = gpr_cpu_num_cores();
