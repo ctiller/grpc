@@ -21,8 +21,10 @@
 
 #include <grpc/support/port_platform.h>
 
-#include <grpc/byte_buffer.h>
-#include <grpc/grpc.h>
+#include "upb/arena.h"
+
+#include <grpc/impl/codegen/grpc_types.h>
+#include <grpc/status.h>
 
 #include "src/core/tsi/transport_security_interface.h"
 #include "src/proto/grpc/gcp/handshaker.upb.h"

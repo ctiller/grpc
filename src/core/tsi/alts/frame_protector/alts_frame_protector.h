@@ -21,7 +21,8 @@
 
 #include <grpc/support/port_platform.h>
 
-#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #include "src/core/tsi/transport_security_interface.h"
 

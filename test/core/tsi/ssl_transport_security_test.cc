@@ -18,23 +18,29 @@
 
 #include "src/core/tsi/ssl_transport_security.h"
 
-#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
 #include <gtest/gtest.h>
+#include <openssl/bio.h>
 #include <openssl/crypto.h>
+#include <openssl/ec_key.h>
 #include <openssl/err.h>
+#include <openssl/nid.h>
 #include <openssl/pem.h>
+#include <openssl/x509.h>
+
+#include "gtest/gtest.h"
 
 #include <grpc/grpc.h>
+#include <grpc/slice.h>
 #include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
 #include <grpc/support/string_util.h>
 
 #include "src/core/lib/gprpp/memory.h"
+#include "src/core/lib/iomgr/error.h"
 #include "src/core/lib/iomgr/load_file.h"
-#include "src/core/lib/security/security_connector/security_connector.h"
 #include "src/core/tsi/transport_security.h"
 #include "src/core/tsi/transport_security_interface.h"
 #include "test/core/tsi/transport_security_test_lib.h"

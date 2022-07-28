@@ -18,6 +18,15 @@
 
 #include "test/core/tsi/alts/handshaker/alts_handshaker_service_api_test_lib.h"
 
+#include <string.h>
+
+#include "upb/upb.h"
+
+#include <grpc/support/log.h>
+
+#include "src/core/tsi/alts/handshaker/transport_security_common_api.h"
+#include "src/proto/grpc/gcp/transport_security_common.upb.h"
+
 bool grpc_gcp_handshaker_resp_set_peer_rpc_versions(
     grpc_gcp_HandshakerResp* resp, upb_Arena* arena, uint32_t max_major,
     uint32_t max_minor, uint32_t min_major, uint32_t min_minor) {

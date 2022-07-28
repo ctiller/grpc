@@ -20,8 +20,18 @@
 
 #include "src/core/ext/xds/certificate_provider_registry.h"
 
-#include <gmock/gmock.h>
+#include <memory>
 
+#include <gtest/gtest.h>
+
+#include "gtest/gtest.h"
+
+#include <grpc/grpc_security.h>
+
+#include "src/core/ext/xds/certificate_provider_factory.h"
+#include "src/core/lib/gprpp/ref_counted_ptr.h"
+#include "src/core/lib/iomgr/error.h"
+#include "src/core/lib/json/json.h"
 #include "src/core/lib/security/credentials/tls/grpc_tls_certificate_provider.h"
 #include "test/core/util/test_config.h"
 

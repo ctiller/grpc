@@ -18,22 +18,38 @@
 
 #include "test/core/security/oauth2_utils.h"
 
-#include <string.h>
+#include <memory>
+#include <string>
 
-#include <grpc/grpc.h>
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
+#include "absl/types/optional.h"
+
+#include <grpc/event_engine/memory_allocator.h>
 #include <grpc/grpc_security.h>
-#include <grpc/slice.h>
 #include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
 #include <grpc/support/string_util.h>
 #include <grpc/support/sync.h>
 
+#include "src/core/lib/gprpp/ref_counted_ptr.h"
+#include "src/core/lib/gprpp/time.h"
+#include "src/core/lib/iomgr/closure.h"
+#include "src/core/lib/iomgr/error.h"
 #include "src/core/lib/iomgr/exec_ctx.h"
+#include "src/core/lib/iomgr/polling_entity.h"
+#include "src/core/lib/iomgr/pollset.h"
+#include "src/core/lib/promise/activity.h"
 #include "src/core/lib/promise/exec_ctx_wakeup_scheduler.h"
 #include "src/core/lib/promise/map.h"
+#include "src/core/lib/promise/poll.h"
+#include "src/core/lib/resource_quota/arena.h"
+#include "src/core/lib/resource_quota/memory_quota.h"
 #include "src/core/lib/resource_quota/resource_quota.h"
-#include "src/core/lib/security/context/security_context.h"
 #include "src/core/lib/security/credentials/credentials.h"
+#include "src/core/lib/transport/metadata_batch.h"
+#include "src/core/lib/transport/transport.h"
 
 static auto* g_memory_allocator = new grpc_core::MemoryAllocator(
     grpc_core::ResourceQuota::Default()->memory_quota()->CreateMemoryAllocator(

@@ -21,11 +21,13 @@
 
 #include <grpc/support/port_platform.h>
 
-#include <openssl/x509.h>
+#include <stddef.h>
+#include <stdint.h>
+
+#include <openssl/crypto.h>
+#include <openssl/stack.h>
 
 #include "absl/strings/string_view.h"
-
-#include <grpc/grpc_security_constants.h>
 
 #include "src/core/tsi/ssl/key_logging/ssl_key_logging.h"
 #include "src/core/tsi/transport_security_interface.h"

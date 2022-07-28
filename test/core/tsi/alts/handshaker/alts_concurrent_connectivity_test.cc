@@ -18,43 +18,35 @@
 
 #include <grpc/support/port_platform.h>
 
-#include <fcntl.h>
-#include <netinet/in.h>
 #include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
 
+#include <algorithm>
 #include <functional>
-#include <set>
+#include <ios>
+#include <memory>
+#include <string>
 #include <thread>
+#include <vector>
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 #include "absl/memory/memory.h"
-#include "absl/strings/str_cat.h"
+#include "gtest/gtest.h"
 
 #include <grpc/grpc.h>
 #include <grpc/grpc_security.h>
-#include <grpc/slice.h>
-#include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
 #include <grpc/support/string_util.h>
 #include <grpc/support/time.h>
-#include <grpcpp/impl/codegen/service_type.h>
+#include <grpcpp/impl/service_type.h>
+#include <grpcpp/security/server_credentials.h>
+#include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
-#include "src/core/lib/gpr/useful.h"
+#include "src/core/lib/channel/channel_args.h"
 #include "src/core/lib/gprpp/host_port.h"
-#include "src/core/lib/gprpp/thd.h"
-#include "src/core/lib/iomgr/error.h"
+#include "src/core/lib/gprpp/memory.h"
 #include "src/core/lib/security/credentials/alts/alts_credentials.h"
-#include "src/core/lib/security/credentials/credentials.h"
-#include "src/core/lib/security/security_connector/alts/alts_security_connector.h"
-#include "src/core/lib/slice/slice_string_helpers.h"
-#include "test/core/end2end/cq_verifier.h"
 #include "test/core/tsi/alts/fake_handshaker/fake_handshaker_server.h"
 #include "test/core/util/fake_udp_and_tcp_server.h"
 #include "test/core/util/port.h"

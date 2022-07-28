@@ -21,14 +21,13 @@
 
 #include <grpc/support/port_platform.h>
 
-#include <grpc/grpc.h>
+#include <stddef.h>
 
-#include "src/core/lib/iomgr/pollset_set.h"
-#include "src/core/lib/security/credentials/alts/grpc_alts_credentials_options.h"
-#include "src/core/tsi/alts/handshaker/alts_handshaker_client.h"
-#include "src/core/tsi/transport_security.h"
+#include <grpc/grpc_security.h>
+#include <grpc/slice.h>
+
+#include "src/core/lib/iomgr/iomgr_fwd.h"
 #include "src/core/tsi/transport_security_interface.h"
-#include "src/proto/grpc/gcp/altscontext.upb.h"
 #include "src/proto/grpc/gcp/handshaker.upb.h"
 
 #define TSI_ALTS_SERVICE_ACCOUNT_PEER_PROPERTY "service_account"

@@ -21,12 +21,13 @@
 
 #include <grpc/support/port_platform.h>
 
-#include <stdbool.h>
 #include <string.h>
 
-#include <grpc/grpc.h>
+#include <grpc/status.h>
 
 #include "src/core/tsi/alts/crypt/gsec.h"
+
+struct alts_crypter;
 
 /**
  * An alts_crypter interface for an ALTS record protocol providing

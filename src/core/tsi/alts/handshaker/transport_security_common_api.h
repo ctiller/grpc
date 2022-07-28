@@ -21,10 +21,11 @@
 
 #include <grpc/support/port_platform.h>
 
+#include <stdint.h>
+
+#include "upb/arena.h"
+
 #include <grpc/slice.h>
-#include <grpc/slice_buffer.h>
-#include <grpc/support/alloc.h>
-#include <grpc/support/log.h>
 
 #include "src/proto/grpc/gcp/transport_security_common.upb.h"
 

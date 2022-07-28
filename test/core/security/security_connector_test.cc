@@ -21,20 +21,28 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <string>
+#include <vector>
+
 #include <gtest/gtest.h>
 
+#include "gtest/gtest.h"
+
 #include <grpc/grpc_security.h>
+#include <grpc/grpc_security_constants.h>
+#include <grpc/slice.h>
 #include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
 #include <grpc/support/string_util.h>
 
-#include "src/core/lib/gpr/string.h"
 #include "src/core/lib/gpr/tmpfile.h"
+#include "src/core/lib/gpr/useful.h"
+#include "src/core/lib/gprpp/debug_location.h"
+#include "src/core/lib/gprpp/global_config_generic.h"
 #include "src/core/lib/gprpp/ref_counted_ptr.h"
 #include "src/core/lib/security/context/security_context.h"
 #include "src/core/lib/security/security_connector/ssl_utils.h"
 #include "src/core/lib/security/security_connector/ssl_utils_config.h"
-#include "src/core/lib/slice/slice_string_helpers.h"
 #include "src/core/tsi/ssl_transport_security.h"
 #include "src/core/tsi/transport_security.h"
 #include "test/core/util/test_config.h"

@@ -28,6 +28,7 @@
 
 #include "src/core/lib/gprpp/ref_counted_ptr.h"
 #include "src/core/lib/json/json.h"
+#include "src/core/lib/security/credentials/credentials.h"
 
 struct grpc_channel_credentials;
 

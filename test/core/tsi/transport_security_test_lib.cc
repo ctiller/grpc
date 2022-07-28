@@ -25,8 +25,10 @@
 #include <grpc/grpc.h>
 #include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
+#include <grpc/support/time.h>
 
 #include "src/core/lib/gprpp/memory.h"
+#include "src/core/lib/iomgr/error.h"
 #include "src/core/lib/security/transport/tsi_error.h"
 
 static void notification_signal(tsi_test_fixture* fixture) {

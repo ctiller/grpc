@@ -19,18 +19,15 @@
 #include "src/core/tsi/alts/frame_protector/frame_handler.h"
 
 #include <stdint.h>
-#include <stdio.h>
 #include <string.h>
 
 #include <algorithm>
 
 #include <gtest/gtest.h>
 
-#include <grpc/support/alloc.h>
-#include <grpc/support/log.h>
+#include "gtest/gtest.h"
 
-#include "src/core/lib/gpr/useful.h"
-#include "test/core/tsi/alts/crypt/gsec_test_util.h"
+#include <grpc/support/alloc.h>
 
 const size_t kFrameHandlerTestBufferSize = 1024;
 

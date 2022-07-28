@@ -21,7 +21,9 @@
 
 #include <grpc/support/port_platform.h>
 
-#include <stdbool.h>
+#include <stddef.h>
+
+#include <string>
 
 #include "src/core/lib/debug/trace.h"
 #include "src/core/tsi/transport_security_interface.h"

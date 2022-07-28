@@ -21,7 +21,6 @@
 
 #include <grpc/support/port_platform.h>
 
-#include <stdbool.h>
 #include <stdlib.h>
 
 const size_t kFrameMessageType = 0x06;

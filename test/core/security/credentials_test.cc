@@ -20,21 +20,37 @@
 
 #include "src/core/lib/security/credentials/credentials.h"
 
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include <functional>
+#include <map>
+#include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <openssl/rsa.h>
 
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_replace.h"
+#include "absl/strings/string_view.h"
+#include "absl/types/optional.h"
+#include "gtest/gtest.h"
 
+#include <grpc/event_engine/memory_allocator.h>
+#include <grpc/grpc.h>
 #include <grpc/grpc_security.h>
+#include <grpc/grpc_security_constants.h>
 #include <grpc/slice.h>
+#include <grpc/status.h>
 #include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
 #include <grpc/support/string_util.h>
@@ -42,17 +58,34 @@
 
 #include "src/core/lib/channel/channel_args.h"
 #include "src/core/lib/gpr/env.h"
-#include "src/core/lib/gpr/string.h"
 #include "src/core/lib/gpr/tmpfile.h"
+#include "src/core/lib/gpr/useful.h"
+#include "src/core/lib/gprpp/debug_location.h"
 #include "src/core/lib/gprpp/host_port.h"
+#include "src/core/lib/gprpp/ref_counted.h"
+#include "src/core/lib/gprpp/ref_counted_ptr.h"
 #include "src/core/lib/gprpp/time.h"
 #include "src/core/lib/gprpp/unique_type_name.h"
 #include "src/core/lib/http/httpcli.h"
 #include "src/core/lib/http/httpcli_ssl_credentials.h"
+#include "src/core/lib/http/parser.h"
+#include "src/core/lib/iomgr/closure.h"
+#include "src/core/lib/iomgr/endpoint.h"
 #include "src/core/lib/iomgr/error.h"
+#include "src/core/lib/iomgr/exec_ctx.h"
+#include "src/core/lib/iomgr/iomgr_fwd.h"
+#include "src/core/lib/iomgr/polling_entity.h"
+#include "src/core/lib/iomgr/pollset_set.h"
+#include "src/core/lib/json/json.h"
+#include "src/core/lib/promise/activity.h"
+#include "src/core/lib/promise/arena_promise.h"
 #include "src/core/lib/promise/exec_ctx_wakeup_scheduler.h"
+#include "src/core/lib/promise/poll.h"
 #include "src/core/lib/promise/promise.h"
 #include "src/core/lib/promise/seq.h"
+#include "src/core/lib/resource_quota/arena.h"
+#include "src/core/lib/resource_quota/memory_quota.h"
+#include "src/core/lib/resource_quota/resource_quota.h"
 #include "src/core/lib/security/context/security_context.h"
 #include "src/core/lib/security/credentials/composite/composite_credentials.h"
 #include "src/core/lib/security/credentials/external/aws_external_account_credentials.h"
@@ -62,13 +95,19 @@
 #include "src/core/lib/security/credentials/fake/fake_credentials.h"
 #include "src/core/lib/security/credentials/google_default/google_default_credentials.h"
 #include "src/core/lib/security/credentials/iam/iam_credentials.h"
+#include "src/core/lib/security/credentials/jwt/json_token.h"
 #include "src/core/lib/security/credentials/jwt/jwt_credentials.h"
 #include "src/core/lib/security/credentials/oauth2/oauth2_credentials.h"
+#include "src/core/lib/security/credentials/tls/grpc_tls_certificate_verifier.h"
 #include "src/core/lib/security/credentials/tls/grpc_tls_credentials_options.h"
-#include "src/core/lib/security/credentials/xds/xds_credentials.h"
-#include "src/core/lib/security/transport/auth_filters.h"
+#include "src/core/lib/security/security_connector/security_connector.h"
+#include "src/core/lib/slice/slice.h"
 #include "src/core/lib/transport/error_utils.h"
+#include "src/core/lib/transport/handshaker.h"
+#include "src/core/lib/transport/metadata_batch.h"
+#include "src/core/lib/transport/transport.h"
 #include "src/core/lib/uri/uri_parser.h"
+#include "src/core/tsi/transport_security_interface.h"
 #include "test/core/util/test_config.h"
 
 namespace grpc_core {

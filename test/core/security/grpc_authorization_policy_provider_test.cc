@@ -16,12 +16,26 @@
 
 #include "src/core/lib/security/authorization/grpc_authorization_policy_provider.h"
 
-#include <gmock/gmock.h>
+#include <functional>
+#include <memory>
+#include <utility>
+
 #include <gtest/gtest.h>
 
-#include <grpc/grpc_security.h>
+#include "absl/memory/memory.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "gtest/gtest.h"
 
+#include <grpc/grpc.h>
+#include <grpc/support/sync.h>
+#include <grpc/support/time.h>
+
+#include "src/core/lib/gprpp/ref_counted_ptr.h"
+#include "src/core/lib/security/authorization/authorization_engine.h"
+#include "src/core/lib/security/authorization/authorization_policy_provider.h"
 #include "src/core/lib/security/authorization/grpc_authorization_engine.h"
+#include "src/core/lib/security/authorization/rbac_policy.h"
 #include "test/core/util/test_config.h"
 #include "test/core/util/tls_utils.h"
 

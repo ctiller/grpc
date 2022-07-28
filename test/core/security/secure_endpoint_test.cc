@@ -18,20 +18,30 @@
 
 #include "src/core/lib/security/transport/secure_endpoint.h"
 
-#include <fcntl.h>
-#include <sys/types.h>
+#include <stdint.h>
 
 #include <gtest/gtest.h>
 
+#include "absl/strings/string_view.h"
+#include "gtest/gtest.h"
+
 #include <grpc/grpc.h>
+#include <grpc/slice_buffer.h>
 #include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
+#include <grpc/support/sync.h>
 
 #include "src/core/lib/gpr/useful.h"
+#include "src/core/lib/iomgr/closure.h"
 #include "src/core/lib/iomgr/endpoint_pair.h"
-#include "src/core/lib/iomgr/iomgr.h"
+#include "src/core/lib/iomgr/error.h"
+#include "src/core/lib/iomgr/exec_ctx.h"
+#include "src/core/lib/iomgr/iomgr_fwd.h"
+#include "src/core/lib/iomgr/pollset.h"
 #include "src/core/lib/slice/slice_internal.h"
+#include "src/core/lib/slice/slice_refcount.h"
 #include "src/core/tsi/fake_transport_security.h"
+#include "src/core/tsi/transport_security_interface.h"
 #include "test/core/iomgr/endpoint_tests.h"
 #include "test/core/util/test_config.h"
 

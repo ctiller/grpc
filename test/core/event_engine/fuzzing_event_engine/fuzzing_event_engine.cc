@@ -14,11 +14,18 @@
 
 #include "test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.h"
 
-#include <inttypes.h>
+#include <stdlib.h>
 
+#include <algorithm>
 #include <chrono>
+#include <ratio>
+#include <vector>
+
+#include <google/protobuf/repeated_ptr_field.h>
 
 #include <grpc/grpc.h>
+#include <grpc/support/log.h>
+#include <grpc/support/time.h>
 
 #include "src/core/lib/gprpp/time.h"
 #include "test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.pb.h"

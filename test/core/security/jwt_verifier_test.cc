@@ -18,17 +18,27 @@
 
 #include "src/core/lib/security/credentials/jwt/jwt_verifier.h"
 
+#include <stdint.h>
 #include <string.h>
 
 #include <gtest/gtest.h>
 
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "gtest/gtest.h"
+
 #include <grpc/grpc.h>
 #include <grpc/slice.h>
 #include <grpc/support/alloc.h>
-#include <grpc/support/log.h>
 #include <grpc/support/string_util.h>
+#include <grpc/support/time.h>
 
+#include "src/core/lib/gprpp/debug_location.h"
 #include "src/core/lib/http/httpcli.h"
+#include "src/core/lib/http/parser.h"
+#include "src/core/lib/iomgr/closure.h"
+#include "src/core/lib/iomgr/error.h"
+#include "src/core/lib/iomgr/exec_ctx.h"
 #include "src/core/lib/security/credentials/jwt/json_token.h"
 #include "src/core/lib/slice/b64.h"
 #include "test/core/util/test_config.h"

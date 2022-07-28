@@ -20,6 +20,9 @@
 
 #include <gtest/gtest.h>
 
+#include "absl/status/statusor.h"
+#include "gtest/gtest.h"
+
 #include <grpc/grpc.h>
 
 #include "test/core/util/test_config.h"

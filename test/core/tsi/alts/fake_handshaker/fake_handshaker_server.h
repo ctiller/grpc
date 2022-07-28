@@ -20,9 +20,9 @@
 #define TEST_CORE_TSI_ALTS_FAKE_HANDSHAKER_FAKE_HANDSHAKER_SERVER_H
 
 #include <memory>
-#include <string>
 
 #include <grpcpp/grpcpp.h>
+#include <grpcpp/impl/codegen/server_interface.h>
 
 namespace grpc {
 namespace gcp {

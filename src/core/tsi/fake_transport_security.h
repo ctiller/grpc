@@ -21,7 +21,11 @@
 
 #include <grpc/support/port_platform.h>
 
-#include "src/core/lib/slice/slice_internal.h"
+#include <stddef.h>
+#include <stdint.h>
+
+#include <grpc/slice.h>
+
 #include "src/core/tsi/transport_security_interface.h"
 
 /* Value for the TSI_CERTIFICATE_TYPE_PEER_PROPERTY property for FAKE certs. */

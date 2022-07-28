@@ -18,14 +18,14 @@
 
 #include "src/core/tsi/alts/frame_protector/alts_crypter.h"
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 
 #include <gtest/gtest.h>
 
+#include "gtest/gtest.h"
+
 #include <grpc/support/alloc.h>
-#include <grpc/support/log.h>
 
 #include "test/core/tsi/alts/crypt/gsec_test_util.h"
 

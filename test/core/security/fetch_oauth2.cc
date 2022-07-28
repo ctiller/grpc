@@ -17,20 +17,22 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+#include <string>
 
 #include <grpc/grpc.h>
 #include <grpc/grpc_security.h>
+#include <grpc/impl/codegen/gpr_slice.h>
 #include <grpc/slice.h>
 #include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
-#include <grpc/support/sync.h>
 #include <grpcpp/security/credentials.h>
+#include <grpcpp/support/status.h>
 
 #include "src/core/lib/iomgr/error.h"
 #include "src/core/lib/iomgr/load_file.h"
-#include "src/core/lib/security/credentials/credentials.h"
-#include "src/core/lib/security/util/json_util.h"
 #include "src/cpp/client/secure_credentials.h"
 #include "test/core/security/oauth2_utils.h"
 #include "test/core/util/cmdline.h"

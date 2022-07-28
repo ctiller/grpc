@@ -15,12 +15,18 @@
  * limitations under the License.
  *
  */
+#include <cstdint>
+#include <memory>
 #include <sstream>
+#include <string>
 
 #include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
 
 #include <grpc/support/log.h>
-#include <grpcpp/impl/codegen/service_type.h>
+#include <grpcpp/impl/service_type.h>
+#include <grpcpp/security/server_credentials.h>
+#include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
 #include "test/core/tsi/alts/fake_handshaker/fake_handshaker_server.h"

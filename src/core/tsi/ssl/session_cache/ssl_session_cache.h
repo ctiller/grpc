@@ -21,17 +21,18 @@
 
 #include <grpc/support/port_platform.h>
 
-#include <map>
+#include <stddef.h>
 
-#include <openssl/ssl.h>
+#include <map>
+#include <string>
+
+#include "absl/strings/string_view.h"
 
 #include <grpc/impl/codegen/grpc_types.h>
-#include <grpc/slice.h>
-#include <grpc/support/sync.h>
 
 #include "src/core/lib/gprpp/cpp_impl_of.h"
-#include "src/core/lib/gprpp/memory.h"
 #include "src/core/lib/gprpp/ref_counted.h"
+#include "src/core/lib/gprpp/ref_counted_ptr.h"
 #include "src/core/lib/gprpp/sync.h"
 #include "src/core/tsi/ssl/session_cache/ssl_session.h"
 

@@ -17,18 +17,18 @@
  */
 #include "test/core/tsi/alts/fake_handshaker/fake_handshaker_server.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 #include <memory>
-#include <sstream>
 #include <string>
 
-#include <grpc/grpc.h>
 #include <grpc/support/log.h>
-#include <grpcpp/impl/codegen/async_stream.h>
 #include <grpcpp/impl/codegen/sync.h>
-#include <grpcpp/security/server_credentials.h>
-#include <grpcpp/server.h>
-#include <grpcpp/server_builder.h>
-#include <grpcpp/server_context.h>
+#include <grpcpp/impl/service_type.h>
+#include <grpcpp/support/config.h>
+#include <grpcpp/support/status.h>
+#include <grpcpp/support/sync_stream.h>
 
 #include "test/core/tsi/alts/fake_handshaker/handshaker.grpc.pb.h"
 #include "test/core/tsi/alts/fake_handshaker/handshaker.pb.h"

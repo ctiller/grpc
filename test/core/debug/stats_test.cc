@@ -18,13 +18,18 @@
 
 #include "src/core/lib/debug/stats.h"
 
-#include <mutex>
+#include <inttypes.h>
+
+#include <algorithm>
+#include <memory>
 #include <thread>
+#include <vector>
 
 #include <gtest/gtest.h>
 
+#include "gtest/gtest.h"
+
 #include <grpc/grpc.h>
-#include <grpc/support/cpu.h>
 #include <grpc/support/log.h>
 
 #include "test/core/util/test_config.h"

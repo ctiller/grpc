@@ -19,7 +19,12 @@
 #ifndef GRPC_TEST_CORE_TSI_ALTS_HANDSHAKER_ALTS_HANDSHAKER_SERVICE_API_TEST_LIB_H
 #define GRPC_TEST_CORE_TSI_ALTS_HANDSHAKER_ALTS_HANDSHAKER_SERVICE_API_TEST_LIB_H
 
-#include "src/core/tsi/alts/handshaker/transport_security_common_api.h"
+#include <stdint.h>
+
+#include "upb/arena.h"
+
+#include <grpc/slice.h>
+
 #include "src/proto/grpc/gcp/handshaker.upb.h"
 
 /**

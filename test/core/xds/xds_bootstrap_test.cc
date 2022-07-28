@@ -16,20 +16,31 @@
 
 #include "src/core/ext/xds/xds_bootstrap.h"
 
-#include <regex>
+#include <stdio.h>
 
-#include <gmock/gmock.h>
+#include <utility>
+
 #include <gtest/gtest.h>
 
+#include "absl/memory/memory.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_format.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 #include <grpc/grpc.h>
-#include <grpc/slice.h>
+#include <grpc/grpc_security.h>
+#include <grpc/grpc_security_constants.h>
+#include <grpc/support/alloc.h>
 
+#include "src/core/ext/xds/certificate_provider_factory.h"
 #include "src/core/ext/xds/certificate_provider_registry.h"
 #include "src/core/lib/gpr/env.h"
 #include "src/core/lib/gpr/tmpfile.h"
+#include "src/core/lib/gprpp/ref_counted_ptr.h"
+#include "src/core/lib/security/credentials/tls/grpc_tls_certificate_provider.h"
 #include "test/core/util/test_config.h"
 
 namespace grpc_core {

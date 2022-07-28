@@ -16,8 +16,17 @@
 
 #include "src/core/lib/security/authorization/grpc_authorization_engine.h"
 
-#include <gmock/gmock.h>
+#include <map>
+#include <string>
+#include <utility>
+
 #include <gtest/gtest.h>
+
+#include "gtest/gtest.h"
+
+#include "src/core/lib/security/authorization/authorization_engine.h"
+#include "src/core/lib/security/authorization/evaluate_args.h"
+#include "src/core/lib/security/authorization/rbac_policy.h"
 
 namespace grpc_core {
 

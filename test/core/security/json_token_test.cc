@@ -18,20 +18,33 @@
 
 #include "src/core/lib/security/credentials/jwt/json_token.h"
 
+#include <stdlib.h>
 #include <string.h>
+
+#include <string>
+#include <utility>
 
 #include <gtest/gtest.h>
 #include <openssl/evp.h>
 
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
+#include "gtest/gtest.h"
+
+#include <grpc/grpc.h>
 #include <grpc/grpc_security.h>
 #include <grpc/slice.h>
 #include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
+#include <grpc/support/time.h>
 
+#include "src/core/lib/iomgr/exec_ctx.h"
 #include "src/core/lib/json/json.h"
 #include "src/core/lib/security/credentials/oauth2/oauth2_credentials.h"
 #include "src/core/lib/slice/b64.h"
 #include "src/core/lib/slice/slice_internal.h"
+#include "src/core/lib/slice/slice_refcount.h"
 #include "test/core/util/test_config.h"
 
 using grpc_core::Json;

@@ -16,12 +16,14 @@
  *
  */
 
+#include <bits/types/struct_iovec.h>
+#include <stddef.h>
+
+#include <grpc/status.h>
 #ifndef GRPC_CORE_TSI_ALTS_ZERO_COPY_FRAME_PROTECTOR_ALTS_IOVEC_RECORD_PROTOCOL_H
 #define GRPC_CORE_TSI_ALTS_ZERO_COPY_FRAME_PROTECTOR_ALTS_IOVEC_RECORD_PROTOCOL_H
 
 #include <grpc/support/port_platform.h>
-
-#include <stdbool.h>
 
 #include "src/core/tsi/alts/crypt/gsec.h"
 

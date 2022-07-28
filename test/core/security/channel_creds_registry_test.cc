@@ -18,13 +18,14 @@
 
 #include "src/core/lib/security/credentials/channel_creds_registry.h"
 
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
+#include "absl/memory/memory.h"
+#include "gtest/gtest.h"
 
 #include <grpc/grpc.h>
 
 #include "src/core/lib/config/core_configuration.h"
-#include "src/core/lib/security/credentials/channel_creds_registry.h"
 #include "src/core/lib/security/credentials/fake/fake_credentials.h"
 #include "test/core/util/test_config.h"
 

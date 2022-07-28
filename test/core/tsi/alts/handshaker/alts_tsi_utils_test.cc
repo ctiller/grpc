@@ -18,9 +18,17 @@
 
 #include "src/core/tsi/alts/handshaker/alts_tsi_utils.h"
 
+#include <stddef.h>
+
 #include <gtest/gtest.h>
 
+#include "gtest/gtest.h"
+#include "upb/upb.h"
 #include "upb/upb.hpp"
+
+#include <grpc/byte_buffer.h>
+#include <grpc/grpc.h>
+#include <grpc/slice.h>
 
 #include "test/core/tsi/alts/handshaker/alts_handshaker_service_api_test_lib.h"
 #include "test/core/util/test_config.h"

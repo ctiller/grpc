@@ -23,15 +23,14 @@
 #include <string>
 
 #include <gtest/gtest.h>
-#include <openssl/crypto.h>
 
 #include "absl/strings/str_format.h"
+#include "gtest/gtest.h"
 
 #include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
 #include <grpc/support/string_util.h>
 
-#include "src/core/lib/gpr/string.h"
 #include "src/core/lib/gpr/useful.h"
 #include "src/core/tsi/fake_transport_security.h"
 #include "src/core/tsi/ssl_transport_security.h"

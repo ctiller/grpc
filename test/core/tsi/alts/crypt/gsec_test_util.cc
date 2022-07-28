@@ -18,6 +18,8 @@
 
 #include "test/core/tsi/alts/crypt/gsec_test_util.h"
 
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #include <grpc/support/alloc.h>

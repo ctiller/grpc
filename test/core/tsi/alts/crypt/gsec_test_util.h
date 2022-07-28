@@ -21,10 +21,8 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
-#include <grpc/grpc.h>
+#include <grpc/status.h>
 
 /**
  * This method returns random bytes of certain length.

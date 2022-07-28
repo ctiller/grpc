@@ -21,10 +21,9 @@
 
 #include <grpc/support/port_platform.h>
 
-#include <stdbool.h>
 #include <stdlib.h>
 
-#include <grpc/grpc.h>
+#include <grpc/status.h>
 
 /* Main struct for a crypter counter managed within seal/unseal operations. */
 typedef struct alts_counter {

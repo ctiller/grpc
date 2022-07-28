@@ -17,15 +17,20 @@
  */
 
 #include <stdio.h>
-#include <string.h>
+#include <stdlib.h>
+
+#include <string>
 
 #include <grpc/grpc.h>
-#include <grpc/grpc_security.h>
-#include <grpc/slice.h>
 #include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
 #include <grpc/support/sync.h>
 
+#include "src/core/lib/gprpp/time.h"
+#include "src/core/lib/iomgr/error.h"
+#include "src/core/lib/iomgr/exec_ctx.h"
+#include "src/core/lib/iomgr/pollset.h"
+#include "src/core/lib/json/json.h"
 #include "src/core/lib/security/credentials/jwt/jwt_verifier.h"
 #include "test/core/util/cmdline.h"
 

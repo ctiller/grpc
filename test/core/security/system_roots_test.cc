@@ -18,29 +18,19 @@
 
 #include <grpc/support/port_platform.h>
 
-#include <stdio.h>
+#include <grpc/slice.h>
+
+#include "src/core/lib/iomgr/error.h"
 
 #if defined(GPR_LINUX) || defined(GPR_FREEBSD) || defined(GPR_APPLE)
-#include <string.h>
 #include <sys/param.h>
 
 #include "gtest/gtest.h"
 
-#include <grpc/grpc_security.h>
 #include <grpc/support/alloc.h>
-#include <grpc/support/log.h>
-#include <grpc/support/string_util.h>
 
-#include "src/core/lib/gpr/env.h"
-#include "src/core/lib/gpr/tmpfile.h"
 #include "src/core/lib/iomgr/load_file.h"
-#include "src/core/lib/security/context/security_context.h"
-#include "src/core/lib/security/security_connector/load_system_roots.h"
 #include "src/core/lib/security/security_connector/load_system_roots_supported.h"
-#include "src/core/lib/security/security_connector/security_connector.h"
-#include "src/core/lib/slice/slice_string_helpers.h"
-#include "src/core/tsi/ssl_transport_security.h"
-#include "src/core/tsi/transport_security.h"
 #include "test/core/util/test_config.h"
 
 namespace grpc {

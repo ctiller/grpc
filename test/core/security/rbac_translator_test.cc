@@ -14,8 +14,20 @@
 
 #include "src/core/lib/security/authorization/rbac_translator.h"
 
-#include <gmock/gmock.h>
+#include <map>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <type_traits>
+#include <vector>
+
 #include <gtest/gtest.h>
+
+#include "absl/status/status.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+
+#include "src/core/lib/matchers/matchers.h"
 
 namespace grpc_core {
 
