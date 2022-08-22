@@ -313,7 +313,7 @@ grpc_core::Resolver::Result BuildResolverResponse(
 // grpc_call_cancel_with_status
 TEST(Pollers, TestReadabilityNotificationsDontGetStrandedOnOneCq) {
   gpr_log(GPR_DEBUG, "test thread");
-  /* 64 is a somewhat arbitary number, the important thing is that it
+  /* 32 is a somewhat arbitary number, the important thing is that it
    * exceeds the value of MAX_EPOLL_EVENTS_HANDLED_EACH_POLL_CALL (16), which
    * is enough to repro a bug at time of writing. */
   const int kNumCalls = 32;
