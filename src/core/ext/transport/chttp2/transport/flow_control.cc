@@ -21,6 +21,7 @@
 #include "src/core/ext/transport/chttp2/transport/flow_control.h"
 
 #include <inttypes.h>
+#include <limits.h>
 
 #include <algorithm>
 #include <cmath>
