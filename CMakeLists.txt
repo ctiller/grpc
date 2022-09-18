@@ -134,6 +134,7 @@ set(gRPC_ABSL_USED_TARGETS
   absl_exponential_biased
   absl_fast_type_id
   absl_fixed_array
+  absl_flags_marshalling
   absl_flat_hash_map
   absl_flat_hash_set
   absl_function_ref
@@ -1527,6 +1528,8 @@ endforeach()
 endif()
 
 add_library(gpr
+  src/core/lib/config/config_from_environment.cc
+  src/core/lib/config/config_vars.cc
   src/core/lib/gpr/alloc.cc
   src/core/lib/gpr/atm.cc
   src/core/lib/gpr/cpu_iphone.cc
@@ -1559,7 +1562,6 @@ add_library(gpr
   src/core/lib/gprpp/env_windows.cc
   src/core/lib/gprpp/examine_stack.cc
   src/core/lib/gprpp/fork.cc
-  src/core/lib/gprpp/global_config_env.cc
   src/core/lib/gprpp/host_port.cc
   src/core/lib/gprpp/mpscq.cc
   src/core/lib/gprpp/stat_posix.cc
@@ -1603,6 +1605,7 @@ target_link_libraries(gpr
   ${_gRPC_ALLTARGETS_LIBRARIES}
   absl::base
   absl::core_headers
+  absl::flags_marshalling
   absl::memory
   absl::random_random
   absl::status
@@ -1612,6 +1615,7 @@ target_link_libraries(gpr
   absl::synchronization
   absl::time
   absl::optional
+  absl::span
   absl::variant
 )
 if(_gRPC_PLATFORM_ANDROID)
@@ -1717,7 +1721,6 @@ add_library(grpc
   src/core/ext/filters/client_channel/resolver/dns/c_ares/grpc_ares_wrapper.cc
   src/core/ext/filters/client_channel/resolver/dns/c_ares/grpc_ares_wrapper_posix.cc
   src/core/ext/filters/client_channel/resolver/dns/c_ares/grpc_ares_wrapper_windows.cc
-  src/core/ext/filters/client_channel/resolver/dns/dns_resolver_selection.cc
   src/core/ext/filters/client_channel/resolver/dns/native/dns_resolver.cc
   src/core/ext/filters/client_channel/resolver/fake/fake_resolver.cc
   src/core/ext/filters/client_channel/resolver/google_c2p/google_c2p_resolver.cc
@@ -2411,7 +2414,6 @@ target_link_libraries(grpc
   absl::hash
   absl::type_traits
   absl::statusor
-  absl::span
   absl::utility
   gpr
   ${_gRPC_SSL_LIBRARIES}
@@ -2624,7 +2626,6 @@ add_library(grpc_unsecure
   src/core/ext/filters/client_channel/resolver/dns/c_ares/grpc_ares_wrapper.cc
   src/core/ext/filters/client_channel/resolver/dns/c_ares/grpc_ares_wrapper_posix.cc
   src/core/ext/filters/client_channel/resolver/dns/c_ares/grpc_ares_wrapper_windows.cc
-  src/core/ext/filters/client_channel/resolver/dns/dns_resolver_selection.cc
   src/core/ext/filters/client_channel/resolver/dns/native/dns_resolver.cc
   src/core/ext/filters/client_channel/resolver/fake/fake_resolver.cc
   src/core/ext/filters/client_channel/resolver/polling_resolver.cc
@@ -2955,7 +2956,6 @@ target_link_libraries(grpc_unsecure
   absl::hash
   absl::type_traits
   absl::statusor
-  absl::span
   absl::utility
   gpr
   address_sorting
@@ -22162,7 +22162,7 @@ generate_pkgconfig(
   "gpr"
   "gRPC platform support library"
   "${gRPC_CORE_VERSION}"
-  "absl_base absl_cord absl_core_headers absl_memory absl_optional absl_random_random absl_status absl_str_format absl_strings absl_synchronization absl_time absl_variant"
+  "absl_base absl_cord absl_core_headers absl_flags_marshalling absl_memory absl_optional absl_random_random absl_span absl_status absl_str_format absl_strings absl_synchronization absl_time absl_variant"
   "-lgpr"
   ""
   "gpr.pc")
@@ -22172,7 +22172,7 @@ generate_pkgconfig(
   "gRPC"
   "high performance general RPC framework"
   "${gRPC_CORE_VERSION}"
-  "gpr openssl absl_any_invocable absl_base absl_bind_front absl_cord absl_core_headers absl_flat_hash_map absl_flat_hash_set absl_function_ref absl_hash absl_inlined_vector absl_memory absl_optional absl_random_random absl_span absl_status absl_statusor absl_str_format absl_strings absl_synchronization absl_time absl_type_traits absl_utility absl_variant"
+  "gpr openssl absl_any_invocable absl_base absl_bind_front absl_cord absl_core_headers absl_flags_marshalling absl_flat_hash_map absl_flat_hash_set absl_function_ref absl_hash absl_inlined_vector absl_memory absl_optional absl_random_random absl_span absl_status absl_statusor absl_str_format absl_strings absl_synchronization absl_time absl_type_traits absl_utility absl_variant"
   "-lgrpc -laddress_sorting -lre2 -lupb -lcares -lz"
   ""
   "grpc.pc")
@@ -22182,7 +22182,7 @@ generate_pkgconfig(
   "gRPC unsecure"
   "high performance general RPC framework without SSL"
   "${gRPC_CORE_VERSION}"
-  "gpr absl_any_invocable absl_base absl_bind_front absl_cord absl_core_headers absl_flat_hash_map absl_flat_hash_set absl_function_ref absl_hash absl_inlined_vector absl_memory absl_optional absl_random_random absl_span absl_status absl_statusor absl_str_format absl_strings absl_synchronization absl_time absl_type_traits absl_utility absl_variant"
+  "gpr absl_any_invocable absl_base absl_bind_front absl_cord absl_core_headers absl_flags_marshalling absl_flat_hash_map absl_flat_hash_set absl_function_ref absl_hash absl_inlined_vector absl_memory absl_optional absl_random_random absl_span absl_status absl_statusor absl_str_format absl_strings absl_synchronization absl_time absl_type_traits absl_utility absl_variant"
   "-lgrpc_unsecure"
   ""
   "grpc_unsecure.pc")
@@ -22192,7 +22192,7 @@ generate_pkgconfig(
   "gRPC++"
   "C++ wrapper for gRPC"
   "${gRPC_CPP_VERSION}"
-  "grpc absl_any_invocable absl_base absl_bind_front absl_cleanup absl_cord absl_core_headers absl_flat_hash_map absl_flat_hash_set absl_function_ref absl_hash absl_inlined_vector absl_memory absl_optional absl_random_random absl_span absl_status absl_statusor absl_str_format absl_strings absl_synchronization absl_time absl_type_traits absl_utility absl_variant"
+  "grpc absl_any_invocable absl_base absl_bind_front absl_cleanup absl_cord absl_core_headers absl_flags_marshalling absl_flat_hash_map absl_flat_hash_set absl_function_ref absl_hash absl_inlined_vector absl_memory absl_optional absl_random_random absl_span absl_status absl_statusor absl_str_format absl_strings absl_synchronization absl_time absl_type_traits absl_utility absl_variant"
   "-lgrpc++"
   ""
   "grpc++.pc")
@@ -22202,7 +22202,7 @@ generate_pkgconfig(
   "gRPC++ unsecure"
   "C++ wrapper for gRPC without SSL"
   "${gRPC_CPP_VERSION}"
-  "grpc_unsecure absl_any_invocable absl_base absl_bind_front absl_cord absl_core_headers absl_flat_hash_map absl_flat_hash_set absl_function_ref absl_hash absl_inlined_vector absl_memory absl_optional absl_random_random absl_span absl_status absl_statusor absl_str_format absl_strings absl_synchronization absl_time absl_type_traits absl_utility absl_variant"
+  "grpc_unsecure absl_any_invocable absl_base absl_bind_front absl_cord absl_core_headers absl_flags_marshalling absl_flat_hash_map absl_flat_hash_set absl_function_ref absl_hash absl_inlined_vector absl_memory absl_optional absl_random_random absl_span absl_status absl_statusor absl_str_format absl_strings absl_synchronization absl_time absl_type_traits absl_utility absl_variant"
   "-lgrpc++_unsecure"
   ""
   "grpc++_unsecure.pc")

@@ -15,6 +15,8 @@
 #ifndef GRPC_CORE_LIB_CONFIG_CONFIG_FROM_ENVIRONMENT_H
 #define GRPC_CORE_LIB_CONFIG_CONFIG_FROM_ENVIRONMENT_H
 
+#include <grpc/support/port_platform.h>
+
 #include <string>
 
 namespace grpc_core {
@@ -30,10 +32,10 @@ bool LoadBoolFromEnv(const char* var_name, bool default_value);
 #define GRPC_CONFIG_DEFINE_BOOL(name, description, default_value)
 
 #define GRPC_CONFIG_LOAD_STRING(name, description, default_value) \
-  ::grpc_core::LoadStringFromEnv(#name, default_value)
+  grpc_core::LoadStringFromEnv(#name, default_value)
 #define GRPC_CONFIG_LOAD_INT(name, description, default_value) \
-  ::grpc_core::LoadIntFromEnv(#name, default_value)
+  grpc_core::LoadIntFromEnv(#name, default_value)
 #define GRPC_CONFIG_LOAD_BOOL(name, description, default_value) \
-  ::grpc_core::LoadBoolFromEnv(#name, default_value)
+  grpc_core::LoadBoolFromEnv(#name, default_value)
 
-#endif
+#endif  // GRPC_CORE_LIB_CONFIG_CONFIG_FROM_ENVIRONMENT_H

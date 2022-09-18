@@ -198,6 +198,10 @@ libs:
   - include/grpc/support/thd_id.h
   - include/grpc/support/time.h
   headers:
+  - src/core/lib/config/config_from_environment.h
+  - src/core/lib/config/config_source.h
+  - src/core/lib/config/config_var_metadata.h
+  - src/core/lib/config/config_vars.h
   - src/core/lib/gpr/alloc.h
   - src/core/lib/gpr/string.h
   - src/core/lib/gpr/time_precise.h
@@ -208,10 +212,6 @@ libs:
   - src/core/lib/gprpp/env.h
   - src/core/lib/gprpp/examine_stack.h
   - src/core/lib/gprpp/fork.h
-  - src/core/lib/gprpp/global_config.h
-  - src/core/lib/gprpp/global_config_custom.h
-  - src/core/lib/gprpp/global_config_env.h
-  - src/core/lib/gprpp/global_config_generic.h
   - src/core/lib/gprpp/host_port.h
   - src/core/lib/gprpp/memory.h
   - src/core/lib/gprpp/mpscq.h
@@ -222,6 +222,8 @@ libs:
   - src/core/lib/gprpp/thd.h
   - src/core/lib/gprpp/time_util.h
   src:
+  - src/core/lib/config/config_from_environment.cc
+  - src/core/lib/config/config_vars.cc
   - src/core/lib/gpr/alloc.cc
   - src/core/lib/gpr/atm.cc
   - src/core/lib/gpr/cpu_iphone.cc
@@ -254,7 +256,6 @@ libs:
   - src/core/lib/gprpp/env_windows.cc
   - src/core/lib/gprpp/examine_stack.cc
   - src/core/lib/gprpp/fork.cc
-  - src/core/lib/gprpp/global_config_env.cc
   - src/core/lib/gprpp/host_port.cc
   - src/core/lib/gprpp/mpscq.cc
   - src/core/lib/gprpp/stat_posix.cc
@@ -266,6 +267,7 @@ libs:
   deps:
   - absl/base:base
   - absl/base:core_headers
+  - absl/flags:marshalling
   - absl/memory:memory
   - absl/random:random
   - absl/status:status
@@ -275,6 +277,7 @@ libs:
   - absl/synchronization:synchronization
   - absl/time:time
   - absl/types:optional
+  - absl/types:span
   - absl/types:variant
 - name: grpc
   build: all
@@ -341,7 +344,6 @@ libs:
   - src/core/ext/filters/client_channel/local_subchannel_pool.h
   - src/core/ext/filters/client_channel/resolver/dns/c_ares/grpc_ares_ev_driver.h
   - src/core/ext/filters/client_channel/resolver/dns/c_ares/grpc_ares_wrapper.h
-  - src/core/ext/filters/client_channel/resolver/dns/dns_resolver_selection.h
   - src/core/ext/filters/client_channel/resolver/fake/fake_resolver.h
   - src/core/ext/filters/client_channel/resolver/polling_resolver.h
   - src/core/ext/filters/client_channel/resolver/xds/xds_resolver.h
@@ -1055,7 +1057,6 @@ libs:
   - src/core/ext/filters/client_channel/resolver/dns/c_ares/grpc_ares_wrapper.cc
   - src/core/ext/filters/client_channel/resolver/dns/c_ares/grpc_ares_wrapper_posix.cc
   - src/core/ext/filters/client_channel/resolver/dns/c_ares/grpc_ares_wrapper_windows.cc
-  - src/core/ext/filters/client_channel/resolver/dns/dns_resolver_selection.cc
   - src/core/ext/filters/client_channel/resolver/dns/native/dns_resolver.cc
   - src/core/ext/filters/client_channel/resolver/fake/fake_resolver.cc
   - src/core/ext/filters/client_channel/resolver/google_c2p/google_c2p_resolver.cc
@@ -1711,7 +1712,6 @@ libs:
   - absl/hash:hash
   - absl/meta:type_traits
   - absl/status:statusor
-  - absl/types:span
   - absl/utility:utility
   - gpr
   - libssl
@@ -1840,7 +1840,6 @@ libs:
   - src/core/ext/filters/client_channel/local_subchannel_pool.h
   - src/core/ext/filters/client_channel/resolver/dns/c_ares/grpc_ares_ev_driver.h
   - src/core/ext/filters/client_channel/resolver/dns/c_ares/grpc_ares_wrapper.h
-  - src/core/ext/filters/client_channel/resolver/dns/dns_resolver_selection.h
   - src/core/ext/filters/client_channel/resolver/fake/fake_resolver.h
   - src/core/ext/filters/client_channel/resolver/polling_resolver.h
   - src/core/ext/filters/client_channel/resolver_result_parsing.h
@@ -2193,7 +2192,6 @@ libs:
   - src/core/ext/filters/client_channel/resolver/dns/c_ares/grpc_ares_wrapper.cc
   - src/core/ext/filters/client_channel/resolver/dns/c_ares/grpc_ares_wrapper_posix.cc
   - src/core/ext/filters/client_channel/resolver/dns/c_ares/grpc_ares_wrapper_windows.cc
-  - src/core/ext/filters/client_channel/resolver/dns/dns_resolver_selection.cc
   - src/core/ext/filters/client_channel/resolver/dns/native/dns_resolver.cc
   - src/core/ext/filters/client_channel/resolver/fake/fake_resolver.cc
   - src/core/ext/filters/client_channel/resolver/polling_resolver.cc
@@ -2486,7 +2484,6 @@ libs:
   - absl/hash:hash
   - absl/meta:type_traits
   - absl/status:statusor
-  - absl/types:span
   - absl/utility:utility
   - gpr
   - address_sorting
