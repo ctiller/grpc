@@ -35,12 +35,12 @@ namespace grpc_core {
 
 namespace {
 
-  #define MOVE_ONLY(x) \
-    x() = default; \
-    x(const x&) = delete; \
-    x& operator=(const x&) = delete; \
-    x(x&&) = default; \
-    x& operator=(x&&) = default
+#define MOVE_ONLY(x)               \
+  x() = default;                   \
+  x(const x&) = delete;            \
+  x& operator=(const x&) = delete; \
+  x(x&&) = default;                \
+  x& operator=(x&&) = default
 
 struct RbacConfig {
   struct RbacPolicy {
@@ -390,7 +390,7 @@ struct RbacConfig {
 
         struct Principal {
           struct PrincipalList {
-            std::vector<Principal> ids; 
+            std::vector<Principal> ids;
 
             MOVE_ONLY(PrincipalList);
 
