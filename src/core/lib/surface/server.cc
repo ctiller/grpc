@@ -227,7 +227,7 @@ class Server::RealRequestMatcher : public RequestMatcherInterface {
 
   void ZombifyPending() override {
     while (!pending_.empty()) {
-      grpc_core::Match(
+      Match(
           pending_.front(),
           [](CallData* calld) {
             calld->SetState(CallData::CallState::ZOMBIED);
@@ -282,7 +282,7 @@ class Server::RealRequestMatcher : public RequestMatcherInterface {
         NextPendingCall next_pending = pop_next_pending();
         if (next_pending.rc == nullptr) break;
         auto mr = MatchResult{request_queue_index, next_pending.rc};
-        grpc_core::Match(
+        Match(
             next_pending.pending,
             [mr](CallData* calld) {
               if (!calld->MaybeActivate()) {
