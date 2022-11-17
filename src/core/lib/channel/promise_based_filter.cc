@@ -26,6 +26,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/types/variant.h"
+#include "promise_based_filter.h"
 
 #include <grpc/status.h>
 
@@ -632,6 +633,26 @@ void BaseCallData::ReceiveMessage::OnComplete(absl::Status status) {
   base_->WakeInsideCombiner(&flusher);
 }
 
+bool BaseCallData::ReceiveMessage::IsProcessingMessage() const {
+  switch (state_) {
+    case State::kInitial:
+    case State::kIdle:
+    case State::kForwardedBatch:
+    case State::kForwardedBatchNoPipe:
+    case State::kBatchCompleted:
+    case State::kBatchCompletedNoPipe:
+    case State::kBatchCompletedButCancelled:
+    case State::kCancelledWhilstIdle:
+    case State::kCancelledWhilstForwarding:
+    case State::kCancelled:
+      return false;
+    case State::kPulledFromPipe:
+    case State::kPushedToPipe:
+      return true;
+  }
+  GPR_UNREACHABLE_CODE(return false);
+}
+
 void BaseCallData::ReceiveMessage::Done(const ServerMetadata& metadata,
                                         Flusher* flusher) {
   if (grpc_trace_channel.enabled()) {
@@ -1112,6 +1133,8 @@ const char* ClientCallData::StateString(RecvTrailingState state) {
       return "CANCELLED";
     case RecvTrailingState::kResponded:
       return "RESPONDED";
+    case RecvTrailingState::kCompleteButProcessingReceivedMessage:
+      return "COMPLETE_BUT_PROCESSING_RECEIVED_MESSAGE";
   }
   return "UNKNOWN";
 }
@@ -1496,6 +1519,10 @@ Poll<ServerMetadataHandle> ClientCallData::PollTrailingMetadata() {
       // We return that and expect the promise to be repolled later (if it's
       // not cancelled).
       return Pending{};
+    case RecvTrailingState::kCompleteButProcessingReceivedMessage:
+      if (receive_message()->IsProcessingMessage()) return Pending{};
+      recv_trailing_state_ = RecvTrailingState::kComplete;
+      ABSL_FALLTHROUGH_INTENDED;
     case RecvTrailingState::kComplete:
       // We've received trailing metadata: pass it to the promise and allow it
       // to adjust it.
@@ -1549,9 +1576,18 @@ void ClientCallData::RecvTrailingMetadataReady(grpc_error_handle error) {
   }
   // Record that we've got the callback.
   GPR_ASSERT(recv_trailing_state_ == RecvTrailingState::kForwarded);
-  recv_trailing_state_ = RecvTrailingState::kComplete;
   if (receive_message() != nullptr) {
-    receive_message()->Done(*recv_trailing_metadata_, &flusher);
+    if (recv_trailing_metadata_->get(GrpcStatusMetadata())
+                .value_or(GRPC_STATUS_UNKNOWN) == GRPC_STATUS_OK &&
+        receive_message()->IsProcessingMessage()) {
+      recv_trailing_state_ =
+          RecvTrailingState::kCompleteButProcessingReceivedMessage;
+    } else {
+      recv_trailing_state_ = RecvTrailingState::kComplete;
+      receive_message()->Done(*recv_trailing_metadata_, &flusher);
+    }
+  } else {
+    recv_trailing_state_ = RecvTrailingState::kComplete;
   }
   // Repoll the promise.
   ScopedContext context(this);
