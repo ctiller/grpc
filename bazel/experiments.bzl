@@ -27,6 +27,9 @@ EXPERIMENTS = {
         "hpack_test": [
             "new_hpack_huffman_decoder",
         ],
+        "resource_quota_test": [
+            "memory_pressure_controller",
+        ],
     },
     "off": {
         "core_end2end_test": [
@@ -60,9 +63,6 @@ EXPERIMENTS = {
         ],
         "flow_control_test": [
             "tcp_read_chunks",
-        ],
-        "resource_quota_test": [
-            "memory_pressure_controller",
         ],
     },
     "opt": {
