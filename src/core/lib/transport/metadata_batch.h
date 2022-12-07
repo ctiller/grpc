@@ -81,7 +81,9 @@ struct TeMetadata {
   static MementoType ParseMemento(Slice value, MetadataParseErrorFn on_error);
   static ValueType MementoToValue(MementoType te) { return te; }
   static StaticSlice Encode(ValueType x) {
-    GPR_ASSERT(x == kTrailers);
+    if (x != kTrailers) {
+      return StaticSlice::FromStaticString("invalid-te-header");
+    }
     return StaticSlice::FromStaticString("trailers");
   }
   static const char* DisplayValue(MementoType te);
@@ -158,7 +160,9 @@ struct CompressionAlgorithmBasedMetadata {
   static MementoType ParseMemento(Slice value, MetadataParseErrorFn on_error);
   static ValueType MementoToValue(MementoType x) { return x; }
   static Slice Encode(ValueType x) {
-    GPR_ASSERT(x != GRPC_COMPRESS_ALGORITHMS_COUNT);
+    if (x == GRPC_COMPRESS_ALGORITHMS_COUNT) {
+      return Slice::FromStaticString("invalid-compression-algorithm");
+    }
     return Slice::FromStaticString(CompressionAlgorithmAsString(x));
   }
   static const char* DisplayValue(MementoType x) {

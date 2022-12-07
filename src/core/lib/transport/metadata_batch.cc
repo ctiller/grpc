@@ -164,7 +164,7 @@ StaticSlice HttpSchemeMetadata::Encode(ValueType x) {
     case kHttps:
       return StaticSlice::FromStaticString("https");
     default:
-      abort();
+      return StaticSlice::FromStaticString("unknown-scheme");
   }
 }
 
