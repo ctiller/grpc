@@ -1134,6 +1134,7 @@ grpc_cc_library(
     ],
     deps = [
         "slice",
+        "slice_cast",
         "slice_refcount",
         "//:gpr",
     ],

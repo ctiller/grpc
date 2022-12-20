@@ -304,6 +304,7 @@ int main(int argc, char **argv) {
   printf("%lx", (unsigned long) gpr_set_log_verbosity);
   printf("%lx", (unsigned long) gpr_log_verbosity_init);
   printf("%lx", (unsigned long) gpr_set_log_function);
+  printf("%lx", (unsigned long) GPR_HAS_FEATURE);
   printf("%lx", (unsigned long) gpr_strdup);
   printf("%lx", (unsigned long) gpr_asprintf);
   printf("%lx", (unsigned long) gpr_mu_init);

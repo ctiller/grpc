@@ -22,6 +22,7 @@
 
 #include <string>
 
+#include <grpc/event_engine/slice_cast.h>
 #include <grpc/slice.h>
 #include <grpc/slice_buffer.h>
 

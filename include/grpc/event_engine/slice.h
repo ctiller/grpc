@@ -215,7 +215,7 @@ class MutableSlice : public slice_detail::BaseSlice,
 
 class GPR_MSVC_EMPTY_BASE_CLASS_WORKAROUND Slice
     : public slice_detail::BaseSlice,
-              public slice_detail::CopyConstructors<Slice> {
+      public slice_detail::CopyConstructors<Slice> {
  public:
   Slice() = default;
   ~Slice();

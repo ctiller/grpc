@@ -234,6 +234,7 @@ EXPORTS
     gpr_log_verbosity_init
     gpr_set_log_function
     gpr_format_message
+    GPR_HAS_FEATURE
     gpr_strdup
     gpr_asprintf
     gpr_mu_init
