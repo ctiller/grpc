@@ -369,6 +369,7 @@ grpc_cc_library(
     hdrs = ["lib/promise/try_concurrently.h"],
     external_deps = [
         "absl/status",
+        "absl/strings",
         "absl/types:variant",
     ],
     language = "c++",
@@ -387,6 +388,7 @@ grpc_cc_library(
         "promise_status",
         "promise_trace",
         "//:gpr",
+        "//:grpc_trace",
     ],
 )
 
@@ -401,7 +403,9 @@ grpc_cc_library(
         "for_each",
         "map",
         "pipe",
+        "poll",
         "promise_factory",
+        "//:gpr",
         "//:gpr_platform",
     ],
 )
@@ -792,6 +796,7 @@ grpc_cc_library(
         "lib/promise/pipe.h",
     ],
     external_deps = [
+        "absl/base:core_headers",
         "absl/strings",
         "absl/types:optional",
         "absl/types:variant",
@@ -805,6 +810,7 @@ grpc_cc_library(
         "poll",
         "promise_trace",
         "//:gpr",
+        "//:grpc_trace",
     ],
 )
 
@@ -827,16 +833,20 @@ grpc_cc_library(
     name = "for_each",
     external_deps = [
         "absl/status",
+        "absl/strings",
         "absl/types:variant",
     ],
     language = "c++",
     public_hdrs = ["lib/promise/for_each.h"],
     deps = [
+        "activity",
         "construct_destruct",
         "poll",
         "promise_factory",
+        "promise_trace",
         "//:gpr",
         "//:gpr_platform",
+        "//:grpc_trace",
     ],
 )
 
