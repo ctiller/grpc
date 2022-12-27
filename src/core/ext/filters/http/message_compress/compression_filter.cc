@@ -28,13 +28,13 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/types/optional.h"
-#include "compression_filter.h"
 
 #include <grpc/compression.h>
 #include <grpc/grpc.h>
 #include <grpc/impl/compression_types.h>
 #include <grpc/support/log.h>
 
+#include "src/core/ext/filters/http/message_compress/compression_filter.h"
 #include "src/core/ext/filters/message_size/message_size_filter.h"
 #include "src/core/lib/channel/channel_args.h"
 #include "src/core/lib/channel/channel_stack.h"
@@ -45,11 +45,10 @@
 #include "src/core/lib/debug/trace.h"
 #include "src/core/lib/promise/activity.h"
 #include "src/core/lib/promise/context.h"
-#include "src/core/lib/promise/detail/promise_like.h"
 #include "src/core/lib/promise/latch.h"
-#include "src/core/lib/promise/map_pipe.h"
+#include "src/core/lib/promise/map.h"
 #include "src/core/lib/promise/pipe.h"
-#include "src/core/lib/promise/promise.h"
+#include "src/core/lib/promise/poll.h"
 #include "src/core/lib/promise/seq.h"
 #include "src/core/lib/promise/try_concurrently.h"
 #include "src/core/lib/resource_quota/arena.h"

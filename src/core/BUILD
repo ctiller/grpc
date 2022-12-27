@@ -810,10 +810,17 @@ grpc_cc_library(
     hdrs = [
         "lib/promise/interceptor_list.h",
     ],
-    external_deps = ["absl/types:optional"],
+    external_deps = [
+        "absl/types:optional",
+        "absl/types:variant",
+    ],
     deps = [
         "arena",
+        "construct_destruct",
+        "context",
         "poll",
+        "promise_factory",
+        "//:gpr",
     ],
 )
 
@@ -832,13 +839,12 @@ grpc_cc_library(
     deps = [
         "activity",
         "arena",
-        "arena_promise",
         "context",
         "interceptor_list",
         "intra_activity_waiter",
         "poll",
-        "promise_factory",
         "promise_trace",
+        "seq",
         "//:gpr",
         "//:grpc_trace",
     ],

@@ -14,9 +14,17 @@
 
 #include "src/core/lib/promise/interceptor_list.h"
 
+#include <memory>
+#include <string>
+#include <utility>
+
 #include "gtest/gtest.h"
 
+#include <grpc/event_engine/memory_allocator.h>
+
+#include "src/core/lib/gprpp/ref_counted_ptr.h"
 #include "src/core/lib/resource_quota/arena.h"
+#include "src/core/lib/resource_quota/memory_quota.h"
 #include "src/core/lib/resource_quota/resource_quota.h"
 #include "test/core/promise/test_context.h"
 
@@ -60,7 +68,7 @@ TEST_F(InterceptorListTest, CanRunManyWithCaptures) {
   InterceptorList<std::string> list;
   for (size_t i = 0; i < 26 * 1000; i++) {
     list.AppendMap([i = std::make_shared<size_t>(i)](std::string s) {
-      return s + char((*i % 26) + 'a');
+      return s + static_cast<char>((*i % 26) + 'a');
     });
   }
   std::string expected;
@@ -79,7 +87,7 @@ TEST_F(InterceptorListTest, CanRunManyWithCapturesThatDelay) {
           x = true;
           return Pending{};
         }
-        return s + char((*i % 26) + 'a');
+        return s + static_cast<char>((*i % 26) + 'a');
       };
     });
   }
