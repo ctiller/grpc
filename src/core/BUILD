@@ -652,7 +652,6 @@ grpc_cc_library(
         "poll",
         "promise_factory",
         "promise_like",
-        "promise_trace",
         "switch",
         "//:gpr_platform",
     ],
@@ -810,10 +809,17 @@ grpc_cc_library(
     hdrs = [
         "lib/promise/interceptor_list.h",
     ],
-    external_deps = ["absl/types:optional"],
+    external_deps = [
+        "absl/types:optional",
+        "absl/types:variant",
+    ],
     deps = [
         "arena",
+        "construct_destruct",
+        "context",
         "poll",
+        "promise_factory",
+        "//:gpr",
     ],
 )
 
@@ -832,12 +838,10 @@ grpc_cc_library(
     deps = [
         "activity",
         "arena",
-        "arena_promise",
         "context",
         "interceptor_list",
         "intra_activity_waiter",
         "poll",
-        "promise_factory",
         "promise_trace",
         "seq",
         "//:gpr",
@@ -3449,7 +3453,6 @@ grpc_cc_library(
         "ext/filters/stateful_session/stateful_session_service_config_parser.h",
     ],
     external_deps = [
-        "absl/status",
         "absl/status:statusor",
         "absl/strings",
         "absl/types:optional",
@@ -3458,7 +3461,6 @@ grpc_cc_library(
     deps = [
         "arena",
         "arena_promise",
-        "basic_seq",
         "channel_args",
         "channel_fwd",
         "context",
@@ -3466,13 +3468,12 @@ grpc_cc_library(
         "json",
         "json_args",
         "json_object_loader",
-        "latch",
         "map",
-        "seq",
+        "pipe",
+        "poll",
         "service_config_parser",
         "slice",
         "time",
-        "try_concurrently",
         "unique_type_name",
         "validation_errors",
         "//:config",

@@ -63,7 +63,7 @@
 #include "src/core/lib/promise/activity.h"
 #include "src/core/lib/promise/arena_promise.h"
 #include "src/core/lib/promise/context.h"
-#include "src/core/lib/promise/latch.h"
+#include "src/core/lib/promise/detail/basic_seq.h"
 #include "src/core/lib/promise/pipe.h"
 #include "src/core/lib/promise/poll.h"
 #include "src/core/lib/resource_quota/arena.h"
@@ -1285,7 +1285,7 @@ grpc_channel_filter MakeConnectedFilter() {
         // and I'm not sure what that is yet.
         // This is only "safe" because call stacks place no additional data
         // after the last call element, and the last call element MUST be the
-        // connected channel. 
+        // connected channel.
         channel_stack->call_stack_size += grpc_transport_stream_size(
             static_cast<channel_data*>(elem->channel_data)->transport);
       },

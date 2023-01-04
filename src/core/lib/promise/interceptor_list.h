@@ -15,9 +15,21 @@
 #ifndef GRPC_CORE_LIB_PROMISE_INTERCEPTOR_LIST_H
 #define GRPC_CORE_LIB_PROMISE_INTERCEPTOR_LIST_H
 
-#include "absl/types/optional.h"
-#include "poll.h"
+#include <grpc/support/port_platform.h>
 
+#include <stddef.h>
+
+#include <algorithm>
+#include <new>
+
+#include "absl/types/optional.h"
+#include "absl/types/variant.h"
+
+#include <grpc/support/log.h>
+
+#include "src/core/lib/gprpp/construct_destruct.h"
+#include "src/core/lib/promise/context.h"
+#include "src/core/lib/promise/detail/promise_factory.h"
 #include "src/core/lib/promise/poll.h"
 #include "src/core/lib/resource_quota/arena.h"
 
@@ -194,4 +206,4 @@ class InterceptorList {
 
 }  // namespace grpc_core
 
-#endif
+#endif  // GRPC_CORE_LIB_PROMISE_INTERCEPTOR_LIST_H
