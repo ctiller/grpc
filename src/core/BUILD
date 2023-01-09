@@ -821,8 +821,10 @@ grpc_cc_library(
         "context",
         "poll",
         "promise_factory",
+        "promise_trace",
         "//:debug_location",
         "//:gpr",
+        "//:grpc_trace",
     ],
 )
 
@@ -844,6 +846,7 @@ grpc_cc_library(
         "context",
         "interceptor_list",
         "intra_activity_waiter",
+        "map",
         "poll",
         "promise_trace",
         "seq",
