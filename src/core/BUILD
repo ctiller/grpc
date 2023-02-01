@@ -110,7 +110,10 @@ grpc_cc_library(
     ],
     external_deps = ["absl/strings"],
     language = "c++",
-    deps = ["//:gpr"],
+    deps = [
+        "no_destruct",
+        "//:gpr",
+    ],
 )
 
 grpc_cc_library(

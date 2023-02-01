@@ -187,13 +187,17 @@ with open('src/core/lib/experiments/experiments.h', 'w') as H:
     for i, attr in enumerate(attrs):
         define_fmt = FINAL_DEFINE[attr['default']]
         if define_fmt:
-            print(define_fmt % ("GRPC_FINAL_EXPERIMENT_IS_INCLUDED_%s" % attr['name'].upper()), file=H)
+            print(
+                define_fmt %
+                ("GRPC_FINAL_EXPERIMENT_IS_INCLUDED_%s" % attr['name'].upper()),
+                file=H)
         print("inline bool Is%sEnabled() { %s }" %
               (snake_to_pascal(attr['name']), FINAL_RETURN[attr['default']]),
               file=H)
     print("#else", file=H)
     for i, attr in enumerate(attrs):
-        print("#define GRPC_EXPERIMENT_IS_INCLUDED_%s" % attr['name'].upper(), file=H)
+        print("#define GRPC_EXPERIMENT_IS_INCLUDED_%s" % attr['name'].upper(),
+              file=H)
         print("inline bool Is%sEnabled() { return IsExperimentEnabled(%d); }" %
               (snake_to_pascal(attr['name']), i),
               file=H)
