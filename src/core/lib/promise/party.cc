@@ -29,6 +29,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
+#include "activity.h"
 
 #include <grpc/support/log.h>
 
@@ -116,12 +117,16 @@ Party::Participant::~Participant() {
   }
 }
 
-Party::~Party() {
-  participants_.clear();
-  arena_->Destroy();
-}
+Party::~Party() { participants_.clear(); }
 
-void Party::Orphan() { Unref(); }
+void Party::Orphan() {
+  auto prev_state =
+      state_.fetch_or(kLocked | kOrphaned, std::memory_order_relaxed);
+  if ((prev_state & kLocked) == 0) {
+    RunParty();
+  }
+  Unref();
+}
 
 void Party::Ref() { state_.fetch_add(kOneRef, std::memory_order_relaxed); }
 
@@ -171,13 +176,13 @@ void Party::ForceImmediateRepoll() {
   state_.fetch_or(1 << currently_polling_, std::memory_order_relaxed);
 }
 
-void Party::Run() {
+void Party::RunParty() {
   ScopedActivity activity(this);
   uint64_t prev_state;
   do {
     // Grab the current state, and clear the wakeup bits & add flag.
-    prev_state =
-        state_.fetch_and(kRefMask | kLocked, std::memory_order_acquire);
+    prev_state = state_.fetch_and(kRefMask | kLocked | kOrphaned,
+                                  std::memory_order_acquire);
     if (grpc_trace_promise_primitives.enabled()) {
       gpr_log(GPR_DEBUG, "Party::Run(): prev_state=%s",
               StateToString(prev_state).c_str());
@@ -189,7 +194,7 @@ void Party::Run() {
     // immediately (draining will situate them).
     if (prev_state & kAddsPending) DrainAdds(wakeups);
     // Now update prev_state to be what we want the CAS to see below.
-    prev_state &= kRefMask | kLocked;
+    prev_state &= kRefMask | kLocked | kOrphaned;
     // For each wakeup bit...
     for (size_t i = 0; wakeups != 0; i++, wakeups >>= 1) {
       // If the bit is not set, skip.
@@ -198,10 +203,20 @@ void Party::Run() {
       // This allows participants to complete whilst wakers still exist
       // somewhere.
       if (participants_[i] == nullptr) continue;
+      absl::string_view name;
+      if (grpc_trace_promise_primitives.enabled()) {
+        name = participants_[i]->name();
+        gpr_log(GPR_DEBUG, "%s[%s] Begin Poll", DebugTag().c_str(),
+                std::string(name).c_str());
+      }
       // Poll the participant.
       currently_polling_ = i;
       if (participants_[i]->Poll()) participants_[i].reset();
       currently_polling_ = kNotPolling;
+      if (!name.empty()) {
+        gpr_log(GPR_DEBUG, "%s[%s] End Poll", DebugTag().c_str(),
+                std::string(name).c_str());
+      }
     }
     // Try to CAS the state we expected to have (with no wakeups or adds)
     // back to unlocked (by masking in only the ref mask - sans locked bit).
@@ -214,9 +229,9 @@ void Party::Run() {
     // TODO(ctiller): consider mitigations for the accidental wakeup on owning
     // waker creation case -- I currently expect this will be more expensive
     // than this quick loop.
-  } while (!state_.compare_exchange_weak(prev_state, (prev_state & kRefMask),
-                                         std::memory_order_acq_rel,
-                                         std::memory_order_acquire));
+  } while (!state_.compare_exchange_weak(
+      prev_state, (prev_state & (kRefMask | kOrphaned)),
+      std::memory_order_acq_rel, std::memory_order_acquire));
 }
 
 void Party::DrainAdds(uint64_t& wakeups) {
@@ -242,7 +257,7 @@ void Party::AddParticipant(Arena::PoolPtr<Participant> participant) {
     // Lock acquired
     state_.fetch_or(1 << SituateNewParticipant(std::move(participant)),
                     std::memory_order_relaxed);
-    Run();
+    RunParty();
     return;
   }
   // Already locked: add to the list of things to add
@@ -263,7 +278,7 @@ void Party::AddParticipant(Arena::PoolPtr<Participant> participant) {
   if ((prev_state & kLocked) == 0) {
     // We queued the add but the lock was released before we signalled that.
     // We acquired the lock though, so now we can run.
-    Run();
+    RunParty();
   }
 }
 
@@ -291,7 +306,7 @@ void Party::ScheduleWakeup(uint64_t participant_index) {
             participant_index, StateToString(prev_state).c_str());
   }
   // If the lock was not held now we hold it, so we need to run.
-  if ((prev_state & kLocked) == 0) Run();
+  if ((prev_state & kLocked) == 0) RunParty();
 }
 
 void Party::Wakeup(void* arg) {
@@ -305,6 +320,7 @@ std::string Party::StateToString(uint64_t state) {
   std::vector<std::string> parts;
   if (state & kLocked) parts.push_back("locked");
   if (state & kAddsPending) parts.push_back("adds_pending");
+  if (state & kOrphaned) parts.push_back("orphaned");
   parts.push_back(
       absl::StrFormat("refs=%" PRIuPTR, (state & kRefMask) >> kRefShift));
   std::vector<int> participants;

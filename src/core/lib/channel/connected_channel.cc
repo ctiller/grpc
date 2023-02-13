@@ -560,6 +560,7 @@ class ConnectedChannelStream : public Orphanable {
   }
 
   void SendMessageBatchDone(grpc_error_handle error) {
+    Waker waker;
     {
       MutexLock lock(&mu_);
       if (error != absl::OkStatus()) {
@@ -572,12 +573,14 @@ class ConnectedChannelStream : public Orphanable {
       if (!absl::holds_alternative<Closed>(send_message_state_)) {
         send_message_state_ = Idle{};
       }
-      send_message_waker_.Wakeup();
+      waker = std::move(send_message_waker_);
     }
+    waker.Wakeup();
     Unref("send_message");
   }
 
   void RecvMessageBatchDone(grpc_error_handle error) {
+    Waker waker;
     {
       MutexLock lock(mu());
       if (absl::holds_alternative<Closed>(recv_message_state_)) {
@@ -606,8 +609,9 @@ class ConnectedChannelStream : public Orphanable {
         GPR_ASSERT(pending->received == false);
         pending->received = true;
       }
-      recv_message_waker_.Wakeup();
+      waker = std::move(recv_message_waker_);
     }
+    waker.Wakeup();
     Unref("recv_message");
   }
 
@@ -808,6 +812,7 @@ class ClientStream : public ConnectedChannelStream {
   }
 
   void RecvInitialMetadataReady(grpc_error_handle error) {
+    Waker waker;
     {
       MutexLock lock(mu());
       if (grpc_call_trace.enabled()) {
@@ -818,8 +823,9 @@ class ClientStream : public ConnectedChannelStream {
       server_initial_metadata_state_ =
           error.ok() ? ServerInitialMetadataState::kReceivedButNotPushed
                      : ServerInitialMetadataState::kError;
-      recv_initial_metadata_waker_.Wakeup();
+      waker = std::move(recv_initial_metadata_waker_);
     }
+    waker.Wakeup();
     Unref("initial_metadata_ready");
   }
 
@@ -834,6 +840,7 @@ class ClientStream : public ConnectedChannelStream {
       server_trailing_metadata_->Set(GrpcMessageMetadata(),
                                      Slice::FromCopiedString(message));
     }
+    Waker waker;
     {
       MutexLock lock(mu());
       queued_trailing_metadata_ = true;
@@ -845,18 +852,21 @@ class ClientStream : public ConnectedChannelStream {
                 recv_trailing_metadata_waker_.ActivityDebugTag().c_str(),
                 ActiveOpsString().c_str());
       }
-      recv_trailing_metadata_waker_.Wakeup();
+      waker = std::move(recv_trailing_metadata_waker_);
     }
+    waker.Wakeup();
     Unref("trailing_metadata_ready");
   }
 
   void SendMetadataBatchDone(grpc_error_handle error) {
+    Waker waker;
     {
       MutexLock lock(mu());
       need_to_clear_client_initial_metadata_outstanding_token_ = true;
       client_initial_metadata_send_result_ = error.ok();
-      send_initial_metadata_waker_.Wakeup();
+      waker = std::move(send_initial_metadata_waker_);
     }
+    waker.Wakeup();
     Unref("metadata_batch_done");
   }
 
@@ -1271,26 +1281,30 @@ class ServerStream final : public ConnectedChannelStream {
   }
 
   void SendTrailingMetadataDone(absl::Status result) {
-    MutexLock lock(mu());
-    auto& completing = absl::get<Completing>(call_state_);
-    auto md = std::move(completing.server_trailing_metadata);
-    auto waker = std::move(completing.waker);
-    if (grpc_call_trace.enabled()) {
-      gpr_log(GPR_DEBUG, "%sSEND TRAILING METADATA DONE: err=%s sent=%s %s",
-              waker.ActivityDebugTag().c_str(), result.ToString().c_str(),
-              completing.sent ? "true" : "false", md->DebugString().c_str());
+    Waker waker;
+    {
+      MutexLock lock(mu());
+      auto& completing = absl::get<Completing>(call_state_);
+      auto md = std::move(completing.server_trailing_metadata);
+      waker = std::move(completing.waker);
+      if (grpc_call_trace.enabled()) {
+        gpr_log(GPR_DEBUG, "%sSEND TRAILING METADATA DONE: err=%s sent=%s %s",
+                waker.ActivityDebugTag().c_str(), result.ToString().c_str(),
+                completing.sent ? "true" : "false", md->DebugString().c_str());
+      }
+      if (!result.ok()) {
+        md->Clear();
+        md->Set(GrpcStatusMetadata(),
+                static_cast<grpc_status_code>(result.code()));
+        md->Set(GrpcMessageMetadata(),
+                Slice::FromCopiedString(result.message()));
+        md->Set(GrpcCallWasCancelled(), true);
+      }
+      if (!md->get(GrpcCallWasCancelled()).has_value()) {
+        md->Set(GrpcCallWasCancelled(), !completing.sent);
+      }
+      call_state_.emplace<Complete>(Complete{std::move(md)});
     }
-    if (!result.ok()) {
-      md->Clear();
-      md->Set(GrpcStatusMetadata(),
-              static_cast<grpc_status_code>(result.code()));
-      md->Set(GrpcMessageMetadata(), Slice::FromCopiedString(result.message()));
-      md->Set(GrpcCallWasCancelled(), true);
-    }
-    if (!md->get(GrpcCallWasCancelled()).has_value()) {
-      md->Set(GrpcCallWasCancelled(), !completing.sent);
-    }
-    call_state_.emplace<Complete>(Complete{std::move(md)});
     waker.Wakeup();
     Unref("SendTrailingMetadata");
   }
@@ -1347,26 +1361,30 @@ class ServerStream final : public ConnectedChannelStream {
   void SendInitialMetadataDone() { Unref("SendInitialMetadata"); }
 
   void RecvTrailingMetadataReady(absl::Status error) {
-    MutexLock lock(mu());
-    auto& state =
-        absl::get<WaitingForTrailingMetadata>(client_trailing_metadata_state_);
-    if (grpc_call_trace.enabled()) {
-      gpr_log(GPR_INFO,
-              "%sRecvTrailingMetadataReady: error:%s metadata:%s state:%s",
-              state.waker.ActivityDebugTag().c_str(), error.ToString().c_str(),
-              state.result->DebugString().c_str(), ActiveOpsString().c_str());
+    Waker waker;
+    {
+      MutexLock lock(mu());
+      auto& state = absl::get<WaitingForTrailingMetadata>(
+          client_trailing_metadata_state_);
+      if (grpc_call_trace.enabled()) {
+        gpr_log(GPR_INFO,
+                "%sRecvTrailingMetadataReady: error:%s metadata:%s state:%s",
+                state.waker.ActivityDebugTag().c_str(),
+                error.ToString().c_str(), state.result->DebugString().c_str(),
+                ActiveOpsString().c_str());
+      }
+      waker = std::move(state.waker);
+      ServerMetadataHandle result = std::move(state.result);
+      if (error.ok()) {
+        auto* message = result->get_pointer(GrpcMessageMetadata());
+        error = absl::Status(
+            static_cast<absl::StatusCode>(result->get(GrpcStatusMetadata())
+                                              .value_or(GRPC_STATUS_UNKNOWN)),
+            message == nullptr ? "" : message->as_string_view());
+      }
+      client_trailing_metadata_state_.emplace<GotClientHalfClose>(
+          GotClientHalfClose{error});
     }
-    auto waker = std::move(state.waker);
-    ServerMetadataHandle result = std::move(state.result);
-    if (error.ok()) {
-      auto* message = result->get_pointer(GrpcMessageMetadata());
-      error = absl::Status(
-          static_cast<absl::StatusCode>(
-              result->get(GrpcStatusMetadata()).value_or(GRPC_STATUS_UNKNOWN)),
-          message == nullptr ? "" : message->as_string_view());
-    }
-    client_trailing_metadata_state_.emplace<GotClientHalfClose>(
-        GotClientHalfClose{error});
     waker.Wakeup();
     Unref("RecvTrailingMetadata");
   }

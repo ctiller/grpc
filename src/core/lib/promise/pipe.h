@@ -220,6 +220,25 @@ class Center : public InterceptorList<T> {
     GPR_UNREACHABLE_CODE(return absl::nullopt);
   }
 
+  Poll<bool> PollClosed() {
+    if (grpc_trace_promise_primitives.enabled()) {
+      gpr_log(GPR_INFO, "%s", DebugOpString("PollClosed").c_str());
+    }
+    GPR_DEBUG_ASSERT(refs_ != 0);
+    switch (value_state_) {
+      case ValueState::kEmpty:
+      case ValueState::kAcked:
+      case ValueState::kReady:
+      case ValueState::kReadyClosed:
+        return Pending{};
+      case ValueState::kClosed:
+        return false;
+      case ValueState::kCancelled:
+        return true;
+    }
+    GPR_UNREACHABLE_CODE(return true);
+  }
+
   void AckNext() {
     if (grpc_trace_promise_primitives.enabled()) {
       gpr_log(GPR_INFO, "%s", DebugOpString("AckNext").c_str());
@@ -387,6 +406,10 @@ class PipeSender {
   // sent, false if it could never be sent. Blocks the promise until the
   // receiver is either closed or able to receive another message.
   PushType Push(T value);
+
+  auto AwaitClosed() {
+    return [center = center_]() { return center->PollClosed(); };
+  }
 
   template <typename Fn>
   void InterceptAndMap(Fn f, DebugLocation from = {}) {
