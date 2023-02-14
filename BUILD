@@ -1492,6 +1492,7 @@ grpc_cc_library(
         "//src/core:resolved_address",
         "//src/core:resource_quota",
         "//src/core:resource_quota_trace",
+        "//src/core:seq",
         "//src/core:slice",
         "//src/core:slice_buffer",
         "//src/core:slice_cast",

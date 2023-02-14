@@ -841,7 +841,6 @@ grpc_cc_library(
         "lib/promise/pipe.h",
     ],
     external_deps = [
-        "absl/base:core_headers",
         "absl/strings",
         "absl/types:optional",
         "absl/types:variant",

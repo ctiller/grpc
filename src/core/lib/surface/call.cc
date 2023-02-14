@@ -35,14 +35,12 @@
 #include <vector>
 
 #include "absl/base/thread_annotations.h"
-#include "absl/cleanup/cleanup.h"
 #include "absl/meta/type_traits.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
-#include "absl/types/variant.h"
 
 #include <grpc/byte_buffer.h>
 #include <grpc/compression.h>
@@ -81,15 +79,16 @@
 #include "src/core/lib/iomgr/call_combiner.h"
 #include "src/core/lib/iomgr/exec_ctx.h"
 #include "src/core/lib/iomgr/polling_entity.h"
-#include "src/core/lib/promise/activity.h"
 #include "src/core/lib/promise/arena_promise.h"
 #include "src/core/lib/promise/context.h"
 #include "src/core/lib/promise/detail/basic_seq.h"
 #include "src/core/lib/promise/latch.h"
+#include "src/core/lib/promise/map.h"
 #include "src/core/lib/promise/party.h"
 #include "src/core/lib/promise/pipe.h"
 #include "src/core/lib/promise/poll.h"
 #include "src/core/lib/promise/race.h"
+#include "src/core/lib/promise/seq.h"
 #include "src/core/lib/resource_quota/arena.h"
 #include "src/core/lib/slice/slice_buffer.h"
 #include "src/core/lib/slice/slice_internal.h"

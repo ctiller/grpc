@@ -21,7 +21,6 @@
 
 #include <algorithm>
 #include <atomic>
-#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>

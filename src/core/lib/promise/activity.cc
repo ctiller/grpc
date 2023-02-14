@@ -19,7 +19,9 @@
 #include <stddef.h>
 
 #include <initializer_list>
+#include <vector>
 
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 
