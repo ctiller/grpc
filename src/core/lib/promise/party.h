@@ -26,6 +26,7 @@
 
 #include "absl/container/inlined_vector.h"
 #include "absl/types/variant.h"
+#include "activity.h"
 
 #include "src/core/lib/promise/activity.h"
 #include "src/core/lib/promise/detail/promise_like.h"
@@ -52,10 +53,14 @@ class Party : public Activity, private Wakeable {
   void Orphan() final;
 
   // Activity implementation: not allowed to be overridden by derived types.
-  void ForceImmediateRepoll() final;
+  void ForceImmediateRepoll(WakeupMask arg) final;
+  WakeupMask CurrentParticipant() const final {
+    GPR_DEBUG_ASSERT(currently_polling_ != kNotPolling);
+    return 1u << currently_polling_;
+  }
   Waker MakeOwningWaker() final;
   Waker MakeNonOwningWaker() final;
-  std::string ActivityDebugTag(void* arg) const final;
+  std::string ActivityDebugTag(WakeupMask arg) const final;
 
  protected:
   Party() = default;
@@ -130,11 +135,11 @@ class Party : public Activity, private Wakeable {
   };
 
   // Wakeable implementation
-  void Wakeup(void* arg) final;
-  void Drop(void* arg) final;
+  void Wakeup(WakeupMask arg) final;
+  void Drop(WakeupMask arg) final;
 
-  // Organize to wake up one participant.
-  void ScheduleWakeup(uint64_t participant_index);
+  // Organize to wake up some participants.
+  void ScheduleWakeup(WakeupMask mask);
   // Start adding a participant to the party.
   // Backs Spawn() after type erasure.
   void AddParticipant(Arena::PoolPtr<Participant> participant);

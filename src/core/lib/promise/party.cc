@@ -60,7 +60,7 @@ class Party::Handle final : public Wakeable {
 
   // Activity needs to wake up (if it still exists!) - wake it up, and drop the
   // ref that was kept for this handle.
-  void Wakeup(void* arg) override ABSL_LOCKS_EXCLUDED(mu_) {
+  void Wakeup(WakeupMask arg) override ABSL_LOCKS_EXCLUDED(mu_) {
     mu_.Lock();
     // Note that activity refcount can drop to zero, but we could win the lock
     // against DropActivity, so we need to only increase activities refcount if
@@ -70,7 +70,7 @@ class Party::Handle final : public Wakeable {
       mu_.Unlock();
       // Activity still exists and we have a reference: wake it up, which will
       // drop the ref.
-      party->Wakeup(reinterpret_cast<void*>(arg));
+      party->Wakeup(arg);
     } else {
       // Could not get the activity - it's either gone or going. No need to wake
       // it up!
@@ -80,9 +80,9 @@ class Party::Handle final : public Wakeable {
     Unref();
   }
 
-  void Drop(void*) override { Unref(); }
+  void Drop(WakeupMask arg) override { Unref(); }
 
-  std::string ActivityDebugTag(void*) const override {
+  std::string ActivityDebugTag(WakeupMask) const override {
     MutexLock lock(&mu_);
     return party_ == nullptr ? "<unknown>" : party_->DebugTag();
   }
@@ -153,27 +153,27 @@ void Party::Unref() {
   GPR_DEBUG_ASSERT((prev & kRefMask) != 0);
 }
 
-std::string Party::ActivityDebugTag(void* arg) const {
-  return absl::StrFormat("%s/%p", DebugTag(), arg);
+std::string Party::ActivityDebugTag(WakeupMask arg) const {
+  return absl::StrFormat("%s [parts:%x]", DebugTag(), arg);
 }
 
 Waker Party::MakeOwningWaker() {
   GPR_DEBUG_ASSERT(currently_polling_ != kNotPolling);
   Ref();
-  return Waker(this, reinterpret_cast<void*>(currently_polling_));
+  return Waker(this, 1u << currently_polling_);
 }
 
 Waker Party::MakeNonOwningWaker() {
   GPR_DEBUG_ASSERT(currently_polling_ != kNotPolling);
   return Waker(participants_[currently_polling_]->MakeNonOwningWakeable(this),
-               reinterpret_cast<void*>(currently_polling_));
+               1u << currently_polling_);
 }
 
-void Party::ForceImmediateRepoll() {
+void Party::ForceImmediateRepoll(WakeupMask mask) {
   GPR_DEBUG_ASSERT(currently_polling_ != kNotPolling);
   // Or in the bit for the currently polling participant.
   // Will be grabbed next round to force a repoll of this promise.
-  state_.fetch_or(1 << currently_polling_, std::memory_order_relaxed);
+  state_.fetch_or(mask & kWakeupMask, std::memory_order_relaxed);
 }
 
 void Party::RunParty() {
@@ -297,24 +297,24 @@ size_t Party::SituateNewParticipant(Arena::PoolPtr<Participant> participant) {
   return participants_.size() - 1;
 }
 
-void Party::ScheduleWakeup(uint64_t participant_index) {
+void Party::ScheduleWakeup(WakeupMask mask) {
   // Or in the wakeup bit for the participant, AND the locked bit.
-  uint64_t prev_state = state_.fetch_or((1 << participant_index) | kLocked,
+  uint64_t prev_state = state_.fetch_or((mask & kWakeupMask) | kLocked,
                                         std::memory_order_acquire);
   if (grpc_trace_promise_primitives.enabled()) {
     gpr_log(GPR_DEBUG, "Party::ScheduleWakeup(%" PRIu64 "): prev_state=%s",
-            participant_index, StateToString(prev_state).c_str());
+            static_cast<uint64_t>(mask), StateToString(prev_state).c_str());
   }
   // If the lock was not held now we hold it, so we need to run.
   if ((prev_state & kLocked) == 0) RunParty();
 }
 
-void Party::Wakeup(void* arg) {
-  ScheduleWakeup(reinterpret_cast<uintptr_t>(arg));
+void Party::Wakeup(WakeupMask arg) {
+  ScheduleWakeup(arg);
   Unref();
 }
 
-void Party::Drop(void*) { Unref(); }
+void Party::Drop(WakeupMask) { Unref(); }
 
 std::string Party::StateToString(uint64_t state) {
   std::vector<std::string> parts;

@@ -707,6 +707,7 @@ grpc_cc_library(
     external_deps = [
         "absl/base:core_headers",
         "absl/status",
+        "absl/strings",
         "absl/strings:str_format",
         "absl/types:optional",
         "absl/types:variant",
@@ -775,19 +776,6 @@ grpc_cc_library(
 )
 
 grpc_cc_library(
-    name = "intra_activity_waiter",
-    language = "c++",
-    public_hdrs = [
-        "lib/promise/intra_activity_waiter.h",
-    ],
-    deps = [
-        "activity",
-        "poll",
-        "//:gpr_platform",
-    ],
-)
-
-grpc_cc_library(
     name = "latch",
     external_deps = ["absl/strings"],
     language = "c++",
@@ -796,7 +784,6 @@ grpc_cc_library(
     ],
     deps = [
         "activity",
-        "intra_activity_waiter",
         "poll",
         "promise_trace",
         "//:gpr",
@@ -866,7 +853,6 @@ grpc_cc_library(
         "context",
         "if",
         "interceptor_list",
-        "intra_activity_waiter",
         "map",
         "poll",
         "promise_trace",

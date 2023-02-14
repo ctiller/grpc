@@ -39,7 +39,6 @@
 #include "src/core/lib/promise/context.h"
 #include "src/core/lib/promise/if.h"
 #include "src/core/lib/promise/interceptor_list.h"
-#include "src/core/lib/promise/intra_activity_waiter.h"
 #include "src/core/lib/promise/map.h"
 #include "src/core/lib/promise/poll.h"
 #include "src/core/lib/promise/seq.h"

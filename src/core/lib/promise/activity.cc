@@ -21,6 +21,7 @@
 #include <initializer_list>
 
 #include "absl/strings/str_format.h"
+#include "absl/strings/str_join.h"
 
 #include "src/core/lib/gprpp/atomic_utils.h"
 
@@ -36,7 +37,9 @@ namespace promise_detail {
 ///////////////////////////////////////////////////////////////////////////////
 // HELPER TYPES
 
-std::string Unwakeable::ActivityDebugTag(void*) const { return "<unknown>"; }
+std::string Unwakeable::ActivityDebugTag(WakeupMask) const {
+  return "<unknown>";
+}
 
 // Weak handle to an Activity.
 // Handle can persist while Activity goes away.
@@ -58,7 +61,7 @@ class FreestandingActivity::Handle final : public Wakeable {
 
   // Activity needs to wake up (if it still exists!) - wake it up, and drop the
   // ref that was kept for this handle.
-  void Wakeup(void*) override ABSL_LOCKS_EXCLUDED(mu_) {
+  void Wakeup(WakeupMask) override ABSL_LOCKS_EXCLUDED(mu_) {
     mu_.Lock();
     // Note that activity refcount can drop to zero, but we could win the lock
     // against DropActivity, so we need to only increase activities refcount if
@@ -68,7 +71,7 @@ class FreestandingActivity::Handle final : public Wakeable {
       mu_.Unlock();
       // Activity still exists and we have a reference: wake it up, which will
       // drop the ref.
-      activity->Wakeup(nullptr);
+      activity->Wakeup(0);
     } else {
       // Could not get the activity - it's either gone or going. No need to wake
       // it up!
@@ -78,9 +81,9 @@ class FreestandingActivity::Handle final : public Wakeable {
     Unref();
   }
 
-  void Drop(void*) override { Unref(); }
+  void Drop(WakeupMask) override { Unref(); }
 
-  std::string ActivityDebugTag(void*) const override {
+  std::string ActivityDebugTag(WakeupMask) const override {
     MutexLock lock(&mu_);
     return activity_ == nullptr ? "<unknown>" : activity_->DebugTag();
   }
@@ -124,13 +127,35 @@ void FreestandingActivity::DropHandle() {
 
 Waker FreestandingActivity::MakeNonOwningWaker() {
   mu_.AssertHeld();
-  return Waker(RefHandle(), nullptr);
+  return Waker(RefHandle(), 0);
 }
 
 }  // namespace promise_detail
 
 std::string Activity::DebugTag() const {
   return absl::StrFormat("ACTIVITY[%p]", this);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// INTRA ACTIVITY WAKER IMPLEMENTATION
+
+Pending IntraActivityWaiter::pending() {
+  wakeups_ |= Activity::current()->CurrentParticipant();
+  return Pending();
+}
+
+void IntraActivityWaiter::Wake() {
+  if (wakeups_ == 0) return;
+  Activity::current()->ForceImmediateRepoll(wakeups_);
+}
+
+std::string IntraActivityWaiter::DebugString() const {
+  if (wakeups_ == 0) return "empty";
+  std::vector<int> bits;
+  for (int i = 0; i < 8 * sizeof(WakeupMask); i++) {
+    if (wakeups_ & (1 << i)) bits.push_back(i);
+  }
+  return absl::StrCat("{", absl::StrJoin(bits, ","), "}");
 }
 
 }  // namespace grpc_core
