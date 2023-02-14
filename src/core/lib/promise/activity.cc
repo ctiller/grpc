@@ -150,7 +150,6 @@ void IntraActivityWaiter::Wake() {
 }
 
 std::string IntraActivityWaiter::DebugString() const {
-  if (wakeups_ == 0) return "empty";
   std::vector<int> bits;
   for (int i = 0; i < 8 * sizeof(WakeupMask); i++) {
     if (wakeups_ & (1 << i)) bits.push_back(i);

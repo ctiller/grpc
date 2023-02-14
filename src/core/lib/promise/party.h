@@ -48,7 +48,8 @@ class Party : public Activity, private Wakeable {
   // it completes.
   // A maximum of sixteen promises can be spawned onto a party.
   template <typename Promise, typename OnComplete>
-  void Spawn(absl::string_view name, Promise promise, OnComplete on_complete);
+  void Spawn(absl::string_view name, Arena* arena, Promise promise,
+             OnComplete on_complete);
 
   void Orphan() final;
 
@@ -196,11 +197,10 @@ class Party : public Activity, private Wakeable {
 };
 
 template <typename Promise, typename OnComplete>
-void Party::Spawn(absl::string_view name, Promise promise,
+void Party::Spawn(absl::string_view name, Arena* arena, Promise promise,
                   OnComplete on_complete) {
-  AddParticipant(
-      GetContext<Arena>()->MakePooled<ParticipantImpl<Promise, OnComplete>>(
-          name, std::move(promise), std::move(on_complete)));
+  AddParticipant(arena->MakePooled<ParticipantImpl<Promise, OnComplete>>(
+      name, std::move(promise), std::move(on_complete)));
 }
 
 }  // namespace grpc_core

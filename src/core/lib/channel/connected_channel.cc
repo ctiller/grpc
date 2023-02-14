@@ -407,7 +407,7 @@ class ConnectedChannelStream : public Orphanable {
           auto* stream = batch->stream;
           auto* party = stream->party_;
           party->Spawn(
-              name,
+              name, stream->arena_,
               [batch, status = std::move(status)]() mutable {
                 batch->done.Set(
                     Batch::Done{std::move(batch->self), std::move(status)});
@@ -422,6 +422,7 @@ class ConnectedChannelStream : public Orphanable {
   }
 
   auto PushBatch(Batch* b) {
+    GPR_ASSERT(b->batch.HasOp());
     IncrementRefCount("push batch");
     grpc_transport_perform_stream_op(transport_, stream_.get(), &b->batch);
     return Map(b->done.Wait(),
@@ -436,6 +437,7 @@ class ConnectedChannelStream : public Orphanable {
           this, DEBUG_LOCATION);
   grpc_stream_refcount stream_refcount_;
   StreamPtr stream_;
+  Arena* arena_ = GetContext<Arena>();
   Party* const party_ = static_cast<Party*>(Activity::current());
   std::atomic<bool> finished_{false};
 
@@ -527,7 +529,7 @@ ArenaPromise<ServerMetadataHandle> MakeClientCallPromise(
                           GetContext<CallContext>()->polling_entity());
   auto* party = static_cast<Party*>(Activity::current());
   party->Spawn(
-      "send_messages",
+      "send_messages", GetContext<Arena>(),
       TrySeq(stream->SendMessages(call_args.client_to_server_messages),
              [stream = stream->InternalRef()]() {
                return stream->PushBatchToTransport(
@@ -546,7 +548,7 @@ ArenaPromise<ServerMetadataHandle> MakeClientCallPromise(
   auto server_initial_metadata =
       GetContext<Arena>()->MakePooled<ServerMetadata>(GetContext<Arena>());
   party->Spawn(
-      "recv_initial_metadata",
+      "recv_initial_metadata", GetContext<Arena>(),
       TrySeq(stream->PushBatchToTransport(
                  "recv_initial_metadata_batch",
                  [server_initial_metadata = server_initial_metadata.get()](
@@ -577,6 +579,7 @@ ArenaPromise<ServerMetadataHandle> MakeClientCallPromise(
           "send_initial_metadata_batch",
           [client_initial_metadata](grpc_transport_stream_op_batch* batch,
                                     grpc_closure* on_done) {
+            batch->send_initial_metadata = true;
             batch->payload->send_initial_metadata.send_initial_metadata =
                 client_initial_metadata;
             batch->payload->send_initial_metadata.peer_string =
@@ -724,8 +727,9 @@ ArenaPromise<ServerMetadataHandle> MakeServerCallPromise(
       TrySeq(std::move(send_initial_metadata),
              stream->SendMessages(&server_to_client.receiver));
 
-  party->Spawn("recv_messages", std::move(recv_messages), [](absl::Status) {});
-  party->Spawn("send_initial_metadata_then_messages",
+  party->Spawn("recv_messages", GetContext<Arena>(), std::move(recv_messages),
+               [](absl::Status) {});
+  party->Spawn("send_initial_metadata_then_messages", GetContext<Arena>(),
                std::move(send_initial_metadata_then_messages),
                [](absl::Status) {});
 

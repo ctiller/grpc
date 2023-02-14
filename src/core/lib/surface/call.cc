@@ -1902,7 +1902,7 @@ class PromiseBasedCall : public Call,
 
   void RunInContext(absl::AnyInvocable<void()> fn) {
     Spawn(
-        "run_in_context",
+        "run_in_context", arena(),
         [fn = std::move(fn)]() mutable {
           fn();
           return Empty{};
@@ -2140,7 +2140,6 @@ class PromiseBasedCall : public Call,
   // Current deadline.
   Timestamp deadline_ = Timestamp::InfFuture();
   grpc_event_engine::experimental::EventEngine::TaskHandle deadline_task_;
-  grpc_byte_buffer** recv_message_ = nullptr;
   Latch<void> finished_;
   std::atomic<bool> completed_{false};
 };
@@ -2353,7 +2352,7 @@ void PromiseBasedCall::StartSendMessage(const grpc_op& op,
   grpc_slice_buffer_swap(
       &op.data.send_message.send_message->data.raw.slice_buffer,
       send.c_slice_buffer());
-  Spawn("send_message",
+  Spawn("send_message", arena(),
         Race(Map(finished_.Wait(), [](Empty) { return false; }),
              sender->Push(GetContext<Arena>()->MakePooled<Message>(
                  std::move(send), op.flags))),
@@ -2372,11 +2371,11 @@ void PromiseBasedCall::StartRecvMessage(const grpc_op& op,
                                         const Completion& completion,
                                         PipeReceiver<MessageHandle>* receiver) {
   Spawn(
-      "recv_message",
+      "recv_message", arena(),
       Race(Map(finished_.Wait(),
                [](Empty) { return NextResult<MessageHandle>(true); }),
            receiver->Next()),
-      [this,
+      [this, recv_message = op.data.recv_message.recv_message,
        completion = AddOpToCompletion(completion, PendingOp::kReceiveMessage)](
           NextResult<MessageHandle> result) mutable {
         if (result.has_value()) {
@@ -2384,20 +2383,20 @@ void PromiseBasedCall::StartRecvMessage(const grpc_op& op,
           NoteLastMessageFlags(message->flags());
           if ((message->flags() & GRPC_WRITE_INTERNAL_COMPRESS) &&
               (incoming_compression_algorithm() != GRPC_COMPRESS_NONE)) {
-            *recv_message_ = grpc_raw_compressed_byte_buffer_create(
+            *recv_message = grpc_raw_compressed_byte_buffer_create(
                 nullptr, 0, incoming_compression_algorithm());
           } else {
-            *recv_message_ = grpc_raw_byte_buffer_create(nullptr, 0);
+            *recv_message = grpc_raw_byte_buffer_create(nullptr, 0);
           }
           grpc_slice_buffer_move_into(message->payload()->c_slice_buffer(),
-                                      &(*recv_message_)->data.raw.slice_buffer);
+                                      &(*recv_message)->data.raw.slice_buffer);
           if (grpc_call_trace.enabled()) {
             gpr_log(GPR_INFO,
                     "%s[call] PollRecvMessage: outstanding_recv "
                     "finishes: received "
                     "%" PRIdPTR " byte message",
                     DebugTag().c_str(),
-                    (*recv_message_)->data.raw.slice_buffer.length);
+                    (*recv_message)->data.raw.slice_buffer.length);
           }
         } else if (result.cancelled()) {
           if (grpc_call_trace.enabled()) {
@@ -2408,7 +2407,7 @@ void PromiseBasedCall::StartRecvMessage(const grpc_op& op,
                     DebugTag().c_str());
           }
           FailCompletion(completion);
-          *recv_message_ = nullptr;
+          *recv_message = nullptr;
         } else {
           if (grpc_call_trace.enabled()) {
             gpr_log(GPR_INFO,
@@ -2417,7 +2416,7 @@ void PromiseBasedCall::StartRecvMessage(const grpc_op& op,
                     "end-of-stream",
                     DebugTag().c_str());
           }
-          *recv_message_ = nullptr;
+          *recv_message = nullptr;
         }
         FinishOpOnCompletion(&completion, PendingOp::kReceiveMessage);
       });
@@ -2503,7 +2502,7 @@ class ClientPromiseBasedCall final : public PromiseBasedCall {
 
   void CancelWithError(absl::Status error) override {
     Spawn(
-        "cancel_with_error",
+        "cancel_with_error", arena(),
         [error, this]() {
           cancel_error_.Set(ServerMetadataFromStatus(error));
           return Empty{};
@@ -2558,14 +2557,14 @@ void ClientPromiseBasedCall::StartPromise(
     ClientMetadataHandle client_initial_metadata,
     const Completion& completion) {
   auto token = ClientInitialMetadataOutstandingToken::New();
-  Spawn("send_initial_metadata", token.Wait(),
+  Spawn("send_initial_metadata", arena(), token.Wait(),
         [this, completion = AddOpToCompletion(completion,
                                               PendingOp::kSendInitialMetadata)](
             bool result) mutable {
           if (!result) FailCompletion(completion);
           FinishOpOnCompletion(&completion, PendingOp::kSendInitialMetadata);
         });
-  Spawn("client_promise",
+  Spawn("client_promise", arena(),
         channel()->channel_stack()->MakeClientCallPromise(
             CallArgs{std::move(client_initial_metadata), std::move(token),
                      &server_initial_metadata_.sender,
@@ -2649,7 +2648,7 @@ void ClientPromiseBasedCall::CommitBatch(const grpc_op* ops, size_t nops,
         break;
       case GRPC_OP_SEND_CLOSE_FROM_CLIENT:
         Spawn(
-            "send_close_from_client",
+            "send_close_from_client", arena(),
             [this]() {
               client_to_server_messages_.sender.Close();
               return Empty{};
@@ -2689,7 +2688,7 @@ grpc_call_error ClientPromiseBasedCall::StartBatch(const grpc_op* ops,
 
 void ClientPromiseBasedCall::StartRecvInitialMetadata(
     grpc_metadata_array* array, const Completion& completion) {
-  Spawn("recv_initial_metadata",
+  Spawn("recv_initial_metadata", arena(),
         Race(Map(finished(),
                  [](Empty) { return NextResult<ServerMetadataHandle>(true); }),
              server_initial_metadata_.receiver.Next()),
@@ -2757,7 +2756,7 @@ void ClientPromiseBasedCall::StartRecvStatusOnClient(
     const Completion& completion,
     grpc_op::grpc_op_data::grpc_op_recv_status_on_client op_args) {
   ForceCompletionSuccess(completion);
-  Spawn("recv_status_on_client", server_trailing_metadata_.Wait(),
+  Spawn("recv_status_on_client", arena(), server_trailing_metadata_.Wait(),
         [this, op_args,
          completion =
              AddOpToCompletion(completion, PendingOp::kReceiveStatusOnClient)](
@@ -2928,7 +2927,7 @@ ServerPromiseBasedCall::ServerPromiseBasedCall(Arena* arena,
     channelz_node->RecordCallStarted();
   }
   ScopedContext activity_context(this);
-  Spawn("server_promise",
+  Spawn("server_promise", arena,
         channel()->channel_stack()->MakeServerCallPromise(
             CallArgs{nullptr, ClientInitialMetadataOutstandingToken::Empty(),
                      nullptr, nullptr, nullptr}),
@@ -3010,7 +3009,7 @@ void ServerPromiseBasedCall::CommitBatch(const grpc_op* ops, size_t nops,
           gpr_log(GPR_INFO, "%s[call] Send initial metadata",
                   DebugTag().c_str());
         }
-        Spawn("sent_initial_metadata",
+        Spawn("sent_initial_metadata", arena(),
               server_initial_metadata_->Push(std::move(metadata)),
               [this, completion = AddOpToCompletion(
                          completion, PendingOp::kSendInitialMetadata)](
@@ -3037,7 +3036,7 @@ void ServerPromiseBasedCall::CommitBatch(const grpc_op* ops, size_t nops,
           metadata->Set(GrpcMessageMetadata(), Slice(CSliceRef(*details)));
         }
         Spawn(
-            "send_status_from_server",
+            "send_status_from_server", arena(),
             [this, metadata = std::move(metadata)]() mutable {
               send_trailing_metadata_.Set(std::move(metadata));
               return Empty{};
@@ -3091,7 +3090,7 @@ grpc_call_error ServerPromiseBasedCall::StartBatch(const grpc_op* ops,
 
 void ServerPromiseBasedCall::CancelWithError(absl::Status error) {
   Spawn(
-      "cancel_with_error",
+      "cancel_with_error", arena(),
       [this, error = std::move(error)]() {
         if (!send_trailing_metadata_.is_set()) {
           send_trailing_metadata_.Set(ServerMetadataFromStatus(error));
