@@ -420,6 +420,7 @@ grpc_cc_library(
         "activity",
         "arena",
         "poll",
+        "promise_like",
         "promise_trace",
         "//:gpr",
         "//:grpc_trace",
