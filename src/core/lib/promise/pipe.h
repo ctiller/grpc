@@ -29,6 +29,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/types/optional.h"
 #include "absl/types/variant.h"
+#include "activity.h"
 
 #include <grpc/support/log.h>
 
@@ -207,9 +208,6 @@ class Center : public InterceptorList<T> {
       case ValueState::kAcked:
         return on_full_.pending();
       case ValueState::kReadyClosed:
-        this->ResetInterceptorList();
-        value_state_ = ValueState::kClosed;
-        ABSL_FALLTHROUGH_INTENDED;
       case ValueState::kReady:
         return std::move(value_);
       case ValueState::kClosed:
@@ -229,7 +227,7 @@ class Center : public InterceptorList<T> {
       case ValueState::kAcked:
       case ValueState::kReady:
       case ValueState::kReadyClosed:
-        return Pending{};
+        return on_full_.pending();
       case ValueState::kClosed:
         return false;
       case ValueState::kCancelled:
@@ -250,6 +248,7 @@ class Center : public InterceptorList<T> {
       case ValueState::kReadyClosed:
         this->ResetInterceptorList();
         value_state_ = ValueState::kClosed;
+        on_full_.Wake();
         break;
       case ValueState::kClosed:
       case ValueState::kCancelled:

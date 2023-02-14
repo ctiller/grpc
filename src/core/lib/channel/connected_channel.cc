@@ -406,6 +406,13 @@ class ConnectedChannelStream : public Orphanable {
           auto name = batch->name;
           auto* stream = batch->stream;
           auto* party = stream->party_;
+          if (grpc_call_trace.enabled()) {
+            gpr_log(
+                GPR_DEBUG, "%s[connected_channel] Finish batch %s: status=%s",
+                party->DebugTag().c_str(),
+                grpc_transport_stream_op_batch_string(&batch->batch).c_str(),
+                status.ToString().c_str());
+          }
           party->Spawn(
               name, stream->arena_,
               [batch, status = std::move(status)]() mutable {
@@ -422,6 +429,11 @@ class ConnectedChannelStream : public Orphanable {
   }
 
   auto PushBatch(Batch* b) {
+    if (grpc_call_trace.enabled()) {
+      gpr_log(GPR_DEBUG, "%s[connected_channel] Start batch %s",
+              b->stream->party_->DebugTag().c_str(),
+              grpc_transport_stream_op_batch_string(&b->batch).c_str());
+    }
     GPR_ASSERT(b->batch.HasOp());
     IncrementRefCount("push batch");
     grpc_transport_perform_stream_op(transport_, stream_.get(), &b->batch);
@@ -652,11 +664,16 @@ ArenaPromise<ServerMetadataHandle> MakeServerCallPromise(
 
   auto* party = static_cast<Party*>(Activity::current());
 
-  Pipe<MessageHandle> server_to_client;
-  Pipe<MessageHandle> client_to_server;
-  Pipe<ServerMetadataHandle> server_initial_metadata;
-  Latch<ServerMetadataHandle>* failure_latch =
-      GetContext<Arena>()->ManagedNew<Latch<ServerMetadataHandle>>();
+  struct CallData {
+    Pipe<MessageHandle> server_to_client;
+    Pipe<MessageHandle> client_to_server;
+    Pipe<ServerMetadataHandle> server_initial_metadata;
+    Latch<ServerMetadataHandle> failure_latch;
+    bool sent_initial_metadata = false;
+    bool sent_trailing_metadata = false;
+  };
+
+  auto* call_data = GetContext<Arena>()->ManagedNew<CallData>();
 
   auto client_initial_metadata =
       GetContext<Arena>()->MakePooled<ClientMetadata>(GetContext<Arena>());
@@ -672,41 +689,121 @@ ArenaPromise<ServerMetadataHandle> MakeServerCallPromise(
           }),
       [client_initial_metadata = std::move(client_initial_metadata),
        next_promise_factory = std::move(next_promise_factory),
-       incoming_messages =
-           GetContext<Arena>()->ManagedNew<PipeReceiver<MessageHandle>>(
-               std::move(client_to_server.receiver)),
-       outgoing_initial_metadata =
-           GetContext<Arena>()->ManagedNew<PipeSender<ServerMetadataHandle>>(
-               std::move(server_initial_metadata.sender)),
-       outgoing_messages =
-           GetContext<Arena>()->ManagedNew<PipeSender<MessageHandle>>(
-               std::move(server_to_client.sender)),
-       failure_latch]() mutable {
-        return Race(failure_latch->Wait(),
+       call_data]() mutable {
+        return Race(call_data->failure_latch.Wait(),
                     next_promise_factory(CallArgs{
                         std::move(client_initial_metadata),
                         ClientInitialMetadataOutstandingToken::Empty(),
-                        outgoing_initial_metadata,
-                        incoming_messages,
-                        outgoing_messages,
+                        &call_data->server_initial_metadata.sender,
+                        &call_data->client_to_server.receiver,
+                        &call_data->server_to_client.sender,
                     }));
+      });
+  auto run_request_then_send_trailing_metadata = Seq(
+      std::move(recv_initial_metadata_then_run_promise),
+      [call_data, stream = stream->InternalRef()](
+          ServerMetadataHandle server_trailing_metadata) {
+        return Map(
+            stream->PushBatchToTransport(
+                "send_trailing_metadata",
+                [call_data, md = server_trailing_metadata.get()](
+                    grpc_transport_stream_op_batch* batch,
+                    grpc_closure* on_done) {
+                  if (call_data->sent_initial_metadata) {
+                    batch->send_trailing_metadata = true;
+                    batch->payload->send_trailing_metadata.sent =
+                        &call_data->sent_trailing_metadata;
+                    batch->payload->send_trailing_metadata
+                        .send_trailing_metadata = md;
+                  } else {
+                    call_data->sent_initial_metadata = true;
+                    batch->cancel_stream = true;
+                    const auto status_code = md->get(GrpcStatusMetadata())
+                                                 .value_or(GRPC_STATUS_UNKNOWN);
+                    batch->payload->cancel_stream.cancel_error =
+                        grpc_error_set_int(
+                            absl::Status(
+                                static_cast<absl::StatusCode>(status_code),
+                                md->GetOrCreatePointer(GrpcMessageMetadata())
+                                    ->as_string_view()),
+                            StatusIntProperty::kRpcStatus, status_code);
+                  }
+                  batch->on_complete = on_done;
+                }),
+            [call_data,
+             server_trailing_metadata = std::move(server_trailing_metadata)](
+                absl::Status status) mutable {
+              if (!status.ok()) {
+                server_trailing_metadata->Clear();
+                server_trailing_metadata->Set(
+                    GrpcStatusMetadata(),
+                    static_cast<grpc_status_code>(status.code()));
+                server_trailing_metadata->Set(
+                    GrpcMessageMetadata(),
+                    Slice::FromCopiedString(status.message()));
+                server_trailing_metadata->Set(GrpcCallWasCancelled(), true);
+              }
+              if (!server_trailing_metadata->get(GrpcCallWasCancelled())
+                       .has_value()) {
+                server_trailing_metadata->Set(
+                    GrpcCallWasCancelled(), !call_data->sent_trailing_metadata);
+              }
+              return std::move(server_trailing_metadata);
+            });
       });
 
   auto recv_messages =
-      Map(stream->RecvMessages(&client_to_server.sender),
-          [failure_latch](absl::Status status) {
+      Map(stream->RecvMessages(&call_data->client_to_server.sender),
+          [failure_latch = &call_data->failure_latch](absl::Status status) {
             if (!status.ok() && !failure_latch->is_set()) {
               failure_latch->Set(ServerMetadataFromStatus(status));
             }
             return status;
           });
 
+  auto trailing_metadata =
+      GetContext<Arena>()->MakePooled<ClientMetadata>(GetContext<Arena>());
+  auto* md = trailing_metadata.get();
+  auto recv_trailing_metadata = Seq(
+      stream->PushBatchToTransport(
+          "recv_trailing_metadata",
+          [md](grpc_transport_stream_op_batch* batch, grpc_closure* on_done) {
+            batch->recv_trailing_metadata = true;
+            batch->payload->recv_trailing_metadata.recv_trailing_metadata = md;
+            batch->payload->recv_trailing_metadata.collect_stats =
+                &GetContext<CallContext>()
+                     ->call_stats()
+                     ->transport_stream_stats;
+            batch->payload->recv_trailing_metadata
+                .recv_trailing_metadata_ready = on_done;
+          }),
+      [failure_latch = &call_data->failure_latch,
+       trailing_metadata =
+           std::move(trailing_metadata)](absl::Status status) mutable {
+        if (!status.ok()) {
+          trailing_metadata->Clear();
+          grpc_status_code status_code = GRPC_STATUS_UNKNOWN;
+          std::string message;
+          grpc_error_get_status(status, Timestamp::InfFuture(), &status_code,
+                                &message, nullptr, nullptr);
+          trailing_metadata->Set(GrpcStatusMetadata(), status_code);
+          trailing_metadata->Set(GrpcMessageMetadata(),
+                                 Slice::FromCopiedString(message));
+          if (!failure_latch->is_set()) {
+            failure_latch->Set(std::move(trailing_metadata));
+          }
+        }
+        return Empty{};
+      });
+
   auto send_initial_metadata = Seq(
-      server_initial_metadata.receiver.Next(),
-      [stream = stream->InternalRef()](
+      call_data->server_initial_metadata.receiver.Next(),
+      [call_data, stream = stream->InternalRef()](
           NextResult<ServerMetadataHandle> next_result) {
-        auto* md =
-            next_result.has_value() ? next_result.value().get() : nullptr;
+        auto* md = !call_data->sent_initial_metadata && next_result.has_value()
+                       ? next_result.value().get()
+                       : nullptr;
+        if (md != nullptr) call_data->sent_initial_metadata = true;
         return If(md != nullptr,
                   Map(stream->PushBatchToTransport(
                           "send_initial_metadata",
@@ -725,7 +822,7 @@ ArenaPromise<ServerMetadataHandle> MakeServerCallPromise(
       });
   auto send_initial_metadata_then_messages =
       TrySeq(std::move(send_initial_metadata),
-             stream->SendMessages(&server_to_client.receiver));
+             stream->SendMessages(&call_data->server_to_client.receiver));
 
   party->Spawn("recv_messages", GetContext<Arena>(), std::move(recv_messages),
                [](absl::Status) {});
@@ -733,7 +830,9 @@ ArenaPromise<ServerMetadataHandle> MakeServerCallPromise(
                std::move(send_initial_metadata_then_messages),
                [](absl::Status) {});
 
-  return std::move(recv_initial_metadata_then_run_promise);
+  return Map(
+      std::move(run_request_then_send_trailing_metadata),
+      [stream = std::move(stream)](ServerMetadataHandle md) { return md; });
 }
 #endif
 
@@ -741,11 +840,11 @@ template <ArenaPromise<ServerMetadataHandle> (*make_call_promise)(
     grpc_transport*, CallArgs, NextPromiseFactory)>
 grpc_channel_filter MakeConnectedFilter() {
   // Create a vtable that contains both the legacy call methods (for filter
-  // stack based calls) and the new promise based method for creating promise
-  // based calls (the latter iff make_call_promise != nullptr).
-  // In this way the filter can be inserted into either kind of channel stack,
-  // and only if all the filters in the stack are promise based will the call
-  // be promise based.
+  // stack based calls) and the new promise based method for creating
+  // promise based calls (the latter iff make_call_promise != nullptr). In
+  // this way the filter can be inserted into either kind of channel stack,
+  // and only if all the filters in the stack are promise based will the
+  // call be promise based.
   auto make_call_wrapper = +[](grpc_channel_element* elem, CallArgs call_args,
                                NextPromiseFactory next) {
     grpc_transport* transport =
@@ -763,12 +862,11 @@ grpc_channel_filter MakeConnectedFilter() {
       sizeof(channel_data),
       connected_channel_init_channel_elem,
       +[](grpc_channel_stack* channel_stack, grpc_channel_element* elem) {
-        // HACK(ctiller): increase call stack size for the channel to make space
-        // for channel data. We need a cleaner (but performant) way to do this,
-        // and I'm not sure what that is yet.
-        // This is only "safe" because call stacks place no additional data
-        // after the last call element, and the last call element MUST be the
-        // connected channel.
+        // HACK(ctiller): increase call stack size for the channel to make
+        // space for channel data. We need a cleaner (but performant) way to
+        // do this, and I'm not sure what that is yet. This is only "safe"
+        // because call stacks place no additional data after the last call
+        // element, and the last call element MUST be the connected channel.
         channel_stack->call_stack_size += grpc_transport_stream_size(
             static_cast<channel_data*>(elem->channel_data)->transport);
       },
@@ -812,20 +910,20 @@ bool grpc_add_connected_filter(grpc_core::ChannelStackBuilder* builder) {
   // We can't know promise based call or not here (that decision needs the
   // collaboration of all of the filters on the channel, and we don't want
   // ordering constraints on when we add filters).
-  // We can know if this results in a promise based call how we'll create our
-  // promise (if indeed we can), and so that is the choice made here.
+  // We can know if this results in a promise based call how we'll create
+  // our promise (if indeed we can), and so that is the choice made here.
   if (t->vtable->make_call_promise != nullptr) {
-    // Option 1, and our ideal: the transport supports promise based calls, and
-    // so we simply use the transport directly.
+    // Option 1, and our ideal: the transport supports promise based calls,
+    // and so we simply use the transport directly.
     builder->AppendFilter(&grpc_core::kPromiseBasedTransportFilter);
   } else if (grpc_channel_stack_type_is_client(builder->channel_stack_type())) {
-    // Option 2: the transport does not support promise based calls, but we're
-    // on the client and so we have an implementation that we can use to convert
-    // to batches.
+    // Option 2: the transport does not support promise based calls, but
+    // we're on the client and so we have an implementation that we can use
+    // to convert to batches.
     builder->AppendFilter(&grpc_core::kClientEmulatedFilter);
   } else {
-    // Option 3: the transport does not support promise based calls, and we're
-    // on the server so we use the server filter.
+    // Option 3: the transport does not support promise based calls, and
+    // we're on the server so we use the server filter.
     builder->AppendFilter(&grpc_core::kServerEmulatedFilter);
   }
   return true;

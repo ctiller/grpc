@@ -2284,8 +2284,7 @@ void PromiseBasedCall::FinishOpOnCompletion(Completion* completion,
     }
     gpr_log(
         GPR_INFO,
-        "%s[call] FinishOpOnCompletion tag:%p completion:%s "
-        "finish:%s %s",
+        "%s[call] FinishOpOnCompletion tag:%p completion:%s finish:%s %s",
         DebugTag().c_str(), completion_info_[completion->index()].pending.tag,
         CompletionString(*completion).c_str(), PendingOpString(reason),
         (pending.empty()
@@ -2393,8 +2392,7 @@ void PromiseBasedCall::StartRecvMessage(const grpc_op& op,
           if (grpc_call_trace.enabled()) {
             gpr_log(GPR_INFO,
                     "%s[call] PollRecvMessage: outstanding_recv "
-                    "finishes: received "
-                    "%" PRIdPTR " byte message",
+                    "finishes: received %" PRIdPTR " byte message",
                     DebugTag().c_str(),
                     (*recv_message)->data.raw.slice_buffer.length);
           }
@@ -2402,8 +2400,7 @@ void PromiseBasedCall::StartRecvMessage(const grpc_op& op,
           if (grpc_call_trace.enabled()) {
             gpr_log(GPR_INFO,
                     "%s[call] PollRecvMessage: outstanding_recv "
-                    "finishes: received "
-                    "end-of-stream with error",
+                    "finishes: received end-of-stream with error",
                     DebugTag().c_str());
           }
           FailCompletion(completion);
@@ -2412,8 +2409,7 @@ void PromiseBasedCall::StartRecvMessage(const grpc_op& op,
           if (grpc_call_trace.enabled()) {
             gpr_log(GPR_INFO,
                     "%s[call] PollRecvMessage: outstanding_recv "
-                    "finishes: received "
-                    "end-of-stream",
+                    "finishes: received end-of-stream",
                     DebugTag().c_str());
           }
           *recv_message = nullptr;
@@ -3038,6 +3034,7 @@ void ServerPromiseBasedCall::CommitBatch(const grpc_op* ops, size_t nops,
         Spawn(
             "send_status_from_server", arena(),
             [this, metadata = std::move(metadata)]() mutable {
+              server_to_client_messages_->Close();
               send_trailing_metadata_.Set(std::move(metadata));
               return Empty{};
             },
