@@ -32,8 +32,10 @@
 #include <utility>
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/optional.h"
+#include "absl/types/variant.h"
 
 #include <grpc/grpc.h>
 #include <grpc/status.h>
@@ -543,7 +545,7 @@ auto ConnectedChannelStream::SendMessages(
           return std::move(message);
         });
     return Map(done, [](absl::StatusOr<MessageHandle> status) {
-      return std::move(status.status());
+      return status.status();
     });
   });
 }
@@ -668,7 +670,7 @@ ArenaPromise<ServerMetadataHandle> MakeClientCallPromise(
   return Map(
       TrySeq(TryJoin(std::move(send_initial_metadata),
                      stream->RecvMessages(call_args.server_to_client_messages)),
-             std::move(recv_trailing_metadata)),
+             recv_trailing_metadata),
       [stream = std::move(stream)](ServerMetadataHandle result) {
         stream->set_finished();
         return result;
@@ -878,7 +880,7 @@ ArenaPromise<ServerMetadataHandle> MakeServerCallPromise(
                         return std::move(next_result);
                       }),
                   [](absl::StatusOr<NextResult<ServerMetadataHandle>> status) {
-                    return std::move(status.status());
+                    return status.status();
                   });
             },
             Immediate(absl::CancelledError()));
