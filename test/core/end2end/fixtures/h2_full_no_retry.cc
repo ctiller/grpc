@@ -18,18 +18,15 @@
 
 #include <string.h>
 
-#include <string>
+#include <memory>
 
-#include "secure_fixture.h"
+#include "absl/functional/any_invocable.h"
 
 #include <grpc/grpc.h>
-#include <grpc/grpc_security.h>
-#include <grpc/support/log.h>
 
 #include "src/core/lib/channel/channel_args.h"
-#include "src/core/lib/gprpp/host_port.h"
 #include "test/core/end2end/end2end_tests.h"
-#include "test/core/util/port.h"
+#include "test/core/end2end/fixtures/secure_fixture.h"
 #include "test/core/util/test_config.h"
 
 class NoRetryFixture : public InsecureFixture {

@@ -63,24 +63,24 @@ static void drain_cq(grpc_completion_queue* cq) {
 }
 
 static void shutdown_server(CoreTestFixture* f) {
-  if (!f->server) return;
-  grpc_server_destroy(f->server);
-  f->server = nullptr;
+  if (!f->server()) return;
+  grpc_server_destroy(f->server());
+  f->server() = nullptr;
 }
 
 static void shutdown_client(CoreTestFixture* f) {
-  if (!f->client) return;
-  grpc_channel_destroy(f->client);
-  f->client = nullptr;
+  if (!f->client()) return;
+  grpc_channel_destroy(f->client());
+  f->client() = nullptr;
 }
 
 static void end_test(CoreTestFixture* f) {
   shutdown_server(f);
   shutdown_client(f);
 
-  grpc_completion_queue_shutdown(f->cq);
-  drain_cq(f->cq);
-  grpc_completion_queue_destroy(f->cq);
+  grpc_completion_queue_shutdown(f->cq());
+  drain_cq(f->cq());
+  grpc_completion_queue_destroy(f->cq());
 }
 
 static void test_max_age_forcibly_close(CoreTestConfiguration config) {

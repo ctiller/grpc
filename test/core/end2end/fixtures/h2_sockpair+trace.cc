@@ -64,8 +64,9 @@ static void server_setup_transport(void* ts, grpc_transport* transport) {
   grpc_core::ExecCtx exec_ctx;
   custom_fixture_data* fixture_data =
       static_cast<custom_fixture_data*>(f->fixture_data);
-  grpc_endpoint_add_to_pollset(fixture_data->ep.server, grpc_cq_pollset(f->cq));
-  grpc_core::Server* core_server = grpc_core::Server::FromC(f->server);
+  grpc_endpoint_add_to_pollset(fixture_data->ep.server,
+                               grpc_cq_pollset(f->cq()));
+  grpc_core::Server* core_server = grpc_core::Server::FromC(f->server());
   grpc_error_handle error = core_server->SetupTransport(
       transport, nullptr, core_server->channel_args(), nullptr);
   if (error.ok()) {
@@ -88,10 +89,10 @@ static void client_setup_transport(void* ts, grpc_transport* transport) {
   auto channel = grpc_core::Channel::Create(
       "socketpair-target", args, GRPC_CLIENT_DIRECT_CHANNEL, transport);
   if (channel.ok()) {
-    cs->f->client = channel->release()->c_ptr();
+    cs->f->client() = channel->release()->c_ptr();
     grpc_chttp2_transport_start_reading(transport, nullptr, nullptr, nullptr);
   } else {
-    cs->f->client = grpc_lame_client_channel_create(
+    cs->f->client() = grpc_lame_client_channel_create(
         nullptr, static_cast<grpc_status_code>(channel.status().code()),
         "lame channel");
     grpc_transport_destroy(transport);
@@ -134,9 +135,9 @@ static void chttp2_init_server_socketpair(
   auto* fixture_data = static_cast<custom_fixture_data*>(f->fixture_data);
   grpc_transport* transport;
   GPR_ASSERT(!f->server);
-  f->server = grpc_server_create(server_args, nullptr);
-  grpc_server_register_completion_queue(f->server, f->cq, nullptr);
-  grpc_server_start(f->server);
+  f->server() = grpc_server_create(server_args, nullptr);
+  grpc_server_register_completion_queue(f->server(), f->cq(), nullptr);
+  grpc_server_start(f->server());
   auto server_channel_args = grpc_core::CoreConfiguration::Get()
                                  .channel_args_preconditioning()
                                  .PreconditionChannelArgs(server_args);

@@ -22,6 +22,7 @@
 #include <memory>
 #include <string>
 
+#include "absl/functional/any_invocable.h"
 #include "absl/strings/str_format.h"
 
 #include <grpc/grpc.h>
@@ -37,9 +38,9 @@
 
 class HttpProxyFilter : public CoreTestFixture {
  public:
-  HttpProxyFilter(const grpc_core::ChannelArgs& client_args)
+  explicit HttpProxyFilter(const grpc_core::ChannelArgs& client_args)
       : proxy_(grpc_end2end_http_proxy_create(client_args.ToC().get())) {}
-  ~HttpProxyFilter() { grpc_end2end_http_proxy_destroy(proxy_); }
+  ~HttpProxyFilter() override { grpc_end2end_http_proxy_destroy(proxy_); }
 
  private:
   grpc_server* MakeServer(const grpc_core::ChannelArgs& args) override {

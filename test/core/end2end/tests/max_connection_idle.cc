@@ -50,7 +50,7 @@ static void simple_request_body(CoreTestConfiguration /*config*/,
                                 CoreTestFixture* f) {
   grpc_call* c;
   grpc_call* s;
-  grpc_core::CqVerifier cqv(f->cq);
+  grpc_core::CqVerifier cqv(f->cq());
   grpc_op ops[6];
   grpc_op* op;
   grpc_metadata_array initial_metadata_recv;
@@ -64,8 +64,8 @@ static void simple_request_body(CoreTestConfiguration /*config*/,
   char* peer;
 
   gpr_timespec deadline = grpc_timeout_seconds_to_deadline(30);
-  c = grpc_channel_create_call(f->client, nullptr, GRPC_PROPAGATE_DEFAULTS,
-                               f->cq, grpc_slice_from_static_string("/foo"),
+  c = grpc_channel_create_call(f->client(), nullptr, GRPC_PROPAGATE_DEFAULTS,
+                               f->cq(), grpc_slice_from_static_string("/foo"),
                                nullptr, deadline, nullptr);
   GPR_ASSERT(c);
 
@@ -107,9 +107,9 @@ static void simple_request_body(CoreTestConfiguration /*config*/,
                                 nullptr);
   GPR_ASSERT(GRPC_CALL_OK == error);
 
-  error =
-      grpc_server_request_call(f->server, &s, &call_details,
-                               &request_metadata_recv, f->cq, f->cq, tag(101));
+  error = grpc_server_request_call(f->server(), &s, &call_details,
+                                   &request_metadata_recv, f->cq(), f->cq(),
+                                   tag(101));
   GPR_ASSERT(GRPC_CALL_OK == error);
   cqv.Expect(tag(101), true);
   cqv.Verify();

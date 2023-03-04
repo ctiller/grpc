@@ -18,8 +18,10 @@
 
 #include <memory>
 
+#include "absl/functional/any_invocable.h"
 #include "absl/status/status.h"
 
+#include "src/core/lib/channel/channel_args.h"
 #include "src/core/lib/iomgr/error.h"
 #include "src/core/lib/iomgr/port.h"
 
@@ -32,7 +34,6 @@
 #include <grpc/grpc.h>
 #include <grpc/grpc_posix.h>
 #include <grpc/grpc_security.h>
-#include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
 
 #include "src/core/lib/iomgr/exec_ctx.h"
