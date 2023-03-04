@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef GRPC_CORE_E2E_TEST_CALL_H
-#define GRPC_CORE_E2E_TEST_CALL_H
+#ifndef GRPC_TEST_CORE_END2END_TEST_CALL_H
+#define GRPC_TEST_CORE_END2END_TEST_CALL_H
 
 #include <initializer_list>
 #include <memory>
@@ -112,4 +112,4 @@ Slice RandomSlice(size_t length);
 
 }  // namespace grpc_core
 
-#endif
+#endif  // GRPC_TEST_CORE_END2END_TEST_CALL_H
