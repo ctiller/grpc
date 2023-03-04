@@ -18,11 +18,14 @@
 
 #include <string.h>
 
+#include <memory>
+
+#include "absl/functional/any_invocable.h"
+
 #include <grpc/grpc.h>
-#include <grpc/support/alloc.h>
-#include <grpc/support/log.h>
 
 #include "src/core/ext/transport/inproc/inproc_transport.h"
+#include "src/core/lib/channel/channel_args.h"
 #include "test/core/end2end/end2end_tests.h"
 #include "test/core/util/test_config.h"
 

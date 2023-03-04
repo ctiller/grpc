@@ -68,7 +68,7 @@ void chttp2_init_client_fullstack(CoreTestFixture* f,
   fullstack_fixture_data* ffd =
       static_cast<fullstack_fixture_data*>(f->fixture_data);
   grpc_channel_credentials* creds = grpc_insecure_credentials_create();
-  f->client = grpc_channel_create(ffd->localaddr.c_str(), creds, client_args);
+  f->client() = grpc_channel_create(ffd->localaddr.c_str(), creds, client_args);
   grpc_channel_credentials_release(creds);
 }
 
@@ -76,17 +76,17 @@ void chttp2_init_server_fullstack(CoreTestFixture* f,
                                   const grpc_channel_args* server_args) {
   fullstack_fixture_data* ffd =
       static_cast<fullstack_fixture_data*>(f->fixture_data);
-  if (f->server) {
-    grpc_server_destroy(f->server);
+  if (f->server()) {
+    grpc_server_destroy(f->server());
   }
-  f->server = grpc_server_create(server_args, nullptr);
-  grpc_server_register_completion_queue(f->server, f->cq, nullptr);
+  f->server() = grpc_server_create(server_args, nullptr);
+  grpc_server_register_completion_queue(f->server(), f->cq(), nullptr);
   grpc_server_credentials* server_creds =
       grpc_insecure_server_credentials_create();
   GPR_ASSERT(grpc_server_add_http2_port(f->server, ffd->localaddr.c_str(),
                                         server_creds));
   grpc_server_credentials_release(server_creds);
-  grpc_server_start(f->server);
+  grpc_server_start(f->server());
 }
 
 void chttp2_tear_down_fullstack(CoreTestFixture* f) {

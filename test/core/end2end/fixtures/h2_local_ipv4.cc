@@ -18,13 +18,14 @@
 
 #include <unistd.h>
 
-#include <string>
+#include <memory>
 
-#include "local_util.h"
+#include "absl/functional/any_invocable.h"
 
 #include <grpc/grpc.h>
 #include <grpc/grpc_security_constants.h>
 
+#include "src/core/lib/channel/channel_args.h"
 #include "src/core/lib/gprpp/host_port.h"
 #include "test/core/end2end/end2end_tests.h"
 #include "test/core/end2end/fixtures/local_util.h"

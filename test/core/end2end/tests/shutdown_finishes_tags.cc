@@ -56,15 +56,15 @@ static void drain_cq(grpc_completion_queue* cq) {
 }
 
 static void shutdown_client(CoreTestFixture* f) {
-  if (!f->client) return;
-  grpc_channel_destroy(f->client);
-  f->client = nullptr;
+  if (!f->client()) return;
+  grpc_channel_destroy(f->client());
+  f->client() = nullptr;
 }
 
 static void end_test(CoreTestFixture* f) {
-  grpc_completion_queue_shutdown(f->cq);
-  drain_cq(f->cq);
-  grpc_completion_queue_destroy(f->cq);
+  grpc_completion_queue_shutdown(f->cq());
+  drain_cq(f->cq());
+  grpc_completion_queue_destroy(f->cq());
 }
 
 static void test_early_server_shutdown_finishes_tags(

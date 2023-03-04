@@ -20,11 +20,13 @@
 
 #include <memory>
 
+#include "absl/functional/any_invocable.h"
+
 #include <grpc/grpc.h>
 #include <grpc/grpc_security.h>
-#include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
 
+#include "src/core/lib/channel/channel_args.h"
 #include "test/core/end2end/end2end_tests.h"
 #include "test/core/end2end/fixtures/proxy.h"
 #include "test/core/util/test_config.h"

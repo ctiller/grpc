@@ -130,13 +130,11 @@ extern void resource_quota_server(CoreTestConfiguration config);
 extern void resource_quota_server_pre_init(void);
 extern void retry(CoreTestConfiguration config);
 extern void retry_pre_init(void);
-extern void retry_cancel_after_first_attempt_starts(
-    CoreTestConfiguration config);
+extern void retry_cancel_after_first_attempt_starts(CoreTestConfiguration config);
 extern void retry_cancel_after_first_attempt_starts_pre_init(void);
 extern void retry_cancel_during_delay(CoreTestConfiguration config);
 extern void retry_cancel_during_delay_pre_init(void);
-extern void retry_cancel_with_multiple_send_batches(
-    CoreTestConfiguration config);
+extern void retry_cancel_with_multiple_send_batches(CoreTestConfiguration config);
 extern void retry_cancel_with_multiple_send_batches_pre_init(void);
 extern void retry_cancellation(CoreTestConfiguration config);
 extern void retry_cancellation_pre_init(void);
@@ -144,11 +142,9 @@ extern void retry_disabled(CoreTestConfiguration config);
 extern void retry_disabled_pre_init(void);
 extern void retry_exceeds_buffer_size_in_delay(CoreTestConfiguration config);
 extern void retry_exceeds_buffer_size_in_delay_pre_init(void);
-extern void retry_exceeds_buffer_size_in_initial_batch(
-    CoreTestConfiguration config);
+extern void retry_exceeds_buffer_size_in_initial_batch(CoreTestConfiguration config);
 extern void retry_exceeds_buffer_size_in_initial_batch_pre_init(void);
-extern void retry_exceeds_buffer_size_in_subsequent_batch(
-    CoreTestConfiguration config);
+extern void retry_exceeds_buffer_size_in_subsequent_batch(CoreTestConfiguration config);
 extern void retry_exceeds_buffer_size_in_subsequent_batch_pre_init(void);
 extern void retry_lb_drop(CoreTestConfiguration config);
 extern void retry_lb_drop_pre_init(void);
@@ -156,14 +152,11 @@ extern void retry_lb_fail(CoreTestConfiguration config);
 extern void retry_lb_fail_pre_init(void);
 extern void retry_non_retriable_status(CoreTestConfiguration config);
 extern void retry_non_retriable_status_pre_init(void);
-extern void retry_non_retriable_status_before_recv_trailing_metadata_started(
-    CoreTestConfiguration config);
-extern void
-retry_non_retriable_status_before_recv_trailing_metadata_started_pre_init(void);
+extern void retry_non_retriable_status_before_recv_trailing_metadata_started(CoreTestConfiguration config);
+extern void retry_non_retriable_status_before_recv_trailing_metadata_started_pre_init(void);
 extern void retry_per_attempt_recv_timeout(CoreTestConfiguration config);
 extern void retry_per_attempt_recv_timeout_pre_init(void);
-extern void retry_per_attempt_recv_timeout_on_last_attempt(
-    CoreTestConfiguration config);
+extern void retry_per_attempt_recv_timeout_on_last_attempt(CoreTestConfiguration config);
 extern void retry_per_attempt_recv_timeout_on_last_attempt_pre_init(void);
 extern void retry_recv_initial_metadata(CoreTestConfiguration config);
 extern void retry_recv_initial_metadata_pre_init(void);
@@ -187,8 +180,7 @@ extern void retry_streaming(CoreTestConfiguration config);
 extern void retry_streaming_pre_init(void);
 extern void retry_streaming_after_commit(CoreTestConfiguration config);
 extern void retry_streaming_after_commit_pre_init(void);
-extern void retry_streaming_succeeds_before_replay_finished(
-    CoreTestConfiguration config);
+extern void retry_streaming_succeeds_before_replay_finished(CoreTestConfiguration config);
 extern void retry_streaming_succeeds_before_replay_finished_pre_init(void);
 extern void retry_throttled(CoreTestConfiguration config);
 extern void retry_throttled_pre_init(void);
@@ -196,8 +188,7 @@ extern void retry_too_many_attempts(CoreTestConfiguration config);
 extern void retry_too_many_attempts_pre_init(void);
 extern void retry_transparent_goaway(CoreTestConfiguration config);
 extern void retry_transparent_goaway_pre_init(void);
-extern void retry_transparent_max_concurrent_streams(
-    CoreTestConfiguration config);
+extern void retry_transparent_max_concurrent_streams(CoreTestConfiguration config);
 extern void retry_transparent_max_concurrent_streams_pre_init(void);
 extern void retry_transparent_not_sent_on_wire(CoreTestConfiguration config);
 extern void retry_transparent_not_sent_on_wire_pre_init(void);
@@ -327,7 +318,8 @@ void grpc_end2end_tests_pre_init(void) {
 }
 
 // NOLINTNEXTLINE(readability-function-size)
-void grpc_end2end_tests(int argc, char** argv, CoreTestConfiguration config) {
+void grpc_end2end_tests(int argc, char **argv,
+                        CoreTestConfiguration config) {
   int i;
 
   GPR_ASSERT(g_pre_init_called);
@@ -670,10 +662,7 @@ void grpc_end2end_tests(int argc, char** argv, CoreTestConfiguration config) {
       retry_non_retriable_status(config);
       continue;
     }
-    if (0 ==
-        strcmp(
-            "retry_non_retriable_status_before_recv_trailing_metadata_started",
-            argv[i])) {
+    if (0 == strcmp("retry_non_retriable_status_before_recv_trailing_metadata_started", argv[i])) {
       retry_non_retriable_status_before_recv_trailing_metadata_started(config);
       continue;
     }
@@ -681,8 +670,7 @@ void grpc_end2end_tests(int argc, char** argv, CoreTestConfiguration config) {
       retry_per_attempt_recv_timeout(config);
       continue;
     }
-    if (0 ==
-        strcmp("retry_per_attempt_recv_timeout_on_last_attempt", argv[i])) {
+    if (0 == strcmp("retry_per_attempt_recv_timeout_on_last_attempt", argv[i])) {
       retry_per_attempt_recv_timeout_on_last_attempt(config);
       continue;
     }
@@ -730,8 +718,7 @@ void grpc_end2end_tests(int argc, char** argv, CoreTestConfiguration config) {
       retry_streaming_after_commit(config);
       continue;
     }
-    if (0 ==
-        strcmp("retry_streaming_succeeds_before_replay_finished", argv[i])) {
+    if (0 == strcmp("retry_streaming_succeeds_before_replay_finished", argv[i])) {
       retry_streaming_succeeds_before_replay_finished(config);
       continue;
     }
@@ -807,6 +794,6 @@ void grpc_end2end_tests(int argc, char** argv, CoreTestConfiguration config) {
       write_buffering_at_end(config);
       continue;
     }
-    grpc_core::Crash(absl::StrFormat("not a test: '%s'", argv[i]));
+    grpc_core::Crash(absl::StrFormat( "not a test: '%s'", argv[i]));
   }
 }

@@ -21,6 +21,8 @@
 
 #include <stdint.h>
 
+#include <memory>
+
 #include "absl/functional/any_invocable.h"
 
 #include <grpc/grpc.h>
