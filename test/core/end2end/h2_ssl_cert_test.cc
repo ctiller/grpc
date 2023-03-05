@@ -286,13 +286,13 @@ static void drain_cq(grpc_completion_queue* cq) {
 // Shuts down the server.
 // Side effect - Also shuts down and drains the completion queue.
 static void shutdown_server(CoreTestFixture* f) {
-  if (!f->server) return;
-  grpc_server_shutdown_and_notify(f->server, f->cq(),
+  if (!f->server()) return;
+  grpc_server_shutdown_and_notify(f->server(), f->cq(),
                                   grpc_core::CqVerifier::tag(1000));
   grpc_completion_queue_shutdown(f->cq());
   drain_cq(f->cq());
-  grpc_server_destroy(f->server);
-  f->server = nullptr;
+  grpc_server_destroy(f->server());
+  f->server() = nullptr;
 }
 
 static void end_test(CoreTestFixture* f) {

@@ -523,7 +523,7 @@ TEST_P(AsyncEnd2endTest, AsyncNextRpc) {
   EXPECT_EQ(send_request.message(), recv_request.message());
 
   send_response.set_message(recv_request.message());
-  response_writer.Finish(send_response, Status::OK, Verifier::tag(3));
+  response_writer.Finish(send_response, Status::OK, tag(3));
   Verifier().Expect(3, true).Expect(4, true).Verify(
       cq_.get(), std::chrono::system_clock::time_point::max());
 
@@ -559,18 +559,16 @@ TEST_P(AsyncEnd2endTest, DoThenAsyncNextRpc) {
   auto resp_writer_ptr = &response_writer;
   auto lambda_2 = [&, this, resp_writer_ptr]() {
     service_->RequestEcho(&srv_ctx, &recv_request, resp_writer_ptr, cq_.get(),
-                          cq_.get(), grpc_core::CqVerifier::tag(2));
+                          cq_.get(), tag(2));
   };
-  response_reader->Finish(&recv_response, &recv_status,
-                          grpc_core::CqVerifier::tag(4));
+  response_reader->Finish(&recv_response, &recv_status, tag(4));
 
   Verifier().Expect(2, true).Verify(cq_.get(), time_limit, lambda_2);
   EXPECT_EQ(send_request.message(), recv_request.message());
 
   send_response.set_message(recv_request.message());
   auto lambda_3 = [resp_writer_ptr, send_response]() {
-    resp_writer_ptr->Finish(send_response, Status::OK,
-                            grpc_core::CqVerifier::tag(3));
+    resp_writer_ptr->Finish(send_response, Status::OK, tag(3));
   };
   Verifier().Expect(3, true).Expect(4, true).Verify(
       cq_.get(), std::chrono::system_clock::time_point::max(), lambda_3);
@@ -594,21 +592,20 @@ TEST_P(AsyncEnd2endTest, SimpleClientStreaming) {
 
   send_request.set_message(GetParam().message_content);
   std::unique_ptr<ClientAsyncWriter<EchoRequest>> cli_stream(
-      stub_->AsyncRequestStream(&cli_ctx, &recv_response, cq_.get(),
-                                grpc_core::CqVerifier::tag(1)));
+      stub_->AsyncRequestStream(&cli_ctx, &recv_response, cq_.get(), tag(1)));
 
   service_->RequestRequestStream(&srv_ctx, &srv_stream, cq_.get(), cq_.get(),
-                                 grpc_core::CqVerifier::tag(2));
+                                 tag(2));
 
   Verifier().Expect(2, true).Expect(1, true).Verify(cq_.get());
 
-  cli_stream->Write(send_request, grpc_core::CqVerifier::tag(3));
-  srv_stream.Read(&recv_request, grpc_core::CqVerifier::tag(4));
+  cli_stream->Write(send_request, tag(3));
+  srv_stream.Read(&recv_request, tag(4));
   Verifier().Expect(3, true).Expect(4, true).Verify(cq_.get());
   EXPECT_EQ(send_request.message(), recv_request.message());
 
-  cli_stream->Write(send_request, grpc_core::CqVerifier::tag(5));
-  srv_stream.Read(&recv_request, grpc_core::CqVerifier::tag(6));
+  cli_stream->Write(send_request, tag(5));
+  srv_stream.Read(&recv_request, tag(6));
   Verifier().Expect(5, true).Expect(6, true).Verify(cq_.get());
 
   EXPECT_EQ(send_request.message(), recv_request.message());
