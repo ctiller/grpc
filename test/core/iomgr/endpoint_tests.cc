@@ -336,17 +336,17 @@ static void multiple_shutdown_test(grpc_endpoint_test_config config) {
                      /*urgent=*/false, /*min_progress_size=*/1);
   wait_for_fail_count(&fail_count, 2);
   grpc_slice_buffer_add(&slice_buffer, grpc_slice_from_copied_string("a"));
-  grpc_endpoint_write(f->client() _ep, &slice_buffer,
+  grpc_endpoint_write(f.client() _ep, &slice_buffer,
                       GRPC_CLOSURE_CREATE(inc_on_failure, &fail_count,
                                           grpc_schedule_on_exec_ctx),
                       nullptr, /*max_frame_size=*/INT_MAX);
   wait_for_fail_count(&fail_count, 3);
-  grpc_endpoint_shutdown(f->client() _ep, GRPC_ERROR_CREATE("Test Shutdown"));
+  grpc_endpoint_shutdown(f.client() _ep, GRPC_ERROR_CREATE("Test Shutdown"));
   wait_for_fail_count(&fail_count, 3);
 
   grpc_slice_buffer_destroy(&slice_buffer);
 
-  grpc_endpoint_destroy(f->client() _ep);
+  grpc_endpoint_destroy(f.client() _ep);
   grpc_endpoint_destroy(f->server() _ep);
 }
 

@@ -329,7 +329,7 @@ static void test_pings_without_data(const CoreTestConfiguration& config) {
 
   // Also expect the previously blocked pings to complete with an error
   cqv.Expect(tan(200 + MAX_PING_STRIKES + 1), false);
-  cqv.Expect(tag(200 + MAX_PING_STRIKES + 2), false);
+  cqv.Expect(tan(200 + MAX_PING_STRIKES + 2), false);
 
   cqv.Verify();
 

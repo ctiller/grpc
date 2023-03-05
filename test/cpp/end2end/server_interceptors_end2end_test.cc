@@ -465,12 +465,12 @@ TEST_F(ServerInterceptorsAsyncEnd2endTest, BidiStreamingTest) {
   Verifier().Expect(5, true).Expect(6, true).Verify(cq.get());
   EXPECT_EQ(send_response.message(), recv_response.message());
 
-  cli_stream->WritesDone(Verifier::tag(7));
-  srv_stream.Read(&recv_request, grpc_core::CqVerifier::tag(8));
+  cli_stream->WritesDone(tag(7));
+  srv_stream.Read(&recv_request, tag(8));
   Verifier().Expect(7, true).Expect(8, false).Verify(cq.get());
 
-  srv_stream.Finish(Status::OK, grpc_core::CqVerifier::tag(9));
-  cli_stream->Finish(&recv_status, grpc_core::CqVerifier::tag(10));
+  srv_stream.Finish(Status::OK, tag(9));
+  cli_stream->Finish(&recv_status, tag(10));
   Verifier().Expect(9, true).Expect(10, true).Verify(cq.get());
 
   EXPECT_TRUE(recv_status.ok());
@@ -532,19 +532,18 @@ TEST_F(ServerInterceptorsAsyncEnd2endTest, GenericRPCTest) {
   std::thread request_call([cq]() { Verifier().Expect(4, true).Verify(cq); });
   std::unique_ptr<GenericClientAsyncReaderWriter> call =
       generic_stub.PrepareCall(&cli_ctx, kMethodName, &cli_cq);
-  call->StartCall(grpc_core::CqVerifier::tag(1));
+  call->StartCall(tag(1));
   Verifier().Expect(1, true).Verify(&cli_cq);
   std::unique_ptr<ByteBuffer> send_buffer =
       SerializeToByteBuffer(&send_request);
-  call->Write(*send_buffer, grpc_core::CqVerifier::tag(2));
+  call->Write(*send_buffer, tag(2));
   // Send ByteBuffer can be destroyed after calling Write.
   send_buffer.reset();
   Verifier().Expect(2, true).Verify(&cli_cq);
-  call->WritesDone(grpc_core::CqVerifier::tag(3));
+  call->WritesDone(tag(3));
   Verifier().Expect(3, true).Verify(&cli_cq);
 
-  service.RequestCall(&srv_ctx, &stream, srv_cq.get(), srv_cq.get(),
-                      grpc_core::CqVerifier::tag(4));
+  service.RequestCall(&srv_ctx, &stream, srv_cq.get(), srv_cq.get(), tag(4));
 
   request_call.join();
   EXPECT_EQ(kMethodName, srv_ctx.method());
@@ -552,14 +551,14 @@ TEST_F(ServerInterceptorsAsyncEnd2endTest, GenericRPCTest) {
   srv_ctx.AddTrailingMetadata("testkey", "testvalue");
 
   ByteBuffer recv_buffer;
-  stream.Read(&recv_buffer, grpc_core::CqVerifier::tag(5));
+  stream.Read(&recv_buffer, tag(5));
   Verifier().Expect(5, true).Verify(srv_cq.get());
   EXPECT_TRUE(ParseFromByteBuffer(&recv_buffer, &recv_request));
   EXPECT_EQ(send_request.message(), recv_request.message());
 
   send_response.set_message(recv_request.message());
   send_buffer = SerializeToByteBuffer(&send_response);
-  stream.Write(*send_buffer, grpc_core::CqVerifier::tag(6));
+  stream.Write(*send_buffer, tag(6));
   send_buffer.reset();
   Verifier().Expect(6, true).Verify(srv_cq.get());
 

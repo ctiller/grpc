@@ -270,13 +270,13 @@ static void drain_cq(grpc_completion_queue* /*cq*/) {
 }
 
 static void shutdown_server(CoreTestFixture* f) {
-  if (!f->server) return;
+  if (!f->server()) return;
   grpc_server_shutdown_and_notify(f->server, f->cq(),
                                   grpc_core::CqVerifier::tag(1));
   expect_tag(1, true);
   verify_tags(grpc_timeout_seconds_to_deadline(5));
-  grpc_server_destroy(f->server);
-  f->server = nullptr;
+  grpc_server_destroy(f->server());
+  f->server() = nullptr;
 }
 
 static void simple_request_body(CoreTestConfiguration /* config */,
