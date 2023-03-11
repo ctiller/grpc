@@ -275,108 +275,108 @@ END2END_TESTS = {
     # OpenCensus can only be built via Bazel so far.
     # 'load_reporting_hook': _test_options(),
     "ping_pong_streaming": _test_options(tags = ["flow_control_test"]),
-#    "ping": _test_options(needs_fullstack = True, proxyable = False),
-#    "proxy_auth": _test_options(needs_proxy_auth = True),
-#    "registered_call": _test_options(),
-#    "request_with_flags": _test_options(proxyable = False),
-#    "request_with_payload": _test_options(),
-#    "retry": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_cancellation": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_cancel_during_delay": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_cancel_with_multiple_send_batches": _test_options(
-#        # TODO(jtattermusch): too long bazel test name makes the test flaky on Windows RBE
-#        # See b/151617965
-#        short_name = "retry_cancel3",
-#        needs_client_channel = True,
-#        needs_retry = True,
-#    ),
-#    "retry_cancel_after_first_attempt_starts": _test_options(
-#        # TODO(jtattermusch): too long bazel test name makes the test flaky on Windows RBE
-#        # See b/151617965
-#        short_name = "retry_cancel4",
-#        needs_client_channel = True,
-#        needs_retry = True,
-#    ),
-#    "retry_disabled": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_exceeds_buffer_size_in_delay": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_exceeds_buffer_size_in_initial_batch": _test_options(
-#        needs_client_channel = True,
-#        # TODO(jtattermusch): too long bazel test name makes the test flaky on Windows RBE
-#        # See b/151617965
-#        short_name = "retry_exceeds_buffer_size_in_init",
-#        needs_retry = True,
-#    ),
-#    "retry_exceeds_buffer_size_in_subsequent_batch": _test_options(
-#        needs_client_channel = True,
-#        # TODO(jtattermusch): too long bazel test name makes the test flaky on Windows RBE
-#        # See b/151617965
-#        short_name = "retry_exceeds_buffer_size_in_subseq",
-#        needs_retry = True,
-#    ),
-#    "retry_lb_drop": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_lb_fail": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_non_retriable_status": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_non_retriable_status_before_recv_trailing_metadata_started": _test_options(
-#        needs_client_channel = True,
-#        # TODO(jtattermusch): too long bazel test name makes the test flaky on Windows RBE
-#        # See b/151617965
-#        short_name = "retry_non_retriable_status2",
-#        needs_retry = True,
-#    ),
-#    "retry_per_attempt_recv_timeout": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_per_attempt_recv_timeout_on_last_attempt": _test_options(
-#        needs_client_channel = True,
-#        # TODO(jtattermusch): too long bazel test name makes the test flaky on Windows RBE
-#        # See b/151617965
-#        short_name = "retry_per_attempt_recv_timeout2",
-#        needs_retry = True,
-#    ),
-#    "retry_recv_initial_metadata": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_recv_message": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_recv_message_replay": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_recv_trailing_metadata_error": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_send_initial_metadata_refs": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_send_op_fails": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_send_recv_batch": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_server_pushback_delay": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_server_pushback_disabled": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_streaming": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_streaming_after_commit": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_streaming_succeeds_before_replay_finished": _test_options(
-#        needs_client_channel = True,
-#        # TODO(jtattermusch): too long bazel test name makes the test flaky on Windows RBE
-#        # See b/151617965
-#        short_name = "retry_streaming2",
-#        needs_retry = True,
-#    ),
-#    "retry_throttled": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_too_many_attempts": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_transparent_goaway": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_transparent_not_sent_on_wire": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_transparent_max_concurrent_streams": _test_options(
-#        needs_client_channel = True,
-#        proxyable = False,
-#        # TODO(jtattermusch): too long bazel test name makes the test flaky on Windows RBE
-#        # See b/151617965
-#        short_name = "retry_transparent_mcs",
-#        needs_retry = True,
-#    ),
-#    "retry_unref_before_finish": _test_options(needs_client_channel = True, needs_retry = True),
-#    "retry_unref_before_recv": _test_options(needs_client_channel = True, needs_retry = True),
-#    "server_finishes_request": _test_options(),
-#    "server_streaming": _test_options(needs_http2 = True),
-#    "shutdown_finishes_calls": _test_options(),
-#    "shutdown_finishes_tags": _test_options(),
-#    "simple_delayed_request": _test_options(needs_fullstack = True),
-#    "simple_metadata": _test_options(),
-#    "simple_request": _test_options(),
-#    "streaming_error_response": _test_options(),
-#    "trailing_metadata": _test_options(),
-#    "authority_not_supported": _test_options(),
-#    "filter_latency": _test_options(),
-#    "filter_status_code": _test_options(),
-#    "write_buffering": _test_options(needs_write_buffering = True),
-#    "write_buffering_at_end": _test_options(needs_write_buffering = True),
+    #    "ping": _test_options(needs_fullstack = True, proxyable = False),
+    #    "proxy_auth": _test_options(needs_proxy_auth = True),
+    #    "registered_call": _test_options(),
+    #    "request_with_flags": _test_options(proxyable = False),
+    #    "request_with_payload": _test_options(),
+    #    "retry": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_cancellation": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_cancel_during_delay": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_cancel_with_multiple_send_batches": _test_options(
+    #        # TODO(jtattermusch): too long bazel test name makes the test flaky on Windows RBE
+    #        # See b/151617965
+    #        short_name = "retry_cancel3",
+    #        needs_client_channel = True,
+    #        needs_retry = True,
+    #    ),
+    #    "retry_cancel_after_first_attempt_starts": _test_options(
+    #        # TODO(jtattermusch): too long bazel test name makes the test flaky on Windows RBE
+    #        # See b/151617965
+    #        short_name = "retry_cancel4",
+    #        needs_client_channel = True,
+    #        needs_retry = True,
+    #    ),
+    #    "retry_disabled": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_exceeds_buffer_size_in_delay": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_exceeds_buffer_size_in_initial_batch": _test_options(
+    #        needs_client_channel = True,
+    #        # TODO(jtattermusch): too long bazel test name makes the test flaky on Windows RBE
+    #        # See b/151617965
+    #        short_name = "retry_exceeds_buffer_size_in_init",
+    #        needs_retry = True,
+    #    ),
+    #    "retry_exceeds_buffer_size_in_subsequent_batch": _test_options(
+    #        needs_client_channel = True,
+    #        # TODO(jtattermusch): too long bazel test name makes the test flaky on Windows RBE
+    #        # See b/151617965
+    #        short_name = "retry_exceeds_buffer_size_in_subseq",
+    #        needs_retry = True,
+    #    ),
+    #    "retry_lb_drop": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_lb_fail": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_non_retriable_status": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_non_retriable_status_before_recv_trailing_metadata_started": _test_options(
+    #        needs_client_channel = True,
+    #        # TODO(jtattermusch): too long bazel test name makes the test flaky on Windows RBE
+    #        # See b/151617965
+    #        short_name = "retry_non_retriable_status2",
+    #        needs_retry = True,
+    #    ),
+    #    "retry_per_attempt_recv_timeout": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_per_attempt_recv_timeout_on_last_attempt": _test_options(
+    #        needs_client_channel = True,
+    #        # TODO(jtattermusch): too long bazel test name makes the test flaky on Windows RBE
+    #        # See b/151617965
+    #        short_name = "retry_per_attempt_recv_timeout2",
+    #        needs_retry = True,
+    #    ),
+    #    "retry_recv_initial_metadata": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_recv_message": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_recv_message_replay": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_recv_trailing_metadata_error": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_send_initial_metadata_refs": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_send_op_fails": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_send_recv_batch": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_server_pushback_delay": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_server_pushback_disabled": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_streaming": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_streaming_after_commit": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_streaming_succeeds_before_replay_finished": _test_options(
+    #        needs_client_channel = True,
+    #        # TODO(jtattermusch): too long bazel test name makes the test flaky on Windows RBE
+    #        # See b/151617965
+    #        short_name = "retry_streaming2",
+    #        needs_retry = True,
+    #    ),
+    #    "retry_throttled": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_too_many_attempts": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_transparent_goaway": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_transparent_not_sent_on_wire": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_transparent_max_concurrent_streams": _test_options(
+    #        needs_client_channel = True,
+    #        proxyable = False,
+    #        # TODO(jtattermusch): too long bazel test name makes the test flaky on Windows RBE
+    #        # See b/151617965
+    #        short_name = "retry_transparent_mcs",
+    #        needs_retry = True,
+    #    ),
+    #    "retry_unref_before_finish": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "retry_unref_before_recv": _test_options(needs_client_channel = True, needs_retry = True),
+    #    "server_finishes_request": _test_options(),
+    #    "server_streaming": _test_options(needs_http2 = True),
+    #    "shutdown_finishes_calls": _test_options(),
+    #    "shutdown_finishes_tags": _test_options(),
+    #    "simple_delayed_request": _test_options(needs_fullstack = True),
+    #    "simple_metadata": _test_options(),
+    #    "simple_request": _test_options(),
+    #    "streaming_error_response": _test_options(),
+    #    "trailing_metadata": _test_options(),
+    #    "authority_not_supported": _test_options(),
+    #    "filter_latency": _test_options(),
+    #    "filter_status_code": _test_options(),
+    #    "write_buffering": _test_options(needs_write_buffering = True),
+    #    "write_buffering_at_end": _test_options(needs_write_buffering = True),
 }
 
 def _compatible(fopt, topt):

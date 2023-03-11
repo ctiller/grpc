@@ -2824,6 +2824,7 @@ Pod::Spec.new do |s|
                       'test/core/end2end/tests/cancel_test_helpers.h',
                       'test/core/end2end/tests/no_op.cc',
                       'test/core/end2end/tests/payload.cc',
+                      'test/core/end2end/tests/ping_pong_streaming.cc',
                       'test/core/event_engine/test_init.cc',
                       'test/core/event_engine/test_init.h',
                       'test/core/util/build.cc',

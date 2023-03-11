@@ -193,6 +193,7 @@
         'test/core/end2end/fixtures/proxy.cc',
         'test/core/end2end/tests/no_op.cc',
         'test/core/end2end/tests/payload.cc',
+        'test/core/end2end/tests/ping_pong_streaming.cc',
         'test/core/util/test_lb_policies.cc',
       ],
     },
