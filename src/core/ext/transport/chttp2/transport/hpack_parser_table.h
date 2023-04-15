@@ -25,6 +25,8 @@
 
 #include <vector>
 
+#include "absl/status/status.h"
+
 #include "src/core/ext/transport/chttp2/transport/hpack_constants.h"
 #include "src/core/lib/gprpp/no_destruct.h"
 #include "src/core/lib/iomgr/error.h"
@@ -44,8 +46,12 @@ class HPackTable {
 
   void SetMaxBytes(uint32_t max_bytes);
   grpc_error_handle SetCurrentTableSize(uint32_t bytes);
+  uint32_t current_table_size() { return current_table_bytes_; }
 
-  using Memento = ParsedMetadata<grpc_metadata_batch>;
+  struct Memento {
+    ParsedMetadata<grpc_metadata_batch> md;
+    absl::Status parse_status;
+  };
 
   // Lookup, but don't ref.
   const Memento* Lookup(uint32_t index) const {
@@ -63,10 +69,14 @@ class HPackTable {
   }
 
   // add a table entry to the index
-  grpc_error_handle Add(Memento md) GRPC_MUST_USE_RESULT;
+  absl::Status Add(Memento md) GRPC_MUST_USE_RESULT;
+  void AddLargerThanCurrentTableSize();
 
   // Current entry count in the table.
   uint32_t num_entries() const { return entries_.num_entries(); }
+
+  // Current size of the table.
+  uint32_t test_only_table_size() const { return mem_used_; }
 
  private:
   struct StaticMementos {

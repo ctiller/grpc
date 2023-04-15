@@ -25,6 +25,8 @@
 
 #include <vector>
 
+#include "hpack_parser_table.h"
+
 #include <grpc/slice.h>
 
 #include "src/core/ext/transport/chttp2/transport/frame.h"
@@ -92,7 +94,7 @@ class HPackParser {
   void FinishFrame();
 
   // Retrieve the associated hpack table (for tests, debugging)
-  HPackTable* hpack_table() { return &table_; }
+  HPackTable* hpack_table() { return &state_.hpack_table; }
   // Is the current frame a boundary of some sort
   bool is_boundary() const { return boundary_ != Boundary::None; }
   // Is the current frame the end of a stream
@@ -102,16 +104,127 @@ class HPackParser {
   // Helper classes: see implementation
   class Parser;
   class Input;
-  class String;
+
+  // Helper to parse a string and turn it into a slice with appropriate memory
+  // management characteristics
+  class String {
+   public:
+    // ParseResult carries both a ParseStatus and the parsed string
+    struct ParseResult;
+    // Result of parsing a string
+    enum class ParseStatus {
+      // Parsed OK
+      kOk,
+      // Parse reached end of the current frame
+      kEof,
+      // Parse failed due to a huffman decode error
+      kParseHuffFailed,
+      // Parse failed due to a base64 decode error
+      kUnbase64Failed,
+    };
+
+    String() : value_(absl::Span<const uint8_t>()) {}
+    String(const String&) = delete;
+    String& operator=(const String&) = delete;
+    String(String&& other) noexcept : value_(std::move(other.value_)) {
+      other.value_ = absl::Span<const uint8_t>();
+    }
+    String& operator=(String&& other) noexcept {
+      value_ = std::move(other.value_);
+      other.value_ = absl::Span<const uint8_t>();
+      return *this;
+    }
+
+    // Take the value and leave this empty
+    Slice Take();
+
+    // Return a reference to the value as a string view
+    absl::string_view string_view() const;
+
+    // Parse a non-binary string
+    static ParseResult Parse(Input* input, bool is_huff, size_t length);
+
+    // Parse a binary string
+    static ParseResult ParseBinary(Input* input, bool is_huff, size_t length);
+
+   private:
+    void AppendBytes(const uint8_t* data, size_t length);
+    explicit String(std::vector<uint8_t> v) : value_(std::move(v)) {}
+    explicit String(absl::Span<const uint8_t> v) : value_(v) {}
+    String(grpc_slice_refcount* r, const uint8_t* begin, const uint8_t* end)
+        : value_(Slice::FromRefcountAndBytes(r, begin, end)) {}
+
+    // Parse some huffman encoded bytes, using output(uint8_t b) to emit each
+    // decoded byte.
+    template <typename Out>
+    static ParseStatus ParseHuff(Input* input, uint32_t length, Out output);
+
+    // Parse some uncompressed string bytes.
+    static ParseResult ParseUncompressed(Input* input, uint32_t length,
+                                         uint32_t wire_size);
+
+    // Turn base64 encoded bytes into not base64 encoded bytes.
+    static ParseResult Unbase64(String s);
+
+    // Main loop for Unbase64
+    static absl::optional<std::vector<uint8_t>> Unbase64Loop(
+        const uint8_t* cur, const uint8_t* end);
+
+    absl::variant<Slice, absl::Span<const uint8_t>, std::vector<uint8_t>>
+        value_;
+  };
+
+  // Prefix for a string
+  struct StringPrefix {
+    // Number of bytes in input for string
+    uint32_t length;
+    // Is it huffman compressed
+    bool huff;
+
+    std::string ToString() const {
+      return absl::StrCat(length, " bytes ",
+                          huff ? "huffman compressed" : "uncompressed");
+    }
+  };
+
+  enum class ParseState : uint8_t {
+    kTop,
+    kParsingKeyLength,
+    kParsingKeyBody,
+    kSkippingKeyBody,
+    kParsingValueLength,
+    kParsingValueBody,
+    kSkippingValueLength,
+    kSkippingValueBody,
+  };
+
+  struct InterSliceState {
+    HPackTable hpack_table;
+    // Length of frame so far.
+    uint32_t frame_length;
+    // Length of the string being parsed
+    uint32_t string_length;
+    uint8_t dynamic_table_updates_allowed;
+    ParseState parse_state = ParseState::kTop;
+    RandomEarlyDetection metadata_early_detection;
+    bool add_to_table;
+    bool is_string_huff_compressed;
+    bool is_binary_header;
+    absl::variant<const HPackTable::Memento*, Slice> key;
+  };
 
   grpc_error_handle ParseInput(Input input, bool is_last);
-  bool ParseInputInner(Input* input, bool is_last);
+  void ParseInputInner(Input* input);
+  GPR_ATTRIBUTE_NOINLINE
+  void HandleMetadataSoftSizeLimitExceeded(Input* input);
 
   // Target metadata buffer
   grpc_metadata_batch* metadata_buffer_ = nullptr;
 
   // Bytes that could not be parsed last parsing round
   std::vector<uint8_t> unparsed_bytes_;
+  // How many bytes would be needed before progress could be made?
+  size_t min_progress_size_ = 0;
   // Buffer kind of boundary
   // TODO(ctiller): see if we can move this argument to Parse, and avoid
   // buffering.
@@ -120,15 +233,9 @@ class HPackParser {
   // TODO(ctiller): see if we can move this argument to Parse, and avoid
   // buffering.
   Priority priority_;
-  uint8_t dynamic_table_updates_allowed_;
-  // Length of frame so far.
-  uint32_t frame_length_;
-  RandomEarlyDetection metadata_early_detection_;
   // Information for logging
   LogInfo log_info_;
-
-  // hpack table
-  HPackTable table_;
+  InterSliceState state_;
 };
 
 }  // namespace grpc_core

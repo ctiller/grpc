@@ -37,8 +37,9 @@
 #include "absl/types/optional.h"
 #include "absl/types/span.h"
 #include "absl/types/variant.h"
+#include "hpack_parser_table.h"
 
-#include <grpc/status.h>
+#include <grpc/slice.h>
 #include <grpc/support/log.h>
 
 #include "src/core/ext/transport/chttp2/transport/decode_huff.h"
@@ -46,9 +47,12 @@
 #include "src/core/lib/debug/stats.h"
 #include "src/core/lib/debug/stats_data.h"
 #include "src/core/lib/debug/trace.h"
+#include "src/core/lib/gprpp/crash.h"
+#include "src/core/lib/gprpp/match.h"
 #include "src/core/lib/gprpp/status_helper.h"
 #include "src/core/lib/slice/slice.h"
 #include "src/core/lib/slice/slice_refcount.h"
+#include "src/core/lib/surface/validate_metadata.h"
 #include "src/core/lib/transport/parsed_metadata.h"
 
 // IWYU pragma: no_include <type_traits>
@@ -80,6 +84,41 @@ struct Base64InverseTable {
 };
 
 constexpr Base64InverseTable kBase64InverseTable;
+
+absl::Status EnsureStreamError(absl::Status error) {
+  if (error.ok()) return error;
+  return grpc_error_set_int(std::move(error), StatusIntProperty::kStreamId, 0);
+}
+
+bool IsStreamError(const absl::Status& status) {
+  intptr_t stream_id;
+  return grpc_error_get_int(status, grpc_core::StatusIntProperty::kStreamId,
+                            &stream_id);
+}
+
+class MetadataSizeLimitExceededEncoder {
+ public:
+  explicit MetadataSizeLimitExceededEncoder(std::string& summary)
+      : summary_(summary) {}
+
+  void Encode(const Slice& key, const Slice& value) {
+    AddToSummary(key.as_string_view(), value.size());
+  }
+
+  template <typename Key, typename Value>
+  void Encode(Key, const Value& value) {
+    AddToSummary(Key::key(), EncodedSizeOfKey(Key(), value));
+  }
+
+ private:
+  void AddToSummary(absl::string_view key,
+                    size_t value_length) GPR_ATTRIBUTE_NOINLINE {
+    absl::StrAppend(&summary_, " ", key, ":",
+                    hpack_constants::SizeForEntry(key.size(), value_length),
+                    "B");
+  }
+  std::string& summary_;
+};
 }  // namespace
 
 // Input tracks the current byte through the input data and provides it
@@ -121,7 +160,8 @@ class HPackParser::Input {
   // of stream
   absl::optional<uint8_t> Next() {
     if (end_of_stream()) {
-      return UnexpectedEOF(absl::optional<uint8_t>());
+      UnexpectedEOF(1);
+      return absl::optional<uint8_t>();
     }
     return *begin_++;
   }
@@ -176,18 +216,13 @@ class HPackParser::Input {
     return ParseVarintOutOfRange(value, *cur);
   }
 
-  // Prefix for a string
-  struct StringPrefix {
-    // Number of bytes in input for string
-    uint32_t length;
-    // Is it huffman compressed
-    bool huff;
-  };
-
   // Parse a string prefix
   absl::optional<StringPrefix> ParseStringPrefix() {
     auto cur = Next();
-    if (!cur.has_value()) return {};
+    if (!cur.has_value()) {
+      GPR_DEBUG_ASSERT(eof_error());
+      return {};
+    }
     // Huffman if the top bit is 1
     const bool huff = (*cur & 0x80) != 0;
     // String length
@@ -195,14 +230,22 @@ class HPackParser::Input {
     if (strlen == 0x7f) {
       // all ones ==> varint string length
       auto v = ParseVarint(0x7f);
-      if (!v.has_value()) return {};
+      if (!v.has_value()) {
+        GPR_DEBUG_ASSERT(eof_error());
+        return {};
+      }
       strlen = *v;
     }
     return StringPrefix{strlen, huff};
   }
 
   // Check if we saw an EOF.. must be verified before looking at TakeError
-  bool eof_error() const { return eof_error_; }
+  bool eof_error() const {
+    return min_progress_size_ != 0 || (!error_.ok() && !IsStreamError(error_));
+  }
+
+  // Minimum number of bytes to unstuck the current parse
+  size_t min_progress_size() const { return min_progress_size_; }
 
   // Extract the parse error, leaving the current error as NONE.
   grpc_error_handle TakeError() {
@@ -211,38 +254,56 @@ class HPackParser::Input {
     return out;
   }
 
-  // Set the current error - allows the rest of the code not to need to pass
-  // around StatusOr<> which would be prohibitive here.
-  GPR_ATTRIBUTE_NOINLINE void SetError(grpc_error_handle error) {
-    if (!error_.ok() || eof_error_) {
+  bool has_error() const { return !error_.ok(); }
+
+  // Set the current error - tweaks the error to include a stream id so that
+  // chttp2 does not close the connection.
+  // Intended for errors that are specific to a stream and recoverable.
+  // Callers should ensure that any hpack table updates happen.
+  GPR_ATTRIBUTE_NOINLINE void SetErrorAndContinueParsing(
+      grpc_error_handle error) {
+    GPR_ASSERT(!error.ok());
+    // StreamId is used as a signal to skip this stream but keep the connection
+    // alive
+    SetError(EnsureStreamError(std::move(error)));
+  }
+
+  // Set the current error, and skip past remaining bytes.
+  // Intended for unrecoverable errors, with the expectation that they will
+  // close the connection on return to chttp2.
+  GPR_ATTRIBUTE_NOINLINE void SetErrorAndStopParsing(grpc_error_handle error) {
+    GPR_ASSERT(!error.ok());
+    SetError(std::move(error));
+    begin_ = end_;
+  }
+
+  // Set the error to an unexpected eof
+  void UnexpectedEOF(size_t min_progress_size) {
+    GPR_ASSERT(min_progress_size > 0);
+    if (min_progress_size_ != 0 || (!error_.ok() && !IsStreamError(error_))) {
       return;
     }
-    error_ = error;
-    begin_ = end_;
-  }
-
-  // If no error is set, set it to the value produced by error_factory.
-  // Return return_value unchanged.
-  template <typename F, typename T>
-  GPR_ATTRIBUTE_NOINLINE T MaybeSetErrorAndReturn(F error_factory,
-                                                  T return_value) {
-    if (!error_.ok() || eof_error_) return return_value;
-    error_ = error_factory();
-    begin_ = end_;
-    return return_value;
-  }
-
-  // Set the error to an unexpected eof, and return result (code golfed as this
-  // is a common case)
-  template <typename T>
-  T UnexpectedEOF(T return_value) {
-    if (!error_.ok()) return return_value;
-    eof_error_ = true;
-    return return_value;
+    // Set min progress size, taking into account bytes parsed already but not
+    // consumed.
+    min_progress_size_ = min_progress_size + (begin_ - frontier_);
   }
 
   // Update the frontier - signifies we've successfully parsed another element
-  void UpdateFrontier() { frontier_ = begin_; }
+  void UpdateFrontier() {
+    GPR_DEBUG_ASSERT(skip_bytes_ == 0);
+    frontier_ = begin_;
+  }
+
+  void UpdateFrontierAndSkipBytes(size_t skip_bytes) {
+    UpdateFrontier();
+    size_t remaining = end_ - begin_;
+    if (skip_bytes >= remaining) {
+      skip_bytes_ = skip_bytes - remaining;
+      frontier_ = end_;
+    } else {
+      frontier_ += skip_bytes_;
+    }
+  }
 
   // Get the frontier - for buffering should we fail due to eof
   const uint8_t* frontier() const { return frontier_; }
@@ -251,14 +312,24 @@ class HPackParser::Input {
   // Helper to set the error to out of range for ParseVarint
   absl::optional<uint32_t> ParseVarintOutOfRange(uint32_t value,
                                                  uint8_t last_byte) {
-    return MaybeSetErrorAndReturn(
-        [value, last_byte] {
-          return GRPC_ERROR_CREATE(absl::StrFormat(
-              "integer overflow in hpack integer decoding: have 0x%08x, "
-              "got byte 0x%02x on byte 5",
-              value, last_byte));
-        },
-        absl::optional<uint32_t>());
+    SetErrorAndStopParsing(absl::InternalError(absl::StrFormat(
+        "integer overflow in hpack integer decoding: have 0x%08x, "
+        "got byte 0x%02x on byte 5",
+        value, last_byte)));
+    return absl::optional<uint32_t>();
+  }
+
+  // If no error is set, set it to the given error (i.e. first error wins)
+  // Do not use this directly, instead use SetErrorAndContinueParsing or
+  // SetErrorAndStopParsing.
+  void SetError(grpc_error_handle error) {
+    if (!error_.ok() || min_progress_size_ != 0) {
+      if (!IsStreamError(error) && IsStreamError(error_)) {
+        error_ = std::move(error);  // connection errors dominate
+      }
+      return;
+    }
+    error_ = std::move(error);
   }
 
   // Refcount if we are backed by a slice
@@ -271,278 +342,279 @@ class HPackParser::Input {
   const uint8_t* frontier_;
   // Current error
   grpc_error_handle error_;
-  // If the error was EOF, we flag it here..
-  bool eof_error_ = false;
+  // If the error was EOF, we flag it here by noting how many more bytes would
+  // be needed to make progress
+  size_t min_progress_size_ = 0;
+  // Number of bytes that should be skipped before parsing resumes
+  size_t skip_bytes_ = 0;
 };
 
-// Helper to parse a string and turn it into a slice with appropriate memory
-// management characteristics
-class HPackParser::String {
- public:
-  String(const String&) = delete;
-  String& operator=(const String&) = delete;
-  String(String&& other) noexcept : value_(std::move(other.value_)) {
-    other.value_ = absl::Span<const uint8_t>();
+absl::string_view HPackParser::String::string_view() const {
+  if (auto* p = absl::get_if<Slice>(&value_)) {
+    return p->as_string_view();
+  } else if (auto* p = absl::get_if<absl::Span<const uint8_t>>(&value_)) {
+    return absl::string_view(reinterpret_cast<const char*>(p->data()),
+                             p->size());
+  } else if (auto* p = absl::get_if<std::vector<uint8_t>>(&value_)) {
+    return absl::string_view(reinterpret_cast<const char*>(p->data()),
+                             p->size());
   }
-  String& operator=(String&& other) noexcept {
-    value_ = std::move(other.value_);
-    other.value_ = absl::Span<const uint8_t>();
-    return *this;
+  GPR_UNREACHABLE_CODE(return absl::string_view());
+}
+
+template <typename Out>
+HPackParser::String::ParseStatus HPackParser::String::ParseHuff(Input* input,
+                                                                uint32_t length,
+                                                                Out output) {
+  // If there's insufficient bytes remaining, return now.
+  if (input->remaining() < length) {
+    input->UnexpectedEOF(length);
+    GPR_DEBUG_ASSERT(input->eof_error());
+    return ParseStatus::kEof;
   }
+  // Grab the byte range, and iterate through it.
+  const uint8_t* p = input->cur_ptr();
+  input->Advance(length);
+  return HuffDecoder<Out>(output, p, p + length).Run()
+             ? ParseStatus::kOk
+             : ParseStatus::kParseHuffFailed;
+}
 
-  // Take the value and leave this empty
-  Slice Take();
+struct HPackParser::String::ParseResult {
+  ParseResult() = delete;
+  ParseResult(ParseStatus status, size_t wire_size, String value)
+      : status(status), wire_size(wire_size), value(std::move(value)) {}
+  ParseStatus status;
+  size_t wire_size;
+  String value;
+};
 
-  // Return a reference to the value as a string view
-  absl::string_view string_view() const {
-    if (auto* p = absl::get_if<Slice>(&value_)) {
-      return p->as_string_view();
-    } else if (auto* p = absl::get_if<absl::Span<const uint8_t>>(&value_)) {
-      return absl::string_view(reinterpret_cast<const char*>(p->data()),
-                               p->size());
-    } else if (auto* p = absl::get_if<std::vector<uint8_t>>(&value_)) {
-      return absl::string_view(reinterpret_cast<const char*>(p->data()),
-                               p->size());
-    }
-    GPR_UNREACHABLE_CODE(return absl::string_view());
+HPackParser::String::ParseResult HPackParser::String::ParseUncompressed(
+    Input* input, uint32_t length, uint32_t wire_size) {
+  // Check there's enough bytes
+  if (input->remaining() < length) {
+    input->UnexpectedEOF(length);
+    GPR_DEBUG_ASSERT(input->eof_error());
+    return ParseResult{ParseStatus::kEof, wire_size, String{}};
   }
-
-  // Parse a non-binary string
-  static absl::optional<String> Parse(Input* input) {
-    auto pfx = input->ParseStringPrefix();
-    if (!pfx.has_value()) return {};
-    if (pfx->huff) {
-      // Huffman coded
-      std::vector<uint8_t> output;
-      auto v = ParseHuff(input, pfx->length,
-                         [&output](uint8_t c) { output.push_back(c); });
-      if (!v) return {};
-      return String(std::move(output));
-    }
-    return ParseUncompressed(input, pfx->length);
+  auto* refcount = input->slice_refcount();
+  auto* p = input->cur_ptr();
+  input->Advance(length);
+  if (refcount != nullptr) {
+    return ParseResult{ParseStatus::kOk, wire_size,
+                       String(refcount, p, p + length)};
+  } else {
+    return ParseResult{ParseStatus::kOk, wire_size,
+                       String(absl::Span<const uint8_t>(p, length))};
   }
+}
 
-  // Parse a binary string
-  static absl::optional<String> ParseBinary(Input* input) {
-    auto pfx = input->ParseStringPrefix();
-    if (!pfx.has_value()) return {};
-    if (!pfx->huff) {
-      if (pfx->length > 0 && input->peek() == 0) {
-        // 'true-binary'
-        input->Advance(1);
-        return ParseUncompressed(input, pfx->length - 1);
-      }
-      // Base64 encoded... pull out the string, then unbase64 it
-      auto base64 = ParseUncompressed(input, pfx->length);
-      if (!base64.has_value()) return {};
-      return Unbase64(input, std::move(*base64));
-    } else {
-      // Huffman encoded...
-      std::vector<uint8_t> decompressed;
-      // State here says either we don't know if it's base64 or binary, or we do
-      // and what is it.
-      enum class State { kUnsure, kBinary, kBase64 };
-      State state = State::kUnsure;
-      auto decompressed_ok =
-          ParseHuff(input, pfx->length, [&state, &decompressed](uint8_t c) {
-            if (state == State::kUnsure) {
-              // First byte... if it's zero it's binary
-              if (c == 0) {
-                // Save the type, and skip the zero
-                state = State::kBinary;
-                return;
-              } else {
-                // Flag base64, store this value
-                state = State::kBase64;
-              }
-            }
-            // Non-first byte, or base64 first byte
-            decompressed.push_back(c);
-          });
-      if (!decompressed_ok) return {};
-      switch (state) {
-        case State::kUnsure:
-          // No bytes, empty span
-          return String(absl::Span<const uint8_t>());
-        case State::kBinary:
-          // Binary, we're done
-          return String(std::move(decompressed));
-        case State::kBase64:
-          // Base64 - unpack it
-          return Unbase64(input, String(std::move(decompressed)));
-      }
-      GPR_UNREACHABLE_CODE(abort(););
-    }
+absl::optional<std::vector<uint8_t>> HPackParser::String::Unbase64Loop(
+    const uint8_t* cur, const uint8_t* end) {
+  while (cur != end && end[-1] == '=') {
+    --end;
   }
 
- private:
-  void AppendBytes(const uint8_t* data, size_t length);
-  explicit String(std::vector<uint8_t> v) : value_(std::move(v)) {}
-  explicit String(absl::Span<const uint8_t> v) : value_(v) {}
-  String(grpc_slice_refcount* r, const uint8_t* begin, const uint8_t* end)
-      : value_(Slice::FromRefcountAndBytes(r, begin, end)) {}
+  std::vector<uint8_t> out;
+  out.reserve(3 * (end - cur) / 4 + 3);
 
-  // Parse some huffman encoded bytes, using output(uint8_t b) to emit each
-  // decoded byte.
-  template <typename Out>
-  static bool ParseHuff(Input* input, uint32_t length, Out output) {
-    // If there's insufficient bytes remaining, return now.
-    if (input->remaining() < length) {
-      return input->UnexpectedEOF(false);
-    }
-    // Grab the byte range, and iterate through it.
-    const uint8_t* p = input->cur_ptr();
-    input->Advance(length);
-    return HuffDecoder<Out>(output, p, p + length).Run();
+  // Decode 4 bytes at a time while we can
+  while (end - cur >= 4) {
+    uint32_t bits = kBase64InverseTable.table[*cur];
+    if (bits > 63) return {};
+    uint32_t buffer = bits << 18;
+    ++cur;
+
+    bits = kBase64InverseTable.table[*cur];
+    if (bits > 63) return {};
+    buffer |= bits << 12;
+    ++cur;
+
+    bits = kBase64InverseTable.table[*cur];
+    if (bits > 63) return {};
+    buffer |= bits << 6;
+    ++cur;
+
+    bits = kBase64InverseTable.table[*cur];
+    if (bits > 63) return {};
+    buffer |= bits;
+    ++cur;
+
+    out.insert(out.end(), {static_cast<uint8_t>(buffer >> 16),
+                           static_cast<uint8_t>(buffer >> 8),
+                           static_cast<uint8_t>(buffer)});
   }
-
-  // Parse some uncompressed string bytes.
-  static absl::optional<String> ParseUncompressed(Input* input,
-                                                  uint32_t length) {
-    // Check there's enough bytes
-    if (input->remaining() < length) {
-      return input->UnexpectedEOF(absl::optional<String>());
-    }
-    auto* refcount = input->slice_refcount();
-    auto* p = input->cur_ptr();
-    input->Advance(length);
-    if (refcount != nullptr) {
-      return String(refcount, p, p + length);
-    } else {
-      return String(absl::Span<const uint8_t>(p, length));
-    }
-  }
-
-  // Turn base64 encoded bytes into not base64 encoded bytes.
-  // Only takes input to set an error on failure.
-  static absl::optional<String> Unbase64(Input* input, String s) {
-    absl::optional<std::vector<uint8_t>> result;
-    if (auto* p = absl::get_if<Slice>(&s.value_)) {
-      result = Unbase64Loop(p->begin(), p->end());
-    }
-    if (auto* p = absl::get_if<absl::Span<const uint8_t>>(&s.value_)) {
-      result = Unbase64Loop(p->begin(), p->end());
-    }
-    if (auto* p = absl::get_if<std::vector<uint8_t>>(&s.value_)) {
-      result = Unbase64Loop(p->data(), p->data() + p->size());
-    }
-    if (!result.has_value()) {
-      return input->MaybeSetErrorAndReturn(
-          [] { return GRPC_ERROR_CREATE("illegal base64 encoding"); },
-          absl::optional<String>());
-    }
-    return String(std::move(*result));
-  }
-
-  // Main loop for Unbase64
-  static absl::optional<std::vector<uint8_t>> Unbase64Loop(const uint8_t* cur,
-                                                           const uint8_t* end) {
-    while (cur != end && end[-1] == '=') {
-      --end;
-    }
-
-    std::vector<uint8_t> out;
-    out.reserve(3 * (end - cur) / 4 + 3);
-
-    // Decode 4 bytes at a time while we can
-    while (end - cur >= 4) {
+  // Deal with the last 0, 1, 2, or 3 bytes.
+  switch (end - cur) {
+    case 0:
+      return out;
+    case 1:
+      return {};
+    case 2: {
       uint32_t bits = kBase64InverseTable.table[*cur];
       if (bits > 63) return {};
       uint32_t buffer = bits << 18;
-      ++cur;
 
+      ++cur;
       bits = kBase64InverseTable.table[*cur];
       if (bits > 63) return {};
       buffer |= bits << 12;
-      ++cur;
 
+      if (buffer & 0xffff) return {};
+      out.push_back(static_cast<uint8_t>(buffer >> 16));
+      return out;
+    }
+    case 3: {
+      uint32_t bits = kBase64InverseTable.table[*cur];
+      if (bits > 63) return {};
+      uint32_t buffer = bits << 18;
+
+      ++cur;
+      bits = kBase64InverseTable.table[*cur];
+      if (bits > 63) return {};
+      buffer |= bits << 12;
+
+      ++cur;
       bits = kBase64InverseTable.table[*cur];
       if (bits > 63) return {};
       buffer |= bits << 6;
+
       ++cur;
-
-      bits = kBase64InverseTable.table[*cur];
-      if (bits > 63) return {};
-      buffer |= bits;
-      ++cur;
-
-      out.insert(out.end(), {static_cast<uint8_t>(buffer >> 16),
-                             static_cast<uint8_t>(buffer >> 8),
-                             static_cast<uint8_t>(buffer)});
+      if (buffer & 0xff) return {};
+      out.push_back(static_cast<uint8_t>(buffer >> 16));
+      out.push_back(static_cast<uint8_t>(buffer >> 8));
+      return out;
     }
-    // Deal with the last 0, 1, 2, or 3 bytes.
-    switch (end - cur) {
-      case 0:
-        return out;
-      case 1:
-        return {};
-      case 2: {
-        uint32_t bits = kBase64InverseTable.table[*cur];
-        if (bits > 63) return {};
-        uint32_t buffer = bits << 18;
-
-        ++cur;
-        bits = kBase64InverseTable.table[*cur];
-        if (bits > 63) return {};
-        buffer |= bits << 12;
-
-        if (buffer & 0xffff) return {};
-        out.push_back(static_cast<uint8_t>(buffer >> 16));
-        return out;
-      }
-      case 3: {
-        uint32_t bits = kBase64InverseTable.table[*cur];
-        if (bits > 63) return {};
-        uint32_t buffer = bits << 18;
-
-        ++cur;
-        bits = kBase64InverseTable.table[*cur];
-        if (bits > 63) return {};
-        buffer |= bits << 12;
-
-        ++cur;
-        bits = kBase64InverseTable.table[*cur];
-        if (bits > 63) return {};
-        buffer |= bits << 6;
-
-        ++cur;
-        if (buffer & 0xff) return {};
-        out.push_back(static_cast<uint8_t>(buffer >> 16));
-        out.push_back(static_cast<uint8_t>(buffer >> 8));
-        return out;
-      }
-    }
-
-    GPR_UNREACHABLE_CODE(return out;);
   }
 
-  absl::variant<Slice, absl::Span<const uint8_t>, std::vector<uint8_t>> value_;
-};
+  GPR_UNREACHABLE_CODE(return out;);
+}
+
+HPackParser::String::ParseResult HPackParser::String::Unbase64(String s) {
+  absl::optional<std::vector<uint8_t>> result;
+  if (auto* p = absl::get_if<Slice>(&s.value_)) {
+    result = Unbase64Loop(p->begin(), p->end());
+  }
+  if (auto* p = absl::get_if<absl::Span<const uint8_t>>(&s.value_)) {
+    result = Unbase64Loop(p->begin(), p->end());
+  }
+  if (auto* p = absl::get_if<std::vector<uint8_t>>(&s.value_)) {
+    result = Unbase64Loop(p->data(), p->data() + p->size());
+  }
+  if (!result.has_value()) {
+    return ParseResult{ParseStatus::kUnbase64Failed, s.string_view().length(),
+                       String{}};
+  }
+  return ParseResult{ParseStatus::kOk, s.string_view().length(),
+                     String(std::move(*result))};
+}
+
+HPackParser::String::ParseResult HPackParser::String::Parse(Input* input,
+                                                            bool is_huff,
+                                                            size_t length) {
+  if (is_huff) {
+    // Huffman coded
+    std::vector<uint8_t> output;
+    ParseStatus sts =
+        ParseHuff(input, length, [&output](uint8_t c) { output.push_back(c); });
+    size_t wire_len = output.size();
+    return ParseResult{sts, wire_len, String(std::move(output))};
+  }
+  return ParseUncompressed(input, length, length);
+}
+
+HPackParser::String::ParseResult HPackParser::String::ParseBinary(
+    Input* input, bool is_huff, size_t length) {
+  if (!is_huff) {
+    if (length > 0 && input->peek() == 0) {
+      // 'true-binary'
+      input->Advance(1);
+      return ParseUncompressed(input, length - 1, length);
+    }
+    // Base64 encoded... pull out the string, then unbase64 it
+    auto base64 = ParseUncompressed(input, length, length);
+    if (base64.status != ParseStatus::kOk) return base64;
+    return Unbase64(std::move(base64.value));
+  } else {
+    // Huffman encoded...
+    std::vector<uint8_t> decompressed;
+    // State here says either we don't know if it's base64 or binary, or we do
+    // and what is it.
+    enum class State { kUnsure, kBinary, kBase64 };
+    State state = State::kUnsure;
+    auto sts = ParseHuff(input, length, [&state, &decompressed](uint8_t c) {
+      if (state == State::kUnsure) {
+        // First byte... if it's zero it's binary
+        if (c == 0) {
+          // Save the type, and skip the zero
+          state = State::kBinary;
+          return;
+        } else {
+          // Flag base64, store this value
+          state = State::kBase64;
+        }
+      }
+      // Non-first byte, or base64 first byte
+      decompressed.push_back(c);
+    });
+    if (sts != ParseStatus::kOk) {
+      return ParseResult{sts, 0, String{}};
+    }
+    switch (state) {
+      case State::kUnsure:
+        // No bytes, empty span
+        return ParseResult{ParseStatus::kOk, 0,
+                           String(absl::Span<const uint8_t>())};
+      case State::kBinary:
+        // Binary, we're done
+        {
+          size_t wire_len = decompressed.size();
+          return ParseResult{ParseStatus::kOk, wire_len,
+                             String(std::move(decompressed))};
+        }
+      case State::kBase64:
+        // Base64 - unpack it
+        return Unbase64(String(std::move(decompressed)));
+    }
+    GPR_UNREACHABLE_CODE(abort(););
+  }
+}
 
 // Parser parses one key/value pair from a byte stream.
 class HPackParser::Parser {
  public:
-  Parser(Input* input, grpc_metadata_batch* metadata_buffer, HPackTable* table,
-         uint8_t* dynamic_table_updates_allowed, uint32_t* frame_length,
-         RandomEarlyDetection* metadata_early_detection, bool is_last,
-         LogInfo log_info)
+  Parser(Input* input, grpc_metadata_batch* metadata_buffer,
+         InterSliceState& state, LogInfo log_info)
       : input_(input),
         metadata_buffer_(metadata_buffer),
-        table_(table),
-        dynamic_table_updates_allowed_(dynamic_table_updates_allowed),
-        frame_length_(frame_length),
-        metadata_early_detection_(metadata_early_detection),
-        is_last_(is_last),
+        state_(state),
         log_info_(log_info) {}
 
-  // Skip any priority bits, or return false on failure
-  bool SkipPriority() {
-    if (input_->remaining() < 5) return input_->UnexpectedEOF(false);
-    input_->Advance(5);
-    return true;
+  bool Parse() {
+    switch (state_.parse_state) {
+      case ParseState::kTop:
+        return ParseTop();
+      case ParseState::kParsingKeyLength:
+        return ParseKeyLength();
+      case ParseState::kParsingKeyBody:
+        return ParseKeyBody();
+      case ParseState::kSkippingKeyBody:
+        return SkipKeyBody();
+      case ParseState::kParsingValueLength:
+        return ParseValueLength();
+      case ParseState::kParsingValueBody:
+        return ParseValueBody();
+      case ParseState::kSkippingValueLength:
+        return SkipValueLength();
+      case ParseState::kSkippingValueBody:
+        return SkipValueBody();
+    }
+    GPR_UNREACHABLE_CODE(return false);
   }
 
-  bool Parse() {
+ private:
+  bool ParseTop() {
+    GPR_DEBUG_ASSERT(state_.parse_state == ParseState::kTop);
     auto cur = *input_->Next();
     switch (cur >> 4) {
         // Literal header not indexed - First byte format: 0000xxxx
@@ -555,11 +627,11 @@ class HPackParser::Parser {
       case 1:
         switch (cur & 0xf) {
           case 0:  // literal key
-            return FinishHeaderOmitFromTable(ParseLiteralKey());
+            return StartParseLiteralKey(false);
           case 0xf:  // varint encoded key index
-            return FinishHeaderOmitFromTable(ParseVarIdxKey(0xf));
+            return StartVarIdxKey(0xf, false);
           default:  // inline encoded key index
-            return FinishHeaderOmitFromTable(ParseIdxKey(cur & 0xf));
+            return StartIdxKey(cur & 0xf, false);
         }
         // Update max table size.
         // First byte format: 001xxxxx
@@ -586,20 +658,20 @@ class HPackParser::Parser {
       case 4:
         if (cur == 0x40) {
           // literal key
-          return FinishHeaderAndAddToTable(ParseLiteralKey());
+          return StartParseLiteralKey(true);
         }
         ABSL_FALLTHROUGH_INTENDED;
       case 5:
       case 6:
         // inline encoded key index
-        return FinishHeaderAndAddToTable(ParseIdxKey(cur & 0x3f));
+        return StartIdxKey(cur & 0x3f, true);
       case 7:
         if (cur == 0x7f) {
           // varint encoded key index
-          return FinishHeaderAndAddToTable(ParseVarIdxKey(0x3f));
+          return StartVarIdxKey(0x3f, true);
         } else {
           // inline encoded key index
-          return FinishHeaderAndAddToTable(ParseIdxKey(cur & 0x3f));
+          return StartIdxKey(cur & 0x3f, true);
         }
         // Indexed Header Field Representation
         // First byte format: 1xxxxxxx
@@ -610,8 +682,9 @@ class HPackParser::Parser {
       case 8:
         if (cur == 0x80) {
           // illegal value.
-          return input_->MaybeSetErrorAndReturn(
-              [] { return GRPC_ERROR_CREATE("Illegal hpack op code"); }, false);
+          input_->SetErrorAndStopParsing(
+              absl::InternalError("Illegal hpack op code"));
+          return false;
         }
         ABSL_FALLTHROUGH_INTENDED;
       case 9:
@@ -634,7 +707,6 @@ class HPackParser::Parser {
     GPR_UNREACHABLE_CODE(abort());
   }
 
- private:
   void GPR_ATTRIBUTE_NOINLINE LogHeader(const HPackTable::Memento& memento) {
     const char* type;
     switch (log_info_.type) {
@@ -648,134 +720,310 @@ class HPackParser::Parser {
         type = "???";
         break;
     }
-    gpr_log(GPR_DEBUG, "HTTP:%d:%s:%s: %s", log_info_.stream_id, type,
-            log_info_.is_client ? "CLI" : "SVR", memento.DebugString().c_str());
+    gpr_log(GPR_DEBUG, "HTTP:%d:%s:%s: %s%s", log_info_.stream_id, type,
+            log_info_.is_client ? "CLI" : "SVR",
+            memento.md.DebugString().c_str(),
+            memento.parse_status.ok()
+                ? ""
+                : absl::StrCat(
+                      " (parse error: ", memento.parse_status.ToString(), ")")
+                      .c_str());
   }
 
-  bool EmitHeader(const HPackTable::Memento& md) {
+  void EmitHeader(const HPackTable::Memento& md) {
     // Pass up to the transport
-    if (GPR_UNLIKELY(metadata_buffer_ == nullptr)) return true;
-    *frame_length_ += md.transport_size();
-    if (metadata_early_detection_->MustReject(*frame_length_)) {
+    state_.frame_length += md.md.transport_size();
+    if (!input_->has_error() &&
+        state_.metadata_early_detection.MustReject(state_.frame_length)) {
       // Reject any requests above hard metadata limit.
-      return HandleMetadataSizeLimitExceeded(md, /*exceeded_hard_limit=*/true);
-    } else if (is_last_ && metadata_early_detection_->Reject(*frame_length_)) {
-      // Reject some random sample of requests above soft metadata limit.
-      return HandleMetadataSizeLimitExceeded(md, /*exceeded_hard_limit=*/false);
+      HandleMetadataHardSizeLimitExceeded([&md]() {
+        return absl::StrCat("adding ", md.md.key(), " (length ",
+                            md.md.transport_size(), "B)");
+      });
     }
-
-    metadata_buffer_->Set(md);
-    return true;
+    if (!md.parse_status.ok()) {
+      // Reject any requests with invalid metadata.
+      HandleMetadataParseError(md.parse_status);
+    }
+    if (GPR_LIKELY(metadata_buffer_ != nullptr)) {
+      metadata_buffer_->Set(md.md);
+    }
   }
 
-  bool FinishHeaderAndAddToTable(absl::optional<HPackTable::Memento> md) {
-    // Allow higher code to just pass in failures ... simplifies things a bit.
-    if (!md.has_value()) return false;
+  bool FinishHeaderAndAddToTable(HPackTable::Memento md) {
     // Log if desired
     if (GRPC_TRACE_FLAG_ENABLED(grpc_trace_chttp2_hpack_parser)) {
-      LogHeader(*md);
+      LogHeader(md);
     }
     // Emit whilst we own the metadata.
-    auto r = EmitHeader(*md);
+    EmitHeader(md);
     // Add to the hpack table
-    grpc_error_handle err = table_->Add(std::move(*md));
+    grpc_error_handle err = state_.hpack_table.Add(std::move(md));
     if (GPR_UNLIKELY(!err.ok())) {
-      input_->SetError(err);
+      input_->SetErrorAndStopParsing(std::move(err));
       return false;
     };
-    return r;
+    return true;
   }
 
   bool FinishHeaderOmitFromTable(absl::optional<HPackTable::Memento> md) {
     // Allow higher code to just pass in failures ... simplifies things a bit.
     if (!md.has_value()) return false;
-    return FinishHeaderOmitFromTable(*md);
+    FinishHeaderOmitFromTable(*md);
+    return true;
   }
 
-  bool FinishHeaderOmitFromTable(const HPackTable::Memento& md) {
+  void FinishHeaderOmitFromTable(const HPackTable::Memento& md) {
     // Log if desired
     if (GRPC_TRACE_FLAG_ENABLED(grpc_trace_chttp2_hpack_parser)) {
       LogHeader(md);
     }
-    return EmitHeader(md);
-  }
-
-  // Parse a string encoded key and a string encoded value
-  absl::optional<HPackTable::Memento> ParseLiteralKey() {
-    auto key = String::Parse(input_);
-    if (!key.has_value()) return {};
-    auto value = ParseValueString(absl::EndsWith(key->string_view(), "-bin"));
-    if (GPR_UNLIKELY(!value.has_value())) {
-      return {};
-    }
-    auto key_string = key->string_view();
-    auto value_slice = value->Take();
-    const auto transport_size = key_string.size() + value_slice.size() +
-                                hpack_constants::kEntryOverhead;
-    return grpc_metadata_batch::Parse(
-        key->string_view(), std::move(value_slice), transport_size,
-        [key_string](absl::string_view error, const Slice& value) {
-          ReportMetadataParseError(key_string, error, value.as_string_view());
-        });
+    EmitHeader(md);
   }
 
   // Parse an index encoded key and a string encoded value
-  absl::optional<HPackTable::Memento> ParseIdxKey(uint32_t index) {
-    const auto* elem = table_->Lookup(index);
+  bool StartIdxKey(uint32_t index, bool add_to_table) {
+    GPR_DEBUG_ASSERT(state_.parse_state == ParseState::kTop);
+    input_->UpdateFrontier();
+    const auto* elem = state_.hpack_table.Lookup(index);
     if (GPR_UNLIKELY(elem == nullptr)) {
-      return InvalidHPackIndexError(index,
-                                    absl::optional<HPackTable::Memento>());
+      InvalidHPackIndexError(index);
+      return false;
     }
-    auto value = ParseValueString(elem->is_binary_header());
-    if (GPR_UNLIKELY(!value.has_value())) return {};
-    return elem->WithNewValue(
-        value->Take(), [=](absl::string_view error, const Slice& value) {
-          ReportMetadataParseError(elem->key(), error, value.as_string_view());
-        });
-  }
+    state_.parse_state = ParseState::kParsingValueLength;
+    state_.is_binary_header = elem->md.is_binary_header();
+    state_.key.emplace<const HPackTable::Memento*>(elem);
+    state_.add_to_table = add_to_table;
+    return ParseValueLength();
+  };
 
   // Parse a varint index encoded key and a string encoded value
-  absl::optional<HPackTable::Memento> ParseVarIdxKey(uint32_t offset) {
+  bool StartVarIdxKey(uint32_t offset, bool add_to_table) {
     auto index = input_->ParseVarint(offset);
-    if (GPR_UNLIKELY(!index.has_value())) return {};
-    return ParseIdxKey(*index);
+    if (GPR_UNLIKELY(!index.has_value())) return false;
+    return StartIdxKey(*index, add_to_table);
   }
 
-  // Parse a string, figuring out if it's binary or not by the key name.
-  absl::optional<String> ParseValueString(bool is_binary) {
-    if (is_binary) {
-      return String::ParseBinary(input_);
+  bool StartParseLiteralKey(bool add_to_table) {
+    GPR_DEBUG_ASSERT(state_.parse_state == ParseState::kTop);
+    state_.add_to_table = add_to_table;
+    state_.parse_state = ParseState::kParsingKeyLength;
+    input_->UpdateFrontier();
+    return ParseKeyLength();
+  }
+
+  bool ShouldSkipParsingString(uint32_t string_length) const {
+    return string_length > state_.hpack_table.current_table_size() &&
+           state_.metadata_early_detection.MustReject(
+               string_length + hpack_constants::kEntryOverhead);
+  }
+
+  bool ParseKeyLength() {
+    GPR_DEBUG_ASSERT(state_.parse_state == ParseState::kParsingKeyLength);
+    auto pfx = input_->ParseStringPrefix();
+    if (!pfx.has_value()) return false;
+    state_.is_string_huff_compressed = pfx->huff;
+    state_.string_length = pfx->length;
+    input_->UpdateFrontier();
+    if (ShouldSkipParsingString(state_.string_length)) {
+      HandleMetadataHardSizeLimitExceeded([pfx]() {
+        return absl::StrCat("adding metadata key of length ", pfx->length);
+      });
+      state_.parse_state = ParseState::kSkippingKeyBody;
+      return SkipKeyBody();
     } else {
-      return String::Parse(input_);
+      state_.parse_state = ParseState::kParsingKeyBody;
+      return ParseKeyBody();
     }
+  }
+
+  bool ParseKeyBody() {
+    GPR_DEBUG_ASSERT(state_.parse_state == ParseState::kParsingKeyBody);
+    auto key = String::Parse(input_, state_.is_string_huff_compressed,
+                             state_.string_length);
+    switch (key.status) {
+      case String::ParseStatus::kOk:
+        break;
+      case String::ParseStatus::kParseHuffFailed:
+        input_->SetErrorAndStopParsing(
+            absl::InternalError("Huffman decoding failed"));
+        return false;
+      case String::ParseStatus::kUnbase64Failed:
+        Crash("unreachable");
+      case String::ParseStatus::kEof:
+        GPR_DEBUG_ASSERT(input_->eof_error());
+        return false;
+    }
+    input_->UpdateFrontier();
+    state_.parse_state = ParseState::kParsingValueLength;
+    state_.is_binary_header = absl::EndsWith(key.value.string_view(), "-bin");
+    state_.key.emplace<Slice>(key.value.Take());
+    return ParseValueLength();
+  }
+
+  bool SkipStringBody() {
+    auto remaining = input_->remaining();
+    if (remaining >= state_.string_length) {
+      input_->Advance(state_.string_length);
+      return true;
+    } else {
+      input_->Advance(remaining);
+      input_->UpdateFrontier();
+      state_.string_length -= remaining;
+      input_->UnexpectedEOF(std::min(state_.string_length, 1024u));
+      return false;
+    }
+  }
+
+  bool SkipKeyBody() {
+    GPR_DEBUG_ASSERT(state_.parse_state == ParseState::kSkippingKeyBody);
+    if (!SkipStringBody()) return false;
+    input_->UpdateFrontier();
+    state_.parse_state = ParseState::kSkippingValueLength;
+    return SkipValueLength();
+  }
+
+  bool SkipValueLength() {
+    GPR_DEBUG_ASSERT(state_.parse_state == ParseState::kSkippingValueLength);
+    auto pfx = input_->ParseStringPrefix();
+    if (!pfx.has_value()) return false;
+    state_.string_length = pfx->length;
+    input_->UpdateFrontier();
+    state_.parse_state = ParseState::kSkippingValueBody;
+    return SkipValueBody();
+  }
+
+  bool SkipValueBody() {
+    GPR_DEBUG_ASSERT(state_.parse_state == ParseState::kSkippingValueBody);
+    if (!SkipStringBody()) return false;
+    input_->UpdateFrontier();
+    state_.parse_state = ParseState::kTop;
+    if (state_.add_to_table) {
+      state_.hpack_table.AddLargerThanCurrentTableSize();
+    }
+    return true;
+  }
+
+  bool ParseValueLength() {
+    GPR_DEBUG_ASSERT(state_.parse_state == ParseState::kParsingValueLength);
+    auto pfx = input_->ParseStringPrefix();
+    if (!pfx.has_value()) return false;
+    state_.is_string_huff_compressed = pfx->huff;
+    state_.string_length = pfx->length;
+    input_->UpdateFrontier();
+    if (ShouldSkipParsingString(state_.string_length)) {
+      HandleMetadataHardSizeLimitExceeded([pfx, this]() {
+        return absl::StrCat(
+            "adding metadata value of length ", pfx->length, " for key \"",
+            absl::CEscape(Match(
+                state_.key, [](const Slice& s) { return s.as_string_view(); },
+                [](const HPackTable::Memento* m) { return m->md.key(); })),
+            "\"");
+      });
+      state_.parse_state = ParseState::kSkippingValueBody;
+      return SkipValueBody();
+    } else {
+      state_.parse_state = ParseState::kParsingValueBody;
+      return ParseValueBody();
+    }
+  }
+
+  bool ParseValueBody() {
+    GPR_DEBUG_ASSERT(state_.parse_state == ParseState::kParsingValueBody);
+    auto value =
+        state_.is_binary_header
+            ? String::ParseBinary(input_, state_.is_string_huff_compressed,
+                                  state_.string_length)
+            : String::Parse(input_, state_.is_string_huff_compressed,
+                            state_.string_length);
+    absl::Status status;
+    absl::string_view key_string;
+    if (auto* s = absl::get_if<Slice>(&state_.key)) {
+      key_string = s->as_string_view();
+      status = EnsureStreamError(ValidateKey(key_string));
+    } else {
+      const auto* memento = absl::get<const HPackTable::Memento*>(state_.key);
+      key_string = memento->md.key();
+      status = memento->parse_status;
+    }
+    if (!status.ok()) input_->SetErrorAndContinueParsing(status);
+    switch (value.status) {
+      case String::ParseStatus::kOk:
+        break;
+      case String::ParseStatus::kParseHuffFailed:
+        input_->SetErrorAndStopParsing(
+            absl::InternalError("Huffman decoding failed"));
+        return false;
+      case String::ParseStatus::kUnbase64Failed: {
+        auto error = absl::InternalError(
+            absl::StrCat("Error parsing '", key_string,
+                         "' metadata: illegal base64 encoding"));
+        if (status.ok()) status = error;
+        input_->SetErrorAndContinueParsing(error);
+        break;
+      }
+      case String::ParseStatus::kEof:
+        GPR_DEBUG_ASSERT(input_->eof_error());
+        return false;
+    }
+    auto value_slice = value.value.Take();
+    const auto transport_size =
+        key_string.size() + value.wire_size + hpack_constants::kEntryOverhead;
+    auto md = grpc_metadata_batch::Parse(
+        key_string, std::move(value_slice), transport_size,
+        [key_string, &status, this](absl::string_view msg, const Slice&) {
+          auto message =
+              absl::StrCat("Error parsing '", key_string, "' metadata: ", msg);
+          auto error = absl::InternalError(message);
+          gpr_log(GPR_ERROR, "%s", message.c_str());
+          input_->SetErrorAndContinueParsing(error);
+          if (status.ok()) status = error;
+        });
+    HPackTable::Memento memento{std::move(md), std::move(status)};
+    input_->UpdateFrontier();
+    state_.parse_state = ParseState::kTop;
+    if (state_.add_to_table) {
+      return FinishHeaderAndAddToTable(std::move(memento));
+    } else {
+      FinishHeaderOmitFromTable(memento);
+      return true;
+    }
+  }
+
+  absl::Status ValidateKey(absl::string_view key) {
+    if (key == HttpSchemeMetadata::key() || key == HttpMethodMetadata::key() ||
+        key == HttpAuthorityMetadata::key() || key == HttpPathMetadata::key() ||
+        key == HttpStatusMetadata::key()) {
+      return absl::OkStatus();
+    }
+    return ValidateHeaderKeyIsLegal(key);
   }
 
   // Emit an indexed field
   bool FinishIndexed(absl::optional<uint32_t> index) {
-    *dynamic_table_updates_allowed_ = 0;
+    state_.dynamic_table_updates_allowed = 0;
     if (!index.has_value()) return false;
-    const auto* elem = table_->Lookup(*index);
+    const auto* elem = state_.hpack_table.Lookup(*index);
     if (GPR_UNLIKELY(elem == nullptr)) {
-      return InvalidHPackIndexError(*index, false);
+      InvalidHPackIndexError(*index);
+      return false;
     }
-    return FinishHeaderOmitFromTable(*elem);
+    FinishHeaderOmitFromTable(*elem);
+    return true;
   }
 
   // finish parsing a max table size change
   bool FinishMaxTableSize(absl::optional<uint32_t> size) {
     if (!size.has_value()) return false;
-    if (*dynamic_table_updates_allowed_ == 0) {
-      return input_->MaybeSetErrorAndReturn(
-          [] {
-            return GRPC_ERROR_CREATE(
-                "More than two max table size changes in a single frame");
-          },
-          false);
+    if (state_.dynamic_table_updates_allowed == 0) {
+      input_->SetErrorAndStopParsing(absl::InternalError(
+          "More than two max table size changes in a single frame"));
+      return false;
     }
-    (*dynamic_table_updates_allowed_)--;
-    grpc_error_handle err = table_->SetCurrentTableSize(*size);
+    state_.dynamic_table_updates_allowed--;
+    absl::Status err = state_.hpack_table.SetCurrentTableSize(*size);
     if (!err.ok()) {
-      input_->SetError(err);
+      input_->SetErrorAndStopParsing(std::move(err));
       return false;
     }
     return true;
@@ -783,47 +1031,29 @@ class HPackParser::Parser {
 
   // Set an invalid hpack index error if no error has been set. Returns result
   // unmodified.
-  template <typename R>
-  R InvalidHPackIndexError(uint32_t index, R result) {
-    return input_->MaybeSetErrorAndReturn(
-        [this, index] {
-          return grpc_error_set_int(
-              grpc_error_set_int(
-                  GRPC_ERROR_CREATE("Invalid HPACK index received"),
-                  StatusIntProperty::kIndex, static_cast<intptr_t>(index)),
-              StatusIntProperty::kSize,
-              static_cast<intptr_t>(this->table_->num_entries()));
-        },
-        std::move(result));
+  void InvalidHPackIndexError(uint32_t index) {
+    input_->SetErrorAndStopParsing(grpc_error_set_int(
+        grpc_error_set_int(absl::InternalError("Invalid HPACK index received"),
+                           StatusIntProperty::kIndex,
+                           static_cast<intptr_t>(index)),
+        StatusIntProperty::kSize,
+        static_cast<intptr_t>(state_.hpack_table.num_entries())));
   }
 
-  class MetadataSizeLimitExceededEncoder {
-   public:
-    explicit MetadataSizeLimitExceededEncoder(std::string& summary)
-        : summary_(summary) {}
-
-    void Encode(const Slice& key, const Slice& value) {
-      AddToSummary(key.as_string_view(), value.size());
+  GPR_ATTRIBUTE_NOINLINE
+  void HandleMetadataParseError(const absl::Status& status) {
+    if (metadata_buffer_ != nullptr) {
+      metadata_buffer_->Clear();
+      metadata_buffer_ = nullptr;
     }
-
-    template <typename Key, typename Value>
-    void Encode(Key, const Value& value) {
-      AddToSummary(Key::key(), EncodedSizeOfKey(Key(), value));
-    }
-
-   private:
-    void AddToSummary(absl::string_view key,
-                      size_t value_length) GPR_ATTRIBUTE_NOINLINE {
-      absl::StrAppend(&summary_, " ", key, ":",
-                      hpack_constants::SizeForEntry(key.size(), value_length),
-                      "B");
-    }
-    std::string& summary_;
-  };
+    // StreamId is used as a signal to skip this stream but keep the connection
+    // alive
+    input_->SetErrorAndContinueParsing(status);
+  }
 
   GPR_ATTRIBUTE_NOINLINE
-  bool HandleMetadataSizeLimitExceeded(const HPackTable::Memento& md,
-                                       bool exceeded_hard_limit) {
+  void HandleMetadataHardSizeLimitExceeded(
+      absl::FunctionRef<std::string()> why) {
     // Collect a summary of sizes so far for debugging
     // Do not collect contents, for fear of exposing PII.
     std::string summary;
@@ -832,49 +1062,16 @@ class HPackParser::Parser {
       MetadataSizeLimitExceededEncoder encoder(summary);
       metadata_buffer_->Encode(&encoder);
     }
-    summary =
-        absl::StrCat("; adding ", md.key(), " (length ", md.transport_size(),
-                     "B)", summary.empty() ? "" : " to ", summary);
-    if (exceeded_hard_limit) {
-      error_message = absl::StrCat(
-          "received metadata size exceeds hard limit (", *frame_length_,
-          " vs. ", metadata_early_detection_->hard_limit(), ")", summary);
-    } else {
-      error_message = absl::StrCat(
-          "received metadata size exceeds soft limit (", *frame_length_,
-          " vs. ", metadata_early_detection_->soft_limit(),
-          "), rejecting requests with some random probability", summary);
-    }
-    if (metadata_buffer_ != nullptr) metadata_buffer_->Clear();
-    // StreamId is used as a signal to skip this stream but keep the connection
-    // alive
-    return input_->MaybeSetErrorAndReturn(
-        [error_message = std::move(error_message)] {
-          return grpc_error_set_int(
-              grpc_error_set_int(GRPC_ERROR_CREATE(error_message),
-                                 StatusIntProperty::kRpcStatus,
-                                 GRPC_STATUS_RESOURCE_EXHAUSTED),
-              StatusIntProperty::kStreamId, 0);
-        },
-        false);
-  }
-
-  static void ReportMetadataParseError(absl::string_view key,
-                                       absl::string_view error,
-                                       absl::string_view value) {
-    gpr_log(
-        GPR_ERROR, "Error parsing metadata: %s",
-        absl::StrCat("error=", error, " key=", key, " value=", value).c_str());
+    summary = absl::StrCat("; ", why(), summary.empty() ? "" : " to ", summary);
+    error_message = absl::StrCat(
+        "received metadata size exceeds hard limit (", state_.frame_length,
+        " vs. ", state_.metadata_early_detection.hard_limit(), ")", summary);
+    HandleMetadataParseError(absl::ResourceExhaustedError(error_message));
   }
 
   Input* const input_;
-  grpc_metadata_batch* const metadata_buffer_;
-  HPackTable* const table_;
-  uint8_t* const dynamic_table_updates_allowed_;
-  uint32_t* const frame_length_;
-  // Random early detection of metadata size limits.
-  RandomEarlyDetection* metadata_early_detection_;
-  bool is_last_;  // Whether this is the last frame.
+  grpc_metadata_batch* metadata_buffer_;
+  InterSliceState& state_;
   const LogInfo log_info_;
 };
 
@@ -906,9 +1103,9 @@ void HPackParser::BeginFrame(grpc_metadata_batch* metadata_buffer,
   }
   boundary_ = boundary;
   priority_ = priority;
-  dynamic_table_updates_allowed_ = 2;
-  frame_length_ = 0;
-  metadata_early_detection_ = RandomEarlyDetection(
+  state_.dynamic_table_updates_allowed = 2;
+  state_.frame_length = 0;
+  state_.metadata_early_detection.ResetLimits(
       /*soft_limit=*/metadata_size_soft_limit,
       /*hard_limit=*/metadata_size_hard_limit);
   log_info_ = log_info;
@@ -916,9 +1113,13 @@ void HPackParser::BeginFrame(grpc_metadata_batch* metadata_buffer,
 
 grpc_error_handle HPackParser::Parse(const grpc_slice& slice, bool is_last) {
   if (GPR_UNLIKELY(!unparsed_bytes_.empty())) {
+    unparsed_bytes_.insert(unparsed_bytes_.end(), GRPC_SLICE_START_PTR(slice),
+                           GRPC_SLICE_END_PTR(slice));
+    if (!is_last && unparsed_bytes_.size() < min_progress_size_) {
+      // We wouldn't make progress anyway, skip out.
+      return absl::OkStatus();
+    }
     std::vector<uint8_t> buffer = std::move(unparsed_bytes_);
-    buffer.insert(buffer.end(), GRPC_SLICE_START_PTR(slice),
-                  GRPC_SLICE_END_PTR(slice));
     return ParseInput(
         Input(nullptr, buffer.data(), buffer.data() + buffer.size()), is_last);
   }
@@ -928,43 +1129,71 @@ grpc_error_handle HPackParser::Parse(const grpc_slice& slice, bool is_last) {
 }
 
 grpc_error_handle HPackParser::ParseInput(Input input, bool is_last) {
-  bool parsed_ok = ParseInputInner(&input, is_last);
-  if (is_last) global_stats().IncrementHttp2MetadataSize(frame_length_);
-  if (parsed_ok) return absl::OkStatus();
+  ParseInputInner(&input);
+  if (is_last) {
+    if (state_.metadata_early_detection.Reject(state_.frame_length)) {
+      HandleMetadataSoftSizeLimitExceeded(&input);
+    }
+    global_stats().IncrementHttp2MetadataSize(state_.frame_length);
+  }
   if (input.eof_error()) {
     if (GPR_UNLIKELY(is_last && is_boundary())) {
-      return GRPC_ERROR_CREATE(
+      auto err = input.TakeError();
+      if (!err.ok() && !IsStreamError(err)) return err;
+      return absl::InternalError(
           "Incomplete header at the end of a header/continuation sequence");
     }
     unparsed_bytes_ = std::vector<uint8_t>(input.frontier(), input.end_ptr());
-    return absl::OkStatus();
+    min_progress_size_ = input.min_progress_size();
+    return input.TakeError();
   }
   return input.TakeError();
 }
 
-bool HPackParser::ParseInputInner(Input* input, bool is_last) {
+void HPackParser::ParseInputInner(Input* input) {
   switch (priority_) {
     case Priority::None:
       break;
     case Priority::Included: {
-      if (input->remaining() < 5) return input->UnexpectedEOF(false);
+      if (input->remaining() < 5) {
+        input->UnexpectedEOF(5);
+        return;
+      }
       input->Advance(5);
       input->UpdateFrontier();
       priority_ = Priority::None;
     }
   }
   while (!input->end_of_stream()) {
-    if (GPR_UNLIKELY(!Parser(input, metadata_buffer_, &table_,
-                             &dynamic_table_updates_allowed_, &frame_length_,
-                             &metadata_early_detection_, is_last, log_info_)
-                          .Parse())) {
-      return false;
+    if (GPR_UNLIKELY(
+            !Parser(input, metadata_buffer_, state_, log_info_).Parse())) {
+      return;
     }
     input->UpdateFrontier();
   }
-  return true;
 }
 
 void HPackParser::FinishFrame() { metadata_buffer_ = nullptr; }
+
+void HPackParser::HandleMetadataSoftSizeLimitExceeded(Input* input) {
+  // Collect a summary of sizes so far for debugging
+  // Do not collect contents, for fear of exposing PII.
+  std::string summary;
+  std::string error_message;
+  if (metadata_buffer_ != nullptr) {
+    MetadataSizeLimitExceededEncoder encoder(summary);
+    metadata_buffer_->Encode(&encoder);
+  }
+  error_message = absl::StrCat(
+      "received metadata size exceeds soft limit (", state_.frame_length,
+      " vs. ", state_.metadata_early_detection.soft_limit(),
+      "), rejecting requests with some random probability", summary);
+  if (metadata_buffer_ != nullptr) {
+    metadata_buffer_->Clear();
+    metadata_buffer_ = nullptr;
+  }
+  input->SetErrorAndContinueParsing(
+      absl::ResourceExhaustedError(error_message));
+}
 
 }  // namespace grpc_core

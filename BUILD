@@ -3698,6 +3698,7 @@ grpc_cc_library(
         "//src/core:decode_huff",
         "//src/core:error",
         "//src/core:hpack_constants",
+        "//src/core:match",
         "//src/core:random_early_detection",
         "//src/core:slice",
         "//src/core:slice_refcount",
