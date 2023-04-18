@@ -2419,8 +2419,10 @@ grpc_cc_library(
         "channel_stack_trace",
         "channel_stack_type",
         "//:channel_stack_builder",
+        "//:debug_location",
         "//:gpr",
         "//:gpr_platform",
+        "//:grpc_trace",
     ],
 )
 
