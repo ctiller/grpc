@@ -26,7 +26,6 @@
 #include <map>
 #include <set>
 #include <string>
-#include <type_traits>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -314,7 +313,7 @@ ChannelInit::StackConfig ChannelInit::BuildStackConfig(
   // condition here.
   // Right now we only log: many tests end up with a core configuration that
   // is invalid.
-  // TODO: evaluate if we can turn this into a crash one day.
+  // TODO(unknown): evaluate if we can turn this into a crash one day.
   // Right now it forces too many tests to know about channel initialization,
   // either by supplying a valid configuration or by including an opt-out flag.
   if (terminal_filters.empty() && type != GRPC_CLIENT_DYNAMIC) {
@@ -366,7 +365,7 @@ bool ChannelInit::CreateStack(ChannelStackBuilder* builder) const {
         " with arguments ", builder->channel_args().ToString(),
         " (we insist upon one and only one terminating "
         "filter)\n");
-    if (stack_config.terminators.size() == 0) {
+    if (stack_config.terminators.empty()) {
       absl::StrAppend(&error, "  No terminal filters were registered");
     } else {
       for (const auto& terminator : stack_config.terminators) {
