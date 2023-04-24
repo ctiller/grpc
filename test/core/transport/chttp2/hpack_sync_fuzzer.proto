@@ -1,4 +1,4 @@
-// Copyright 2021 gRPC authors.
+// Copyright 2023 gRPC authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,21 +14,30 @@
 
 syntax = "proto3";
 
-package hpack_parser_fuzzer;
+package hpack_sync_fuzzer;
 
 message Empty {}
 
-message Frame {
-  bool end_of_headers = 1;
-  bool end_of_stream = 2;
-  bool priority = 3;
-  int32 stop_buffering_after_segments = 4;
-  int32 max_metadata_length = 5;
-  repeated bytes parse = 6;
-  int32 absolute_max_metadata_length = 7;
+message StringKeyValue {
+    string key = 1;
+    string value = 2;
+}
+
+message IndexedKeyValue {
+    uint32 index = 1;
+    string value = 2;
+}
+
+message Header {
+    oneof ty {
+        uint32 indexed = 1;
+        StringKeyValue literal_inc_idx = 2;
+        StringKeyValue literal_not_idx = 3;
+        IndexedKeyValue literal_not_idx_from_idx = 4;
+    }
 }
 
 message Msg {
-  repeated Frame frames = 2;
+  bool use_true_binary_metadata = 1;
+  repeated Header headers = 2;
 }
-
