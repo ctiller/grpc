@@ -206,9 +206,16 @@ class HPackParser::Input {
 
     // Spec weirdness: we can add an infinite stream of 0x80 at the end of a
     // varint and still end up with a correctly encoded varint.
+    // We allow up to 16 just for kicks, but any more and we'll assume the
+    // sender is being malicious.
+    int num_redundent_0x80 = 0;
     do {
       cur = Next();
       if (!cur.has_value()) return {};
+      ++num_redundent_0x80;
+      if (num_redundent_0x80 == 16) {
+        return ParseVarintMaliciousEncoding();
+      }
     } while (*cur == 0x80);
 
     // BUT... the last byte needs to be 0x00 or we'll overflow dramatically!
@@ -316,6 +323,14 @@ class HPackParser::Input {
         "integer overflow in hpack integer decoding: have 0x%08x, "
         "got byte 0x%02x on byte 5",
         value, last_byte)));
+    return absl::optional<uint32_t>();
+  }
+
+  // Helper to set the error in the case of a malicious encoding
+  absl::optional<uint32_t> ParseVarintMaliciousEncoding() {
+    SetErrorAndStopParsing(
+        absl::InternalError("Malicious varint encoding observed during hpack "
+                            "decoding (infinite length degenerate varint)"));
     return absl::optional<uint32_t>();
   }
 
