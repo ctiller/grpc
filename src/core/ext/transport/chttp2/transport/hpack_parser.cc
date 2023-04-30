@@ -756,8 +756,7 @@ class HPackParser::Parser {
   void EmitHeader(const HPackTable::Memento& md) {
     // Pass up to the transport
     state_.frame_length += md.md.transport_size();
-    if (!input_->has_error() &&
-        state_.metadata_early_detection.MustReject(state_.frame_length)) {
+    if (state_.metadata_early_detection.MustReject(state_.frame_length)) {
       // Reject any requests above hard metadata limit.
       HandleMetadataHardSizeLimitExceeded([&md]() {
         return absl::StrCat("adding ", md.md.key(), " (length ",
@@ -1077,6 +1076,7 @@ class HPackParser::Parser {
   GPR_ATTRIBUTE_NOINLINE
   void HandleMetadataHardSizeLimitExceeded(
       absl::FunctionRef<std::string()> why) {
+    if (input_->has_error()) return;
     // Collect a summary of sizes so far for debugging
     // Do not collect contents, for fear of exposing PII.
     std::string summary;
