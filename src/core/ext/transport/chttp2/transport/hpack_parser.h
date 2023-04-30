@@ -187,28 +187,59 @@ class HPackParser {
     }
   };
 
+  // Current parse state
+  // ┌───┐
+  // │Top│
+  // └┬─┬┘
+  //  │┌▽────────────────┐
+  //  ││ParsingKeyLength │
+  //  │└┬───────────────┬┘
+  //  │┌▽─────────────┐┌▽──────────────┐
+  //  ││ParsingKeyBody││SkippingKeyBody│
+  //  │└┬─────────────┘└───┬───────────┘
+  // ┌▽─▽────────────────┐┌▽──────────────────┐
+  // │ParsingValueLength ││SkippingValueLength│
+  // └┬─────────────────┬┘└┬──────────────────┘
+  // ┌▽───────────────┐┌▽──▽─────────────┐
+  // │ParsingValueBody││SkippingValueBody│
+  // └────────────────┘└─────────────────┘
   enum class ParseState : uint8_t {
+    // Start of one opcode
     kTop,
+    // Parsing a literal keys length
     kParsingKeyLength,
+    // Parsing a literal key
     kParsingKeyBody,
+    // Skipping a literal key
     kSkippingKeyBody,
+    // Parsing a literal value length
     kParsingValueLength,
+    // Parsing a literal value
     kParsingValueBody,
+    // Reading a literal value length (so we can skip it)
     kSkippingValueLength,
+    // Skipping a literal value
     kSkippingValueBody,
   };
 
+  // Shared state for Parser instances between slices.
   struct InterSliceState {
     HPackTable hpack_table;
     // Length of frame so far.
     uint32_t frame_length;
     // Length of the string being parsed
     uint32_t string_length;
+    // How many more dynamic table updates are allowed
     uint8_t dynamic_table_updates_allowed;
+    // Current parse state
     ParseState parse_state = ParseState::kTop;
+    // RED for overly large metadata sets
     RandomEarlyDetection metadata_early_detection;
+    // Should the current header be added to the hpack table?
     bool add_to_table;
+    // Is the string being parsed huffman compressed?
     bool is_string_huff_compressed;
+    // Is the value being parsed binary?
     bool is_binary_header;
     absl::variant<const HPackTable::Memento*, Slice> key;
   };

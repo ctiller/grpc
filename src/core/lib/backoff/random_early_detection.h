@@ -43,7 +43,7 @@ class RandomEarlyDetection {
   uint64_t soft_limit() const { return soft_limit_; }
   uint64_t hard_limit() const { return hard_limit_; }
 
-  void ResetLimits(uint64_t soft_limit, uint64_t hard_limit) {
+  void SetLimits(uint64_t soft_limit, uint64_t hard_limit) {
     soft_limit_ = soft_limit;
     hard_limit_ = hard_limit;
   }

@@ -284,7 +284,9 @@ class HPackParser::Input {
     begin_ = end_;
   }
 
-  // Set the error to an unexpected eof
+  // Set the error to an unexpected eof.
+  // min_progress_size: how many bytes beyond the current frontier do we need to
+  // read prior to being able to get further in this parse.
   void UnexpectedEOF(size_t min_progress_size) {
     GPR_ASSERT(min_progress_size > 0);
     if (min_progress_size_ != 0 || (!error_.ok() && !IsStreamError(error_))) {
@@ -305,9 +307,13 @@ class HPackParser::Input {
     UpdateFrontier();
     size_t remaining = end_ - begin_;
     if (skip_bytes >= remaining) {
+      // If we have more bytes to skip than we have remaining in this buffer
+      // then we skip over what's there and stash that we need to skip some
+      // more.
       skip_bytes_ = skip_bytes - remaining;
       frontier_ = end_;
     } else {
+      // Otherwise we zoom through some bytes and continue parsing.
       frontier_ += skip_bytes_;
     }
   }
@@ -338,7 +344,7 @@ class HPackParser::Input {
   // Do not use this directly, instead use SetErrorAndContinueParsing or
   // SetErrorAndStopParsing.
   void SetError(grpc_error_handle error) {
-    if (!error_.ok() || min_progress_size_ != 0) {
+    if (!error_.ok() || min_progress_size_ > 0) {
       if (!IsStreamError(error) && IsStreamError(error_)) {
         error_ = std::move(error);  // connection errors dominate
       }
@@ -360,7 +366,9 @@ class HPackParser::Input {
   // If the error was EOF, we flag it here by noting how many more bytes would
   // be needed to make progress
   size_t min_progress_size_ = 0;
-  // Number of bytes that should be skipped before parsing resumes
+  // Number of bytes that should be skipped before parsing resumes.
+  // (We've failed parsing a request for whatever reason, but we're still
+  // continuing the connection so we need to see future opcodes after this bit).
   size_t skip_bytes_ = 0;
 };
 
@@ -1120,7 +1128,7 @@ void HPackParser::BeginFrame(grpc_metadata_batch* metadata_buffer,
   priority_ = priority;
   state_.dynamic_table_updates_allowed = 2;
   state_.frame_length = 0;
-  state_.metadata_early_detection.ResetLimits(
+  state_.metadata_early_detection.SetLimits(
       /*soft_limit=*/metadata_size_soft_limit,
       /*hard_limit=*/metadata_size_hard_limit);
   log_info_ = log_info;
