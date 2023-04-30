@@ -348,6 +348,7 @@ class HPackParser::Input {
     if (!error_.ok() || min_progress_size_ > 0) {
       if (!IsStreamError(error) && IsStreamError(error_)) {
         error_ = std::move(error);  // connection errors dominate
+        return;
       }
       return;
     }
@@ -959,17 +960,22 @@ class HPackParser::Parser {
                                   state_.string_length)
             : String::Parse(input_, state_.is_string_huff_compressed,
                             state_.string_length);
-    absl::Status status;
+    absl::Status status = state_.frame_error;
     absl::string_view key_string;
     if (auto* s = absl::get_if<Slice>(&state_.key)) {
       key_string = s->as_string_view();
-      status = EnsureStreamError(ValidateKey(key_string));
+      if (status.ok()) {
+        status = EnsureStreamError(ValidateKey(key_string));
+        if (!status.ok()) input_->SetErrorAndContinueParsing(status);
+      }
     } else {
       const auto* memento = absl::get<const HPackTable::Memento*>(state_.key);
       key_string = memento->md.key();
-      status = memento->parse_status;
+      if (status.ok()) {
+        status = memento->parse_status;
+        if (!status.ok()) input_->SetErrorAndContinueParsing(status);
+      }
     }
-    if (!status.ok()) input_->SetErrorAndContinueParsing(status);
     switch (value.status) {
       case String::ParseStatus::kOk:
         break;
@@ -995,12 +1001,13 @@ class HPackParser::Parser {
     auto md = grpc_metadata_batch::Parse(
         key_string, std::move(value_slice), transport_size,
         [key_string, &status, this](absl::string_view msg, const Slice&) {
+          if (!status.ok()) return;
           auto message =
               absl::StrCat("Error parsing '", key_string, "' metadata: ", msg);
           auto error = absl::InternalError(message);
           gpr_log(GPR_ERROR, "%s", message.c_str());
           input_->SetErrorAndContinueParsing(error);
-          if (status.ok()) status = error;
+          status = error;
         });
     HPackTable::Memento memento{std::move(md), std::move(status)};
     input_->UpdateFrontier();
