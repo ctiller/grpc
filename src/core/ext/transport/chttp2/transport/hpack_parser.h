@@ -225,8 +225,10 @@ class HPackParser {
   // Shared state for Parser instances between slices.
   struct InterSliceState {
     HPackTable hpack_table;
+    // Error so far for this frame (set by class Input)
+    absl::Status frame_error;
     // Length of frame so far.
-    uint32_t frame_length;
+    uint32_t frame_length = 0;
     // Length of the string being parsed
     uint32_t string_length;
     // How many more dynamic table updates are allowed

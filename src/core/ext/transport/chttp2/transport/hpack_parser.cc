@@ -126,11 +126,12 @@ class MetadataSizeLimitExceededEncoder {
 class HPackParser::Input {
  public:
   Input(grpc_slice_refcount* current_slice_refcount, const uint8_t* begin,
-        const uint8_t* end)
+        const uint8_t* end, absl::Status& error)
       : current_slice_refcount_(current_slice_refcount),
         begin_(begin),
         end_(end),
-        frontier_(begin) {}
+        frontier_(begin),
+        error_(error) {}
 
   // If input is backed by a slice, retrieve its refcount. If not, return
   // nullptr.
@@ -362,7 +363,7 @@ class HPackParser::Input {
   // Frontier denotes the first byte past successfully processed input
   const uint8_t* frontier_;
   // Current error
-  grpc_error_handle error_;
+  absl::Status& error_;
   // If the error was EOF, we flag it here by noting how many more bytes would
   // be needed to make progress
   size_t min_progress_size_ = 0;
@@ -1127,10 +1128,10 @@ void HPackParser::BeginFrame(grpc_metadata_batch* metadata_buffer,
   boundary_ = boundary;
   priority_ = priority;
   state_.dynamic_table_updates_allowed = 2;
-  state_.frame_length = 0;
   state_.metadata_early_detection.SetLimits(
       /*soft_limit=*/metadata_size_soft_limit,
       /*hard_limit=*/metadata_size_hard_limit);
+  state_.frame_error = absl::OkStatus();
   log_info_ = log_info;
 }
 
@@ -1143,11 +1144,12 @@ grpc_error_handle HPackParser::Parse(const grpc_slice& slice, bool is_last) {
       return absl::OkStatus();
     }
     std::vector<uint8_t> buffer = std::move(unparsed_bytes_);
-    return ParseInput(
-        Input(nullptr, buffer.data(), buffer.data() + buffer.size()), is_last);
+    return ParseInput(Input(nullptr, buffer.data(),
+                            buffer.data() + buffer.size(), state_.frame_error),
+                      is_last);
   }
   return ParseInput(Input(slice.refcount, GRPC_SLICE_START_PTR(slice),
-                          GRPC_SLICE_END_PTR(slice)),
+                          GRPC_SLICE_END_PTR(slice), state_.frame_error),
                     is_last);
 }
 
@@ -1159,6 +1161,7 @@ grpc_error_handle HPackParser::ParseInput(Input input, bool is_last) {
     }
     global_stats().IncrementHttp2MetadataSize(state_.frame_length);
   }
+  auto error = state_.frame_error;
   if (input.eof_error()) {
     if (GPR_UNLIKELY(is_last && is_boundary())) {
       auto err = input.TakeError();
@@ -1168,9 +1171,12 @@ grpc_error_handle HPackParser::ParseInput(Input input, bool is_last) {
     }
     unparsed_bytes_ = std::vector<uint8_t>(input.frontier(), input.end_ptr());
     min_progress_size_ = input.min_progress_size();
-    return input.TakeError();
   }
-  return input.TakeError();
+  if (is_last && boundary_ != Boundary::None) {
+    state_.frame_error = absl::OkStatus();
+    state_.frame_length = 0;
+  }
+  return error;
 }
 
 void HPackParser::ParseInputInner(Input* input) {
