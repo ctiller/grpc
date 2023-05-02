@@ -728,7 +728,14 @@ INSTANTIATE_TEST_SUITE_P(
                "dadadadadadadadadadadadadadadadadadadadadadadadadadadadadadadad"
                "adadadadadadadadadadadadadadadadadadada",
                absl::InternalError("Invalid HPACK index received"),
-               kWithPriority | kFailureIsConnectionError}}}),
+               kWithPriority | kFailureIsConnectionError}}},
+        Test{"MaliciousVarintEncoding",
+             {},
+             {},
+             {{"1f80808080808080808080808080808080808080808080808080808080",
+               absl::InternalError(
+                   "Malicious varint encoding detected in HPACK stream"),
+               kFailureIsConnectionError}}}),
     NameFromConfig);
 
 }  // namespace
