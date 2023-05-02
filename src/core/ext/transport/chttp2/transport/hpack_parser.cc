@@ -964,7 +964,8 @@ class HPackParser::Parser {
                   std::string(key_string).c_str(),
                   std::string(message).c_str());
         });
-    HPackTable::Memento memento{std::move(md), status.PersistentOrOk()};
+    HPackTable::Memento memento{std::move(md),
+                                status.PersistentStreamErrorOrOk()};
     input_->UpdateFrontier();
     state_.parse_state = ParseState::kTop;
     if (state_.add_to_table) {

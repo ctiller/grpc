@@ -97,7 +97,8 @@ class HpackParseResult {
   bool connection_error() const { return IsConnectionError(status_.get()); }
   bool ephemeral() const { return IsEphemeralError(status_.get()); }
 
-  HpackParseResult PersistentOrOk() const {
+  HpackParseResult PersistentStreamErrorOrOk() const {
+    if (connection_error()) return HpackParseResult();
     if (ephemeral()) return HpackParseResult();
     return *this;
   }

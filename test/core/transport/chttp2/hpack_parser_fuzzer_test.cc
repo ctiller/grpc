@@ -94,7 +94,7 @@ DEFINE_PROTO_FUZZER(const hpack_parser_fuzzer::Msg& msg) {
         grpc_slice_unref(buffer);
         stop_buffering_ctr--;
         if (0 == stop_buffering_ctr) parser->StopBufferingFrame();
-        GPR_ASSERT(parser->buffered_bytes() < 4 * absolute_max_length);
+        GPR_ASSERT(parser->buffered_bytes() / 4 < absolute_max_length);
       }
       parser->FinishFrame();
     }
