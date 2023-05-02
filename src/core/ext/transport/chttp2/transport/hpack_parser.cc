@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <initializer_list>
+#include <limits>
 #include <string>
 #include <utility>
 
@@ -1093,8 +1094,13 @@ grpc_error_handle HPackParser::ParseInput(Input input, bool is_last) {
                      !state_.frame_error.connection_error())) {
       state_.frame_error = HpackParseResult::IncompleteHeaderAtBoundaryError();
     }
-    unparsed_bytes_ = std::vector<uint8_t>(input.frontier(), input.end_ptr());
-    min_progress_size_ = input.min_progress_size();
+    if (GPR_UNLIKELY(state_.frame_error.connection_error())) {
+      unparsed_bytes_.clear();
+      min_progress_size_ = std::numeric_limits<size_t>::max();
+    } else {
+      unparsed_bytes_ = std::vector<uint8_t>(input.frontier(), input.end_ptr());
+      min_progress_size_ = input.min_progress_size();
+    }
   }
   if (is_last && is_boundary()) {
     state_.frame_length = 0;

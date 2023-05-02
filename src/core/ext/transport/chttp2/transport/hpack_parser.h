@@ -103,6 +103,9 @@ class HPackParser {
   // Is the current frame the end of a stream
   bool is_eof() const { return boundary_ == Boundary::EndOfStream; }
 
+  // How many bytes are buffered (for tests to assert on)
+  size_t buffered_bytes() const { return unparsed_bytes_.size(); }
+
  private:
   // Helper classes: see implementation
   class Parser;

@@ -71,14 +71,14 @@ DEFINE_PROTO_FUZZER(const hpack_parser_fuzzer::Msg& msg) {
       }
       int max_length = 1024;
       int absolute_max_length = 1024;
-      if (absolute_max_length < max_length) {
-        std::swap(absolute_max_length, max_length);
-      }
       if (frame.max_metadata_length() != 0) {
         max_length = frame.max_metadata_length();
       }
       if (frame.absolute_max_metadata_length() != 0) {
         absolute_max_length = frame.absolute_max_metadata_length();
+      }
+      if (absolute_max_length < max_length) {
+        std::swap(absolute_max_length, max_length);
       }
 
       parser->BeginFrame(
@@ -94,6 +94,7 @@ DEFINE_PROTO_FUZZER(const hpack_parser_fuzzer::Msg& msg) {
         grpc_slice_unref(buffer);
         stop_buffering_ctr--;
         if (0 == stop_buffering_ctr) parser->StopBufferingFrame();
+        GPR_ASSERT(parser->buffered_bytes() < 4 * absolute_max_length);
       }
       parser->FinishFrame();
     }
