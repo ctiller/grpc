@@ -50,35 +50,43 @@ DEFINE_PROTO_FUZZER(const hpack_parser_fuzzer::Msg& msg) {
                               ->CreateMemoryAllocator("test-allocator");
   {
     std::unique_ptr<grpc_core::HPackParser> parser(new grpc_core::HPackParser);
+    int max_length = 1024;
+    int absolute_max_length = 1024;
+    bool can_update_max_length = true;
     for (int i = 0; i < msg.frames_size(); i++) {
       auto arena = grpc_core::MakeScopedArena(1024, &memory_allocator);
       grpc_core::ExecCtx exec_ctx;
       grpc_metadata_batch b(arena.get());
 
       const auto& frame = msg.frames(i);
+      // we can only update max length after a frame boundary
+      // so simulate that here
+      if (can_update_max_length) {
+        if (frame.max_metadata_length() != 0) {
+          max_length = frame.max_metadata_length();
+        }
+        if (frame.absolute_max_metadata_length() != 0) {
+          absolute_max_length = frame.absolute_max_metadata_length();
+        }
+        if (absolute_max_length < max_length) {
+          std::swap(absolute_max_length, max_length);
+        }
+      }
       grpc_core::HPackParser::Boundary boundary =
           grpc_core::HPackParser::Boundary::None;
+      can_update_max_length = false;
       if (frame.end_of_headers()) {
         boundary = grpc_core::HPackParser::Boundary::EndOfHeaders;
+        can_update_max_length = true;
       }
       if (frame.end_of_stream()) {
         boundary = grpc_core::HPackParser::Boundary::EndOfStream;
+        can_update_max_length = true;
       }
       grpc_core::HPackParser::Priority priority =
           grpc_core::HPackParser::Priority::None;
       if (frame.priority()) {
         priority = grpc_core::HPackParser::Priority::Included;
-      }
-      int max_length = 1024;
-      int absolute_max_length = 1024;
-      if (frame.max_metadata_length() != 0) {
-        max_length = frame.max_metadata_length();
-      }
-      if (frame.absolute_max_metadata_length() != 0) {
-        absolute_max_length = frame.absolute_max_metadata_length();
-      }
-      if (absolute_max_length < max_length) {
-        std::swap(absolute_max_length, max_length);
       }
 
       parser->BeginFrame(
@@ -94,7 +102,13 @@ DEFINE_PROTO_FUZZER(const hpack_parser_fuzzer::Msg& msg) {
         grpc_slice_unref(buffer);
         stop_buffering_ctr--;
         if (0 == stop_buffering_ctr) parser->StopBufferingFrame();
-        GPR_ASSERT(parser->buffered_bytes() / 4 < absolute_max_length);
+        // Ensure we never take on more than four times the absolute limit in
+        // buffer size.
+        // (This is incredibly generous, but having a bound nevertheless means
+        // we don't accidentally flow to infinity, which would be crossing the
+        // streams level bad).
+        GPR_ASSERT(parser->buffered_bytes() / 4 <
+                   std::max(1024, absolute_max_length));
       }
       parser->FinishFrame();
     }
