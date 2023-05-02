@@ -158,6 +158,7 @@ absl::Status HpackParseResult::BuildMaterialized() const {
     case HpackParseStatus::kIllegalHpackOpCode:
       return absl::InternalError("Illegal hpack op code");
   }
+  GPR_UNREACHABLE_CODE(return absl::UnknownError("Should never reach here"));
 }
 
 }  // namespace grpc_core

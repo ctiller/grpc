@@ -68,10 +68,11 @@ DEFINE_PROTO_FUZZER(const hpack_parser_fuzzer::Msg& msg) {
       // so simulate that here
       if (can_update_max_length) {
         if (frame.max_metadata_length() != 0) {
-          max_length = frame.max_metadata_length();
+          max_length = std::max(0, frame.max_metadata_length());
         }
         if (frame.absolute_max_metadata_length() != 0) {
-          absolute_max_length = frame.absolute_max_metadata_length();
+          absolute_max_length =
+              std::max(0, frame.absolute_max_metadata_length());
         }
         if (absolute_max_length < max_length) {
           std::swap(absolute_max_length, max_length);
