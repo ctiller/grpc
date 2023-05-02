@@ -21,6 +21,8 @@
 #include <string>
 #include <utility>
 
+#include "absl/cleanup/cleanup.h"
+
 #include <grpc/grpc.h>
 #include <grpc/slice.h>
 #include <grpc/support/log.h>
@@ -45,6 +47,7 @@ static void dont_log(gpr_log_func_args* /*args*/) {}
 DEFINE_PROTO_FUZZER(const hpack_parser_fuzzer::Msg& msg) {
   if (squelch) gpr_set_log_function(dont_log);
   grpc_init();
+  auto cleanup = absl::MakeCleanup(grpc_shutdown);
   auto memory_allocator = grpc_core::ResourceQuota::Default()
                               ->memory_quota()
                               ->CreateMemoryAllocator("test-allocator");
@@ -59,6 +62,8 @@ DEFINE_PROTO_FUZZER(const hpack_parser_fuzzer::Msg& msg) {
       grpc_metadata_batch b(arena.get());
 
       const auto& frame = msg.frames(i);
+      if (frame.parse_size() == 0) continue;
+
       // we can only update max length after a frame boundary
       // so simulate that here
       if (can_update_max_length) {
@@ -95,10 +100,11 @@ DEFINE_PROTO_FUZZER(const hpack_parser_fuzzer::Msg& msg) {
               1, grpc_core::HPackParser::LogInfo::kHeaders, false});
       int stop_buffering_ctr =
           std::max(-1, frame.stop_buffering_after_segments());
-      for (const auto& parse : frame.parse()) {
+      for (size_t idx = 0; idx < frame.parse_size(); idx++) {
+        const auto& parse = frame.parse(idx);
         grpc_slice buffer =
             grpc_slice_from_copied_buffer(parse.data(), parse.size());
-        (void)parser->Parse(buffer, i == msg.frames_size() - 1);
+        auto err = parser->Parse(buffer, idx == frame.parse_size() - 1);
         grpc_slice_unref(buffer);
         stop_buffering_ctr--;
         if (0 == stop_buffering_ctr) parser->StopBufferingFrame();
@@ -109,9 +115,18 @@ DEFINE_PROTO_FUZZER(const hpack_parser_fuzzer::Msg& msg) {
         // streams level bad).
         GPR_ASSERT(parser->buffered_bytes() / 4 <
                    std::max(1024, absolute_max_length));
+        if (!err.ok()) {
+          intptr_t unused;
+          if (grpc_error_get_int(err, grpc_core::StatusIntProperty::kStreamId,
+                                 &unused)) {
+            // This is a stream error, we ignore it
+          } else {
+            // This is a connection error, we don't try to parse anymore
+            return;
+          }
+        }
       }
       parser->FinishFrame();
     }
   }
-  grpc_shutdown();
 }

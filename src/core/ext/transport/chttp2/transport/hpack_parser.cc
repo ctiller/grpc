@@ -1092,7 +1092,8 @@ grpc_error_handle HPackParser::ParseInput(Input input, bool is_last) {
   }
   if (input.eof_error()) {
     if (GPR_UNLIKELY(is_last && is_boundary() &&
-                     !state_.frame_error.connection_error())) {
+                     (!state_.frame_error.connection_error() ||
+                      state_.parse_state != ParseState::kTop))) {
       state_.frame_error = HpackParseResult::IncompleteHeaderAtBoundaryError();
     }
     if (GPR_UNLIKELY(state_.frame_error.connection_error())) {
