@@ -560,7 +560,7 @@ HPackParser::String::StringResult HPackParser::String::ParseBinary(
 // Parser parses one key/value pair from a byte stream.
 class HPackParser::Parser {
  public:
-  Parser(Input* input, grpc_metadata_batch* metadata_buffer,
+  Parser(Input* input, grpc_metadata_batch*& metadata_buffer,
          InterSliceState& state, LogInfo log_info)
       : input_(input),
         metadata_buffer_(metadata_buffer),
@@ -808,6 +808,7 @@ class HPackParser::Parser {
           HpackParseResult::HardMetadataLimitExceededByKeyError(
               state_.string_length,
               state_.metadata_early_detection.hard_limit()));
+      metadata_buffer_ = nullptr;
       state_.parse_state = ParseState::kSkippingKeyBody;
       return SkipKeyBody();
     } else {
@@ -896,6 +897,7 @@ class HPackParser::Parser {
                   [](const HPackTable::Memento* m) { return m->md.key(); }),
               state_.string_length,
               state_.metadata_early_detection.hard_limit()));
+      metadata_buffer_ = nullptr;
       state_.parse_state = ParseState::kSkippingValueBody;
       return SkipValueBody();
     } else {
@@ -1020,7 +1022,7 @@ class HPackParser::Parser {
   }
 
   Input* const input_;
-  grpc_metadata_batch* metadata_buffer_;
+  grpc_metadata_batch*& metadata_buffer_;
   InterSliceState& state_;
   const LogInfo log_info_;
 };
