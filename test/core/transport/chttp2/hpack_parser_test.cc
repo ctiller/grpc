@@ -96,18 +96,16 @@ class ParseTest : public ::testing::TestWithParam<Test> {
 
   static bool IsStreamError(const absl::Status& status) {
     intptr_t stream_id;
-    return grpc_error_get_int(status, StatusIntProperty::kStreamId,
-                              &stream_id);
+    return grpc_error_get_int(status, StatusIntProperty::kStreamId, &stream_id);
   }
 
   void TestVector(grpc_slice_split_mode mode,
                   absl::optional<size_t> max_metadata_size,
                   absl::string_view hexstring,
                   absl::StatusOr<absl::string_view> expect, uint32_t flags) {
-    MemoryAllocator memory_allocator =
-        MemoryAllocator(ResourceQuota::Default()
-                                       ->memory_quota()
-                                       ->CreateMemoryAllocator("test"));
+    MemoryAllocator memory_allocator = MemoryAllocator(
+        ResourceQuota::Default()->memory_quota()->CreateMemoryAllocator(
+            "test"));
     auto arena = MakeScopedArena(1024, &memory_allocator);
     ExecCtx exec_ctx;
     auto input = ParseHexstring(hexstring);
@@ -121,13 +119,11 @@ class ParseTest : public ::testing::TestWithParam<Test> {
         &b, max_metadata_size.value_or(4096), max_metadata_size.value_or(4096),
         (flags & kEndOfStream)
             ? HPackParser::Boundary::EndOfStream
-            : ((flags & kEndOfHeaders)
-                   ? HPackParser::Boundary::EndOfHeaders
-                   : HPackParser::Boundary::None),
+            : ((flags & kEndOfHeaders) ? HPackParser::Boundary::EndOfHeaders
+                                       : HPackParser::Boundary::None),
         flags & kWithPriority ? HPackParser::Priority::Included
                               : HPackParser::Priority::None,
-        HPackParser::LogInfo{
-            1, HPackParser::LogInfo::kHeaders, false});
+        HPackParser::LogInfo{1, HPackParser::LogInfo::kHeaders, false});
 
     grpc_split_slices(mode, const_cast<grpc_slice*>(&input.c_slice()), 1,
                       &slices, &nslices);
