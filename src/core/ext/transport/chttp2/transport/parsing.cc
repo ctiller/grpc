@@ -23,7 +23,6 @@
 
 #include <initializer_list>
 #include <string>
-#include <utility>
 
 #include "absl/base/attributes.h"
 #include "absl/status/status.h"
@@ -815,8 +814,9 @@ static grpc_error_handle parse_frame_slice(grpc_chttp2_transport* t,
                          &unused)) {
     grpc_chttp2_parsing_become_skip_parser(t);
     if (s) {
-      grpc_chttp2_cancel_stream(t, s, std::exchange(err, absl::OkStatus()));
+      grpc_chttp2_cancel_stream(t, s, err);
     }
+    return absl::OkStatus();
   }
   return err;
 }
