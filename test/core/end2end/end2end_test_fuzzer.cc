@@ -79,8 +79,9 @@ uint8_t CappedDamerauLevenshteinDistance(absl::string_view s1,
   const uint8_t cutoff_plus_1 = static_cast<uint8_t>(_cutoff + 1);
 
   if (s1.size() > s2.size()) std::swap(s1, s2);
-  if (s1.size() + _cutoff < s2.size() || s2.size() > MAX_SIZE)
+  if (s1.size() + _cutoff < s2.size() || s2.size() > MAX_SIZE) {
     return cutoff_plus_1;
+  }
 
   if (s1.empty()) return static_cast<uint8_t>(s2.size());
 
@@ -118,8 +119,9 @@ uint8_t CappedDamerauLevenshteinDistance(absl::string_view s1,
       const uint8_t mismatched_tail_cost = s1[i - 1] == s2[j - 1] ? 0 : 1;
       const uint8_t mismatch_distance = d[i - 1][j - 1] + mismatched_tail_cost;
       uint8_t transposition_distance = _cutoff + 1;
-      if (i > 1 && j > 1 && s1[i - 1] == s2[j - 2] && s1[i - 2] == s2[j - 1])
+      if (i > 1 && j > 1 && s1[i - 1] == s2[j - 2] && s1[i - 2] == s2[j - 1]) {
         transposition_distance = d[i - 2][j - 2] + 1;
+      }
       d[i][j] = std::min({cutoff_plus_1, deletion_distance, insertion_distance,
                           mismatch_distance, transposition_distance});
     }
@@ -158,7 +160,7 @@ DEFINE_PROTO_FUZZER(const core_end2end_test_fuzzer::Msg& msg) {
                      test.make_test(test.config));
                }});
     }
-    GPR_ASSERT(tests.size() > 0);
+    GPR_ASSERT(!tests.empty());
     return tests;
   }();
   static const auto only_experiment =
