@@ -22,8 +22,6 @@
 #include <limits>
 #include <memory>
 
-#include <grpc/support/cpu.h>
-
 #include "src/core/lib/iomgr/exec_ctx.h"
 
 namespace grpc_core {
