@@ -44,7 +44,9 @@ namespace chaotic_good {
 
 class ClientTransport {
  public:
-  ClientTransport(const ChannelArgs& channel_args, EventEngine* event_engine,
+  ClientTransport(const ChannelArgs& channel_args,
+                  grpc_event_engine::experimental::EventEngineengine::
+                      experimental::EventEngine* event_engine,
                   std::unique_ptr<PromiseEndpoint> control_endpoint_,
                   std::unique_ptr<PromiseEndpoint> data_endpoint_);
   auto AddStream(CallArgs call_args) {
