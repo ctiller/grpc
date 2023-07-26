@@ -44,39 +44,48 @@ namespace chaotic_good {
 
 class ClientTransport {
  public:
-  ClientTransport(const ChannelArgs& channel_args,
-                  PromiseEndpoint&& control_endpoint_,
-                  PromiseEndpoint&& data_endpoint_);
+  ClientTransport(const ChannelArgs& channel_args, EventEngine* event_engine,
+                  std::unique_ptr<PromiseEndpoint> control_endpoint_,
+                  std::unique_ptr<PromiseEndpoint> data_endpoint_);
   auto AddStream(CallArgs call_args) {
-    // At this point, the connection is set up.
-    // Start sending data frames.
-    auto initial_frame = std::make_shared<ClientFragmentFrame>();
-    initial_frame->headers = std::move(call_args.client_initial_metadata);
-    initial_frame->end_of_stream = false;
+    uint64_t stream_id;
     {
       MutexLock lock(&mu_);
-      initial_frame->stream_id = next_stream_id_++;
+      stream_id = next_stream_id_++;
     }
-    return ForEach(std::move(*call_args.client_to_server_messages),
-                   [this, initial_frame](MessageHandle result) {
-                     initial_frame->message = std::move(result);
-                     auto outgoing_frames =
-                         std::make_shared<MpscSender<FrameInterface*>>(
-                             this->outgoing_frames_.MakeSender());
-                     return Seq(outgoing_frames->Send(initial_frame.get()), [] {
-                       // TODO(ladynana): remove this sleep after figure out how
-                       // to synchronize writer_ with outside activity.
-                       absl::SleepFor(absl::Seconds(5));
-                       return absl::OkStatus();
-                     });
-                   });
+
+    // At this point, the connection is set up.
+    // Start sending data frames.
+    return Seq(
+        [stream_id, outgoing_frames = outgoing_frames_.MakeSender(),
+         client_initial_metadata =
+             std::move(call_args.client_initial_metadata)]() mutable {
+          // TODO(): consider getting the first message here if it's available.
+          ClientFragmentFrame frame;
+          frame.stream_id = stream_id;
+          frame.headers = std::move(client_initial_metadata);
+          frame.end_of_stream = false;
+          return outgoing_frames.Send(std::move(frame));
+        },
+        ForEach(std::move(*call_args.client_to_server_messages),
+                [stream_id, outgoing_frames = outgoing_frames_.MakeSender()](
+                    MessageHandle result) mutable {
+                  ClientFragmentFrame frame;
+                  frame.stream_id = stream_id;
+                  frame.message = std::move(result);
+                  return Seq(outgoing_frames.Send(std::move(frame)), [] {
+                    // TODO(ladynana): remove this sleep after figure out how
+                    // to synchronize writer_ with outside activity.
+                    absl::SleepFor(absl::Seconds(5));
+                    return absl::OkStatus();
+                  });
+                }));
   }
 
  private:
   // Max buffer is set to 4, so that for stream writes each time it will queue
   // at most 2 frames.
-  MpscReceiver<FrameInterface*> outgoing_frames_ =
-      MpscReceiver<FrameInterface*>(4);
+  MpscReceiver<ClientFrame> outgoing_frames_ = MpscReceiver<ClientFrame>(4);
   Mutex mu_;
   uint32_t next_stream_id_ ABSL_GUARDED_BY(mu_) = 1;
   ActivityPtr writer_;

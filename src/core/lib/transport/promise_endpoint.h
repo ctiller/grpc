@@ -51,6 +51,8 @@ class PromiseEndpoint {
           endpoint,
       SliceBuffer already_received);
   ~PromiseEndpoint();
+  PromiseEndpoint(const PromiseEndpoint&) = delete;
+  PromiseEndpoint(PromiseEndpoint&&) = delete;
 
   // Returns a promise that resolves to a `absl::Status` indicating the result
   // of the write operation.
