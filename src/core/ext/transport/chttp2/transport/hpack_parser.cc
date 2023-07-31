@@ -490,7 +490,7 @@ HPackParser::String::StringResult HPackParser::String::Parse(Input* input,
     HuffDecodeBuffer output;
     HpackParseStatus sts = ParseHuff(input, length, output);
     size_t wire_len = output.size();
-    return StringResult{sts, wire_len, String(std::move(output))};
+    return StringResult{sts, wire_len, String(output)};
   }
   return ParseUncompressed(input, length, length);
 }

@@ -3800,6 +3800,7 @@ grpc_cc_library(
     ],
     external_deps = [
         "absl/base:core_headers",
+        "absl/container:inlined_vector",
         "absl/status",
         "absl/strings",
         "absl/types:optional",
