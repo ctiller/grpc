@@ -17,6 +17,7 @@
 
 #include <benchmark/benchmark.h>
 
+#include "absl/container/inlined_vector.h"
 #include "absl/strings/escaping.h"
 
 #include "src/core/ext/transport/chttp2/transport/bin_encoder.h"
@@ -30,8 +31,8 @@ std::vector<uint8_t> MakeInput(int min, int max) {
   std::vector<uint8_t> v;
   std::uniform_int_distribution<> distribution(min, max);
   static std::mt19937 rd(0);
-  v.reserve(1024 * 1024);
-  for (int i = 0; i < 1024 * 1024; i++) {
+  v.reserve(4096);
+  for (int i = 0; i < 4096; i++) {
     v.push_back(distribution(rd));
   }
   grpc_core::Slice s = grpc_core::Slice::FromCopiedBuffer(v);
@@ -68,11 +69,9 @@ using CharSet = const std::vector<uint8_t>& (*)();
 template <template <typename Sink> class Decoder>
 static void BM_Decode(benchmark::State& state, CharSet chars_gen) {
   const std::vector<uint8_t>& chars = chars_gen();
-  std::vector<uint8_t> output;
-  auto add = [&output](uint8_t c) { output.push_back(c); };
   for (auto _ : state) {
-    output.clear();
-    Decoder<decltype(add)>(add, chars.data(), chars.data() + chars.size())
+    absl::InlinedVector<uint8_t, 8192> output;
+    Decoder<decltype(output)>(output, chars.data(), chars.data() + chars.size())
         .Run();
   }
 }

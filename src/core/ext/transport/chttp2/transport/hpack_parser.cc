@@ -338,9 +338,8 @@ absl::string_view HPackParser::String::string_view() const {
   GPR_UNREACHABLE_CODE(return absl::string_view());
 }
 
-template <typename Out>
 HpackParseStatus HPackParser::String::ParseHuff(Input* input, uint32_t length,
-                                                Out output) {
+                                                HuffDecodeBuffer& output) {
   // If there's insufficient bytes remaining, return now.
   if (input->remaining() < length) {
     input->UnexpectedEOF(/*min_progress_size=*/length);
@@ -349,7 +348,7 @@ HpackParseStatus HPackParser::String::ParseHuff(Input* input, uint32_t length,
   // Grab the byte range, and iterate through it.
   const uint8_t* p = input->cur_ptr();
   input->Advance(length);
-  return HuffDecoder<Out>(output, p, p + length).Run()
+  return HuffDecoder<HuffDecodeBuffer>(output, p, p + length).Run()
              ? HpackParseStatus::kOk
              : HpackParseStatus::kParseHuffFailed;
 }
@@ -488,9 +487,8 @@ HPackParser::String::StringResult HPackParser::String::Parse(Input* input,
                                                              size_t length) {
   if (is_huff) {
     // Huffman coded
-    std::vector<uint8_t> output;
-    HpackParseStatus sts =
-        ParseHuff(input, length, [&output](uint8_t c) { output.push_back(c); });
+    HuffDecodeBuffer output;
+    HpackParseStatus sts = ParseHuff(input, length, output);
     size_t wire_len = output.size();
     return StringResult{sts, wire_len, String(std::move(output))};
   }
@@ -511,46 +509,24 @@ HPackParser::String::StringResult HPackParser::String::ParseBinary(
     return Unbase64(std::move(base64.value));
   } else {
     // Huffman encoded...
-    std::vector<uint8_t> decompressed;
-    // State here says either we don't know if it's base64 or binary, or we do
-    // and what is it.
-    enum class State { kUnsure, kBinary, kBase64 };
-    State state = State::kUnsure;
-    auto sts = ParseHuff(input, length, [&state, &decompressed](uint8_t c) {
-      if (state == State::kUnsure) {
-        // First byte... if it's zero it's binary
-        if (c == 0) {
-          // Save the type, and skip the zero
-          state = State::kBinary;
-          return;
-        } else {
-          // Flag base64, store this value
-          state = State::kBase64;
-        }
-      }
-      // Non-first byte, or base64 first byte
-      decompressed.push_back(c);
-    });
+    HuffDecodeBuffer decompressed;
+    auto sts = ParseHuff(input, length, decompressed);
     if (sts != HpackParseStatus::kOk) {
       return StringResult{sts, 0, String{}};
+    } else if (decompressed.empty()) {
+      // No bytes, empty span
+      return StringResult{HpackParseStatus::kOk, 0,
+                          String(absl::Span<const uint8_t>())};
+    } else if (decompressed[0] == 0) {
+      // Binary.. remove the first element then return
+      size_t wire_len = decompressed.size() - 1;
+      return StringResult{HpackParseStatus::kOk, wire_len,
+                          String(std::vector<uint8_t>(decompressed.begin() + 1,
+                                                      decompressed.end()))};
+    } else {
+      // Base64 - unpack it
+      return Unbase64(String(absl::Span<uint8_t>(decompressed)));
     }
-    switch (state) {
-      case State::kUnsure:
-        // No bytes, empty span
-        return StringResult{HpackParseStatus::kOk, 0,
-                            String(absl::Span<const uint8_t>())};
-      case State::kBinary:
-        // Binary, we're done
-        {
-          size_t wire_len = decompressed.size();
-          return StringResult{HpackParseStatus::kOk, wire_len,
-                              String(std::move(decompressed))};
-        }
-      case State::kBase64:
-        // Base64 - unpack it
-        return Unbase64(String(std::move(decompressed)));
-    }
-    GPR_UNREACHABLE_CODE(abort(););
   }
 }
 

@@ -3936,9 +3936,12 @@ const uint8_t* const HuffDecoderCommon::table1_outer_[256] = {
     table1_248_outer_, table1_248_outer_, table1_248_outer_, table1_248_outer_,
     table1_248_outer_, table1_248_outer_, table1_0_outer_,   table1_255_outer_,
 };
+const uint8_t HuffDecoderCommon::table11_0_emit_[2] = {0x3c, 0x60};
+const uint8_t HuffDecoderCommon::table13_0_emit_[1] = {0x7b};
 const uint8_t HuffDecoderCommon::table15_0_outer_[8] = {0, 0, 0, 1, 0, 0, 0, 2};
 const uint8_t HuffDecoderCommon::table16_0_outer_[16] = {
     0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 2};
+const uint8_t HuffDecoderCommon::table17_0_emit_[4] = {0x7b, 0x5c, 0xc3, 0xd0};
 const uint8_t HuffDecoderCommon::table17_0_ops_[32] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x01, 0x05, 0x09, 0x0d, 0x00, 0x00, 0x00,
@@ -10339,7 +10342,6 @@ const uint8_t* const HuffDecoderCommon::table27_outer_[128] = {
     table27_62_outer_,  table27_62_outer_,  table27_125_outer_,
     table27_126_outer_, table27_127_outer_,
 };
-const uint8_t HuffDecoderCommon::table12_0_emit_[1] = {0x7b};
 const uint16_t HuffDecoderCommon::table12_0_ops_[512] = {
     0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001,
     0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001,
@@ -10923,22 +10925,22 @@ const uint16_t HuffDecoderCommon::table12_127_ops_[512] = {
     0x0ece, 0x0f0e, 0x0f0e, 0x0f0e, 0x0f0e, 0x0f4e, 0x0f4e, 0x0f4e, 0x0f4e,
     0x0f8e, 0x0f8e, 0x0f8e, 0x0f8e, 0x0fd0, 0x1010, 0x1050, 0x0030};
 const uint8_t* const HuffDecoderCommon::table12_emit_[128] = {
-    table12_0_emit_,   table12_0_emit_,   table12_0_emit_,   table12_0_emit_,
-    table12_0_emit_,   table12_0_emit_,   table12_0_emit_,   table12_0_emit_,
-    table12_0_emit_,   table12_0_emit_,   table12_0_emit_,   table12_0_emit_,
-    table12_0_emit_,   table12_0_emit_,   table12_0_emit_,   table12_0_emit_,
-    table12_0_emit_,   table12_0_emit_,   table12_0_emit_,   table12_0_emit_,
-    table12_0_emit_,   table12_0_emit_,   table12_0_emit_,   table12_0_emit_,
-    table12_0_emit_,   table12_0_emit_,   table12_0_emit_,   table12_0_emit_,
-    table12_0_emit_,   table12_0_emit_,   table12_0_emit_,   table12_0_emit_,
-    table12_0_emit_,   table12_0_emit_,   table12_0_emit_,   table12_0_emit_,
-    table12_0_emit_,   table12_0_emit_,   table12_0_emit_,   table12_0_emit_,
-    table12_0_emit_,   table12_0_emit_,   table12_0_emit_,   table12_0_emit_,
-    table12_0_emit_,   table12_0_emit_,   table12_0_emit_,   table12_0_emit_,
-    table12_0_emit_,   table12_0_emit_,   table12_0_emit_,   table12_0_emit_,
-    table12_0_emit_,   table12_0_emit_,   table12_0_emit_,   table12_0_emit_,
-    table12_0_emit_,   table12_0_emit_,   table12_0_emit_,   table12_0_emit_,
-    table12_0_emit_,   table12_0_emit_,   table12_0_emit_,   table12_0_emit_,
+    table13_0_emit_,   table13_0_emit_,   table13_0_emit_,   table13_0_emit_,
+    table13_0_emit_,   table13_0_emit_,   table13_0_emit_,   table13_0_emit_,
+    table13_0_emit_,   table13_0_emit_,   table13_0_emit_,   table13_0_emit_,
+    table13_0_emit_,   table13_0_emit_,   table13_0_emit_,   table13_0_emit_,
+    table13_0_emit_,   table13_0_emit_,   table13_0_emit_,   table13_0_emit_,
+    table13_0_emit_,   table13_0_emit_,   table13_0_emit_,   table13_0_emit_,
+    table13_0_emit_,   table13_0_emit_,   table13_0_emit_,   table13_0_emit_,
+    table13_0_emit_,   table13_0_emit_,   table13_0_emit_,   table13_0_emit_,
+    table13_0_emit_,   table13_0_emit_,   table13_0_emit_,   table13_0_emit_,
+    table13_0_emit_,   table13_0_emit_,   table13_0_emit_,   table13_0_emit_,
+    table13_0_emit_,   table13_0_emit_,   table13_0_emit_,   table13_0_emit_,
+    table13_0_emit_,   table13_0_emit_,   table13_0_emit_,   table13_0_emit_,
+    table13_0_emit_,   table13_0_emit_,   table13_0_emit_,   table13_0_emit_,
+    table13_0_emit_,   table13_0_emit_,   table13_0_emit_,   table13_0_emit_,
+    table13_0_emit_,   table13_0_emit_,   table13_0_emit_,   table13_0_emit_,
+    table13_0_emit_,   table13_0_emit_,   table13_0_emit_,   table13_0_emit_,
     table12_64_emit_,  table12_64_emit_,  table12_64_emit_,  table12_64_emit_,
     table12_68_emit_,  table12_68_emit_,  table12_68_emit_,  table12_68_emit_,
     table12_72_emit_,  table12_72_emit_,  table12_72_emit_,  table12_72_emit_,

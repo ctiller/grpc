@@ -163,6 +163,12 @@ const uint16_t* const HuffDecoderCommon::table1_ops_[16] = {
     table1_5_ops_,  table1_5_ops_,  table1_5_ops_,  table1_11_ops_,
     table1_12_ops_, table1_12_ops_, table1_12_ops_, table1_15_ops_,
 };
+const uint8_t HuffDecoderCommon::table6_0_emit_[2] = {0x21, 0x22};
+const uint8_t HuffDecoderCommon::table7_0_emit_[2] = {0x28, 0x29};
+const uint8_t HuffDecoderCommon::table9_0_emit_[1] = {0x3f};
+const uint8_t HuffDecoderCommon::table8_0_emit_[3] = {0x3f, 0x27, 0x2b};
+const uint8_t HuffDecoderCommon::table11_0_emit_[1] = {0x7c};
+const uint8_t HuffDecoderCommon::table12_0_emit_[3] = {0x7c, 0x23, 0x3e};
 const uint8_t HuffDecoderCommon::table12_0_inner_[5] = {0x00, 0x01, 0x05, 0x09,
                                                         0x02};
 const uint8_t HuffDecoderCommon::table12_0_outer_[8] = {0, 1, 2, 3, 0, 0, 0, 4};
@@ -495,7 +501,6 @@ const uint16_t* const HuffDecoderCommon::table19_ops_[16] = {
     table18_2_ops_, table18_2_ops_, table18_2_ops_, table18_2_ops_,
     table18_2_ops_, table18_2_ops_, table18_4_ops_, table19_15_ops_,
 };
-const uint8_t HuffDecoderCommon::table10_0_emit_[1] = {0x7c};
 const uint16_t HuffDecoderCommon::table10_0_ops_[128] = {
     0x0002, 0x0002, 0x0002, 0x0002, 0x0002, 0x0002, 0x0002, 0x0002, 0x0002,
     0x0002, 0x0002, 0x0002, 0x0002, 0x0002, 0x0002, 0x0002, 0x0002, 0x0002,
@@ -589,7 +594,7 @@ const uint16_t HuffDecoderCommon::table10_15_ops_[128] = {
     0x008b, 0x009b, 0x00ab, 0x00bb, 0x00cb, 0x00db, 0x00eb, 0x00fb, 0x010b,
     0x011b, 0x012b};
 const uint8_t* const HuffDecoderCommon::table10_emit_[16] = {
-    table10_0_emit_,  table10_0_emit_,  table10_0_emit_,  table10_0_emit_,
+    table11_0_emit_,  table11_0_emit_,  table11_0_emit_,  table11_0_emit_,
     table10_4_emit_,  table10_4_emit_,  table10_6_emit_,  table10_6_emit_,
     table10_8_emit_,  table10_9_emit_,  table10_10_emit_, table10_11_emit_,
     table10_12_emit_, table10_13_emit_, table10_14_emit_, table10_15_emit_,
@@ -600,6 +605,18 @@ const uint16_t* const HuffDecoderCommon::table10_ops_[16] = {
     table10_8_ops_, table10_8_ops_, table10_8_ops_,  table10_8_ops_,
     table10_8_ops_, table10_8_ops_, table10_14_ops_, table10_15_ops_,
 };
+const uint8_t HuffDecoderCommon::table20_0_emit_[2] = {0x99, 0xa1};
+const uint8_t HuffDecoderCommon::table21_0_emit_[2] = {0xa7, 0xac};
+const uint8_t HuffDecoderCommon::table22_0_emit_[2] = {0xb0, 0xb1};
+const uint8_t HuffDecoderCommon::table23_0_emit_[2] = {0xb3, 0xd1};
+const uint8_t HuffDecoderCommon::table24_0_emit_[2] = {0xd8, 0xd9};
+const uint8_t HuffDecoderCommon::table25_0_emit_[2] = {0xe3, 0xe5};
+const uint8_t HuffDecoderCommon::table26_0_emit_[4] = {0x85, 0x86, 0x88, 0x92};
+const uint8_t HuffDecoderCommon::table27_0_emit_[4] = {0x9a, 0x9c, 0xa0, 0xa3};
+const uint8_t HuffDecoderCommon::table28_0_emit_[4] = {0xa4, 0xa9, 0xaa, 0xad};
+const uint8_t HuffDecoderCommon::table29_0_emit_[4] = {0xb2, 0xb5, 0xb9, 0xba};
+const uint8_t HuffDecoderCommon::table30_0_emit_[4] = {0xbb, 0xbd, 0xbe, 0xc4};
+const uint8_t HuffDecoderCommon::table31_0_emit_[4] = {0xc6, 0xe4, 0xe8, 0xe9};
 const uint8_t HuffDecoderCommon::table32_0_emit_[8] = {0x01, 0x87, 0x89, 0x8a,
                                                        0x8b, 0x8c, 0x8d, 0x8f};
 const uint8_t HuffDecoderCommon::table32_0_inner_[8] = {0x03, 0x07, 0x0b, 0x0f,
@@ -608,6 +625,8 @@ const uint8_t HuffDecoderCommon::table33_0_emit_[8] = {0x93, 0x95, 0x96, 0x97,
                                                        0x98, 0x9b, 0x9d, 0x9e};
 const uint8_t HuffDecoderCommon::table34_0_emit_[8] = {0xa5, 0xa6, 0xa8, 0xae,
                                                        0xaf, 0xb4, 0xb6, 0xb7};
+const uint8_t HuffDecoderCommon::table36_0_emit_[1] = {0xe6};
+const uint8_t HuffDecoderCommon::table35_0_emit_[3] = {0xe6, 0x81, 0x84};
 const uint8_t HuffDecoderCommon::table38_0_emit_[5] = {0xbc, 0xbf, 0xc5, 0xe7,
                                                        0xef};
 const uint8_t HuffDecoderCommon::table38_0_inner_[6] = {0x00, 0x02, 0x04,

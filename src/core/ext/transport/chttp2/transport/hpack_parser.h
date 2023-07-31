@@ -158,9 +158,9 @@ class HPackParser {
 
     // Parse some huffman encoded bytes, using output(uint8_t b) to emit each
     // decoded byte.
-    template <typename Out>
+    using HuffDecodeBuffer = absl::InlinedVector<uint8_t, 1024>;
     static HpackParseStatus ParseHuff(Input* input, uint32_t length,
-                                      Out output);
+                                      HuffDecodeBuffer& output);
 
     // Parse some uncompressed string bytes.
     static StringResult ParseUncompressed(Input* input, uint32_t length,

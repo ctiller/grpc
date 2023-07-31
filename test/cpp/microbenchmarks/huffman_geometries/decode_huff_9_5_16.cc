@@ -163,6 +163,12 @@ const uint16_t* const HuffDecoderCommon::table1_ops_[16] = {
     table1_5_ops_,  table1_5_ops_,  table1_5_ops_,  table1_11_ops_,
     table1_12_ops_, table1_12_ops_, table1_12_ops_, table1_15_ops_,
 };
+const uint8_t HuffDecoderCommon::table6_0_emit_[2] = {0x21, 0x22};
+const uint8_t HuffDecoderCommon::table7_0_emit_[2] = {0x28, 0x29};
+const uint8_t HuffDecoderCommon::table9_0_emit_[1] = {0x3f};
+const uint8_t HuffDecoderCommon::table8_0_emit_[3] = {0x3f, 0x27, 0x2b};
+const uint8_t HuffDecoderCommon::table11_0_emit_[1] = {0x7c};
+const uint8_t HuffDecoderCommon::table12_0_emit_[3] = {0x7c, 0x23, 0x3e};
 const uint8_t HuffDecoderCommon::table12_0_inner_[5] = {0x00, 0x01, 0x05, 0x09,
                                                         0x02};
 const uint8_t HuffDecoderCommon::table12_0_outer_[8] = {0, 1, 2, 3, 0, 0, 0, 4};
@@ -180,9 +186,12 @@ const uint16_t HuffDecoderCommon::table10_0_inner_[13] = {
 const uint8_t HuffDecoderCommon::table10_0_outer_[32] = {
     0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2,  2,  2,
     3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 10, 11, 12};
+const uint8_t HuffDecoderCommon::table14_0_emit_[2] = {0x3c, 0x60};
+const uint8_t HuffDecoderCommon::table16_0_emit_[1] = {0x7b};
 const uint8_t HuffDecoderCommon::table18_0_outer_[8] = {0, 0, 0, 1, 0, 0, 0, 2};
 const uint8_t HuffDecoderCommon::table19_0_outer_[16] = {
     0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 2};
+const uint8_t HuffDecoderCommon::table20_0_emit_[4] = {0x7b, 0x5c, 0xc3, 0xd0};
 const uint8_t HuffDecoderCommon::table20_0_ops_[32] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x01, 0x05, 0x09, 0x0d, 0x00, 0x00, 0x00,
@@ -6603,7 +6612,6 @@ const uint8_t* const HuffDecoderCommon::table30_outer_[128] = {
     table30_62_outer_,  table30_62_outer_,  table30_125_outer_,
     table30_126_outer_, table30_127_outer_,
 };
-const uint8_t HuffDecoderCommon::table15_0_emit_[1] = {0x7b};
 const uint16_t HuffDecoderCommon::table15_0_ops_[512] = {
     0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001,
     0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001,
@@ -7187,22 +7195,22 @@ const uint16_t HuffDecoderCommon::table15_127_ops_[512] = {
     0x0ece, 0x0f0e, 0x0f0e, 0x0f0e, 0x0f0e, 0x0f4e, 0x0f4e, 0x0f4e, 0x0f4e,
     0x0f8e, 0x0f8e, 0x0f8e, 0x0f8e, 0x0fd0, 0x1010, 0x1050, 0x0030};
 const uint8_t* const HuffDecoderCommon::table15_emit_[128] = {
-    table15_0_emit_,   table15_0_emit_,   table15_0_emit_,   table15_0_emit_,
-    table15_0_emit_,   table15_0_emit_,   table15_0_emit_,   table15_0_emit_,
-    table15_0_emit_,   table15_0_emit_,   table15_0_emit_,   table15_0_emit_,
-    table15_0_emit_,   table15_0_emit_,   table15_0_emit_,   table15_0_emit_,
-    table15_0_emit_,   table15_0_emit_,   table15_0_emit_,   table15_0_emit_,
-    table15_0_emit_,   table15_0_emit_,   table15_0_emit_,   table15_0_emit_,
-    table15_0_emit_,   table15_0_emit_,   table15_0_emit_,   table15_0_emit_,
-    table15_0_emit_,   table15_0_emit_,   table15_0_emit_,   table15_0_emit_,
-    table15_0_emit_,   table15_0_emit_,   table15_0_emit_,   table15_0_emit_,
-    table15_0_emit_,   table15_0_emit_,   table15_0_emit_,   table15_0_emit_,
-    table15_0_emit_,   table15_0_emit_,   table15_0_emit_,   table15_0_emit_,
-    table15_0_emit_,   table15_0_emit_,   table15_0_emit_,   table15_0_emit_,
-    table15_0_emit_,   table15_0_emit_,   table15_0_emit_,   table15_0_emit_,
-    table15_0_emit_,   table15_0_emit_,   table15_0_emit_,   table15_0_emit_,
-    table15_0_emit_,   table15_0_emit_,   table15_0_emit_,   table15_0_emit_,
-    table15_0_emit_,   table15_0_emit_,   table15_0_emit_,   table15_0_emit_,
+    table16_0_emit_,   table16_0_emit_,   table16_0_emit_,   table16_0_emit_,
+    table16_0_emit_,   table16_0_emit_,   table16_0_emit_,   table16_0_emit_,
+    table16_0_emit_,   table16_0_emit_,   table16_0_emit_,   table16_0_emit_,
+    table16_0_emit_,   table16_0_emit_,   table16_0_emit_,   table16_0_emit_,
+    table16_0_emit_,   table16_0_emit_,   table16_0_emit_,   table16_0_emit_,
+    table16_0_emit_,   table16_0_emit_,   table16_0_emit_,   table16_0_emit_,
+    table16_0_emit_,   table16_0_emit_,   table16_0_emit_,   table16_0_emit_,
+    table16_0_emit_,   table16_0_emit_,   table16_0_emit_,   table16_0_emit_,
+    table16_0_emit_,   table16_0_emit_,   table16_0_emit_,   table16_0_emit_,
+    table16_0_emit_,   table16_0_emit_,   table16_0_emit_,   table16_0_emit_,
+    table16_0_emit_,   table16_0_emit_,   table16_0_emit_,   table16_0_emit_,
+    table16_0_emit_,   table16_0_emit_,   table16_0_emit_,   table16_0_emit_,
+    table16_0_emit_,   table16_0_emit_,   table16_0_emit_,   table16_0_emit_,
+    table16_0_emit_,   table16_0_emit_,   table16_0_emit_,   table16_0_emit_,
+    table16_0_emit_,   table16_0_emit_,   table16_0_emit_,   table16_0_emit_,
+    table16_0_emit_,   table16_0_emit_,   table16_0_emit_,   table16_0_emit_,
     table15_64_emit_,  table15_64_emit_,  table15_64_emit_,  table15_64_emit_,
     table15_68_emit_,  table15_68_emit_,  table15_68_emit_,  table15_68_emit_,
     table15_72_emit_,  table15_72_emit_,  table15_72_emit_,  table15_72_emit_,

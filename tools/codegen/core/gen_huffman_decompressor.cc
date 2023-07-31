@@ -736,8 +736,8 @@ class TableBuilder {
       std::vector<std::unique_ptr<Array>> outer_names;
       for (size_t i = 0; i < slices.size(); i++) {
         emit_names.push_back(builder->GenArray(
-            slice_bits != 0, absl::StrCat("table", id, "_", i, "_emit"),
-            "uint8_t", slices[i].emit, true, global_decls, global_values));
+            true, absl::StrCat("table", id, "_", i, "_emit"), "uint8_t",
+            slices[i].emit, true, global_decls, global_values));
         inner_names.push_back(builder->GenArray(
             slice_bits != 0, absl::StrCat("table", id, "_", i, "_inner"),
             TypeForMax(max_inner), slices[i].inner, true, global_decls,
@@ -751,8 +751,8 @@ class TableBuilder {
         global_fns->Add(absl::StrCat(
             "static inline uint64_t GetOp", id, "(size_t i) { return ",
             inner_names[0]->Index(outer_names[0]->Index("i")), "; }"));
-        global_fns->Add(absl::StrCat("static inline uint64_t GetEmit", id,
-                                     "(size_t, size_t emit) { return ",
+        global_fns->Add(absl::StrCat("static inline const uint8_t* GetEmit", id,
+                                     "(size_t, size_t emit) { return &",
                                      emit_names[0]->Index("emit"), "; }"));
       } else {
         GenCompound(id, emit_names, "emit", "uint8_t", global_decls,
@@ -766,8 +766,8 @@ class TableBuilder {
             "_inner_[i >> ", op_bits - slice_bits, "][table", id,
             "_outer_[i >> ", op_bits - slice_bits, "][i & 0x",
             absl::Hex((1 << (op_bits - slice_bits)) - 1), "]]; }"));
-        global_fns->Add(absl::StrCat("static inline uint64_t GetEmit", id,
-                                     "(size_t i, size_t emit) { return table",
+        global_fns->Add(absl::StrCat("static inline const uint8_t* GetEmit", id,
+                                     "(size_t i, size_t emit) { return &table",
                                      id, "_emit_[i >> ", op_bits - slice_bits,
                                      "][emit]; }"));
       }
@@ -827,8 +827,8 @@ class TableBuilder {
       std::vector<std::unique_ptr<Array>> ops_names;
       for (size_t i = 0; i < slices.size(); i++) {
         emit_names.push_back(builder->GenArray(
-            slice_bits != 0, absl::StrCat("table", id, "_", i, "_emit"),
-            "uint8_t", slices[i].emit, true, global_decls, global_values));
+            true, absl::StrCat("table", id, "_", i, "_emit"), "uint8_t",
+            slices[i].emit, true, global_decls, global_values));
         ops_names.push_back(builder->GenArray(
             slice_bits != 0, absl::StrCat("table", id, "_", i, "_ops"),
             TypeForMax(max_op), slices[i].ops, true, global_decls,
@@ -838,8 +838,8 @@ class TableBuilder {
         global_fns->Add(absl::StrCat("static inline uint64_t GetOp", id,
                                      "(size_t i) { return ",
                                      ops_names[0]->Index("i"), "; }"));
-        global_fns->Add(absl::StrCat("static inline uint64_t GetEmit", id,
-                                     "(size_t, size_t emit) { return ",
+        global_fns->Add(absl::StrCat("static inline const uint8_t* GetEmit", id,
+                                     "(size_t, size_t emit) { return &",
                                      emit_names[0]->Index("emit"), "; }"));
       } else {
         GenCompound(id, emit_names, "emit", "uint8_t", global_decls,
@@ -850,8 +850,8 @@ class TableBuilder {
             "static inline uint64_t GetOp", id, "(size_t i) { return table", id,
             "_ops_[i >> ", op_bits - slice_bits, "][i & 0x",
             absl::Hex((1 << (op_bits - slice_bits)) - 1), "]; }"));
-        global_fns->Add(absl::StrCat("static inline uint64_t GetEmit", id,
-                                     "(size_t i, size_t emit) { return table",
+        global_fns->Add(absl::StrCat("static inline const uint8_t* GetEmit", id,
+                                     "(size_t i, size_t emit) { return &table",
                                      id, "_emit_[i >> ", op_bits - slice_bits,
                                      "][emit]; }"));
       }
@@ -1325,17 +1325,33 @@ void BuildCtx::AddDone(SymSet start_syms, int num_bits, bool all_ones_so_far,
         absl::StrCat("op & ", (1 << table_builder.MatchBits()) - 1));
     for (auto& kv : cases) {
       if (kv.first.has_value()) {
-        if (*kv.first == 0) continue;
-        auto emit_ok = s_fin->Case(kv.second);
-        for (int i = 0; i < *kv.first; i++) {
-          emit_ok->Add(absl::StrCat(
-              "sink_(",
-              table_builder.EmitAccessor(
-                  "index", absl::StrCat("(op >> ", table_builder.MatchBits(),
-                                        ") + ", i)),
-              ");"));
+        switch (*kv.first) {
+          case 0:
+            continue;
+          case 1: {
+            auto emit_ok = s_fin->Case(kv.second);
+            emit_ok->Add(absl::StrCat(
+                "container_.push_back(*",
+                table_builder.EmitAccessor(
+                    "index",
+                    absl::StrCat("(op >> ", table_builder.MatchBits(), ")")),
+                ");"));
+            emit_ok->Add("break;");
+          } break;
+          default: {
+            auto emit_ok = s_fin->Case(kv.second);
+            emit_ok->Add(absl::StrCat(
+                "const uint8_t* p = ",
+                table_builder.EmitAccessor(
+                    "index",
+                    absl::StrCat("(op >> ", table_builder.MatchBits(), ")")),
+                ";"));
+            for (int i = 0; i < *kv.first; i++) {
+              emit_ok->Add(absl::StrCat("container_.push_back(p[", i, "]);"));
+            }
+            emit_ok->Add("break;");
+          } break;
         }
-        emit_ok->Add("break;");
       } else {
         auto fail = s_fin->Case(kv.second);
         fail->Add("ok_ = false;");
@@ -1423,6 +1439,7 @@ void BuildCtx::AddStep(SymSet start_syms, int num_bits, bool is_top,
                         num_bits);
     } else {
       std::vector<uint8_t> emit;
+      emit.reserve(actions.emit.size());
       for (auto sym : actions.emit) emit.push_back(sym);
       table_builder.Add(
           add_case(Matched{static_cast<int>(actions.emit.size())}),
@@ -1476,10 +1493,20 @@ void BuildCtx::AddMatchBody(TableBuilder* table_builder, std::string index,
     return;
   }
   const auto& matched = absl::get<Matched>(match_case);
-  for (int i = 0; i < matched.emits; i++) {
-    out->Add(absl::StrCat(
-        "sink_(",
-        table_builder->EmitAccessor(index, absl::StrCat(ofs, " + ", i)), ");"));
+  switch (matched.emits) {
+    case 0:
+      break;
+    case 1:
+      out->Add(absl::StrCat("container_.push_back(*",
+                            table_builder->EmitAccessor(index, ofs), ");"));
+      break;
+    default: {
+      out->Add(absl::StrCat(
+          "const uint8_t* p = ", table_builder->EmitAccessor(index, ofs), ";"));
+      for (int i = 0; i < matched.emits; i++) {
+        out->Add(absl::StrCat("container_.push_back(p[", i, "]);"));
+      }
+    } break;
   }
 }
 
@@ -1535,7 +1562,7 @@ BuildOutput Build(std::vector<int> max_bits_for_depth, bool selected_version,
   auto global_decls = hdr->Add<Indent>();
   hdr->Add("};");
   hdr->Add(
-      "template<typename F> class HuffDecoder : public HuffDecoderCommon {");
+      "template<typename C> class HuffDecoder : public HuffDecoderCommon {");
   hdr->Add(" public:");
   auto pub = hdr->Add<Indent>();
   hdr->Add(" private:");
@@ -1556,10 +1583,10 @@ BuildOutput Build(std::vector<int> max_bits_for_depth, bool selected_version,
                global_values, &fun_maker);
   // constructor
   pub->Add(
-      "HuffDecoder(F sink, const uint8_t* begin, const uint8_t* end) : "
-      "sink_(sink), begin_(begin), end_(end) {}");
+      "HuffDecoder(C& container, const uint8_t* begin, const uint8_t* end) : "
+      "container_(container), begin_(begin), end_(end) {}");
   // members
-  prv->Add("F sink_;");
+  prv->Add("C container_;");
   prv->Add("const uint8_t* begin_;");
   prv->Add("const uint8_t* const end_;");
   prv->Add("uint64_t buffer_ = 0;");

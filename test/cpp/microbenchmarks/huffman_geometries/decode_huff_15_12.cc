@@ -6515,6 +6515,7 @@ const uint8_t* const HuffDecoderCommon::table1_outer_[512] = {
     table1_496_outer_, table1_497_outer_, table1_496_outer_, table1_497_outer_,
     table1_0_outer_,   table1_0_outer_,   table1_510_outer_, table1_511_outer_,
 };
+const uint8_t HuffDecoderCommon::table13_0_emit_[3] = {0x5c, 0xc3, 0xd0};
 const uint8_t HuffDecoderCommon::table13_0_inner_[5] = {0x00, 0x04, 0x08, 0x01,
                                                         0x02};
 const uint8_t HuffDecoderCommon::table14_0_emit_[11] = {
@@ -7187,6 +7188,22 @@ const uint16_t* const HuffDecoderCommon::table12_ops_[64] = {
     table12_54_ops_, table12_54_ops_, table12_54_ops_, table12_54_ops_,
     table12_54_ops_, table12_61_ops_, table12_62_ops_, table12_63_ops_,
 };
+const uint8_t HuffDecoderCommon::table21_0_emit_[2] = {0x02, 0x03};
+const uint8_t HuffDecoderCommon::table22_0_emit_[2] = {0x04, 0x05};
+const uint8_t HuffDecoderCommon::table23_0_emit_[2] = {0x06, 0x07};
+const uint8_t HuffDecoderCommon::table24_0_emit_[2] = {0x08, 0x0b};
+const uint8_t HuffDecoderCommon::table25_0_emit_[2] = {0x0c, 0x0e};
+const uint8_t HuffDecoderCommon::table26_0_emit_[2] = {0x0f, 0x10};
+const uint8_t HuffDecoderCommon::table27_0_emit_[2] = {0x11, 0x12};
+const uint8_t HuffDecoderCommon::table28_0_emit_[2] = {0x13, 0x14};
+const uint8_t HuffDecoderCommon::table29_0_emit_[2] = {0x15, 0x17};
+const uint8_t HuffDecoderCommon::table30_0_emit_[2] = {0x18, 0x19};
+const uint8_t HuffDecoderCommon::table31_0_emit_[2] = {0x1a, 0x1b};
+const uint8_t HuffDecoderCommon::table32_0_emit_[2] = {0x1c, 0x1d};
+const uint8_t HuffDecoderCommon::table33_0_emit_[2] = {0x1e, 0x1f};
+const uint8_t HuffDecoderCommon::table34_0_emit_[2] = {0x7f, 0xdc};
+const uint8_t HuffDecoderCommon::table36_0_emit_[1] = {0xf9};
+const uint8_t HuffDecoderCommon::table35_0_emit_[4] = {0xf9, 0x0a, 0x0d, 0x16};
 const uint8_t HuffDecoderCommon::table35_0_inner_[5] = {0x01, 0x0b, 0x13, 0x1b,
                                                         0x07};
 }  // namespace geometry_15_12
