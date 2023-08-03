@@ -157,12 +157,12 @@ std::string MakeFrameTypeString(absl::string_view frame_type, uint8_t flags,
 std::string FrameTypeString(uint8_t frame_type, uint8_t flags) {
   switch (frame_type) {
     case GRPC_CHTTP2_FRAME_DATA:
-      return MakeFrameTypeString(
-          "DATA", flags, {{GRPC_CHTTP2_DATA_FLAG_END_STREAM, "END_STREAM"}});
+      return MakeFrameTypeString("DATA", flags,
+                                 {{GRPC_HTTP2_REFUSED_STREAM, "END_STREAM"}});
     case GRPC_CHTTP2_FRAME_HEADER:
       return MakeFrameTypeString(
           "HEADERS", flags,
-          {{GRPC_CHTTP2_DATA_FLAG_END_STREAM, "END_STREAM"},
+          {{GRPC_HTTP2_REFUSED_STREAM, "END_STREAM"},
            {GRPC_CHTTP2_DATA_FLAG_END_HEADERS, "END_HEADERS"},
            {GRPC_CHTTP2_FLAG_HAS_PRIORITY, "PRIORITY"}});
     case GRPC_CHTTP2_FRAME_CONTINUATION:

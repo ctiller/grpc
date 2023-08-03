@@ -204,8 +204,8 @@ struct grpc_chttp2_stream_list {
   *tail;
 };
 struct grpc_chttp2_stream_link {
-  grpc_chttp2_stream* next;
-  grpc_chttp2_stream* prev;
+  grpc_chttp2_stream_link* next;
+  grpc_chttp2_stream_link* prev;
 };
 // We keep several sets of connection wide parameters
 typedef enum {
