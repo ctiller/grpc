@@ -279,7 +279,7 @@ class HPackParser {
 // wraps grpc_chttp2_hpack_parser_parse to provide a frame level parser for
 // the transport
 grpc_error_handle grpc_chttp2_header_parser_parse(void* hpack_parser,
-                                                  grpc_chttp2_transport* t,
+                                                  grpc_transport* t,
                                                   grpc_chttp2_stream* s,
                                                   const grpc_slice& slice,
                                                   int is_last);

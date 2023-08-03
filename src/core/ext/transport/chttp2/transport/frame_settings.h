@@ -58,7 +58,7 @@ grpc_error_handle grpc_chttp2_settings_parser_begin_frame(
     grpc_chttp2_settings_parser* parser, uint32_t length, uint8_t flags,
     uint32_t* settings);
 grpc_error_handle grpc_chttp2_settings_parser_parse(void* parser,
-                                                    grpc_chttp2_transport* t,
+                                                    grpc_transport* t,
                                                     grpc_chttp2_stream* s,
                                                     const grpc_slice& slice,
                                                     int is_last);

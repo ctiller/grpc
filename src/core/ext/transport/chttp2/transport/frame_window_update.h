@@ -40,7 +40,7 @@ grpc_slice grpc_chttp2_window_update_create(
 grpc_error_handle grpc_chttp2_window_update_parser_begin_frame(
     grpc_chttp2_window_update_parser* parser, uint32_t length, uint8_t flags);
 grpc_error_handle grpc_chttp2_window_update_parser_parse(
-    void* parser, grpc_chttp2_transport* t, grpc_chttp2_stream* s,
+    void* parser, grpc_transport* t, grpc_chttp2_stream* s,
     const grpc_slice& slice, int is_last);
 
 #endif  // GRPC_SRC_CORE_EXT_TRANSPORT_CHTTP2_TRANSPORT_FRAME_WINDOW_UPDATE_H
