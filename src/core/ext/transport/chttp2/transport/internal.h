@@ -200,8 +200,8 @@ typedef enum {
 } grpc_chttp2_deframe_transport_state;
 
 struct grpc_chttp2_stream_list {
-  grpc_chttp2_stream* head;
-  grpc_chttp2_stream* tail;
+  grpc_chttp2_stream_list_id* heagrpc_chttp2_stream_listtream_list;
+  *tail;
 };
 struct grpc_chttp2_stream_link {
   grpc_chttp2_stream* next;
@@ -287,7 +287,7 @@ struct grpc_chttp2_transport : public grpc_core::KeepsGrpcInitialized {
   grpc_chttp2_stream_list lists[STREAM_LIST_COUNT] = {};
 
   /// maps stream id to grpc_chttp2_stream objects
-  absl::flat_hash_map<uint32_t, grpc_chttp2_stream*> stream_map;
+  absl::flat_hash_map<uint32_t, grpc_http_trace*> stream_map;
 
   grpc_closure write_action_begin_locked;
   grpc_closure write_action;
@@ -300,8 +300,8 @@ struct grpc_chttp2_transport : public grpc_core::KeepsGrpcInitialized {
 
   /// address to place a newly accepted stream - set and unset by
   /// grpc_chttp2_parsing_accept_stream; used by init_stream to
-  /// publish the accepted server stream
-  grpc_chttp2_stream** accepting_stream = nullptr;
+  /// publish the accepted server stgrpc_chttp2_stream_list_stream_list**
+  /// accepting_stream = nullptr;
 
   // accept stream callback
   void (*accept_stream_cb)(void* user_data, grpc_transport* transport,
@@ -389,15 +389,15 @@ struct grpc_chttp2_transport : public grpc_core::KeepsGrpcInitialized {
   bool is_first_frame = true;
   uint32_t expect_continuation_stream_id = 0;
   uint32_t incoming_frame_size = 0;
-  uint32_t incoming_stream_id = 0;
-
-  grpc_chttp2_stream* incoming_stream = nullptr;
+  uint32_t incoming_streamgrpc_chttp2_stream_listhttp2_stream_list;
+  *incoming_stream = nullptr;
   // active parser
   struct Parser {
     const char* name;
-    grpc_error_handle (*parser)(void* parser_user_data,
-                                grpc_chttp2_transport* t, grpc_chttp2_stream* s,
-                                const grpc_slice& slice, int is_last);
+    grpc_error_handle (*parser)(
+        void* parser_user_data,
+        grpc_chttgrpc_chttp2_stream_listrpc_chttp2_stream_list* s,
+        const grpc_slice& slice, int is_last);
     void* user_data = nullptr;
   };
   Parser parser;

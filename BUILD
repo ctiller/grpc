@@ -3727,13 +3727,14 @@ grpc_cc_library(
         "//src/core:ext/transport/chttp2/transport/frame.h",
     ],
     external_deps = [
+        "absl/status",
         "absl/status:statusor",
+        "absl/strings",
         "absl/types:span",
         "absl/types:variant",
     ],
     deps = [
         "gpr",
-        "//src/core:match",
         "//src/core:slice",
         "//src/core:slice_buffer",
     ],
