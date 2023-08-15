@@ -3093,6 +3093,7 @@ grpc_cc_library(
         "//src/core:resource_quota",
         "//src/core:seq",
         "//src/core:service_config_parser",
+        "//src/core:sleep",
         "//src/core:slice",
         "//src/core:slice_buffer",
         "//src/core:slice_refcount",
