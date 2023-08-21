@@ -22,10 +22,10 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/types/optional.h"
-#include "ping_rate_policy.h"
 
 #include <grpc/impl/channel_arg_names.h>
 
+#include "src/core/ext/transport/chttp2/transport/ping_rate_policy.h"
 #include "src/core/lib/gprpp/match.h"
 
 namespace grpc_core {

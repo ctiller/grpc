@@ -7654,6 +7654,7 @@ targets:
   - test/core/event_engine/endpoint_config_test.cc
   deps:
   - gtest
+  - absl/container:flat_hash_map
   - absl/meta:type_traits
   - absl/status:statusor
   - gpr

@@ -19,9 +19,10 @@
 #include <algorithm>
 
 #include "absl/types/optional.h"
-#include "ping_abuse_policy.h"
 
 #include <grpc/impl/channel_arg_names.h>
+
+#include "src/core/ext/transport/chttp2/transport/ping_abuse_policy.h"
 
 namespace grpc_core {
 
