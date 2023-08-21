@@ -33,6 +33,8 @@ class Chttp2PingRatePolicy {
 
   static void SetDefaults(const ChannelArgs& args);
 
+  static const ChannelArgKey kMaxPingsWithoutData;
+
   struct SendGranted {
     bool operator==(const SendGranted&) const { return true; }
   };

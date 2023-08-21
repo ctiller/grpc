@@ -19,10 +19,17 @@
 #include <algorithm>
 
 #include "absl/types/optional.h"
+#include "ping_abuse_policy.h"
 
 #include <grpc/impl/channel_arg_names.h>
 
 namespace grpc_core {
+
+const ChannelArgKey
+    Chttp2PingAbusePolicy::kHttp2MinRecvPingIntervalWithoutDataMs{
+        GRPC_ARG_HTTP2_MIN_RECV_PING_INTERVAL_WITHOUT_DATA_MS, {}};
+const ChannelArgKey Chttp2PingAbusePolicy::kHttp2MaxPingStrikes{
+    GRPC_ARG_HTTP2_MAX_PING_STRIKES, {}};
 
 namespace {
 Duration g_default_min_recv_ping_interval_without_data = Duration::Minutes(5);
@@ -32,22 +39,20 @@ int g_default_max_ping_strikes = 2;
 Chttp2PingAbusePolicy::Chttp2PingAbusePolicy(const ChannelArgs& args)
     : min_recv_ping_interval_without_data_(std::max(
           Duration::Zero(),
-          args.GetDurationFromIntMillis(
-                  GRPC_ARG_HTTP2_MIN_RECV_PING_INTERVAL_WITHOUT_DATA_MS)
+          args.GetDurationFromIntMillis(kHttp2MinRecvPingIntervalWithoutDataMs)
               .value_or(g_default_min_recv_ping_interval_without_data))),
       max_ping_strikes_(
-          std::max(0, args.GetInt(GRPC_ARG_HTTP2_MAX_PING_STRIKES)
+          std::max(0, args.GetInt(kHttp2MaxPingStrikes)
                           .value_or(g_default_max_ping_strikes))) {}
 
 void Chttp2PingAbusePolicy::SetDefaults(const ChannelArgs& args) {
-  g_default_max_ping_strikes =
-      std::max(0, args.GetInt(GRPC_ARG_HTTP2_MAX_PING_STRIKES)
-                      .value_or(g_default_max_ping_strikes));
-  g_default_min_recv_ping_interval_without_data =
-      std::max(Duration::Zero(),
-               args.GetDurationFromIntMillis(
-                       GRPC_ARG_HTTP2_MIN_RECV_PING_INTERVAL_WITHOUT_DATA_MS)
-                   .value_or(g_default_min_recv_ping_interval_without_data));
+  g_default_max_ping_strikes = std::max(
+      0,
+      args.GetInt(kHttp2MaxPingStrikes).value_or(g_default_max_ping_strikes));
+  g_default_min_recv_ping_interval_without_data = std::max(
+      Duration::Zero(),
+      args.GetDurationFromIntMillis(kHttp2MinRecvPingIntervalWithoutDataMs)
+          .value_or(g_default_min_recv_ping_interval_without_data));
 }
 
 bool Chttp2PingAbusePolicy::ReceivedOnePing(bool transport_idle) {

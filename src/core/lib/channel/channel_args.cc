@@ -25,17 +25,21 @@
 #include <string.h>
 
 #include <algorithm>
+#include <atomic>
 #include <initializer_list>
+#include <limits>
 #include <map>
 #include <memory>
 #include <new>
 #include <string>
 #include <vector>
 
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
+#include "channel_args.h"
 
 #include <grpc/impl/channel_arg_names.h>
 #include <grpc/support/alloc.h>
@@ -43,8 +47,69 @@
 #include <grpc/support/string_util.h>
 
 #include "src/core/lib/gpr/useful.h"
+#include "src/core/lib/gprpp/crash.h"
+#include "src/core/lib/gprpp/sync.h"
 
 namespace grpc_core {
+
+class ChannelArgKey::Registry {
+ public:
+  static Registry& Get() {
+    static Registry* channel_arg_registry = new Registry;
+    return *channel_arg_registry;
+  }
+
+  ChannelArgKey Register(absl::string_view key,
+                         ChannelArgKey::Options options) {
+    if (queried_.load(std::memory_order_relaxed)) {
+      Crash(
+          "Attempting to register a channel argument after the registry has "
+          "been queried. Channel args should be registered during static "
+          "initialization and *never* queried until main() is called.");
+    }
+
+    auto it = name_to_index_map_.find(key);
+    if (it != name_to_index_map_.end()) {
+      auto& arg_info = arg_info_[it->second];
+      GPR_ASSERT(arg_info.name == key);
+      if (arg_info.options == options) return ChannelArgKey(it->second);
+      Crash(absl::StrCat(
+          "Channel arg key ", key, " registered with two different options: ",
+          options.ToString(), " and ", arg_info.options.ToString()));
+    }
+    GPR_ASSERT(arg_info_.size() < std::numeric_limits<ValueType>::max());
+    name_to_index_map_.emplace(key, arg_info_.size());
+    ChannelArgKey result(arg_info_.size());
+    arg_info_.push_back(ArgInfo{key, options});
+    return result;
+  }
+
+  absl::optional<ChannelArgKey> Query(absl::string_view key) {
+    queried_.store(true, std::memory_order_relaxed);
+    auto it = name_to_index_map_.find(key);
+    if (it == name_to_index_map_.end()) return {};
+    return ChannelArgKey(it->second);
+  }
+
+ private:
+  Registry() = default;
+
+  struct ArgInfo {
+    absl::string_view name;
+    ChannelArgKey::Options options;
+  };
+
+  std::atomic<bool> queried_{false};
+  absl::flat_hash_map<absl::string_view, ValueType> name_to_index_map_;
+  std::vector<ArgInfo> arg_info_;
+};
+
+ChannelArgKey::ChannelArgKey(absl::string_view key, Options options)
+    : ChannelArgKey(Registry::Get().Register(key, options)) {}
+
+absl::optional<ChannelArgKey> ChannelArgKey::Query(absl::string_view key) {
+  return Registry::Get().Query(key);
+}
 
 RefCountedPtr<RcString> RcString::Make(absl::string_view src) {
   void* p = gpr_malloc(sizeof(Header) + src.length() + 1);
@@ -119,7 +184,7 @@ const ChannelArgs::Value* ChannelArgs::Get(absl::string_view name) const {
   return args_.Lookup(name);
 }
 
-bool ChannelArgs::Contains(absl::string_view name) const {
+bool ChannelArgs::Contains(ChannelArgKey name) const {
   return Get(name) != nullptr;
 }
 

@@ -56,6 +56,25 @@
 
 namespace grpc_core {
 
+class ChannelArgKey {
+ public:
+  class Options {
+   public:
+    bool operator==(const Options&) const { return true; }
+    std::string ToString() { return "{}"; }
+  };
+  ChannelArgKey(absl::string_view key, Options options);
+
+  static absl::optional<ChannelArgKey> Query(absl::string_view key);
+
+ private:
+  using ValueType = uint16_t;
+  class Registry;
+  explicit ChannelArgKey(ValueType value) : value_(value) {}
+
+  ValueType value_;
+};
+
 // Define a traits object for vtable lookup - allows us to integrate with
 // existing code easily (just define the trait!) and allows some magic in
 // ChannelArgs to automatically derive a vtable from a T*.
@@ -436,15 +455,14 @@ class ChannelArgs {
   GRPC_MUST_USE_RESULT ChannelArgs
   FuzzingReferenceUnionWith(ChannelArgs other) const;
 
-  const Value* Get(absl::string_view name) const;
-  GRPC_MUST_USE_RESULT ChannelArgs Set(absl::string_view name,
-                                       Pointer value) const;
-  GRPC_MUST_USE_RESULT ChannelArgs Set(absl::string_view name, int value) const;
-  GRPC_MUST_USE_RESULT ChannelArgs Set(absl::string_view name,
+  const Value* Get(ChannelArgKey name) const;
+  GRPC_MUST_USE_RESULT ChannelArgs Set(ChannelArgKey name, Pointer value) const;
+  GRPC_MUST_USE_RESULT ChannelArgs Set(ChannelArgKey name, int value) const;
+  GRPC_MUST_USE_RESULT ChannelArgs Set(ChannelArgKey name,
                                        absl::string_view value) const;
-  GRPC_MUST_USE_RESULT ChannelArgs Set(absl::string_view name,
+  GRPC_MUST_USE_RESULT ChannelArgs Set(ChannelArgKey name,
                                        std::string value) const;
-  GRPC_MUST_USE_RESULT ChannelArgs Set(absl::string_view name,
+  GRPC_MUST_USE_RESULT ChannelArgs Set(ChannelArgKey name,
                                        const char* value) const;
   GRPC_MUST_USE_RESULT ChannelArgs Set(grpc_arg arg) const;
   template <typename T>
@@ -452,12 +470,12 @@ class ChannelArgs {
       std::is_same<const grpc_arg_pointer_vtable*,
                    decltype(ChannelArgTypeTraits<T>::VTable())>::value,
       ChannelArgs>
-  Set(absl::string_view name, T* value) const {
+  Set(ChannelArgKey name, T* value) const {
     return Set(name, Pointer(ChannelArgTypeTraits<T>::TakeUnownedPointer(value),
                              ChannelArgTypeTraits<T>::VTable()));
   }
   template <typename T>
-  GRPC_MUST_USE_RESULT auto Set(absl::string_view name,
+  GRPC_MUST_USE_RESULT auto Set(ChannelArgKey name,
                                 RefCountedPtr<T> value) const
       -> absl::enable_if_t<
           std::is_same<const grpc_arg_pointer_vtable*,
@@ -474,7 +492,7 @@ class ChannelArgs {
           const grpc_arg_pointer_vtable*,
           decltype(ChannelArgTypeTraits<std::shared_ptr<T>>::VTable())>::value,
       ChannelArgs>
-  Set(absl::string_view name, std::shared_ptr<T> value) const {
+  Set(ChannelArgKey name, std::shared_ptr<T> value) const {
     auto* store_value = new std::shared_ptr<T>(value);
     return Set(
         name,
@@ -483,13 +501,13 @@ class ChannelArgs {
                 ChannelArgTypeTraits<std::shared_ptr<T>>::VTable()));
   }
   template <typename T>
-  GRPC_MUST_USE_RESULT ChannelArgs SetIfUnset(absl::string_view name,
+  GRPC_MUST_USE_RESULT ChannelArgs SetIfUnset(ChannelArgKey name,
                                               T value) const {
     if (Contains(name)) return *this;
     return Set(name, std::move(value));
   }
-  GRPC_MUST_USE_RESULT ChannelArgs Remove(absl::string_view name) const;
-  bool Contains(absl::string_view name) const;
+  GRPC_MUST_USE_RESULT ChannelArgs Remove(ChannelArgKey key) const;
+  bool Contains(ChannelArgKey name) const;
 
   GRPC_MUST_USE_RESULT ChannelArgs
   RemoveAllKeysWithPrefix(absl::string_view prefix) const;
@@ -499,18 +517,16 @@ class ChannelArgs {
     return Get(ChannelArgNameTraits<T>::ChannelArgName()) != nullptr;
   }
 
-  absl::optional<int> GetInt(absl::string_view name) const;
-  absl::optional<absl::string_view> GetString(absl::string_view name) const;
-  absl::optional<std::string> GetOwnedString(absl::string_view name) const;
-  void* GetVoidPointer(absl::string_view name) const;
+  absl::optional<int> GetInt(ChannelArgKey name) const;
+  absl::optional<absl::string_view> GetString(ChannelArgKey name) const;
+  absl::optional<std::string> GetOwnedString(ChannelArgKey name) const;
+  void* GetVoidPointer(ChannelArgKey name) const;
   template <typename T>
-  typename GetObjectImpl<T>::StoredType GetPointer(
-      absl::string_view name) const {
+  typename GetObjectImpl<T>::StoredType GetPointer(ChannelArgKey name) const {
     return static_cast<typename GetObjectImpl<T>::StoredType>(
         GetVoidPointer(name));
   }
-  absl::optional<Duration> GetDurationFromIntMillis(
-      absl::string_view name) const;
+  absl::optional<Duration> GetDurationFromIntMillis(ChannelArgKey name) const;
   absl::optional<bool> GetBool(absl::string_view name) const;
 
   // Object based get/set.
@@ -558,12 +574,12 @@ class ChannelArgs {
   std::string ToString() const;
 
  private:
-  explicit ChannelArgs(AVL<RcStringValue, Value> args);
+  explicit ChannelArgs(AVL<ChannelArgKey, Value> args);
 
   GRPC_MUST_USE_RESULT ChannelArgs Set(absl::string_view name,
                                        Value value) const;
 
-  AVL<RcStringValue, Value> args_;
+  AVL<ChannelArgKey, Value> args_;
 };
 
 std::ostream& operator<<(std::ostream& out, const ChannelArgs& args);

@@ -22,6 +22,7 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/types/optional.h"
+#include "ping_rate_policy.h"
 
 #include <grpc/impl/channel_arg_names.h>
 
@@ -33,17 +34,20 @@ namespace {
 int g_default_max_pings_without_data = 2;
 }  // namespace
 
+const ChannelArgKey Chttp2PingRatePolicy::kMaxPingsWithoutData{
+    GRPC_ARG_HTTP2_MAX_PINGS_WITHOUT_DATA, ChannelArgKey::Options{}};
+
 Chttp2PingRatePolicy::Chttp2PingRatePolicy(const ChannelArgs& args,
                                            bool is_client)
     : max_pings_without_data_(
           is_client
-              ? std::max(0, args.GetInt(GRPC_ARG_HTTP2_MAX_PINGS_WITHOUT_DATA)
+              ? std::max(0, args.GetInt(kMaxPingsWithoutData)
                                 .value_or(g_default_max_pings_without_data))
               : 0) {}
 
 void Chttp2PingRatePolicy::SetDefaults(const ChannelArgs& args) {
   g_default_max_pings_without_data =
-      std::max(0, args.GetInt(GRPC_ARG_HTTP2_MAX_PINGS_WITHOUT_DATA)
+      std::max(0, args.GetInt(kMaxPingsWithoutData)
                       .value_or(g_default_max_pings_without_data));
 }
 

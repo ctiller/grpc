@@ -26,6 +26,9 @@ class Chttp2PingAbusePolicy {
  public:
   explicit Chttp2PingAbusePolicy(const ChannelArgs& args);
 
+  static const ChannelArgKey kHttp2MinRecvPingIntervalWithoutDataMs;
+  static const ChannelArgKey kHttp2MaxPingStrikes;
+
   static void SetDefaults(const ChannelArgs& args);
 
   // Record one received ping; returns true if the connection should be closed.
