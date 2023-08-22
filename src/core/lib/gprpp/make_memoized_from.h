@@ -56,7 +56,7 @@ T MakeMemoizedFrom(Arg&& arg) {
     struct Map {
       Mutex mu;
       AVL<Arg, T> map ABSL_GUARDED_BY(mu);
-    };
+    } ABSL_CACHELINE_ALIGNED;
     Map authoritative_map_;
     PerCpu<Map> cpu_maps_;
   };
