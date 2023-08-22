@@ -43,6 +43,7 @@
 #include <grpc/support/string_util.h>
 
 #include "src/core/lib/gpr/useful.h"
+#include "src/core/lib/gprpp/make_memoized_from.h"
 
 namespace grpc_core {
 
@@ -203,7 +204,8 @@ ChannelArgs ChannelArgs::Set(absl::string_view name, Value value) const {
   if (const auto* p = args_.Lookup(name)) {
     if (*p == value) return *this;  // already have this value for this key
   }
-  return ChannelArgs(args_.Add(RcStringValue(name), std::move(value)));
+  return ChannelArgs(
+      args_.Add(MakeMemoizedFrom<RcStringValue>(name), std::move(value)));
 }
 
 ChannelArgs ChannelArgs::Set(absl::string_view name,
