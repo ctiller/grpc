@@ -778,6 +778,7 @@ CORE_SOURCE_FILES = [
     'src/core/lib/surface/channel_init.cc',
     'src/core/lib/surface/channel_ping.cc',
     'src/core/lib/surface/channel_stack_type.cc',
+    'src/core/lib/surface/common_channel_args.cc',
     'src/core/lib/surface/completion_queue.cc',
     'src/core/lib/surface/completion_queue_factory.cc',
     'src/core/lib/surface/event_string.cc',

@@ -17,9 +17,6 @@
 
 #include "absl/types/optional.h"
 
-#include <grpc/event_engine/event_engine.h>
-
-#include "src/core/lib/channel/channel_args.h"
 #include "src/core/lib/gprpp/crash.h"
 
 namespace grpc_event_engine {

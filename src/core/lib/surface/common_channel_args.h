@@ -15,10 +15,12 @@
 #ifndef GRPC_SRC_CORE_LIB_SURFACE_COMMON_CHANNEL_ARGS_H
 #define GRPC_SRC_CORE_LIB_SURFACE_COMMON_CHANNEL_ARGS_H
 
+#include <grpc/support/port_platform.h>
+
 #include "src/core/lib/channel/channel_args.h"
 
 namespace grpc_core {
 extern ChannelArgs::StringKey kDefaultAuthorityKey;
 }
 
-#endif
+#endif  // GRPC_SRC_CORE_LIB_SURFACE_COMMON_CHANNEL_ARGS_H

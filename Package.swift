@@ -1656,6 +1656,8 @@ let package = Package(
         "src/core/lib/surface/channel_ping.cc",
         "src/core/lib/surface/channel_stack_type.cc",
         "src/core/lib/surface/channel_stack_type.h",
+        "src/core/lib/surface/common_channel_args.cc",
+        "src/core/lib/surface/common_channel_args.h",
         "src/core/lib/surface/completion_queue.cc",
         "src/core/lib/surface/completion_queue.h",
         "src/core/lib/surface/completion_queue_factory.cc",

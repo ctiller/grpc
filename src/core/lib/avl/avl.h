@@ -20,7 +20,6 @@
 #include <stdlib.h>
 
 #include <algorithm>  // IWYU pragma: keep
-#include <cstdint>
 #include <utility>
 
 #include "src/core/lib/gpr/useful.h"

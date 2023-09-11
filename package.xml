@@ -1640,6 +1640,8 @@
     <file baseinstalldir="/" name="src/core/lib/surface/channel_ping.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/surface/channel_stack_type.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/surface/channel_stack_type.h" role="src" />
+    <file baseinstalldir="/" name="src/core/lib/surface/common_channel_args.cc" role="src" />
+    <file baseinstalldir="/" name="src/core/lib/surface/common_channel_args.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/surface/completion_queue.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/surface/completion_queue.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/surface/completion_queue_factory.cc" role="src" />

@@ -22,6 +22,8 @@
 
 #include <utility>
 
+#include <grpc/grpc.h>
+
 #include "src/core/lib/channel/channel_args.h"
 #include "src/core/lib/gpr/useful.h"
 

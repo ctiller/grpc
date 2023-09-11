@@ -24,8 +24,6 @@
 
 #include "absl/strings/string_view.h"
 
-#include <grpc/impl/channel_arg_names.h>
-
 #include "src/core/lib/gprpp/status_helper.h"
 #include "src/core/lib/iomgr/sockaddr.h"
 #include "src/core/lib/surface/common_channel_args.h"

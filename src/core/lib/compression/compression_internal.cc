@@ -22,21 +22,17 @@
 
 #include <stdlib.h>
 
-#include <optional>
-
 #include "absl/container/inlined_vector.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
-#include "compression_internal.h"
 
 #include <grpc/support/log.h>
 
 #include "src/core/lib/channel/channel_args.h"
+#include "src/core/lib/compression/compression_internal.h"
 #include "src/core/lib/debug/trace.h"
 #include "src/core/lib/gprpp/crash.h"
-#include "src/core/lib/gprpp/ref_counted_ptr.h"
-#include "src/core/lib/gprpp/ref_counted_string.h"
 #include "src/core/lib/surface/api_trace.h"
 
 namespace grpc_core {

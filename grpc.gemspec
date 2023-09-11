@@ -1658,6 +1658,8 @@ Gem::Specification.new do |s|
   s.files += %w( src/core/lib/surface/channel_ping.cc )
   s.files += %w( src/core/lib/surface/channel_stack_type.cc )
   s.files += %w( src/core/lib/surface/channel_stack_type.h )
+  s.files += %w( src/core/lib/surface/common_channel_args.cc )
+  s.files += %w( src/core/lib/surface/common_channel_args.h )
   s.files += %w( src/core/lib/surface/completion_queue.cc )
   s.files += %w( src/core/lib/surface/completion_queue.h )
   s.files += %w( src/core/lib/surface/completion_queue_factory.cc )

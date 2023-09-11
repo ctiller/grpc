@@ -1585,7 +1585,6 @@ grpc_cc_library(
         "//src/core:promise_status",
         "//src/core:race",
         "//src/core:ref_counted",
-        "//src/core:ref_counted_string",
         "//src/core:resolved_address",
         "//src/core:resource_quota",
         "//src/core:resource_quota_trace",

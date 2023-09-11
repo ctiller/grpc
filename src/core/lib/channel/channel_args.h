@@ -25,12 +25,14 @@
 #include <stdint.h>
 
 #include <algorithm>  // IWYU pragma: keep
+#include <array>
 #include <iosfwd>
 #include <memory>
 #include <string>
 #include <type_traits>
 #include <utility>
 
+#include "absl/functional/any_invocable.h"
 #include "absl/meta/type_traits.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/optional.h"

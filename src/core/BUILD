@@ -2703,9 +2703,9 @@ grpc_cc_library(
         "lib/channel/channel_args.h",
     ],
     external_deps = [
+        "absl/functional:any_invocable",
         "absl/meta:type_traits",
         "absl/strings",
-        "absl/strings:str_format",
         "absl/types:optional",
     ],
     language = "c++",
@@ -2736,7 +2736,10 @@ grpc_cc_library(
     hdrs = [
         "lib/surface/common_channel_args.h",
     ],
-    deps = ["channel_args"],
+    deps = [
+        "channel_args",
+        "//:channel_arg_names",
+    ],
 )
 
 grpc_cc_library(
