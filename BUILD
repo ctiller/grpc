@@ -2413,6 +2413,7 @@ grpc_cc_library(
         "orphanable",
         "stats",
         "//src/core:experiments",
+        "//src/core:stats_data",
     ],
 )
 
