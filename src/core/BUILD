@@ -104,6 +104,7 @@ grpc_cc_library(
     external_deps = ["absl/random"],
     language = "c++",
     public_hdrs = ["lib/gprpp/random.h"],
+    deps = ["//:gpr_platform"],
 )
 
 grpc_cc_library(
