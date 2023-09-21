@@ -149,13 +149,6 @@ struct grpc_chttp2_ping_queue {
   uint64_t inflight_id = 0;
 };
 
-struct grpc_chttp2_repeated_ping_state {
-  grpc_core::Timestamp last_ping_sent_time;
-  int pings_before_data_required;
-  absl::optional<grpc_event_engine::experimental::EventEngine::TaskHandle>
-      delayed_ping_timer_handle;
-};
-
 // deframer state for the overall http2 stream of bytes
 typedef enum {
   // prefix: one entry per http2 connection prefix byte
