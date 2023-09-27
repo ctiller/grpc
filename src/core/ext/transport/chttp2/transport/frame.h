@@ -112,6 +112,12 @@ struct Http2SettingsFrame {
   bool ack = false;
   std::vector<Setting> settings;
 
+  static Http2SettingsFrame Ack() {
+    Http2SettingsFrame frame;
+    frame.ack = true;
+    return frame;
+  }
+
   bool operator==(const Http2SettingsFrame& other) const {
     return ack == other.ack && settings == other.settings;
   }

@@ -295,8 +295,8 @@ class TransportFlowControl final {
   double TargetLogBdp();
   double SmoothLogBdp(double value);
   double TargetInitialWindowSizeBasedOnMemoryPressureAndBdp() const;
-  static void UpdateSetting(grpc_chttp2_setting_id id, int64_t* desired_value,
-                            uint32_t new_desired_value,
+  static void UpdateSetting(Http2Settings::Traits traits,
+                            int64_t* desired_value, uint32_t new_desired_value,
                             FlowControlAction* action,
                             FlowControlAction& (FlowControlAction::*set)(
                                 FlowControlAction::Urgency, uint32_t));

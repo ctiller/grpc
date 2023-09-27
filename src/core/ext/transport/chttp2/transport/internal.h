@@ -208,18 +208,6 @@ struct grpc_chttp2_stream_link {
   grpc_chttp2_stream* next;
   grpc_chttp2_stream* prev;
 };
-// We keep several sets of connection wide parameters
-typedef enum {
-  // The settings our peer has asked for (and we have acked)
-  GRPC_PEER_SETTINGS = 0,
-  // The settings we'd like to have
-  GRPC_LOCAL_SETTINGS,
-  // The settings we've published to our peer
-  GRPC_SENT_SETTINGS,
-  // The settings the peer has acked
-  GRPC_ACKED_SETTINGS,
-  GRPC_NUM_SETTING_SETS
-} grpc_chttp2_setting_set;
 
 typedef enum {
   GRPC_CHTTP2_NO_GOAWAY_SEND,
@@ -324,12 +312,11 @@ struct grpc_chttp2_transport : public grpc_core::KeepsGrpcInitialized {
 
   grpc_chttp2_sent_goaway_state sent_goaway_state = GRPC_CHTTP2_NO_GOAWAY_SEND;
 
-  /// bitmask of setting indexes to send out
-  /// Hack: it's common for implementations to assume 65536 bytes initial send
-  /// window -- this should by rights be 0
-  uint32_t force_send_settings = 1 << GRPC_CHTTP2_SETTINGS_INITIAL_WINDOW_SIZE;
-  /// settings values
-  uint32_t settings[GRPC_NUM_SETTING_SETS][GRPC_CHTTP2_NUM_SETTINGS];
+  // The settings the peer has acked
+  grpc_core::Http2Settings peer_settings;
+  grpc_core::Http2Settings local_settings;
+  grpc_core::Http2Settings sent_settings;
+  grpc_core::Http2Settings acked_settings;
 
   /// what is the next stream id to be allocated by this peer?
   /// copied to next_stream_id in parsing when parsing commences
@@ -355,7 +342,8 @@ struct grpc_chttp2_transport : public grpc_core::KeepsGrpcInitialized {
   /// parser for headers
   grpc_core::HPackParser hpack_parser;
   /// simple one shot parsers
-  union {
+  union Simple {
+    Simple() {}
     grpc_chttp2_window_update_parser window_update;
     grpc_chttp2_settings_parser settings;
     grpc_chttp2_ping_parser ping;
@@ -487,6 +475,8 @@ struct grpc_chttp2_transport : public grpc_core::KeepsGrpcInitialized {
   bool dirtied_local_settings = true;
   /// have local settings been sent?
   bool sent_local_settings = false;
+  /// have any settings been sent?
+  bool sent_first_settings = false;
 
   /// If start_bdp_ping_locked has been called
   bool bdp_ping_started = false;

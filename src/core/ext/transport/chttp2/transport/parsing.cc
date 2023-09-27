@@ -339,14 +339,10 @@ grpc_error_handle grpc_chttp2_perform_read(grpc_chttp2_transport* t,
           return absl::OkStatus();
         }
         goto dts_fh_0;  // loop
-      } else if (t->incoming_frame_size >
-                 t->settings[GRPC_ACKED_SETTINGS]
-                            [GRPC_CHTTP2_SETTINGS_MAX_FRAME_SIZE]) {
-        return GRPC_ERROR_CREATE(
-            absl::StrFormat("Frame size %d is larger than max frame size %d",
-                            t->incoming_frame_size,
-                            t->settings[GRPC_ACKED_SETTINGS]
-                                       [GRPC_CHTTP2_SETTINGS_MAX_FRAME_SIZE]));
+      } else if (t->incoming_frame_size > t->acked_settings.max_frame_size()) {
+        return GRPC_ERROR_CREATE(absl::StrFormat(
+            "Frame size %d is larger than max frame size %d",
+            t->incoming_frame_size, t->acked_settings.max_frame_size()));
       }
       if (++cur == end) {
         return absl::OkStatus();
@@ -484,10 +480,8 @@ static grpc_error_handle init_header_skip_frame_parser(
       /*metadata_size_soft_limit=*/
       t->max_header_list_size_soft_limit,
       /*metadata_size_hard_limit=*/
-      t->settings[GRPC_ACKED_SETTINGS]
-                 [GRPC_CHTTP2_SETTINGS_MAX_HEADER_LIST_SIZE],
-      hpack_boundary_type(t, is_eoh), priority_type,
-      hpack_parser_log_info(t, HPackParser::LogInfo::kDontKnow));
+      t->acked_settings.max_header_list_size(), hpack_boundary_type(t, is_eoh),
+      priority_type, hpack_parser_log_info(t, HPackParser::LogInfo::kDontKnow));
   return absl::OkStatus();
 }
 
@@ -624,10 +618,8 @@ static grpc_error_handle init_header_frame_parser(grpc_chttp2_transport* t,
           "ignoring grpc_chttp2_stream with non-client generated index %d",
           t->incoming_stream_id));
       return init_header_skip_frame_parser(t, priority_type, is_eoh);
-    } else if (GPR_UNLIKELY(
-                   t->stream_map.size() >=
-                   t->settings[GRPC_ACKED_SETTINGS]
-                              [GRPC_CHTTP2_SETTINGS_MAX_CONCURRENT_STREAMS])) {
+    } else if (GPR_UNLIKELY(t->stream_map.size() >=
+                            t->acked_settings.max_concurrent_streams())) {
       return GRPC_ERROR_CREATE("Max stream count exceeded");
     } else if (t->sent_goaway_state == GRPC_CHTTP2_FINAL_GOAWAY_SENT ||
                t->sent_goaway_state ==
@@ -706,15 +698,13 @@ static grpc_error_handle init_header_frame_parser(grpc_chttp2_transport* t,
     return GRPC_ERROR_CREATE(
         "Trailing metadata frame received without an end-o-stream");
   }
-  t->hpack_parser.BeginFrame(
-      incoming_metadata_buffer,
-      /*metadata_size_soft_limit=*/
-      t->max_header_list_size_soft_limit,
-      /*metadata_size_hard_limit=*/
-      t->settings[GRPC_ACKED_SETTINGS]
-                 [GRPC_CHTTP2_SETTINGS_MAX_HEADER_LIST_SIZE],
-      hpack_boundary_type(t, is_eoh), priority_type,
-      hpack_parser_log_info(t, frame_type));
+  t->hpack_parser.BeginFrame(incoming_metadata_buffer,
+                             /*metadata_size_soft_limit=*/
+                             t->max_header_list_size_soft_limit,
+                             /*metadata_size_hard_limit=*/
+                             t->acked_settings.max_header_list_size(),
+                             hpack_boundary_type(t, is_eoh), priority_type,
+                             hpack_parser_log_info(t, frame_type));
   return absl::OkStatus();
 }
 
@@ -782,20 +772,17 @@ static grpc_error_handle init_settings_frame_parser(grpc_chttp2_transport* t) {
 
   grpc_error_handle err = grpc_chttp2_settings_parser_begin_frame(
       &t->simple.settings, t->incoming_frame_size, t->incoming_frame_flags,
-      t->settings[GRPC_PEER_SETTINGS]);
+      &t->peer_settings);
   if (!err.ok()) {
     return err;
   }
   if (t->incoming_frame_flags & GRPC_CHTTP2_FLAG_ACK) {
-    memcpy(t->settings[GRPC_ACKED_SETTINGS], t->settings[GRPC_SENT_SETTINGS],
-           GRPC_CHTTP2_NUM_SETTINGS * sizeof(uint32_t));
+    t->acked_settings = t->sent_settings;
     t->hpack_parser.hpack_table()->SetMaxBytes(
-        t->settings[GRPC_ACKED_SETTINGS]
-                   [GRPC_CHTTP2_SETTINGS_HEADER_TABLE_SIZE]);
+        t->acked_settings.header_table_size());
     grpc_chttp2_act_on_flowctl_action(
         t->flow_control.SetAckedInitialWindow(
-            t->settings[GRPC_ACKED_SETTINGS]
-                       [GRPC_CHTTP2_SETTINGS_INITIAL_WINDOW_SIZE]),
+            t->acked_settings.initial_window_size()),
         t, nullptr);
     t->sent_local_settings = false;
   }

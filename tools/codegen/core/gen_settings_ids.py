@@ -19,52 +19,113 @@ from __future__ import print_function
 import collections
 import sys
 
-import perfection
-
 _MAX_HEADER_LIST_SIZE = 16 * 1024 * 1024
 
-Setting = collections.namedtuple("Setting", "id default min max on_error")
+Setting = collections.namedtuple(
+    "Setting",
+    "name channel_arg id default min max on_error force_send_on_first server client",
+)
 OnError = collections.namedtuple("OnError", "behavior code")
 clamp_invalid_value = OnError("CLAMP_INVALID_VALUE", "PROTOCOL_ERROR")
 disconnect_on_invalid_value = lambda e: OnError(
     "DISCONNECT_ON_INVALID_VALUE", e
 )
-DecoratedSetting = collections.namedtuple(
-    "DecoratedSetting", "enum name setting"
-)
-
-_SETTINGS = {
-    "HEADER_TABLE_SIZE": Setting(1, 4096, 0, 0xFFFFFFFF, clamp_invalid_value),
-    "ENABLE_PUSH": Setting(
-        2, 1, 0, 1, disconnect_on_invalid_value("PROTOCOL_ERROR")
+_SETTINGS = (
+    Setting(
+        "HEADER_TABLE_SIZE",
+        "GRPC_ARG_HTTP2_HPACK_TABLE_SIZE_DECODER",
+        1,
+        4096,
+        0,
+        0xFFFFFFFF,
+        clamp_invalid_value,
+        False,
+        True,
+        True,
     ),
-    "MAX_CONCURRENT_STREAMS": Setting(
+    Setting(
+        "ENABLE_PUSH",
+        None,
+        2,
+        1,
+        0,
+        1,
+        disconnect_on_invalid_value("PROTOCOL_ERROR"),
+        False,
+        True,
+        False,
+    ),
+    Setting(
+        "MAX_CONCURRENT_STREAMS",
+        "GRPC_ARG_MAX_CONCURRENT_STREAMS",
         3,
         0xFFFFFFFF,
         0,
         0xFFFFFFFF,
         disconnect_on_invalid_value("PROTOCOL_ERROR"),
+        False,
+        True,
+        False,
     ),
-    "INITIAL_WINDOW_SIZE": Setting(
+    Setting(
+        "INITIAL_WINDOW_SIZE",
+        "GRPC_ARG_HTTP2_STREAM_LOOKAHEAD_BYTES",
         4,
         65535,
         0,
         0x7FFFFFFF,
         disconnect_on_invalid_value("FLOW_CONTROL_ERROR"),
+        True,
+        True,
+        True,
     ),
-    "MAX_FRAME_SIZE": Setting(
-        5, 16384, 16384, 16777215, disconnect_on_invalid_value("PROTOCOL_ERROR")
+    Setting(
+        "MAX_FRAME_SIZE",
+        "GRPC_ARG_HTTP2_MAX_FRAME_SIZE",
+        5,
+        16384,
+        16384,
+        16777215,
+        disconnect_on_invalid_value("PROTOCOL_ERROR"),
+        False,True,True,
     ),
-    "MAX_HEADER_LIST_SIZE": Setting(
-        6, _MAX_HEADER_LIST_SIZE, 0, _MAX_HEADER_LIST_SIZE, clamp_invalid_value
+    Setting(
+        "MAX_HEADER_LIST_SIZE",
+        None,
+        6,
+        _MAX_HEADER_LIST_SIZE,
+        0,
+        _MAX_HEADER_LIST_SIZE,
+        clamp_invalid_value,
+        False,
+        True,
+        True,
     ),
-    "GRPC_ALLOW_TRUE_BINARY_METADATA": Setting(
-        0xFE03, 0, 0, 1, clamp_invalid_value
+    Setting(
+        "GRPC_ALLOW_TRUE_BINARY_METADATA",
+        "GRPC_ARG_HTTP2_ENABLE_TRUE_BINARY",
+        0xFE03,
+        0,
+        0,
+        1,
+        clamp_invalid_value,
+        False,
+        True,
+        True,
     ),
-    "GRPC_PREFERRED_RECEIVE_CRYPTO_FRAME_SIZE": Setting(
-        0xFE04, 0, 16384, 0x7FFFFFFF, clamp_invalid_value
+    Setting(
+        "GRPC_PREFERRED_RECEIVE_CRYPTO_FRAME_SIZE",
+        None,
+        0xFE04,
+        0,
+        16384,
+        0x7FFFFFFF,
+        clamp_invalid_value,
+        False,
+        True,
+        True,
     ),
-}
+)
 
 H = open("src/core/ext/transport/chttp2/transport/http2_settings.h", "w")
 C = open("src/core/ext/transport/chttp2/transport/http2_settings.cc", "w")
@@ -110,7 +171,13 @@ print(
 print(file=H)
 print("#include <grpc/support/port_platform.h>", file=H)
 print("#include <stdint.h>", file=H)
+print('#include "src/core/ext/transport/chttp2/transport/frame.h"', file=H)
+print('#include "absl/types/variant.h"', file=H)
+print('#include "src/core/lib/transport/http2_errors.h"', file=H)
+print('#include "src/core/lib/gpr/useful.h"', file=H)
+print('#include "src/core/lib/channel/channel_args.h"', file=H)
 print(file=H)
+print("namespace grpc_core {", file=H)
 
 print("#include <grpc/support/port_platform.h>", file=C)
 print(
@@ -118,153 +185,198 @@ print(
     file=C,
 )
 print(file=C)
-print('#include "src/core/lib/gpr/useful.h"', file=C)
-print('#include "src/core/lib/transport/http2_errors.h"', file=C)
-print(file=C)
-
-p = perfection.hash_parameters(sorted(x.id for x in list(_SETTINGS.values())))
-print(p)
+print("namespace grpc_core {", file=C)
 
 
-def hash(i):
-    i += p.offset
-    x = i % p.t
-    y = i // p.t
-    return x + p.r[y]
+def UpperSnakeToPascalCase(name):
+    return "".join(x.capitalize() for x in name.split("_"))
 
 
-decorated_settings = [
-    DecoratedSetting(hash(setting.id), name, setting)
-    for name, setting in _SETTINGS.items()
-]
-
-print("typedef enum {", file=H)
-for decorated_setting in sorted(decorated_settings):
+print("class Http2Settings {", file=H)
+print(" public:", file=H)
+print("  struct Traits {", file=H)
+print("    static absl::optional<Traits> FromId(uint16_t id);", file=H)
+print("    absl::string_view name;", file=H)
+print("    uint32_t min;", file=H)
+print("    uint32_t max;", file=H)
+print("  };", file=H)
+for setting in _SETTINGS:
+    if setting.min == 0 and setting.max == 0xFFFFFFFF:
+        print(
+            f"  void Set{UpperSnakeToPascalCase(setting.name)}(uint32_t {setting.name.lower()}) {{ {setting.name.lower()}_ = {setting.name.lower()}; }}",
+            file=H,
+        )
+    elif setting.min == 0:
+        print(
+            f"  void Set{UpperSnakeToPascalCase(setting.name)}(uint32_t {setting.name.lower()}) {{ {setting.name.lower()}_ = std::min<uint32_t>({setting.name.lower()}, {setting.max}); }}",
+            file=H,
+        )
+    else:
+        print(
+            f"  void Set{UpperSnakeToPascalCase(setting.name)}(uint32_t {setting.name.lower()}) {{ {setting.name.lower()}_ = Clamp<uint32_t>({setting.name.lower()}, {setting.min}, {setting.max}); }}",
+            file=H,
+        )
     print(
-        "  GRPC_CHTTP2_SETTINGS_%s = %d, /* wire id %d */"
-        % (
-            decorated_setting.name,
-            decorated_setting.enum,
-            decorated_setting.setting.id,
-        ),
+        f"  uint32_t {setting.name.lower()}() const {{ return {setting.name.lower()}_; }}",
         file=H,
     )
-print("} grpc_chttp2_setting_id;", file=H)
-print(file=H)
+    print(f"  static Traits {setting.name.lower()}_traits() {{ return Traits{{\"{setting.name.lower()}\", {setting.min}, {setting.max}}}; }}", file=H)
+print("  bool operator==(const Http2Settings& other) const {", file=H)
+print("    return", file=H)
 print(
-    "#define GRPC_CHTTP2_NUM_SETTINGS %d"
-    % (max(x.enum for x in decorated_settings) + 1),
-    file=H,
-)
-
-print("extern const uint16_t grpc_setting_id_to_wire_id[];", file=H)
-print(
-    "const uint16_t grpc_setting_id_to_wire_id[] = {%s};"
-    % ",".join("%d" % s for s in p.slots),
-    file=C,
-)
-print(file=H)
-print(
-    (
-        "bool grpc_wire_id_to_setting_id(uint32_t wire_id,"
-        " grpc_chttp2_setting_id *out);"
+    " && ".join(
+        f"{setting.name.lower()}_ == other.{setting.name.lower()}_"
+        for setting in _SETTINGS
     ),
     file=H,
 )
-cgargs = {
-    "r": ",".join("%d" % (r if r is not None else 0) for r in p.r),
-    "t": p.t,
-    "offset": abs(p.offset),
-    "offset_sign": "+" if p.offset > 0 else "-",
-}
+print(";  }", file=H)
 print(
-    """
-bool grpc_wire_id_to_setting_id(uint32_t wire_id, grpc_chttp2_setting_id *out) {
-  uint32_t i = wire_id %(offset_sign)s %(offset)d;
-  uint32_t x = i %% %(t)d;
-  uint32_t y = i / %(t)d;
-  uint32_t h = x;
-  switch (y) {
-"""
-    % cgargs,
+    "  struct ParseError { grpc_http2_error_code error; absl::string_view message; };",
+    file=H,
+)
+print("  using ParseResult = absl::variant<Http2Settings, ParseError>;", file=H)
+print(
+    "  ParseResult FromIncomingFrame(const Http2SettingsFrame& frame) const;", file=H
+)
+print(
+    "  Http2Settings FromClientChannelArgs(const ChannelArgs& args) const;",
+    file=H,
+)
+print(
+    "  Http2Settings FromServerChannelArgs(const ChannelArgs& args) const;",
+    file=H,
+)
+print(
+    "  Http2SettingsFrame CreateUpdateFromBasis(Http2Settings basis, bool is_first_send) const;",
+    file=H,
+)
+print(" private:", file=H)
+for setting in _SETTINGS:
+    print(f"  uint32_t {setting.name.lower()}_ = {setting.default};", file=H)
+print("};", file=H)
+
+print(
+    "Http2Settings::ParseResult Http2Settings::FromIncomingFrame(const Http2SettingsFrame& frame) const {",
     file=C,
 )
-for i, r in enumerate(p.r):
-    if not r:
-        continue
-    if r < 0:
-        print("case %d: h -= %d; break;" % (i, -r), file=C)
+print("  Http2Settings settings(*this);", file=C)
+print("  for (const auto& setting : frame.settings) {", file=C)
+print("    switch (setting.id) {", file=C)
+for setting in _SETTINGS:
+    print(f"      case {setting.id}:", file=C)
+    if setting.on_error.behavior == "CLAMP_INVALID_VALUE":
+        if setting.min == 0 and setting.max == 0xFFFFFFFF:
+            print(
+                f"        settings.Set{UpperSnakeToPascalCase(setting.name)}(setting.value);",
+                file=C,
+            )
+        else:
+            print(
+                f"          settings.Set{UpperSnakeToPascalCase(setting.name)}(Clamp<uint32_t>(setting.value, {setting.min}, {setting.max}));",
+                file=C,
+            )
+    elif setting.on_error.behavior == "DISCONNECT_ON_INVALID_VALUE":
+        if setting.min == 0 and setting.max == 0xFFFFFFFF:
+            print(
+                f"        settings.Set{UpperSnakeToPascalCase(setting.name)}(setting.value);",
+                file=C,
+            )
+        else:
+            print(
+                f"          if (setting.value < {setting.min} || setting.value > {setting.max}) {{",
+                file=C,
+            )
+            print(
+                f'            return ParseError{{GRPC_HTTP2_{setting.on_error.code}, "Invalid value for {setting.name}"}};',
+                file=C,
+            )
+            print("          }", file=C)
+            print(
+                f"        settings.Set{UpperSnakeToPascalCase(setting.name)}(setting.value);",
+                file=C,
+            )
     else:
-        print("case %d: h += %d; break;" % (i, r), file=C)
+        assert False, setting.on_error.behavior
+    print("        break;", file=C)
+print("      default:", file=C)
 print(
-    """
-  }
-  *out = static_cast<grpc_chttp2_setting_id>(h);
-  return h < GPR_ARRAY_SIZE(grpc_setting_id_to_wire_id) && grpc_setting_id_to_wire_id[h] == wire_id;
-}
-"""
-    % cgargs,
+    '          gpr_log(GPR_DEBUG, "CHTTP2: Ignoring unknown setting %d (value %d)", setting.id, setting.value);',
     file=C,
 )
+print("        break;", file=C)
+print("    }", file=C)
+print("  }", file=C)
+print("  return settings;", file=C)
+print("}", file=C)
 
 print(
-    """
-typedef enum {
-  GRPC_CHTTP2_CLAMP_INVALID_VALUE,
-  GRPC_CHTTP2_DISCONNECT_ON_INVALID_VALUE
-} grpc_chttp2_invalid_value_behavior;
-
-typedef struct {
-  const char *name;
-  uint32_t default_value;
-  uint32_t min_value;
-  uint32_t max_value;
-  grpc_chttp2_invalid_value_behavior invalid_value_behavior;
-  uint32_t error_value;
-} grpc_chttp2_setting_parameters;
-
-extern const grpc_chttp2_setting_parameters grpc_chttp2_settings_parameters[GRPC_CHTTP2_NUM_SETTINGS];
-""",
-    file=H,
-)
-print(
-    (
-        "const grpc_chttp2_setting_parameters"
-        " grpc_chttp2_settings_parameters[GRPC_CHTTP2_NUM_SETTINGS] = {"
-    ),
+    "Http2SettingsFrame Http2Settings::CreateUpdateFromBasis(Http2Settings basis, bool is_first_send) const {",
     file=C,
 )
-i = 0
-for decorated_setting in sorted(decorated_settings):
-    while i < decorated_setting.enum:
-        print(
-            (
-                "{NULL, 0, 0, 0, GRPC_CHTTP2_DISCONNECT_ON_INVALID_VALUE,"
-                " GRPC_HTTP2_PROTOCOL_ERROR},"
-            ),
-            file=C,
-        )
-        i += 1
+print("  Http2SettingsFrame frame;", file=C)
+for setting in _SETTINGS:
+    front = "is_first_send || " if setting.force_send_on_first else ""
     print(
-        '{"%s", %du, %du, %du, GRPC_CHTTP2_%s, GRPC_HTTP2_%s},'
-        % (
-            decorated_setting.name,
-            decorated_setting.setting.default,
-            decorated_setting.setting.min,
-            decorated_setting.setting.max,
-            decorated_setting.setting.on_error.behavior,
-            decorated_setting.setting.on_error.code,
-        ),
+        f"  if ({front}{setting.name.lower()}_ != basis.{setting.name.lower()}_) {{",
         file=C,
     )
-    i += 1
-print("};", file=C)
+    print(
+        f"    frame.settings.push_back(Http2SettingsFrame::Setting{{{setting.id}, {setting.name.lower()}_}});",
+        file=C,
+    )
+    print("  }", file=C)
+print("  return frame;", file=C)
+print("}", file=C)
 
+print(
+    "Http2Settings Http2Settings::FromClientChannelArgs(const ChannelArgs& args) const {",
+    file=C,
+)
+print("  Http2Settings settings(*this);", file=C)
+for setting in _SETTINGS:
+    if setting.channel_arg is None:
+        continue
+    if not setting.client:
+        print(f"if (args.Contains({setting.channel_arg})) {{gpr_log(GPR_ERROR, \"CHTTP2: Ignoring server-only setting on client {setting.name}\");}}", file=C)
+    print(
+        f'const auto {setting.name.lower()} = args.GetInt({setting.channel_arg});',
+        file=C,
+    )
+    print(f'if ({setting.name.lower()}.has_value()) {{', file=C)
+    print(f'  settings.Set{UpperSnakeToPascalCase(setting.name)}({setting.name.lower()}.value());', file=C)
+    print(f'}}', file=C)
+print("return settings;", file=C)
+print("}", file=C)
+
+print(
+    "Http2Settings Http2Settings::FromServerChannelArgs(const ChannelArgs& args) const {",
+    file=C,
+)
+print("  Http2Settings settings(*this);", file=C)
+for setting in _SETTINGS:
+    if setting.channel_arg is None:
+        continue
+    if not setting.server:
+        print(f"if (args.Contains({setting.channel_arg})) {{gpr_log(GPR_ERROR, \"CHTTP2: Ignoring client-only setting on server {setting.name}\");}}", file=C)
+    print(
+        f'const auto {setting.name.lower()} = args.GetInt({setting.channel_arg});',
+        file=C,
+    )
+    print(f'if ({setting.name.lower()}.has_value()) {{', file=C)
+    print(f'  settings.Set{UpperSnakeToPascalCase(setting.name)}({setting.name.lower()}.value());', file=C)
+    print(f'}}', file=C)
+print("return settings;", file=C)
+print("}", file=C)
+
+print("}  // namespace grpc_core", file=H)
 print(file=H)
 print(
     "#endif /* GRPC_CORE_EXT_TRANSPORT_CHTTP2_TRANSPORT_HTTP2_SETTINGS_H */",
     file=H,
 )
+
+print("}  // namespace grpc_core", file=C)
 
 H.close()
 C.close()

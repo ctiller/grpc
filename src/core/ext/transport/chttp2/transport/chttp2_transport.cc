@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <initializer_list>
+#include <limits>
 #include <memory>
 #include <new>
 #include <string>
@@ -147,10 +148,6 @@ static void read_action_locked(grpc_core::RefCountedPtr<grpc_chttp2_transport>,
                                grpc_error_handle error);
 static void continue_read_action_locked(
     grpc_core::RefCountedPtr<grpc_chttp2_transport> t);
-
-// Set a transport level setting, and push it to our peer
-static void queue_setting_update(grpc_chttp2_transport* t,
-                                 grpc_chttp2_setting_id id, uint32_t value);
 
 static void close_from_api(grpc_chttp2_transport* t, grpc_chttp2_stream* s,
                            grpc_error_handle error);
@@ -447,90 +444,38 @@ static void read_channel_args(grpc_chttp2_transport* t,
     t->max_header_list_size_soft_limit = soft_limit;
   }
 
-  static const struct {
-    absl::string_view channel_arg_name;
-    grpc_chttp2_setting_id setting_id;
-    int default_value;
-    int min;
-    int max;
-    bool availability[2] /* server, client */;
-  } settings_map[] = {{GRPC_ARG_MAX_CONCURRENT_STREAMS,
-                       GRPC_CHTTP2_SETTINGS_MAX_CONCURRENT_STREAMS,
-                       -1,
-                       0,
-                       INT32_MAX,
-                       {true, false}},
-                      {GRPC_ARG_HTTP2_HPACK_TABLE_SIZE_DECODER,
-                       GRPC_CHTTP2_SETTINGS_HEADER_TABLE_SIZE,
-                       -1,
-                       0,
-                       INT32_MAX,
-                       {true, true}},
-                      {GRPC_ARG_ABSOLUTE_MAX_METADATA_SIZE,
-                       GRPC_CHTTP2_SETTINGS_MAX_HEADER_LIST_SIZE,
-                       -1,
-                       0,
-                       INT32_MAX,
-                       {true, true}},
-                      {GRPC_ARG_HTTP2_MAX_FRAME_SIZE,
-                       GRPC_CHTTP2_SETTINGS_MAX_FRAME_SIZE,
-                       -1,
-                       16384,
-                       16777215,
-                       {true, true}},
-                      {GRPC_ARG_HTTP2_ENABLE_TRUE_BINARY,
-                       GRPC_CHTTP2_SETTINGS_GRPC_ALLOW_TRUE_BINARY_METADATA,
-                       1,
-                       0,
-                       1,
-                       {true, true}},
-                      {GRPC_ARG_HTTP2_STREAM_LOOKAHEAD_BYTES,
-                       GRPC_CHTTP2_SETTINGS_INITIAL_WINDOW_SIZE,
-                       -1,
-                       5,
-                       INT32_MAX,
-                       {true, true}}};
+  // configure http2 the way we like it
+  grpc_core::Http2Settings settings;
+  settings.SetGrpcAllowTrueBinaryMetadata(1);
+  settings.SetMaxHeaderListSize(DEFAULT_MAX_HEADER_LIST_SIZE);
+  if (is_client) {
+    settings.SetMaxConcurrentStreams(0);
+    settings.SetEnablePush(0);
+    settings = settings.FromClientChannelArgs(channel_args);
+  } else {
+    settings = settings.FromServerChannelArgs(channel_args);
+  }
 
-  for (size_t i = 0; i < GPR_ARRAY_SIZE(settings_map); i++) {
-    const auto& setting = settings_map[i];
-    if (setting.availability[is_client]) {
-      const int value = channel_args.GetInt(setting.channel_arg_name)
-                            .value_or(setting.default_value);
-      if (value >= 0) {
-        queue_setting_update(t, setting.setting_id,
-                             grpc_core::Clamp(value, setting.min, setting.max));
-      } else if (setting.setting_id ==
-                 GRPC_CHTTP2_SETTINGS_MAX_HEADER_LIST_SIZE) {
-        // Set value to 1.25 * soft limit if this is larger than
-        // `DEFAULT_MAX_HEADER_LIST_SIZE` and
-        // `GRPC_ARG_ABSOLUTE_MAX_METADATA_SIZE` is not set.
-        const int soft_limit = channel_args.GetInt(GRPC_ARG_MAX_METADATA_SIZE)
-                                   .value_or(setting.default_value);
-        const int value = (soft_limit >= 0 && soft_limit < (INT_MAX / 1.25))
-                              ? static_cast<int>(soft_limit * 1.25)
-                              : soft_limit;
-        if (value > DEFAULT_MAX_HEADER_LIST_SIZE) {
-          queue_setting_update(
-              t, setting.setting_id,
-              grpc_core::Clamp(value, setting.min, setting.max));
-        }
-      }
-    } else if (channel_args.Contains(setting.channel_arg_name)) {
-      gpr_log(GPR_DEBUG, "%s is not available on %s",
-              std::string(setting.channel_arg_name).c_str(),
-              is_client ? "clients" : "servers");
+  const int hard_limit =
+      channel_args.GetInt(GRPC_ARG_ABSOLUTE_MAX_METADATA_SIZE).value_or(-1);
+  if (hard_limit >= 0) {
+    settings.SetMaxFrameSize(hard_limit);
+  } else {
+    // Set value to 1.25 * soft limit if this is larger than
+    // `DEFAULT_MAX_HEADER_LIST_SIZE` and
+    // `GRPC_ARG_ABSOLUTE_MAX_METADATA_SIZE` is not set.
+    const int value = (soft_limit >= 0 && soft_limit < (INT_MAX / 1.25))
+                          ? static_cast<int>(soft_limit * 1.25)
+                          : soft_limit;
+    if (value > DEFAULT_MAX_HEADER_LIST_SIZE) {
+      settings.SetMaxFrameSize(value);
     }
   }
-
   if (t->enable_preferred_rx_crypto_frame_advertisement) {
-    const grpc_chttp2_setting_parameters* sp =
-        &grpc_chttp2_settings_parameters
-            [GRPC_CHTTP2_SETTINGS_GRPC_PREFERRED_RECEIVE_CRYPTO_FRAME_SIZE];
-    queue_setting_update(
-        t, GRPC_CHTTP2_SETTINGS_GRPC_PREFERRED_RECEIVE_CRYPTO_FRAME_SIZE,
-        grpc_core::Clamp(INT_MAX, static_cast<int>(sp->min_value),
-                         static_cast<int>(sp->max_value)));
+    settings.SetGrpcPreferredReceiveCryptoFrameSize(
+        std::numeric_limits<uint32_t>::max());
   }
+  t->local_settings = settings;
 }
 
 static void init_keepalive_pings_if_enabled_locked(
@@ -594,25 +539,7 @@ grpc_chttp2_transport::grpc_chttp2_transport(
         grpc_slice_from_copied_string(GRPC_CHTTP2_CLIENT_CONNECT_STRING));
   }
   grpc_slice_buffer_init(&qbuf);
-  // copy in initial settings to all setting sets
-  size_t i;
-  int j;
-  for (i = 0; i < GRPC_CHTTP2_NUM_SETTINGS; i++) {
-    for (j = 0; j < GRPC_NUM_SETTING_SETS; j++) {
-      settings[j][i] = grpc_chttp2_settings_parameters[i].default_value;
-    }
-  }
   grpc_chttp2_goaway_parser_init(&goaway_parser);
-
-  // configure http2 the way we like it
-  if (is_client) {
-    queue_setting_update(this, GRPC_CHTTP2_SETTINGS_ENABLE_PUSH, 0);
-    queue_setting_update(this, GRPC_CHTTP2_SETTINGS_MAX_CONCURRENT_STREAMS, 0);
-  }
-  queue_setting_update(this, GRPC_CHTTP2_SETTINGS_MAX_HEADER_LIST_SIZE,
-                       DEFAULT_MAX_HEADER_LIST_SIZE);
-  queue_setting_update(this,
-                       GRPC_CHTTP2_SETTINGS_GRPC_ALLOW_TRUE_BINARY_METADATA, 1);
 
   read_channel_args(this, channel_args, is_client);
 
@@ -1006,9 +933,7 @@ static void write_action(grpc_chttp2_transport* t) {
   // Choose max_frame_size as the prefered rx crypto frame size indicated by the
   // peer.
   int max_frame_size =
-      t->settings
-          [GRPC_PEER_SETTINGS]
-          [GRPC_CHTTP2_SETTINGS_GRPC_PREFERRED_RECEIVE_CRYPTO_FRAME_SIZE];
+      t->peer_settings.grpc_preferred_receive_crypto_frame_size();
   // Note: max frame size is 0 if the remote peer does not support adjusting the
   // sending frame size.
   if (max_frame_size == 0) {
@@ -1072,23 +997,6 @@ static void write_action_end_locked(
   }
 
   grpc_chttp2_end_write(t.get(), error);
-}
-
-// Dirties an HTTP2 setting to be sent out next time a writing path occurs.
-// If the change needs to occur immediately, manually initiate a write.
-static void queue_setting_update(grpc_chttp2_transport* t,
-                                 grpc_chttp2_setting_id id, uint32_t value) {
-  const grpc_chttp2_setting_parameters* sp =
-      &grpc_chttp2_settings_parameters[id];
-  uint32_t use_value = grpc_core::Clamp(value, sp->min_value, sp->max_value);
-  if (use_value != value) {
-    gpr_log(GPR_INFO, "Requested parameter %s clamped from %d to %d", sp->name,
-            value, use_value);
-  }
-  if (use_value != t->settings[GRPC_LOCAL_SETTINGS][id]) {
-    t->settings[GRPC_LOCAL_SETTINGS][id] = use_value;
-    t->dirtied_local_settings = true;
-  }
 }
 
 // Cancel out streams that haven't yet started if we have received a GOAWAY
@@ -1189,9 +1097,7 @@ static void maybe_start_some_streams(grpc_chttp2_transport* t) {
   // start streams where we have free grpc_chttp2_stream ids and free
   // * concurrency
   while (t->next_stream_id <= MAX_CLIENT_STREAM_ID &&
-         t->stream_map.size() <
-             t->settings[GRPC_PEER_SETTINGS]
-                        [GRPC_CHTTP2_SETTINGS_MAX_CONCURRENT_STREAMS] &&
+         t->stream_map.size() < t->peer_settings.max_concurrent_streams() &&
          grpc_chttp2_list_pop_waiting_for_concurrency(t, &s)) {
     // safe since we can't (legally) be parsing this stream yet
     GRPC_CHTTP2_IF_TRACING(gpr_log(
@@ -2468,25 +2374,21 @@ void grpc_chttp2_act_on_flowctl_action(
               });
   WithUrgency(t, action.send_transport_update(),
               GRPC_CHTTP2_INITIATE_WRITE_TRANSPORT_FLOW_CONTROL, []() {});
-  WithUrgency(t, action.send_initial_window_update(),
-              GRPC_CHTTP2_INITIATE_WRITE_SEND_SETTINGS, [t, &action]() {
-                queue_setting_update(t,
-                                     GRPC_CHTTP2_SETTINGS_INITIAL_WINDOW_SIZE,
-                                     action.initial_window_size());
-              });
+  WithUrgency(
+      t, action.send_initial_window_update(),
+      GRPC_CHTTP2_INITIATE_WRITE_SEND_SETTINGS, [t, &action]() {
+        t->local_settings.SetInitialWindowSize(action.initial_window_size());
+      });
   WithUrgency(t, action.send_max_frame_size_update(),
               GRPC_CHTTP2_INITIATE_WRITE_SEND_SETTINGS, [t, &action]() {
-                queue_setting_update(t, GRPC_CHTTP2_SETTINGS_MAX_FRAME_SIZE,
-                                     action.max_frame_size());
+                t->local_settings.SetMaxFrameSize(action.max_frame_size());
               });
   if (t->enable_preferred_rx_crypto_frame_advertisement) {
-    WithUrgency(
-        t, action.preferred_rx_crypto_frame_size_update(),
-        GRPC_CHTTP2_INITIATE_WRITE_SEND_SETTINGS, [t, &action]() {
-          queue_setting_update(
-              t, GRPC_CHTTP2_SETTINGS_GRPC_PREFERRED_RECEIVE_CRYPTO_FRAME_SIZE,
-              action.preferred_rx_crypto_frame_size());
-        });
+    WithUrgency(t, action.preferred_rx_crypto_frame_size_update(),
+                GRPC_CHTTP2_INITIATE_WRITE_SEND_SETTINGS, [t, &action]() {
+                  t->local_settings.SetGrpcPreferredReceiveCryptoFrameSize(
+                      action.preferred_rx_crypto_frame_size());
+                });
   }
 }
 
