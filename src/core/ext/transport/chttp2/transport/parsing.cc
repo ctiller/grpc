@@ -24,6 +24,7 @@
 #include <initializer_list>
 #include <limits>
 #include <string>
+#include <utility>
 
 #include "absl/base/attributes.h"
 #include "absl/container/flat_hash_map.h"
@@ -833,6 +834,12 @@ static grpc_error_handle init_settings_frame_parser(grpc_chttp2_transport* t) {
             t->settings[GRPC_ACKED_SETTINGS]
                        [GRPC_CHTTP2_SETTINGS_INITIAL_WINDOW_SIZE]),
         t, nullptr);
+    if (t->settings_ack_watchdog !=
+        grpc_event_engine::experimental::EventEngine::TaskHandle::kInvalid) {
+      t->event_engine->Cancel(std::exchange(
+          t->settings_ack_watchdog,
+          grpc_event_engine::experimental::EventEngine::TaskHandle::kInvalid));
+    }
     t->sent_local_settings = false;
     // This is more streams than can be started in http2, so setting this
     // effictively removes the limit for the rest of the connection.

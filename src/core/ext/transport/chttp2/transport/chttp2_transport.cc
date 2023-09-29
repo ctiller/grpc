@@ -213,6 +213,9 @@ static void finish_keepalive_ping_locked(
     grpc_core::RefCountedPtr<grpc_chttp2_transport> t, grpc_error_handle error);
 static void maybe_reset_keepalive_ping_timer_locked(grpc_chttp2_transport* t);
 
+static void send_goaway(grpc_chttp2_transport* t, grpc_error_handle error,
+                        bool immediate_disconnect_hint);
+
 namespace {
 grpc_core::CallTracerInterface* CallTracerIfEnabled(grpc_chttp2_stream* s) {
   if (s->context == nullptr || !grpc_core::IsTraceRecordCallopsEnabled()) {
@@ -704,6 +707,12 @@ static void close_transport_locked(grpc_chttp2_transport* t,
     t->closed_with_error = error;
     connectivity_state_set(t, GRPC_CHANNEL_SHUTDOWN, absl::Status(),
                            "close_transport");
+    if (t->settings_ack_watchdog !=
+        grpc_event_engine::experimental::EventEngine::TaskHandle::kInvalid) {
+      t->event_engine->Cancel(std::exchange(
+          t->settings_ack_watchdog,
+          grpc_event_engine::experimental::EventEngine::TaskHandle::kInvalid));
+    }
     if (t->delayed_ping_timer_handle.has_value()) {
       if (t->event_engine->Cancel(*t->delayed_ping_timer_handle)) {
         t->delayed_ping_timer_handle.reset();
@@ -1726,9 +1735,36 @@ void grpc_chttp2_ping_timeout(
       grpc_core::NewClosure([t](grpc_error_handle) {
         gpr_log(GPR_INFO, "%s: Ping timeout. Closing transport.",
                 std::string(t->peer_string.as_string_view()).c_str());
+        send_goaway(
+            t.get(),
+            grpc_error_set_int(GRPC_ERROR_CREATE("ping_timeout"),
+                               grpc_core::StatusIntProperty::kHttp2Error,
+                               GRPC_HTTP2_ENHANCE_YOUR_CALM),
+            /*immediate_disconnect_hint=*/true);
         close_transport_locked(
             t.get(),
             grpc_error_set_int(GRPC_ERROR_CREATE("ping timeout"),
+                               grpc_core::StatusIntProperty::kRpcStatus,
+                               GRPC_STATUS_UNAVAILABLE));
+      }),
+      absl::OkStatus());
+}
+
+void grpc_chttp2_settings_timeout(
+    grpc_core::RefCountedPtr<grpc_chttp2_transport> t) {
+  t->combiner->Run(
+      grpc_core::NewClosure([t](grpc_error_handle) {
+        gpr_log(GPR_INFO, "%s: Settings timeout. Closing transport.",
+                std::string(t->peer_string.as_string_view()).c_str());
+        send_goaway(
+            t.get(),
+            grpc_error_set_int(GRPC_ERROR_CREATE("settings_timeout"),
+                               grpc_core::StatusIntProperty::kHttp2Error,
+                               GRPC_HTTP2_SETTINGS_TIMEOUT),
+            /*immediate_disconnect_hint=*/true);
+        close_transport_locked(
+            t.get(),
+            grpc_error_set_int(GRPC_ERROR_CREATE("settings timeout"),
                                grpc_core::StatusIntProperty::kRpcStatus,
                                GRPC_STATUS_UNAVAILABLE));
       }),
