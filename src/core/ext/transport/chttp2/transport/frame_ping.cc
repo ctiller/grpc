@@ -20,6 +20,7 @@
 
 #include "src/core/ext/transport/chttp2/transport/frame_ping.h"
 
+#include <inttypes.h>
 #include <string.h>
 
 #include <algorithm>
@@ -104,8 +105,7 @@ grpc_error_handle grpc_chttp2_ping_parser_parse(void* parser,
               p->opaque_8bytes,
               t->ping_abuse_policy.GetDebugString(transport_idle).c_str());
       if (!t->is_client) {
-        if (true || grpc_keepalive_trace.enabled() ||
-            grpc_http_trace.enabled()) {
+        if (true || grpc_http_trace.enabled()) {
         }
         if (t->ping_abuse_policy.ReceivedOnePing(transport_idle)) {
           grpc_chttp2_exceeded_ping_strikes(t);
