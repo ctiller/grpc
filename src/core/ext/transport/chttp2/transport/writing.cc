@@ -46,7 +46,6 @@
 #include "src/core/ext/transport/chttp2/transport/frame_window_update.h"
 #include "src/core/ext/transport/chttp2/transport/hpack_encoder.h"
 #include "src/core/ext/transport/chttp2/transport/http2_settings.h"
-#include "src/core/ext/transport/chttp2/transport/http_trace.h"
 #include "src/core/ext/transport/chttp2/transport/internal.h"
 #include "src/core/ext/transport/chttp2/transport/legacy_frame.h"
 #include "src/core/ext/transport/chttp2/transport/ping_callbacks.h"
@@ -144,8 +143,7 @@ static bool maybe_initiate_ping(grpc_chttp2_transport* t) {
           t->channelz_socket->RecordKeepaliveSent();
         }
         grpc_core::global_stats().IncrementHttp2PingsSent();
-        if (true || GRPC_TRACE_FLAG_ENABLED(grpc_http_trace) ||
-            GRPC_TRACE_FLAG_ENABLED(grpc_bdp_estimator_trace) ||
+        if (true || GRPC_TRACE_FLAG_ENABLED(grpc_bdp_estimator_trace) ||
             GRPC_TRACE_FLAG_ENABLED(grpc_keepalive_trace)) {
           gpr_log(GPR_ERROR, "%s: Ping sent [%s]: %s id=%" PRId64 " timeout=%s",
                   t->is_client ? "CLIENT" : "SERVER",
@@ -157,8 +155,7 @@ static bool maybe_initiate_ping(grpc_chttp2_transport* t) {
       },
       [t](grpc_core::Chttp2PingRatePolicy::TooManyRecentPings) {
         // need to receive something of substance before sending a ping again
-        if (true || GRPC_TRACE_FLAG_ENABLED(grpc_http_trace) ||
-            GRPC_TRACE_FLAG_ENABLED(grpc_bdp_estimator_trace) ||
+        if (true || GRPC_TRACE_FLAG_ENABLED(grpc_bdp_estimator_trace) ||
             GRPC_TRACE_FLAG_ENABLED(grpc_keepalive_trace)) {
           gpr_log(GPR_ERROR, "%s: Ping delayed [%s]: too many recent pings: %s",
                   t->is_client ? "CLIENT" : "SERVER",
@@ -169,8 +166,7 @@ static bool maybe_initiate_ping(grpc_chttp2_transport* t) {
       },
       [t](grpc_core::Chttp2PingRatePolicy::TooSoon too_soon) {
         // not enough elapsed time between successive pings
-        if (true || GRPC_TRACE_FLAG_ENABLED(grpc_http_trace) ||
-            GRPC_TRACE_FLAG_ENABLED(grpc_bdp_estimator_trace) ||
+        if (true || GRPC_TRACE_FLAG_ENABLED(grpc_bdp_estimator_trace) ||
             GRPC_TRACE_FLAG_ENABLED(grpc_keepalive_trace)) {
           gpr_log(GPR_ERROR,
                   "%s: Ping delayed [%s]: not enough time elapsed since last "
