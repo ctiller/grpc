@@ -49,6 +49,7 @@
 #include "src/core/ext/transport/chttp2/transport/hpack_parser.h"
 #include "src/core/ext/transport/chttp2/transport/http2_settings.h"
 #include "src/core/ext/transport/chttp2/transport/legacy_frame.h"
+#include "src/core/ext/transport/chttp2/transport/max_concurrent_streams_policy.h"
 #include "src/core/ext/transport/chttp2/transport/ping_abuse_policy.h"
 #include "src/core/ext/transport/chttp2/transport/ping_callbacks.h"
 #include "src/core/ext/transport/chttp2/transport/ping_rate_policy.h"
@@ -332,6 +333,8 @@ struct grpc_chttp2_transport : public grpc_core::KeepsGrpcInitialized {
   /// data to write next write
   grpc_slice_buffer qbuf;
 
+  size_t max_requests_per_read;
+
   /// Set to a grpc_error object if a goaway frame is received. By default, set
   /// to absl::OkStatus()
   grpc_error_handle goaway_error;
@@ -345,12 +348,19 @@ struct grpc_chttp2_transport : public grpc_core::KeepsGrpcInitialized {
   /// settings values
   uint32_t settings[GRPC_NUM_SETTING_SETS][GRPC_CHTTP2_NUM_SETTINGS];
 
+  grpc_event_engine::experimental::EventEngine::TaskHandle
+      settings_ack_watchdog =
+          grpc_event_engine::experimental::EventEngine::TaskHandle::kInvalid;
+
   /// what is the next stream id to be allocated by this peer?
   /// copied to next_stream_id in parsing when parsing commences
   uint32_t next_stream_id = 0;
 
   /// last new stream id
   uint32_t last_new_stream_id = 0;
+
+  /// Number of incoming streams allowed before a settings ACK is required
+  uint32_t num_incoming_streams_before_settings_ack = 0;
 
   /// ping queues for various ping insertion points
   grpc_core::Chttp2PingAbusePolicy ping_abuse_policy;
@@ -359,6 +369,8 @@ struct grpc_chttp2_transport : public grpc_core::KeepsGrpcInitialized {
   absl::optional<grpc_event_engine::experimental::EventEngine::TaskHandle>
       delayed_ping_timer_handle;
   grpc_closure retry_initiate_ping_locked;
+
+  grpc_core::Chttp2MaxConcurrentStreamsPolicy max_concurrent_streams_policy;
 
   /// ping acks
   size_t ping_ack_count = 0;
@@ -506,6 +518,10 @@ struct grpc_chttp2_transport : public grpc_core::KeepsGrpcInitialized {
   bool bdp_ping_started = false;
   // True if pings should be acked
   bool ack_pings = true;
+
+  // What percentage of rst_stream frames on the server should cause a ping
+  // frame to be generated.
+  uint8_t ping_on_rst_stream_percent;
 
   /// write execution state of the transport
   grpc_chttp2_write_state write_state = GRPC_CHTTP2_WRITE_STATE_IDLE;
@@ -659,10 +675,14 @@ grpc_chttp2_begin_write_result grpc_chttp2_begin_write(
     grpc_chttp2_transport* t);
 void grpc_chttp2_end_write(grpc_chttp2_transport* t, grpc_error_handle error);
 
-/// Process one slice of incoming data; return 1 if the connection is still
-/// viable after reading, or 0 if the connection should be torn down
-grpc_error_handle grpc_chttp2_perform_read(grpc_chttp2_transport* t,
-                                           const grpc_slice& slice);
+/// Process one slice of incoming data
+/// Returns:
+///  - a count of parsed bytes in the event of a partial read: the caller should
+///    offload responsibilities to another thread to continue parsing.
+///  - or a status in the case of a completed read
+absl::variant<size_t, absl::Status> grpc_chttp2_perform_read(
+    grpc_chttp2_transport* t, const grpc_slice& slice,
+    size_t& requests_started);
 
 bool grpc_chttp2_list_add_writable_stream(grpc_chttp2_transport* t,
                                           grpc_chttp2_stream* s);
@@ -738,6 +758,9 @@ void grpc_chttp2_complete_closure_step(grpc_chttp2_transport* t,
                                        grpc_core::DebugLocation whence = {});
 
 void grpc_chttp2_ping_timeout(
+    grpc_core::RefCountedPtr<grpc_chttp2_transport> t);
+
+void grpc_chttp2_settings_timeout(
     grpc_core::RefCountedPtr<grpc_chttp2_transport> t);
 
 #define GRPC_HEADER_SIZE_IN_BYTES 5
