@@ -41,7 +41,7 @@
 #include "src/core/lib/resource_quota/api.h"
 #include "src/core/lib/surface/event_string.h"
 #include "src/core/lib/surface/server.h"
-#include "src/core/lib/transport/transport_fwd.h"
+#include "src/core/lib/transport/transport.h"
 #include "src/libfuzzer/libfuzzer_macro.h"
 #include "test/core/end2end/fuzzers/fuzzer_input.pb.h"
 #include "test/core/end2end/fuzzers/network_input.h"

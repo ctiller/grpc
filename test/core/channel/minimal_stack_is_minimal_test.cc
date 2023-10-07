@@ -59,7 +59,7 @@ std::vector<std::string> MakeStack(const char* transport_name,
   grpc_core::ChannelStackBuilderImpl builder("test", channel_stack_type,
                                              channel_args);
   grpc_transport_vtable fake_transport_vtable;
-  memset(&fake_transport_vtable, 0, sizeof(grpc_transport_vtable));
+  memset(&fake_transport_vtable, 0, sizeof(fake_transport_vtable));
   fake_transport_vtable.name = transport_name;
   grpc_core::Transport fake_transport = {&fake_transport_vtable};
   builder.SetTarget("foo.test.google.fr");

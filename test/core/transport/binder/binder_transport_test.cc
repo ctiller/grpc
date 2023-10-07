@@ -69,8 +69,8 @@ class BinderTransportTest : public ::testing::Test {
 
   void PerformStreamOp(grpc_binder_stream* gbs,
                        grpc_transport_stream_op_batch* op) {
-    grpc_transport_perform_stream_op(transport_,
-                                     reinterpret_cast<grpc_stream*>(gbs), op);
+    grpc_transport_destroy_stream(transport_,
+                                  reinterpret_cast<grpc_stream*>(gbs), op);
   }
 
   grpc_binder_transport* GetBinderTransport() {

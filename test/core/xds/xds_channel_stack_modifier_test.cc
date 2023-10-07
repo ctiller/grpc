@@ -94,7 +94,7 @@ TEST(XdsChannelStackModifierTest, XdsHttpFiltersInsertion) {
                                   ChannelArgs::FromC(args));
   grpc_channel_args_destroy(args);
   grpc_transport_vtable fake_transport_vtable;
-  memset(&fake_transport_vtable, 0, sizeof(grpc_transport_vtable));
+  memset(&fake_transport_vtable, 0, sizeof(fake_transport_vtable));
   fake_transport_vtable.name = "fake";
   Transport fake_transport = {&fake_transport_vtable};
   builder.SetTransport(&fake_transport);

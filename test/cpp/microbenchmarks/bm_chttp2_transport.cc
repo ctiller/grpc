@@ -229,8 +229,8 @@ class Stream {
   }
 
   void Op(grpc_transport_stream_op_batch* op) {
-    grpc_transport_perform_stream_op(f_->transport(),
-                                     static_cast<grpc_stream*>(stream_), op);
+    grpc_transport_destroy_stream(f_->transport(),
+                                  static_cast<grpc_stream*>(stream_), op);
   }
 
   grpc_chttp2_stream* chttp2_stream() {
