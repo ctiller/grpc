@@ -22,6 +22,7 @@
 #include <stddef.h>
 
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <string>
 #include <utility>
@@ -403,11 +404,12 @@ class DataSendContext {
   }
 
   uint32_t max_outgoing() const {
-    return static_cast<uint32_t>(std::min(
-        t_->settings[GRPC_PEER_SETTINGS][GRPC_CHTTP2_SETTINGS_MAX_FRAME_SIZE],
-        static_cast<uint32_t>(
-            std::min(static_cast<int64_t>(stream_remote_window()),
-                     t_->flow_control.remote_window()))));
+    return grpc_core::Clamp<int64_t>(
+        std::min<int64_t>({t_->settings[GRPC_PEER_SETTINGS]
+                                       [GRPC_CHTTP2_SETTINGS_MAX_FRAME_SIZE],
+                           stream_remote_window(),
+                           t_->flow_control.remote_window()}),
+        0, std::numeric_limits<uint32_t>::max());
   }
 
   bool AnyOutgoing() const { return max_outgoing() > 0; }
