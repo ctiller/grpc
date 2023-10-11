@@ -2469,7 +2469,10 @@ grpc_cc_library(
         "lib/transport/bdp_estimator.cc",
     ],
     hdrs = ["lib/transport/bdp_estimator.h"],
-    external_deps = ["absl/strings"],
+    external_deps = [
+        "absl/strings",
+        "absl/types:optional",
+    ],
     deps = [
         "time",
         "//:gpr",
