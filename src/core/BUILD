@@ -423,7 +423,6 @@ grpc_cc_library(
     public_hdrs = [
         "lib/promise/status_flag.h",
     ],
-    deps = ["promise_status"],
 )
 
 grpc_cc_library(

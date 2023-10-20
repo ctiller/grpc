@@ -15,8 +15,6 @@
 #ifndef GRPC_SRC_CORE_LIB_PROMISE_STATUS_FLAG_H
 #define GRPC_SRC_CORE_LIB_PROMISE_STATUS_FLAG_H
 
-#include "src/core/lib/promise/detail/status.h"
-
 namespace grpc_core {
 
 // A simple flag that looks a little like a status object - enough so that
@@ -35,4 +33,4 @@ inline bool IsStatusOk(StatusFlag flag) { return flag.ok(); }
 
 }  // namespace grpc_core
 
-#endif
+#endif  // GRPC_SRC_CORE_LIB_PROMISE_STATUS_FLAG_H
