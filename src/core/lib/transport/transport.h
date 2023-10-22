@@ -507,71 +507,60 @@ struct grpc_transport_stream_op_batch_payload {
   grpc_call_context_element* context;
 };
 
-/// Transport op: a set of operations to perform on a transport as a whole
-typedef struct grpc_transport_op {
-  /// Called when processing of this op is done.
-  grpc_closure* on_consumed = nullptr;
+namespace grpc_core {
+
+struct StartConnectivityWatch {
   /// connectivity monitoring - set connectivity_state to NULL to unsubscribe
   grpc_core::OrphanablePtr<grpc_core::ConnectivityStateWatcherInterface>
-      start_connectivity_watch;
-  grpc_core::ConnectivityStateWatcherInterface* stop_connectivity_watch =
-      nullptr;
-  /// should the transport be disconnected
-  /// Error contract: the transport that gets this op must cause
-  ///                disconnect_with_error to be unref'ed after processing it
-  grpc_error_handle disconnect_with_error;
-  /// what should the goaway contain?
-  /// Error contract: the transport that gets this op must cause
-  ///                goaway_error to be unref'ed after processing it
-  grpc_error_handle goaway_error;
-  void (*set_accept_stream_fn)(void* user_data, grpc_core::Transport* transport,
-                               const void* server_data) = nullptr;
-  void (*set_registered_method_matcher_fn)(
-      void* user_data, grpc_core::ServerMetadata* metadata) = nullptr;
-  void* set_accept_stream_user_data = nullptr;
-  void (*set_make_promise_fn)(void* user_data, grpc_core::Transport* transport,
-                              const void* server_data) = nullptr;
-  void* set_make_promise_user_data = nullptr;
-  /// add this transport to a pollset
-  grpc_pollset* bind_pollset = nullptr;
-  /// add this transport to a pollset_set
-  grpc_pollset_set* bind_pollset_set = nullptr;
-  /// send a ping, if either on_initiate or on_ack is not NULL
-  struct {
-    /// Ping may be delayed by the transport, on_initiate callback will be
-    /// called when the ping is actually being sent.
-    grpc_closure* on_initiate = nullptr;
-    /// Called when the ping ack is received
-    grpc_closure* on_ack = nullptr;
-  } send_ping;
-  grpc_connectivity_state start_connectivity_watch_state = GRPC_CHANNEL_IDLE;
-  // If true, will reset the channel's connection backoff.
-  bool reset_connect_backoff = false;
+      watcher;
+  grpc_connectivity_state from = GRPC_CHANNEL_IDLE;
+};
 
-  /// set the callback for accepting new streams;
-  /// this is a permanent callback, unlike the other one-shot closures.
-  /// If true, the callback is set to set_accept_stream_fn, with its
-  /// user_data argument set to set_accept_stream_user_data.
-  /// `set_registered_method_matcher_fn` is also set with its user_data argument
-  /// set to set_accept_stream_user_data. The transport should invoke
-  /// `set_registered_method_matcher_fn` after initial metadata is received but
-  /// before recv_initial_metadata_ready callback is invoked. If the transport
-  /// detects an error in the stream, invoking
-  /// `set_registered_method_matcher_fn` can be skipped.
-  bool set_accept_stream = false;
+struct StopConnectivityWatch {
+  grpc_core::ConnectivityStateWatcherInterface* watcher;
+};
 
-  /// set the callback for accepting new streams based upon promises;
-  /// this is a permanent callback, unlike the other one-shot closures.
-  /// If true, the callback is set to set_make_promise_fn, with its
-  /// user_data argument set to set_make_promise_data
-  bool set_make_promise = false;
+struct DisconnectWithError {
+  absl::Status error;
+};
 
-  //**************************************************************************
-  // remaining fields are initialized and used at the discretion of the
-  // transport implementation
+struct Goaway {
+  absl::Status error;
+};
 
-  grpc_handler_private_op_data handler_private;
-} grpc_transport_op;
+struct SetReadCallbacks {
+  absl::AnyInvocable<void(grpc_core::Transport*, const void*) const>
+      accept_stream;
+  absl::AnyInvocable<void(grpc_core::ServerMetadata) const>
+      registered_method_matcher;
+};
+
+struct BindPollset {
+  grpc_pollset* bind_pollset;
+};
+
+struct BindPollsetSet {
+  grpc_pollset_set* bind_pollset_set;
+};
+
+struct SendPing {
+  absl::AnyInvocable<void()> on_initiate;
+  absl::AnyInvocable<void()> on_ack;
+};
+
+struct ResetConnectionBackoff {};
+
+struct TransportOp {
+  absl::variant<StartConnectivityWatch, StopConnectivityWatch,
+                DisconnectWithError, Goaway, SetReadCallbacks, BindPollset,
+                BindPollsetSet, SendPing, ResetConnectionBackoff>
+      op;
+  absl::AnyInvocable<void()> on_consumed;
+
+  std::string ToString() const;
+};
+
+}  // namespace grpc_core
 
 void grpc_transport_stream_op_batch_finish_with_failure(
     grpc_transport_stream_op_batch* batch, grpc_error_handle error,
@@ -586,7 +575,6 @@ void grpc_transport_stream_op_batch_finish_with_failure_from_transport(
 
 std::string grpc_transport_stream_op_batch_string(
     grpc_transport_stream_op_batch* op, bool truncate);
-std::string grpc_transport_op_string(grpc_transport_op* op);
 
 namespace grpc_core {
 
@@ -675,7 +663,7 @@ class Transport : public Orphanable {
                         grpc_polling_entity* pollset_or_pollset_set);
 
   // implementation of grpc_transport_perform_op
-  virtual void PerformOp(grpc_transport_op* op) = 0;
+  virtual void PerformOp(TransportOp op) = 0;
 
   // implementation of grpc_transport_get_endpoint
   virtual grpc_endpoint* GetEndpoint() = 0;
@@ -683,9 +671,6 @@ class Transport : public Orphanable {
 
 }  // namespace grpc_core
 
-// Allocate a grpc_transport_op, and preconfigure the on_complete closure to
-// \a on_complete and then delete the returned transport op
-grpc_transport_op* grpc_make_transport_op(grpc_closure* on_complete);
 // Allocate a grpc_transport_stream_op_batch, and preconfigure the on_complete
 // closure
 // to \a on_complete and then delete the returned transport op

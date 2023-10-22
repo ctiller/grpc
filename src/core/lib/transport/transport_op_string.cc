@@ -28,6 +28,7 @@
 
 #include "src/core/lib/channel/channel_fwd.h"
 #include "src/core/lib/channel/channel_stack.h"
+#include "src/core/lib/gprpp/match.h"
 #include "src/core/lib/gprpp/orphanable.h"
 #include "src/core/lib/gprpp/status_helper.h"
 #include "src/core/lib/slice/slice_buffer.h"
@@ -102,51 +103,34 @@ std::string grpc_transport_stream_op_batch_string(
   return out;
 }
 
-std::string grpc_transport_op_string(grpc_transport_op* op) {
-  std::string out;
+namespace grpc_core {
 
-  if (op->start_connectivity_watch != nullptr) {
-    absl::StrAppendFormat(
-        &out, " START_CONNECTIVITY_WATCH:watcher=%p:from=%s",
-        op->start_connectivity_watch.get(),
-        grpc_core::ConnectivityStateName(op->start_connectivity_watch_state));
-  }
-
-  if (op->stop_connectivity_watch != nullptr) {
-    absl::StrAppendFormat(&out, " STOP_CONNECTIVITY_WATCH:watcher=%p",
-                          op->stop_connectivity_watch);
-  }
-
-  if (!op->disconnect_with_error.ok()) {
-    absl::StrAppend(&out, " DISCONNECT:",
-                    grpc_core::StatusToString(op->disconnect_with_error));
-  }
-
-  if (!op->goaway_error.ok()) {
-    absl::StrAppend(
-        &out, " SEND_GOAWAY:", grpc_core::StatusToString(op->goaway_error));
-  }
-
-  if (op->set_accept_stream) {
-    absl::StrAppendFormat(&out, " SET_ACCEPT_STREAM:%p(%p,...)",
-                          op->set_accept_stream_fn,
-                          op->set_accept_stream_user_data);
-  }
-
-  if (op->bind_pollset != nullptr) {
-    absl::StrAppend(&out, " BIND_POLLSET");
-  }
-
-  if (op->bind_pollset_set != nullptr) {
-    absl::StrAppend(&out, " BIND_POLLSET_SET");
-  }
-
-  if (op->send_ping.on_initiate != nullptr || op->send_ping.on_ack != nullptr) {
-    absl::StrAppend(&out, " SEND_PING");
-  }
-
-  return out;
+std::string TransportOp::ToString() const {
+  return Match(
+      op,
+      [](const StartConnectivityWatch& op) {
+        return absl::StrFormat("StartConnectivityWatch:watcher=%p,from=%s",
+                               op.watcher.get(),
+                               ConnectivityStateName(op.from));
+      },
+      [](const StopConnectivityWatch& op) {
+        return absl::StrFormat("StopConnectivityWatch:watcher=%p", op.watcher);
+      },
+      [](const DisconnectWithError& op) {
+        return absl::StrCat("Disconnect:", op.error.ToString());
+      },
+      [](const Goaway& op) {
+        return absl::StrCat("Goaway:", op.error.ToString());
+      },
+      [](const SetReadCallbacks& op) {
+        return absl::StrCat("SetReadCallbacks");
+      },
+      [](const BindPollset&) { return "BindPollset"; },
+      [](const BindPollsetSet&) { return "BindPollsetSet"; },
+      [](const SendPing&) { return "SendPing"; });
 }
+
+}  // namespace grpc_core
 
 void grpc_call_log_op(const char* file, int line, gpr_log_severity severity,
                       grpc_call_element* elem,

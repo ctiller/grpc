@@ -181,57 +181,6 @@ void grpc_transport_stream_op_batch_finish_with_failure_from_transport(
   }
 }
 
-struct made_transport_op {
-  grpc_closure outer_on_complete;
-  grpc_closure* inner_on_complete = nullptr;
-  grpc_transport_op op;
-  made_transport_op() {
-    memset(&outer_on_complete, 0, sizeof(outer_on_complete));
-  }
-};
-
-static void destroy_made_transport_op(void* arg, grpc_error_handle error) {
-  made_transport_op* op = static_cast<made_transport_op*>(arg);
-  grpc_core::ExecCtx::Run(DEBUG_LOCATION, op->inner_on_complete, error);
-  delete op;
-}
-
-grpc_transport_op* grpc_make_transport_op(grpc_closure* on_complete) {
-  made_transport_op* op = new made_transport_op();
-  GRPC_CLOSURE_INIT(&op->outer_on_complete, destroy_made_transport_op, op,
-                    grpc_schedule_on_exec_ctx);
-  op->inner_on_complete = on_complete;
-  op->op.on_consumed = &op->outer_on_complete;
-  return &op->op;
-}
-
-struct made_transport_stream_op {
-  grpc_closure outer_on_complete;
-  grpc_closure* inner_on_complete = nullptr;
-  grpc_transport_stream_op_batch op;
-  grpc_transport_stream_op_batch_payload payload{nullptr};
-};
-static void destroy_made_transport_stream_op(void* arg,
-                                             grpc_error_handle error) {
-  made_transport_stream_op* op = static_cast<made_transport_stream_op*>(arg);
-  grpc_closure* c = op->inner_on_complete;
-  delete op;
-  if (c != nullptr) {
-    grpc_core::Closure::Run(DEBUG_LOCATION, c, error);
-  }
-}
-
-grpc_transport_stream_op_batch* grpc_make_transport_stream_op(
-    grpc_closure* on_complete) {
-  made_transport_stream_op* op = new made_transport_stream_op();
-  op->op.payload = &op->payload;
-  GRPC_CLOSURE_INIT(&op->outer_on_complete, destroy_made_transport_stream_op,
-                    op, grpc_schedule_on_exec_ctx);
-  op->inner_on_complete = on_complete;
-  op->op.on_complete = &op->outer_on_complete;
-  return &op->op;
-}
-
 namespace grpc_core {
 
 ServerMetadataHandle ServerMetadataFromStatus(const absl::Status& status,
