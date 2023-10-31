@@ -211,6 +211,8 @@ struct CallArgs {
   // This should be moved around and only destroyed when the transport is
   // satisfied that the metadata has passed any flow control measures it has.
   ClientInitialMetadataOutstandingToken client_initial_metadata_outstanding;
+  // Transport-specific argument passed to the server accept function.
+  void* server_accept_tag = nullptr;
   // Latch that will ultimately contain the polling entity for the call.
   // TODO(ctiller): remove once event engine lands
   Latch<grpc_polling_entity>* polling_entity;
@@ -524,14 +526,9 @@ typedef struct grpc_transport_op {
   /// Error contract: the transport that gets this op must cause
   ///                goaway_error to be unref'ed after processing it
   grpc_error_handle goaway_error;
-  void (*set_accept_stream_fn)(void* user_data, grpc_core::Transport* transport,
-                               const void* server_data) = nullptr;
-  void (*set_registered_method_matcher_fn)(
-      void* user_data, grpc_core::ServerMetadata* metadata) = nullptr;
-  void* set_accept_stream_user_data = nullptr;
-  void (*set_make_promise_fn)(void* user_data, grpc_core::Transport* transport,
-                              const void* server_data) = nullptr;
-  void* set_make_promise_user_data = nullptr;
+  absl::AnyInvocable<void(void* server_data) const> set_accept_stream_fn;
+  absl::AnyInvocable<void(grpc_core::ServerMetadata* metadata) const>
+      set_registered_method_matcher_fn;
   /// add this transport to a pollset
   grpc_pollset* bind_pollset = nullptr;
   /// add this transport to a pollset_set
@@ -631,25 +628,14 @@ class FilterStackTransport {
   ~FilterStackTransport() = default;
 };
 
-class ClientTransport {
+class PromiseTransport {
  public:
-  // Create a promise to execute one client call.
+  // Create a promise to execute one call.
   virtual ArenaPromise<ServerMetadataHandle> MakeCallPromise(
-      CallArgs call_args) = 0;
+      CallArgs call_args, NextPromiseFactory next_promise_factory) = 0;
 
  protected:
-  ~ClientTransport() = default;
-};
-
-class ServerTransport {
- public:
-  // Register the factory function for the filter stack part of a call
-  // promise.
-  void SetCallPromiseFactory(
-      absl::AnyInvocable<ArenaPromise<ServerMetadataHandle>(CallArgs) const>);
-
- protected:
-  ~ServerTransport() = default;
+  ~PromiseTransport() = default;
 };
 
 class Transport : public Orphanable {
@@ -658,8 +644,7 @@ class Transport : public Orphanable {
   static absl::string_view ChannelArgName() { return GRPC_ARG_TRANSPORT; }
 
   virtual FilterStackTransport* filter_stack_transport() = 0;
-  virtual ClientTransport* client_transport() = 0;
-  virtual ServerTransport* server_transport() = 0;
+  virtual PromiseTransport* promise_transport() = 0;
 
   // name of this transport implementation
   virtual absl::string_view GetTransportName() const = 0;

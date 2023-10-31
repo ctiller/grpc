@@ -258,8 +258,7 @@ struct grpc_chttp2_transport final
   grpc_core::FilterStackTransport* filter_stack_transport() override {
     return this;
   }
-  grpc_core::ClientTransport* client_transport() override { return nullptr; }
-  grpc_core::ServerTransport* server_transport() override { return nullptr; }
+  grpc_core::PromiseTransport* promise_transport() override { return nullptr; }
 
   absl::string_view GetTransportName() const override;
   void InitStream(grpc_stream* gs, grpc_stream_refcount* refcount,
@@ -333,13 +332,12 @@ struct grpc_chttp2_transport final
   grpc_chttp2_stream** accepting_stream = nullptr;
 
   // accept stream callback
-  void (*accept_stream_cb)(void* user_data, grpc_core::Transport* transport,
-                           const void* server_data);
+  absl::AnyInvocable<void(const void* server_data) const> accept_stream_cb(
+      const void* server_data);
   // registered_method_matcher_cb is called before invoking the recv initial
   // metadata callback.
-  void (*registered_method_matcher_cb)(
-      void* user_data, grpc_core::ServerMetadata* metadata) = nullptr;
-  void* accept_stream_cb_user_data;
+  absl::AnyInvocable<void(grpc_core::ServerMetadata* metadata) const>
+      registered_method_matcher_cb;
 
   /// connectivity tracking
   grpc_core::ConnectivityStateTracker state_tracker;

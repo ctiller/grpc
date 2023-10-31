@@ -266,10 +266,8 @@ class Server : public InternallyRefCounted<Server>,
    private:
     class ConnectivityWatcher;
 
-    static void AcceptStream(void* arg, Transport* /*transport*/,
-                             const void* transport_server_data);
-    static void SetRegisteredMethodOnMetadata(void* arg,
-                                              ServerMetadata* metadata);
+    void AcceptStream(const void* transport_server_data);
+    void SetRegisteredMethodOnMetadata(ServerMetadata* metadata);
 
     void Destroy() ABSL_EXCLUSIVE_LOCKS_REQUIRED(server_->mu_global_);
 

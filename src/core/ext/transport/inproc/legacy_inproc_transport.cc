@@ -124,8 +124,7 @@ struct inproc_transport final : public grpc_core::Transport,
     return this;
   }
 
-  grpc_core::ClientTransport* client_transport() override { return nullptr; }
-  grpc_core::ServerTransport* server_transport() override { return nullptr; }
+  grpc_core::PromiseTransport* promise_transport() override { return nullptr; }
 
   absl::string_view GetTransportName() const override;
   void InitStream(grpc_stream* gs, grpc_stream_refcount* refcount,
@@ -167,11 +166,9 @@ struct inproc_transport final : public grpc_core::Transport,
   gpr_refcount refs;
   bool is_client;
   grpc_core::ConnectivityStateTracker state_tracker;
-  void (*accept_stream_cb)(void* user_data, grpc_core::Transport* transport,
-                           const void* server_data);
-  void (*registered_method_matcher_cb)(
-      void* user_data, grpc_core::ServerMetadata* metadata) = nullptr;
-  void* accept_stream_data;
+  absl::AnyInvocable<void(void* server_data) const> accept_stream_cb;
+  absl::AnyInvocable<void(grpc_core::ServerMetadata* metadata) const>
+      registered_method_matcher_cb;
   bool is_closed = false;
   struct inproc_transport* other_side;
   struct inproc_stream* stream_list = nullptr;
@@ -202,9 +199,8 @@ struct inproc_stream {
       // Pass the client-side stream address to the server-side for a ref
       ref("inproc_init_stream:clt");  // ref it now on behalf of server
                                       // side to avoid destruction
-      INPROC_LOG(GPR_INFO, "calling accept stream cb %p %p",
-                 st->accept_stream_cb, st->accept_stream_data);
-      (*st->accept_stream_cb)(st->accept_stream_data, t, this);
+      INPROC_LOG(GPR_INFO, "calling accept stream cb");
+      st->accept_stream_cb(this);
     } else {
       // This is the server-side and is being called through accept_stream_cb
       inproc_stream* cs = const_cast<inproc_stream*>(
@@ -724,7 +720,6 @@ void op_state_machine_locked(inproc_stream* s, grpc_error_handle error) {
       s->to_read_initial_md_filled = false;
       if (s->t->registered_method_matcher_cb != nullptr) {
         s->t->registered_method_matcher_cb(
-            s->t->accept_stream_data,
             s->recv_initial_md_op->payload->recv_initial_metadata
                 .recv_initial_metadata);
       }
@@ -1150,9 +1145,9 @@ void inproc_transport::PerformOp(grpc_transport_op* op) {
     state_tracker.RemoveWatcher(op->stop_connectivity_watch);
   }
   if (op->set_accept_stream) {
-    accept_stream_cb = op->set_accept_stream_fn;
-    registered_method_matcher_cb = op->set_registered_method_matcher_fn;
-    accept_stream_data = op->set_accept_stream_user_data;
+    accept_stream_cb = std::move(op->set_accept_stream_fn);
+    registered_method_matcher_cb =
+        std::move(op->set_registered_method_matcher_fn);
   }
   if (op->on_consumed) {
     grpc_core::ExecCtx::Run(DEBUG_LOCATION, op->on_consumed, absl::OkStatus());

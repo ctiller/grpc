@@ -52,13 +52,13 @@
 #include "src/core/lib/promise/activity.h"
 #include "src/core/lib/promise/arena_promise.h"
 #include "src/core/lib/promise/for_each.h"
+#include "src/core/lib/promise/inter_activity_pipe.h"
 #include "src/core/lib/promise/map.h"
 #include "src/core/lib/promise/party.h"
 #include "src/core/lib/promise/pipe.h"
 #include "src/core/lib/promise/poll.h"
 #include "src/core/lib/promise/promise.h"
 #include "src/core/lib/promise/seq.h"
-#include "src/core/lib/promise/status_flag.h"
 #include "src/core/lib/promise/try_seq.h"
 #include "src/core/lib/surface/channel.h"
 #include "src/core/lib/surface/channel_stack_type.h"
@@ -85,15 +85,14 @@ class InprocClientTransport;
 class InprocServerTransport;
 
 class InprocClientTransport final : public InprocTransport,
-                                    public ClientTransport {
+                                    public PromiseTransport {
  public:
   explicit InprocClientTransport(RefCountedPtr<InprocServerTransport> server);
 
-  ClientTransport* client_transport() override { return this; }
-  ServerTransport* server_transport() override { return nullptr; }
+  PromiseTransport* promise_transport() override { return this; }
 
   ArenaPromise<ServerMetadataHandle> MakeCallPromise(
-      CallArgs call_args) override;
+      CallArgs call_args, NextPromiseFactory next_promise_factory) override;
 
   void Orphan() override { delete this; }
 
@@ -107,17 +106,19 @@ class InprocClientTransport final : public InprocTransport,
 
 class InprocServerTransport final
     : public InprocTransport,
-      public ServerTransport,
+      public PromiseTransport,
       public RefCounted<InprocServerTransport, NonPolymorphicRefCount> {
  public:
-  ClientTransport* client_transport() override { return nullptr; }
-  ServerTransport* server_transport() override { return this; }
+  PromiseTransport* promise_transport() override { return this; }
 
-  ArenaPromise<ServerMetadataHandle> MakeCallPromise(CallArgs client_call_args);
+  ArenaPromise<ServerMetadataHandle> MakeCallPromise(
+      CallArgs server_call_args,
+      NextPromiseFactory next_promise_factory) override;
+  ArenaPromise<ServerMetadataHandle> AcceptClientCall(
+      CallArgs client_call_args);
 
   void Orphan() override { Unref(); }
 
-  void SetAccept(AcceptFn accept) final;
   void PerformOp(grpc_transport_op* op) final;
 
  private:
@@ -127,13 +128,21 @@ class InprocServerTransport final
     kDisconnected
   };
 
+  struct AcceptingCall {
+    CallArgs client_call_args;
+    RefCountedPtr<Party> client_party;
+    ArenaPromise<ServerMetadataHandle> client_promise;
+  };
+
   void Disconnect(absl::Status disconnect_error);
 
   std::atomic<ConnectedState> connected_state_{
       ConnectedState::kWaitingForAcceptFn};
   Mutex state_set_mutex_;
-  AcceptFn accept_fn_;
   absl::Status disconnect_error_;
+  absl::AnyInvocable<void(void* server_data) const> accept_stream_fn_;
+  absl::AnyInvocable<void(grpc_core::ServerMetadata* metadata) const>
+      registered_method_matcher_fn_;
   /// connectivity tracking
   grpc_core::ConnectivityStateTracker state_tracker_
       ABSL_GUARDED_BY(state_set_mutex_){"inproc", GRPC_CHANNEL_READY};
@@ -144,6 +153,7 @@ InprocClientTransport::InprocClientTransport(
     : server_(server) {}
 
 void InprocClientTransport::PerformOp(grpc_transport_op* op) {
+  GPR_ASSERT(!op->set_accept_stream);
   server()->PerformOp(op);
 }
 
@@ -170,15 +180,15 @@ void InprocServerTransport::PerformOp(grpc_transport_op* op) {
     run(op->send_ping.on_initiate);
     run(op->send_ping.on_ack);
   }
-  GPR_ASSERT(op->set_accept_stream == false);
-}
-
-void InprocServerTransport::SetAccept(AcceptFn accept_fn) {
-  GPR_ASSERT(accept_fn != nullptr);
-  MutexLock lock(&state_set_mutex_);
-  if (!disconnect_error_.ok()) return;  // already disconnected
-  accept_fn_ = std::move(accept_fn);
-  connected_state_.store(ConnectedState::kReady);
+  if (op->set_accept_stream) {
+    GPR_ASSERT(op->set_accept_stream_fn != nullptr);
+    MutexLock lock(&state_set_mutex_);
+    if (!disconnect_error_.ok()) return;  // already disconnected
+    accept_stream_fn_ = std::move(op->set_accept_stream_fn);
+    registered_method_matcher_fn_ =
+        std::move(op->set_registered_method_matcher_fn);
+    connected_state_.store(ConnectedState::kReady, std::memory_order_release);
+  }
 }
 
 void InprocServerTransport::Disconnect(absl::Status disconnect_error) {
@@ -193,11 +203,11 @@ void InprocServerTransport::Disconnect(absl::Status disconnect_error) {
 }
 
 ArenaPromise<ServerMetadataHandle> InprocClientTransport::MakeCallPromise(
-    CallArgs call_args) {
-  return server()->MakeCallPromise(std::move(call_args));
+    CallArgs call_args, NextPromiseFactory) {
+  return server()->AcceptClientCall(std::move(call_args));
 }
 
-ArenaPromise<ServerMetadataHandle> InprocServerTransport::MakeCallPromise(
+ArenaPromise<ServerMetadataHandle> InprocServerTransport::AcceptClientCall(
     CallArgs client_call_args) {
   switch (connected_state_.load(std::memory_order_acquire)) {
     case ConnectedState::kWaitingForAcceptFn:
@@ -208,38 +218,50 @@ ArenaPromise<ServerMetadataHandle> InprocServerTransport::MakeCallPromise(
     case ConnectedState::kReady:
       break;
   }
-  absl::StatusOr<RefCountedPtr<CallPart>> server_call_status =
-      accept_fn_(*client_call_args.client_initial_metadata);
-  if (!server_call_status.ok()) {
-    return Immediate(ServerMetadataFromStatus(server_call_status.status()));
-  }
-  auto server_call = std::move(*server_call_status);
-  Party* client_party = static_cast<Party*>(Activity::current());
+  AcceptingCall c{
+      std::move(client_call_args),
+      static_cast<Party*>(Activity::current())->Ref(),
+  };
+  accept_stream_fn_(&c);
+  return std::move(c.client_promise);
+}
+
+ArenaPromise<ServerMetadataHandle> InprocServerTransport::MakeCallPromise(
+    CallArgs server_call_args, NextPromiseFactory next_promise_factory) {
+  AcceptingCall* c =
+      static_cast<AcceptingCall*>(server_call_args.server_accept_tag);
+  Party* const server_party = static_cast<Party*>(Activity::current());
+  const RefCountedPtr<Party> client_party = c->client_party;
+  server_call_args.client_initial_metadata =
+      std::move(c->client_call_args.client_initial_metadata);
+  InterActivityPipe<ServerMetadataHandle, 1> trailing_metadata;
+  InterActivityPipe<MessageHandle, 1> client_to_server_messages;
   client_party->Spawn(
       "client_to_server",
-      Seq(server_call->SpawnWaitableWithPromisor(
-              "push_client_initial_metadata",
-              [client_initial_metadata =
-                   std::move(client_call_args.client_initial_metadata)](
-                  CallPart::Promisor p) mutable {
-                return p.PushClientInitialMetadata(
-                    std::move(client_initial_metadata));
+      ForEach(std::move(*c->client_call_args.client_to_server_messages),
+              [client_to_server_message_sender =
+                   std::move(client_to_server_messages.sender)](
+                  MessageHandle message) mutable {
+                return client_to_server_message_sender.Push(std::move(message));
               }),
-          ForEach(std::move(*client_call_args.client_to_server_messages),
-                  [server_call](MessageHandle message) {
-                    return server_call->SpawnWaitableWithPromisor(
-                        "push_client_message",
-                        [message =
-                             std::move(message)](CallPart::Promisor p) mutable {
-                          return p.PushClientMessage(std::move(message));
-                        });
-                  }),
-          [server_call] {
-            return server_call->SpawnWaitableWithPromisor(
-                "push_client_close",
-                [](CallPart::Promisor p) { return p.PushClientClose(); });
-          }),
       [](Empty) {});
+  return Seq(next_promise_factory(std::move(server_call_args)),
+             [client_party,
+              trailing_metadata_sender = std::move(trailing_metadata.sender)](
+                 ServerMetadataHandle trailing_metadata) mutable {
+               ServerMetadataHandle for_client =
+                   client_party->arena()->MakePooled<ServerMetadata>();
+               *for_client = trailing_metadata->Copy();
+               return Map(trailing_metadata_sender.Push(std::move(for_client)),
+                          [trailing_metadata =
+                               std::move(trailing_metadata)](bool ok) mutable {
+                            if (ok) return std::move(trailing_metadata);
+                            auto error = ServerMetadataFromStatus(
+                                absl::CancelledError());
+                            error->Set(GrpcCallWasCancelled(), true);
+                            return error;
+                          });
+             });
   return Seq(
       TrySeq(
           server_call->SpawnWaitableWithPromisor(

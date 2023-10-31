@@ -1325,12 +1325,15 @@ void Server::ChannelData::InitTransport(RefCountedPtr<Server> server,
   // Start accept_stream transport op.
   grpc_transport_op* op = grpc_make_transport_op(nullptr);
   op->set_accept_stream = true;
-  op->set_accept_stream_fn = AcceptStream;
+  op->set_accept_stream_fn = [this](const void* server_data) {
+    AcceptStream(server_data);
+  };
   if (IsRegisteredMethodLookupInTransportEnabled()) {
-    op->set_registered_method_matcher_fn = SetRegisteredMethodOnMetadata;
+    op->set_registered_method_matcher_fn =
+        [this](grpc_core::ServerMetadata* metadata) {
+          return SetRegisteredMethodOnMetadata(metadata);
+        };
   }
-  // op->set_registered_method_matcher_fn = Registered
-  op->set_accept_stream_user_data = this;
   op->start_connectivity_watch = MakeOrphanable<ConnectivityWatcher>(this);
   if (server_->ShutdownCalled()) {
     op->disconnect_with_error = GRPC_ERROR_CREATE("Server shutdown");
@@ -1383,8 +1386,7 @@ Server::ChannelRegisteredMethod* Server::ChannelData::GetRegisteredMethod(
 }
 
 void Server::ChannelData::SetRegisteredMethodOnMetadata(
-    void* arg, ServerMetadata* metadata) {
-  auto* chand = static_cast<Server::ChannelData*>(arg);
+    ServerMetadata* metadata) {
   auto* authority = metadata->get_pointer(HttpAuthorityMetadata());
   if (authority == nullptr) {
     authority = metadata->get_pointer(HostMetadata());
@@ -1400,22 +1402,20 @@ void Server::ChannelData::SetRegisteredMethodOnMetadata(
   }
   ChannelRegisteredMethod* method;
   if (!IsRegisteredMethodsMapEnabled()) {
-    method = chand->GetRegisteredMethod(authority->c_slice(), path->c_slice());
+    method = GetRegisteredMethod(authority->c_slice(), path->c_slice());
   } else {
-    method = chand->GetRegisteredMethod(authority->as_string_view(),
-                                        path->as_string_view());
+    method = GetRegisteredMethod(authority->as_string_view(),
+                                 path->as_string_view());
   }
   // insert in metadata
   metadata->Set(GrpcRegisteredMethod(), method);
 }
 
-void Server::ChannelData::AcceptStream(void* arg, Transport* /*transport*/,
-                                       const void* transport_server_data) {
-  auto* chand = static_cast<Server::ChannelData*>(arg);
+void Server::ChannelData::AcceptStream(const void* transport_server_data) {
   // create a call
   grpc_call_create_args args;
-  args.channel = chand->channel_;
-  args.server = chand->server_.get();
+  args.channel = channel_;
+  args.server = server_.get();
   args.parent = nullptr;
   args.propagation_mask = 0;
   args.cq = nullptr;

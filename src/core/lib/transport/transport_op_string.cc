@@ -128,9 +128,9 @@ std::string grpc_transport_op_string(grpc_transport_op* op) {
   }
 
   if (op->set_accept_stream) {
-    absl::StrAppendFormat(&out, " SET_ACCEPT_STREAM:%p(%p,...)",
-                          op->set_accept_stream_fn,
-                          op->set_accept_stream_user_data);
+    absl::StrAppendFormat(
+        &out, " SET_ACCEPT_STREAM:%s",
+        op->set_accept_stream_fn == nullptr ? "function" : "nullptr");
   }
 
   if (op->bind_pollset != nullptr) {

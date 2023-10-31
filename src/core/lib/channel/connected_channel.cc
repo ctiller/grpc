@@ -618,6 +618,7 @@ ArenaPromise<ServerMetadataHandle> MakeServerCallPromise(
                auto call_promise = next_promise_factory(CallArgs{
                    std::move(client_initial_metadata),
                    ClientInitialMetadataOutstandingToken::Empty(),
+                   nullptr,
                    &call_data->polling_entity_latch,
                    &call_data->server_initial_metadata.sender,
                    &call_data->client_to_server.receiver,
@@ -882,8 +883,10 @@ grpc_channel_filter MakeConnectedFilter() {
 }
 
 ArenaPromise<ServerMetadataHandle> MakeTransportCallPromise(
-    Transport* transport, CallArgs call_args, NextPromiseFactory) {
-  return transport->client_transport()->MakeCallPromise(std::move(call_args));
+    Transport* transport, CallArgs call_args,
+    NextPromiseFactory next_promise_factory) {
+  return transport->promise_transport()->MakeCallPromise(
+      std::move(call_args), std::move(next_promise_factory));
 }
 
 const grpc_channel_filter kPromiseBasedTransportFilter =
@@ -907,7 +910,7 @@ const grpc_channel_filter kServerEmulatedFilter =
 
 bool TransportSupportsPromiseBasedCalls(const ChannelArgs& args) {
   auto* transport = args.GetObject<Transport>();
-  return transport->client_transport() != nullptr;
+  return transport->promise_transport() != nullptr;
 }
 
 }  // namespace
