@@ -346,7 +346,7 @@ class ExperimentsCompiler(object):
         ].AddRolloutSpecification(
             self._defaults, self._platforms_define, rollout_attributes
         )
-    
+
     def _FinalizeExperiments(self):
         queue = collections.OrderedDict()
         for name, exp in self._experiment_definitions.items():
@@ -387,7 +387,7 @@ class ExperimentsCompiler(object):
             )
 
     def GenerateExperimentsHdr(self, output_file, mode):
-        assert(self._FinalizeExperiments())
+        assert self._FinalizeExperiments()
         with open(output_file, "w") as H:
             PutCopyright(H, "//")
             PutBanner(
@@ -490,8 +490,14 @@ class ExperimentsCompiler(object):
             have_defaults.add(self._defaults[exp.default(platform)])
             print(
                 "const uint8_t required_experiments_%s[] = {%s};"
-                % (exp.name, ','.join(f"static_cast<uint8_t>(grpc_core::kExperimentId{SnakeToPascal(name)})" for name in exp._requires)),
-                file = file_desc,
+                % (
+                    exp.name,
+                    ",".join(
+                        f"static_cast<uint8_t>(grpc_core::kExperimentId{SnakeToPascal(name)})"
+                        for name in exp._requires
+                    ),
+                ),
+                file=file_desc,
             )
         if "kDefaultForDebugOnly" in have_defaults:
             print("#ifdef NDEBUG", file=file_desc)
@@ -534,7 +540,7 @@ class ExperimentsCompiler(object):
         print("}  // namespace grpc_core", file=file_desc)
 
     def GenerateExperimentsSrc(self, output_file, header_file_path, mode):
-        assert(self._FinalizeExperiments())
+        assert self._FinalizeExperiments()
         with open(output_file, "w") as C:
             PutCopyright(C, "//")
             PutBanner(
@@ -573,7 +579,7 @@ class ExperimentsCompiler(object):
         return defs
 
     def GenTest(self, output_file):
-        assert(self._FinalizeExperiments())
+        assert self._FinalizeExperiments()
         with open(output_file, "w") as C:
             PutCopyright(C, "//")
             PutBanner(
@@ -601,7 +607,7 @@ class ExperimentsCompiler(object):
             print(_EXPERIMENTS_TEST_SKELETON(defs, test_body), file=C)
 
     def GenExperimentsBzl(self, mode, output_file):
-        assert(self._FinalizeExperiments())
+        assert self._FinalizeExperiments()
         if self._bzl_list_for_defaults is None:
             return
 
