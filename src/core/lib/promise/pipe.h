@@ -458,6 +458,7 @@ template <typename T>
 class PipeSender {
  public:
   using PushType = pipe_detail::Push<T>;
+  using ValueType = T;
 
   PipeSender(const PipeSender&) = delete;
   PipeSender& operator=(const PipeSender&) = delete;
@@ -556,6 +557,8 @@ class Next {
 template <typename T>
 class PipeReceiver {
  public:
+  using ValueType = T;
+
   PipeReceiver(const PipeReceiver&) = delete;
   PipeReceiver& operator=(const PipeReceiver&) = delete;
   PipeReceiver(PipeReceiver&& other) noexcept = default;
