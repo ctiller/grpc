@@ -257,7 +257,7 @@ class CallSpine : public RefCounted<CallSpine> {
         party_(party),
         underlying_call_(underlying_call) {}
 
-  ~CallSpine() {
+  ~CallSpine() override {
     if (underlying_call_ != nullptr) {
       // HACK: server sets this when it wants us to own all the objects
       grpc_call_unref(underlying_call_);
