@@ -330,3 +330,11 @@ void grpc_channel_stack::InitClientCallSpine(
     elem->filter->init_call(elem, call);
   }
 }
+
+void grpc_channel_stack::InitServerCallSpine(
+    grpc_core::CallSpineInterface* call) {
+  for (size_t i = 0; i < count; i++) {
+    auto* elem = grpc_channel_stack_element(this, count - 1 - i);
+    elem->filter->init_call(elem, call);
+  }
+}
