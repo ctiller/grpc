@@ -25,11 +25,10 @@
 #include <memory>
 #include <utility>
 
-#include "channel_fwd.h"
-
 #include <grpc/support/log.h>
 
 #include "src/core/lib/channel/channel_args.h"
+#include "src/core/lib/channel/channel_fwd.h"
 #include "src/core/lib/channel/channel_stack_trace.h"
 #include "src/core/lib/gpr/alloc.h"
 #include "src/core/lib/surface/channel_init.h"
