@@ -3366,7 +3366,7 @@ void ServerPromiseBasedCall::Finish(ServerMetadataHandle result) {
   PropagateCancellationToChildren();
 }
 
-grpc_call_error ValidateServerBatch(const grpc_op* ops, size_t nops) const {
+grpc_call_error ValidateServerBatch(const grpc_op* ops, size_t nops) {
   BitSet<8> got_ops;
   for (size_t op_idx = 0; op_idx < nops; op_idx++) {
     const grpc_op& op = ops[op_idx];
