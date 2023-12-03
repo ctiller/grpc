@@ -3155,7 +3155,9 @@ class ServerPromiseBasedCall final : public PromiseBasedCall {
   void CancelWithError(grpc_error_handle) override;
   grpc_call_error StartBatch(const grpc_op* ops, size_t nops, void* notify_tag,
                              bool is_notify_tag_closure) override;
-  bool is_trailers_only() const override { abort(); }
+  bool is_trailers_only() const override {
+    Crash("is_trailers_only not implemented for server calls");
+  }
   absl::string_view GetServerAuthority() const override {
     const Slice* authority_metadata =
         client_initial_metadata_->get_pointer(HttpAuthorityMetadata());
@@ -3273,7 +3275,6 @@ class ServerPromiseBasedCall final : public PromiseBasedCall {
     std::atomic<uintptr_t> state_{kUnset};
   };
 
-  grpc_call_error ValidateBatch(const grpc_op* ops, size_t nops) const;
   void CommitBatch(const grpc_op* ops, size_t nops,
                    const Completion& completion);
   void Finish(ServerMetadataHandle result);
@@ -3365,8 +3366,7 @@ void ServerPromiseBasedCall::Finish(ServerMetadataHandle result) {
   PropagateCancellationToChildren();
 }
 
-grpc_call_error ServerPromiseBasedCall::ValidateBatch(const grpc_op* ops,
-                                                      size_t nops) const {
+grpc_call_error ValidateServerBatch(const grpc_op* ops, size_t nops) const {
   BitSet<8> got_ops;
   for (size_t op_idx = 0; op_idx < nops; op_idx++) {
     const grpc_op& op = ops[op_idx];
@@ -3526,7 +3526,7 @@ grpc_call_error ServerPromiseBasedCall::StartBatch(const grpc_op* ops,
     EndOpImmediately(cq(), notify_tag, is_notify_tag_closure);
     return GRPC_CALL_OK;
   }
-  const grpc_call_error validation_result = ValidateBatch(ops, nops);
+  const grpc_call_error validation_result = ValidateServerBatch(ops, nops);
   if (validation_result != GRPC_CALL_OK) {
     return validation_result;
   }
@@ -3591,6 +3591,64 @@ ServerCallContext::MakeTopOfServerCallPromise(
   Crash("Promise-based server call is not enabled");
 }
 #endif
+
+///////////////////////////////////////////////////////////////////////////////
+// CallSpine based Server Call
+
+class ServerCallSpine final : public CallSpineInterface,
+                              public PromiseBasedCall {
+ public:
+  // CallSpineInterface
+  Pipe<ClientMetadataHandle>& client_initial_metadata() override {
+    return client_initial_metadata_;
+  }
+  Pipe<ServerMetadataHandle>& server_initial_metadata() override {
+    return server_initial_metadata_;
+  }
+  Pipe<MessageHandle>& client_to_server_messages() override {
+    return client_to_server_messages_;
+  }
+  Pipe<MessageHandle>& server_to_client_messages() override {
+    return server_to_client_messages_;
+  }
+  Pipe<ServerMetadataHandle>& server_trailing_metadata() override {
+    return server_trailing_metadata_;
+  }
+  Latch<ServerMetadataHandle>& cancel_latch() override { return cancel_latch_; }
+  Party& party() override { return *this; }
+  void IncrementRefCount() override { InternalRef("CallSpine"); }
+  void Unref() override { InternalUnref("CallSpine"); }
+
+  // PromiseBasedCall
+  void OrphanCall() override {}
+  void CancelWithError(grpc_error_handle error) override {
+    SpawnInfallible("CancelWithError", [this, error = std::move(error)] {
+      cancel_latch_.Set(ServerMetadataFromStatus(error));
+    });
+  }
+  bool is_trailers_only() const override {
+    Crash("is_trailers_only not implemented for server calls");
+  }
+  absl::string_view GetServerAuthority() const override {
+    Crash("unimplemented");
+  }
+  grpc_call_error StartBatch(const grpc_op* ops, size_t nops, void* notify_tag,
+                             bool is_notify_tag_closure) override;
+
+ private:
+  // Initial metadata from client to server
+  Pipe<ClientMetadataHandle> client_initial_metadata_;
+  // Initial metadata from server to client
+  Pipe<ServerMetadataHandle> server_initial_metadata_;
+  // Messages travelling from the application to the transport.
+  Pipe<MessageHandle> client_to_server_messages_;
+  // Messages travelling from the transport to the application.
+  Pipe<MessageHandle> server_to_client_messages_;
+  // Trailing metadata from server to client
+  Pipe<ServerMetadataHandle> server_trailing_metadata_;
+  // Latch that can be set to terminate the call
+  Latch<ServerMetadataHandle> cancel_latch_;
+};
 
 }  // namespace grpc_core
 
