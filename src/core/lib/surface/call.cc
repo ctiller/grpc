@@ -1985,6 +1985,40 @@ class BasicPromiseBasedCall : public Call,
  public:
   using Call::arena;
 
+  ~BasicPromiseBasedCall() {
+    for (int i = 0; i < GRPC_CONTEXT_COUNT; i++) {
+      if (context_[i].destroy) {
+        context_[i].destroy(context_[i].value);
+      }
+    }
+  }
+
+  void ContextSet(grpc_context_index elem, void* value,
+                  void (*destroy)(void*)) {
+    if (context_[elem].destroy != nullptr) {
+      context_[elem].destroy(context_[elem].value);
+    }
+    context_[elem].value = value;
+    context_[elem].destroy = destroy;
+  }
+
+  void* ContextGet(grpc_context_index elem) const {
+    return context_[elem].value;
+  }
+
+  void UpdateDeadline(Timestamp deadline) ABSL_LOCKS_EXCLUDED(deadline_mu_);
+  void ResetDeadline() ABSL_LOCKS_EXCLUDED(deadline_mu_);
+  Timestamp deadline() {
+    MutexLock lock(&deadline_mu_);
+    return deadline_;
+  }
+
+  // Accept the stats from the context (call once we have proof the transport is
+  // done with them).
+  void AcceptTransportStatsFromContext() {
+    final_stats_ = *call_context_.call_stats();
+  }
+
  protected:
   class ScopedContext
       : public ScopedActivity,
@@ -2000,6 +2034,8 @@ class BasicPromiseBasedCall : public Call,
           promise_detail::Context<CallContext>(&call->call_context_),
           promise_detail::Context<CallFinalization>(&call->finalization_) {}
   };
+
+  grpc_call_context_element* context() { return context_; }
 
  private:
   CallFinalization finalization_;
@@ -2066,13 +2102,6 @@ class PromiseBasedCall : public BasicPromiseBasedCall {
   // for that functionality be invented)
   grpc_call_stack* call_stack() override { return nullptr; }
 
-  void UpdateDeadline(Timestamp deadline) ABSL_LOCKS_EXCLUDED(deadline_mu_);
-  void ResetDeadline() ABSL_LOCKS_EXCLUDED(deadline_mu_);
-  Timestamp deadline() {
-    MutexLock lock(&deadline_mu_);
-    return deadline_;
-  }
-
   // Implementation of EventEngine::Closure, called when deadline expires
   void Run() override;
 
@@ -2126,11 +2155,6 @@ class PromiseBasedCall : public BasicPromiseBasedCall {
 
   ~PromiseBasedCall() override {
     if (cq_) GRPC_CQ_INTERNAL_UNREF(cq_, "bind");
-    for (int i = 0; i < GRPC_CONTEXT_COUNT; i++) {
-      if (context_[i].destroy) {
-        context_[i].destroy(context_[i].value);
-      }
-    }
   }
 
   // Enumerates why a Completion is still pending
@@ -2199,15 +2223,6 @@ class PromiseBasedCall : public BasicPromiseBasedCall {
   // Mark the completion as infallible. Overrides FailCompletion to report
   // success always.
   void ForceCompletionSuccess(const Completion& completion);
-  // Accept the stats from the context (call once we have proof the transport is
-  // done with them).
-  // Right now this means that promise based calls do not record correct stats
-  // with census if they are cancelled.
-  // TODO(ctiller): this should be remedied before promise  based calls are
-  // dexperimentalized.
-  void AcceptTransportStatsFromContext() {
-    final_stats_ = *call_context_.call_stats();
-  }
 
   grpc_completion_queue* cq() { return cq_; }
 
@@ -2408,7 +2423,7 @@ class PromiseBasedCall : public BasicPromiseBasedCall {
   // Waiter for when sends_queued_ becomes 0.
   IntraActivityWaiter waiting_for_queued_sends_;
   grpc_byte_buffer** recv_message_ = nullptr;
-  grpc_transport_stream_op_batch_payload batch_payload_{context_};
+  grpc_transport_stream_op_batch_payload batch_payload_{context()};
 };
 
 template <typename T>
@@ -2454,19 +2469,6 @@ void PromiseBasedCall::CToMetadata(grpc_metadata* metadata, size_t count,
                             .c_str());
               });
   }
-}
-
-void PromiseBasedCall::ContextSet(grpc_context_index elem, void* value,
-                                  void (*destroy)(void*)) {
-  if (context_[elem].destroy != nullptr) {
-    context_[elem].destroy(context_[elem].value);
-  }
-  context_[elem].value = value;
-  context_[elem].destroy = destroy;
-}
-
-void* PromiseBasedCall::ContextGet(grpc_context_index elem) const {
-  return context_[elem].value;
 }
 
 PromiseBasedCall::Completion PromiseBasedCall::StartCompletion(
@@ -3653,6 +3655,7 @@ class ServerCallSpine final : public CallSpineInterface,
  private:
   void CommitBatch(const grpc_op* ops, size_t nops, void* notify_tag,
                    bool is_notify_tag_closure);
+  StatusFlag FinishRecvMessage(NextResult<MessageHandle> result);
 
   // Initial metadata from client to server
   Pipe<ClientMetadataHandle> client_initial_metadata_;
@@ -3778,6 +3781,50 @@ class WaitForCqEndOp {
 };
 }  // namespace
 
+StatusFlag ServerCallSpine::FinishRecvMessage(
+    NextResult<MessageHandle> result) {
+  if (result.has_value()) {
+    MessageHandle& message = *result;
+    NoteLastMessageFlags(message->flags());
+    if ((message->flags() & GRPC_WRITE_INTERNAL_COMPRESS) &&
+        (incoming_compression_algorithm() != GRPC_COMPRESS_NONE)) {
+      *recv_message_ = grpc_raw_compressed_byte_buffer_create(
+          nullptr, 0, incoming_compression_algorithm());
+    } else {
+      *recv_message_ = grpc_raw_byte_buffer_create(nullptr, 0);
+    }
+    grpc_slice_buffer_move_into(message->payload()->c_slice_buffer(),
+                                &(*recv_message_)->data.raw.slice_buffer);
+    if (grpc_call_trace.enabled()) {
+      gpr_log(GPR_INFO,
+              "%s[call] RecvMessage: outstanding_recv "
+              "finishes: received %" PRIdPTR " byte message",
+              DebugTag().c_str(),
+              (*recv_message_)->data.raw.slice_buffer.length);
+    }
+    return Success{};
+  }
+  if (!read_messages_.is_set()) read_messages_.Set();
+  if (result.cancelled()) {
+    if (grpc_call_trace.enabled()) {
+      gpr_log(GPR_INFO,
+              "%s[call] RecvMessage: outstanding_recv "
+              "finishes: received end-of-stream with error",
+              DebugTag().c_str());
+    }
+    *recv_message_ = nullptr;
+    return Failure{};
+  }
+  if (grpc_call_trace.enabled()) {
+    gpr_log(GPR_INFO,
+            "%s[call] RecvMessage: outstanding_recv "
+            "finishes: received end-of-stream",
+            DebugTag().c_str());
+  }
+  *recv_message_ = nullptr;
+  return Success{};
+}
+
 void ServerCallSpine::CommitBatch(const grpc_op* ops, size_t nops,
                                   void* notify_tag,
                                   bool is_notify_tag_closure) {
@@ -3839,19 +3886,28 @@ void ServerCallSpine::CommitBatch(const grpc_op* ops, size_t nops,
       });
   auto recv_message =
       MaybeOp(ops, got_ops[GRPC_OP_RECV_MESSAGE], [this](const grpc_op& op) {
+        GPR_ASSERT(recv_message_ == nullptr);
         recv_message_ = op.data.recv_message.recv_message;
         return [this]() mutable {
           return Seq(read_initial_metadata_.Wait(),
                      Map(client_to_server_messages_.receiver.Next(),
                          [this](NextResult<MessageHandle> msg) {
-                           Crash("unimplemented");
+                           return FinishRecvMessage(std::move(msg));
                          }));
         };
       });
   auto primary_ops =
       TryJoin(std::move(send_initial_metadata), std::move(send_message),
-              std::move(send_trailing_metadata));
+              std::move(send_trailing_metadata), std::move(recv_message));
   if (got_ops[GRPC_OP_RECV_CLOSE_ON_SERVER] != 255) {
+    auto recv_trailing_metadata = MaybeOp(
+        ops, got_ops[GRPC_OP_RECV_CLOSE_ON_SERVER], [this](const grpc_op& op) {
+          return [this, cancelled = op.data.recv_close_on_server.cancelled]() {
+            return Seq(read_messages_.Wait(),
+                       Map(server_trailing_metadata_.receiver.Next(),
+                           [](NextResult<ServerMetadataHandle> result) {}));
+          };
+        });
     SpawnInfallible(
         "final-batch",
         Seq(std::move(primary_ops),

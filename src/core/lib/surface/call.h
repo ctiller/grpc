@@ -77,7 +77,7 @@ typedef struct grpc_call_create_args {
 } grpc_call_create_args;
 
 namespace grpc_core {
-class PromiseBasedCall;
+class BasicPromiseBasedCall;
 class ServerPromiseBasedCall;
 
 class ServerCallContext {
@@ -104,7 +104,7 @@ class ServerCallContext {
 // TODO(ctiller): move more call things into this type
 class CallContext {
  public:
-  explicit CallContext(PromiseBasedCall* call) : call_(call) {}
+  explicit CallContext(BasicPromiseBasedCall* call) : call_(call) {}
 
   // Update the deadline (if deadline < the current deadline).
   void UpdateDeadline(Timestamp deadline);
@@ -141,7 +141,7 @@ class CallContext {
   grpc_call_stats call_stats_;
   // TODO(ctiller): remove this once transport APIs are promise based and we
   // don't need refcounting here.
-  PromiseBasedCall* const call_;
+  BasicPromiseBasedCall* const call_;
   gpr_cycle_counter start_time_ = gpr_get_cycle_counter();
   // Is this call traced?
   bool traced_ = false;
