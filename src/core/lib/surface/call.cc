@@ -3701,7 +3701,13 @@ auto MaybeOp(const grpc_op* ops, uint8_t idx, SetupFn setup) {
   class Impl {
    public:
     Impl() : state_(Dismissed{}) {}
-    Impl(PromiseFactory factory) : state_(std::move(factory)) {}
+    explicit Impl(SetupResult result)
+        : state_(PromiseFactory(std::move(result))) {}
+
+    Impl(const Impl&) = delete;
+    Impl& operator=(const Impl&) = delete;
+    Impl(Impl&&) = default;
+    Impl& operator=(Impl&&) = default;
 
     Poll<StatusFlag> operator()() {
       if (absl::holds_alternative<Dismissed>(state_)) return Success{};
@@ -3877,7 +3883,7 @@ void ServerCallSpine::CommitBatch(const grpc_op* ops, size_t nops,
         }
         return [this, metadata = std::move(metadata)]() mutable {
           return Map(server_to_client_messages_.sender.Push(std::move(msg)),
-                     [](bool r) { return SuccessFlag(r); });
+                     [](bool r) { return StatusFlag(r); });
         };
       });
   auto recv_message =
