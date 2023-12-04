@@ -88,6 +88,7 @@
 #include "src/core/lib/promise/poll.h"
 #include "src/core/lib/promise/race.h"
 #include "src/core/lib/promise/seq.h"
+#include "src/core/lib/promise/status_flag.h"
 #include "src/core/lib/resource_quota/arena.h"
 #include "src/core/lib/slice/slice_buffer.h"
 #include "src/core/lib/slice/slice_internal.h"
@@ -1985,12 +1986,72 @@ class BasicPromiseBasedCall : public Call,
  public:
   using Call::arena;
 
+  BasicPromiseBasedCall(Arena* arena, uint32_t initial_external_refs,
+                        const grpc_call_create_args& args)
+      : Call(arena, args.server_transport_data == nullptr, args.send_deadline,
+             args.channel->Ref()),
+        Party(arena, initial_external_refs != 0 ? 1 : 0),
+        external_refs_(initial_external_refs),
+        cq_(args.cq) {
+    if (args.cq != nullptr) {
+      GRPC_CQ_INTERNAL_REF(args.cq, "bind");
+    }
+  }
+
   ~BasicPromiseBasedCall() {
+    if (cq_) GRPC_CQ_INTERNAL_UNREF(cq_, "bind");
     for (int i = 0; i < GRPC_CONTEXT_COUNT; i++) {
       if (context_[i].destroy) {
         context_[i].destroy(context_[i].value);
       }
     }
+  }
+
+  // Implementation of EventEngine::Closure, called when deadline expires
+  void Run() final;
+
+  virtual void OrphanCall() = 0;
+
+  virtual ServerCallContext* server_call_context() { return nullptr; }
+  void SetCompletionQueue(grpc_completion_queue* cq) final {
+    cq_ = cq;
+    GRPC_CQ_INTERNAL_REF(cq, "bind");
+  }
+
+  // Implementation of call refcounting: move this to DualRefCounted once we
+  // don't need to maintain FilterStackCall compatibility
+  void ExternalRef() final {
+    if (external_refs_.fetch_add(1, std::memory_order_relaxed) == 0) {
+      InternalRef("external");
+    }
+  }
+  void ExternalUnref() final {
+    if (external_refs_.fetch_sub(1, std::memory_order_acq_rel) == 1) {
+      OrphanCall();
+      InternalUnref("external");
+    }
+  }
+  void InternalRef(const char* reason) final {
+    if (grpc_call_refcount_trace.enabled()) {
+      gpr_log(GPR_DEBUG, "INTERNAL_REF:%p:%s", this, reason);
+    }
+    Party::IncrementRefCount();
+  }
+  void InternalUnref(const char* reason) final {
+    if (grpc_call_refcount_trace.enabled()) {
+      gpr_log(GPR_DEBUG, "INTERNAL_UNREF:%p:%s", this, reason);
+    }
+    Party::Unref();
+  }
+
+  void RunInContext(absl::AnyInvocable<void()> fn) {
+    Spawn(
+        "run_in_context",
+        [fn = std::move(fn)]() mutable {
+          fn();
+          return Empty{};
+        },
+        [](Empty) {});
   }
 
   void ContextSet(grpc_context_index elem, void* value,
@@ -2037,9 +2098,43 @@ class BasicPromiseBasedCall : public Call,
 
   grpc_call_context_element* context() { return context_; }
 
+  grpc_completion_queue* cq() { return cq_; }
+
+  // At the end of the call run any finalization actions.
+  void SetFinalizationStatus(grpc_status_code status, Slice status_details) {
+    final_message_ = std::move(status_details);
+    final_status_ = status;
+  }
+
  private:
+  void PartyOver() final {
+    {
+      ScopedContext ctx(this);
+      std::string message;
+      grpc_call_final_info final_info;
+      final_info.stats = final_stats_;
+      final_info.final_status = final_status_;
+      // TODO(ctiller): change type here so we don't need to copy this string.
+      final_info.error_string = nullptr;
+      if (!final_message_.empty()) {
+        message = std::string(final_message_.begin(), final_message_.end());
+        final_info.error_string = message.c_str();
+      }
+      final_info.stats.latency =
+          gpr_cycle_counter_sub(gpr_get_cycle_counter(), start_time());
+      finalization_.Run(&final_info);
+      CancelRemainingParticipants();
+      arena()->DestroyManagedNewObjects();
+    }
+    DeleteThis();
+  }
+
+  // Double refcounted for now: party owns the internal refcount, we track the
+  // external refcount. Figure out a better scheme post-promise conversion.
+  std::atomic<size_t> external_refs_;
   CallFinalization finalization_;
   CallContext call_context_{this};
+  // Contexts for various subsystems (security, tracing, ...).
   grpc_call_context_element context_[GRPC_CONTEXT_COUNT] = {};
   grpc_call_stats final_stats_{};
   // Current deadline.
@@ -2047,65 +2142,56 @@ class BasicPromiseBasedCall : public Call,
   Timestamp deadline_ ABSL_GUARDED_BY(deadline_mu_) = Timestamp::InfFuture();
   grpc_event_engine::experimental::EventEngine::TaskHandle ABSL_GUARDED_BY(
       deadline_mu_) deadline_task_;
+  Slice final_message_;
+  grpc_status_code final_status_ = GRPC_STATUS_UNKNOWN;
+  grpc_completion_queue* cq_;
 };
+
+void BasicPromiseBasedCall::UpdateDeadline(Timestamp deadline) {
+  MutexLock lock(&deadline_mu_);
+  if (grpc_call_trace.enabled()) {
+    gpr_log(GPR_DEBUG, "%s[call] UpdateDeadline from=%s to=%s",
+            DebugTag().c_str(), deadline_.ToString().c_str(),
+            deadline.ToString().c_str());
+  }
+  if (deadline >= deadline_) return;
+  auto* const event_engine = channel()->event_engine();
+  if (deadline_ != Timestamp::InfFuture()) {
+    if (!event_engine->Cancel(deadline_task_)) return;
+  } else {
+    InternalRef("deadline");
+  }
+  deadline_ = deadline;
+  deadline_task_ = event_engine->RunAfter(deadline - Timestamp::Now(), this);
+}
+
+void BasicPromiseBasedCall::ResetDeadline() {
+  MutexLock lock(&deadline_mu_);
+  if (deadline_ == Timestamp::InfFuture()) return;
+  auto* const event_engine = channel()->event_engine();
+  if (!event_engine->Cancel(deadline_task_)) return;
+  deadline_ = Timestamp::InfFuture();
+  InternalUnref("deadline");
+}
+
+void BasicPromiseBasedCall::Run() {
+  ApplicationCallbackExecCtx callback_exec_ctx;
+  ExecCtx exec_ctx;
+  CancelWithError(absl::DeadlineExceededError("Deadline exceeded"));
+  InternalUnref("deadline");
+}
 
 class PromiseBasedCall : public BasicPromiseBasedCall {
  public:
   PromiseBasedCall(Arena* arena, uint32_t initial_external_refs,
                    const grpc_call_create_args& args);
 
-  void ContextSet(grpc_context_index elem, void* value,
-                  void (*destroy)(void* value)) override;
-  void* ContextGet(grpc_context_index elem) const override;
-  void SetCompletionQueue(grpc_completion_queue* cq) override;
   bool Completed() final { return finished_.IsSet(); }
-
-  virtual void OrphanCall() = 0;
-
-  // Implementation of call refcounting: move this to DualRefCounted once we
-  // don't need to maintain FilterStackCall compatibility
-  void ExternalRef() final {
-    if (external_refs_.fetch_add(1, std::memory_order_relaxed) == 0) {
-      InternalRef("external");
-    }
-  }
-  void ExternalUnref() final {
-    if (external_refs_.fetch_sub(1, std::memory_order_acq_rel) == 1) {
-      OrphanCall();
-      InternalUnref("external");
-    }
-  }
-  void InternalRef(const char* reason) final {
-    if (grpc_call_refcount_trace.enabled()) {
-      gpr_log(GPR_DEBUG, "INTERNAL_REF:%p:%s", this, reason);
-    }
-    Party::IncrementRefCount();
-  }
-  void InternalUnref(const char* reason) final {
-    if (grpc_call_refcount_trace.enabled()) {
-      gpr_log(GPR_DEBUG, "INTERNAL_UNREF:%p:%s", this, reason);
-    }
-    Party::Unref();
-  }
-
-  void RunInContext(absl::AnyInvocable<void()> fn) {
-    Spawn(
-        "run_in_context",
-        [fn = std::move(fn)]() mutable {
-          fn();
-          return Empty{};
-        },
-        [](Empty) {});
-  }
 
   // This should return nullptr for the promise stack (and alternative means
   // for that functionality be invented)
   grpc_call_stack* call_stack() override { return nullptr; }
 
-  // Implementation of EventEngine::Closure, called when deadline expires
-  void Run() override;
-
-  virtual ServerCallContext* server_call_context() { return nullptr; }
   bool failed_before_recv_message() const final {
     return failed_before_recv_message_.load(std::memory_order_relaxed);
   }
@@ -2152,10 +2238,6 @@ class PromiseBasedCall : public BasicPromiseBasedCall {
     enum : uint8_t { kNullIndex = 0xff };
     uint8_t index_;
   };
-
-  ~PromiseBasedCall() override {
-    if (cq_) GRPC_CQ_INTERNAL_UNREF(cq_, "bind");
-  }
 
   // Enumerates why a Completion is still pending
   enum class PendingOp {
@@ -2223,17 +2305,6 @@ class PromiseBasedCall : public BasicPromiseBasedCall {
   // Mark the completion as infallible. Overrides FailCompletion to report
   // success always.
   void ForceCompletionSuccess(const Completion& completion);
-
-  grpc_completion_queue* cq() { return cq_; }
-
-  void CToMetadata(grpc_metadata* metadata, size_t count,
-                   grpc_metadata_batch* batch);
-
-  // At the end of the call run any finalization actions.
-  void SetFinalizationStatus(grpc_status_code status, Slice status_details) {
-    final_message_ = std::move(status_details);
-    final_status_ = status;
-  }
 
   std::string PresentAndCompletionText(const char* caption, bool has,
                                        const Completion& completion) const {
@@ -2384,36 +2455,7 @@ class PromiseBasedCall : public BasicPromiseBasedCall {
     grpc_cq_completion completion;
   };
 
-  void PartyOver() override {
-    {
-      ScopedContext ctx(this);
-      std::string message;
-      grpc_call_final_info final_info;
-      final_info.stats = final_stats_;
-      final_info.final_status = final_status_;
-      // TODO(ctiller): change type here so we don't need to copy this string.
-      final_info.error_string = nullptr;
-      if (!final_message_.empty()) {
-        message = std::string(final_message_.begin(), final_message_.end());
-        final_info.error_string = message.c_str();
-      }
-      final_info.stats.latency =
-          gpr_cycle_counter_sub(gpr_get_cycle_counter(), start_time());
-      finalization_.Run(&final_info);
-      CancelRemainingParticipants();
-      arena()->DestroyManagedNewObjects();
-    }
-    DeleteThis();
-  }
-
-  // Double refcounted for now: party owns the internal refcount, we track the
-  // external refcount. Figure out a better scheme post-promise conversion.
-  std::atomic<size_t> external_refs_;
-  // Contexts for various subsystems (security, tracing, ...).
-  grpc_completion_queue* cq_;
   CompletionInfo completion_info_[6];
-  Slice final_message_;
-  grpc_status_code final_status_ = GRPC_STATUS_UNKNOWN;
   ExternallyObservableLatch<void> finished_;
   // Non-zero with an outstanding GRPC_OP_SEND_INITIAL_METADATA or
   // GRPC_OP_SEND_MESSAGE (one count each), and 0 once those payloads have been
@@ -2443,18 +2485,10 @@ grpc_error_handle MakePromiseBasedCall(grpc_call_create_args* args,
 
 PromiseBasedCall::PromiseBasedCall(Arena* arena, uint32_t initial_external_refs,
                                    const grpc_call_create_args& args)
-    : Call(arena, args.server_transport_data == nullptr, args.send_deadline,
-           args.channel->Ref()),
-      Party(arena, initial_external_refs != 0 ? 1 : 0),
-      external_refs_(initial_external_refs),
-      cq_(args.cq) {
-  if (args.cq != nullptr) {
-    GRPC_CQ_INTERNAL_REF(args.cq, "bind");
-  }
-}
+    : BasicPromiseBasedCall(arena, initial_external_refs, args) {}
 
-void PromiseBasedCall::CToMetadata(grpc_metadata* metadata, size_t count,
-                                   grpc_metadata_batch* b) {
+static void CToMetadata(grpc_metadata* metadata, size_t count,
+                        grpc_metadata_batch* b) {
   for (size_t i = 0; i < count; i++) {
     grpc_metadata* md = &metadata[i];
     auto key = StringViewFromSlice(md->key);
@@ -2548,45 +2582,6 @@ void PromiseBasedCall::FinishOpOnCompletion(Completion* completion,
         },
         this, &completion_info_[i].completion);
   }
-}
-
-void PromiseBasedCall::SetCompletionQueue(grpc_completion_queue* cq) {
-  cq_ = cq;
-  GRPC_CQ_INTERNAL_REF(cq, "bind");
-}
-
-void PromiseBasedCall::UpdateDeadline(Timestamp deadline) {
-  MutexLock lock(&deadline_mu_);
-  if (grpc_call_trace.enabled()) {
-    gpr_log(GPR_DEBUG, "%s[call] UpdateDeadline from=%s to=%s",
-            DebugTag().c_str(), deadline_.ToString().c_str(),
-            deadline.ToString().c_str());
-  }
-  if (deadline >= deadline_) return;
-  auto* const event_engine = channel()->event_engine();
-  if (deadline_ != Timestamp::InfFuture()) {
-    if (!event_engine->Cancel(deadline_task_)) return;
-  } else {
-    InternalRef("deadline");
-  }
-  deadline_ = deadline;
-  deadline_task_ = event_engine->RunAfter(deadline - Timestamp::Now(), this);
-}
-
-void PromiseBasedCall::ResetDeadline() {
-  MutexLock lock(&deadline_mu_);
-  if (deadline_ == Timestamp::InfFuture()) return;
-  auto* const event_engine = channel()->event_engine();
-  if (!event_engine->Cancel(deadline_task_)) return;
-  deadline_ = Timestamp::InfFuture();
-  InternalUnref("deadline");
-}
-
-void PromiseBasedCall::Run() {
-  ApplicationCallbackExecCtx callback_exec_ctx;
-  ExecCtx exec_ctx;
-  CancelWithError(absl::DeadlineExceededError("Deadline exceeded"));
-  InternalUnref("deadline");
 }
 
 void PromiseBasedCall::StartSendMessage(const grpc_op& op,
@@ -3685,7 +3680,7 @@ grpc_call_error ServerCallSpine::StartBatch(const grpc_op* ops, size_t nops,
   if (validation_result != GRPC_CALL_OK) {
     return validation_result;
   }
-  CommitBatch(ops, nops, completion, notify_tag, is_notify_tag_closure);
+  CommitBatch(ops, nops, notify_tag, is_notify_tag_closure);
   return GRPC_CALL_OK;
 }
 
@@ -3712,8 +3707,8 @@ auto MaybeOp(const grpc_op* ops, uint8_t idx, SetupFn setup) {
       if (absl::holds_alternative<Dismissed>(state_)) return Success{};
       if (absl::holds_alternative<PromiseFactory>(state_)) {
         auto& factory = absl::get<PromiseFactory>(state_);
-        auto promise = factory();
-        state_ = std::move(promise);
+        auto promise = factory.Make();
+        state_.template emplace<Promise>(std::move(promise));
       }
       auto& promise = absl::get<Promise>(state_);
       return promise();
@@ -3746,7 +3741,7 @@ class WaitForCqEndOp {
       } else {
         auto not_started = std::move(*n);
         auto& started =
-            state_.emplace(Started{Activity::current()->MakeOwningWaker()});
+            state_.emplace<Started>(Activity::current()->MakeOwningWaker());
         grpc_cq_end_op(
             not_started.cq, not_started.tag, std::move(not_started.error),
             [](void* p, grpc_cq_completion*) {
@@ -3772,6 +3767,7 @@ class WaitForCqEndOp {
     grpc_completion_queue* cq;
   };
   struct Started {
+    explicit Started(Waker waker) : waker(std::move(waker)) {}
     Waker waker;
     grpc_cq_completion completion;
     std::atomic<bool> done{false};
@@ -3847,7 +3843,7 @@ void ServerCallSpine::CommitBatch(const grpc_op* ops, size_t nops,
           return Map(server_initial_metadata_.sender.Push(std::move(metadata)),
                      [this](bool r) {
                        server_initial_metadata_.sender.Close();
-                       return SuccessFlag(r);
+                       return StatusFlag(r);
                      });
         };
       });
@@ -3860,7 +3856,7 @@ void ServerCallSpine::CommitBatch(const grpc_op* ops, size_t nops,
         auto msg = arena()->MakePooled<Message>(std::move(send), op.flags);
         return [this, msg = std::move(msg)]() mutable {
           return Map(server_to_client_messages_.sender.Push(std::move(msg)),
-                     [](bool r) { return SuccessFlag(r); });
+                     [](bool r) { return StatusFlag(r); });
         };
       });
   auto send_trailing_metadata = MaybeOp(
