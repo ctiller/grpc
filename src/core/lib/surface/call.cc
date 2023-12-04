@@ -3702,7 +3702,7 @@ auto MaybeOp(const grpc_op* ops, uint8_t idx, SetupFn setup) {
   class Impl {
    public:
     Impl() : state_(Dismissed{}) {}
-    Impl(PromiseFactory factory) : state_(std::move(factory)) {}
+    explicit Impl(PromiseFactory factory) : state_(std::move(factory)) {}
 
     Poll<StatusFlag> operator()() {
       if (absl::holds_alternative<Dismissed>(state_)) return Success{};
@@ -3735,9 +3735,8 @@ class WaitForCqEndOp {
   Poll<Empty> operator()() {
     if (auto* n = absl::get_if<NotStarted>(&state_)) {
       if (n->is_closure) {
-        grpc_core::ExecCtx::Run(DEBUG_LOCATION,
-                                static_cast<grpc_closure*>(n->tag),
-                                std::move(n->error));
+        ExecCtx::Run(DEBUG_LOCATION, static_cast<grpc_closure*>(n->tag),
+                     std::move(n->error));
         return Empty{};
       } else {
         auto not_started = std::move(*n);
