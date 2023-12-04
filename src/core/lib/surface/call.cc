@@ -1985,7 +1985,7 @@ class BasicPromiseBasedCall : public Call,
  public:
   using Call::arena;
 
-  ~BasicPromiseBasedCall() {
+  ~BasicPromiseBasedCall() override {
     for (int i = 0; i < GRPC_CONTEXT_COUNT; i++) {
       if (context_[i].destroy) {
         context_[i].destroy(context_[i].value);
@@ -1994,7 +1994,7 @@ class BasicPromiseBasedCall : public Call,
   }
 
   void ContextSet(grpc_context_index elem, void* value,
-                  void (*destroy)(void*)) {
+                  void (*destroy)(void*)) override {
     if (context_[elem].destroy != nullptr) {
       context_[elem].destroy(context_[elem].value);
     }
@@ -2002,7 +2002,7 @@ class BasicPromiseBasedCall : public Call,
     context_[elem].destroy = destroy;
   }
 
-  void* ContextGet(grpc_context_index elem) const {
+  void* ContextGet(grpc_context_index elem) const override {
     return context_[elem].value;
   }
 
@@ -3706,7 +3706,7 @@ auto MaybeOp(const grpc_op* ops, uint8_t idx, SetupFn setup) {
   class Impl {
    public:
     Impl() : state_(Dismissed{}) {}
-    Impl(PromiseFactory factory) : state_(std::move(factory)) {}
+    explicit Impl(PromiseFactory factory) : state_(std::move(factory)) {}
 
     Poll<StatusFlag> operator()() {
       if (absl::holds_alternative<Dismissed>(state_)) return Success{};
@@ -3739,9 +3739,8 @@ class WaitForCqEndOp {
   Poll<Empty> operator()() {
     if (auto* n = absl::get_if<NotStarted>(&state_)) {
       if (n->is_closure) {
-        grpc_core::ExecCtx::Run(DEBUG_LOCATION,
-                                static_cast<grpc_closure*>(n->tag),
-                                std::move(n->error));
+        ExecCtx::Run(DEBUG_LOCATION, static_cast<grpc_closure*>(n->tag),
+                     std::move(n->error));
         return Empty{};
       } else {
         auto not_started = std::move(*n);
