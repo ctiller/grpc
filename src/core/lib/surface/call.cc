@@ -1998,7 +1998,7 @@ class BasicPromiseBasedCall : public Call,
     }
   }
 
-  ~BasicPromiseBasedCall() {
+  ~BasicPromiseBasedCall() override {
     if (cq_) GRPC_CQ_INTERNAL_UNREF(cq_, "bind");
     for (int i = 0; i < GRPC_CONTEXT_COUNT; i++) {
       if (context_[i].destroy) {
@@ -2055,7 +2055,7 @@ class BasicPromiseBasedCall : public Call,
   }
 
   void ContextSet(grpc_context_index elem, void* value,
-                  void (*destroy)(void*)) {
+                  void (*destroy)(void*)) override {
     if (context_[elem].destroy != nullptr) {
       context_[elem].destroy(context_[elem].value);
     }
@@ -2063,7 +2063,7 @@ class BasicPromiseBasedCall : public Call,
     context_[elem].destroy = destroy;
   }
 
-  void* ContextGet(grpc_context_index elem) const {
+  void* ContextGet(grpc_context_index elem) const override {
     return context_[elem].value;
   }
 
@@ -3701,7 +3701,7 @@ auto MaybeOp(const grpc_op* ops, uint8_t idx, SetupFn setup) {
   class Impl {
    public:
     Impl() : state_(Dismissed{}) {}
-    Impl(PromiseFactory factory) : state_(std::move(factory)) {}
+    explicit Impl(PromiseFactory factory) : state_(std::move(factory)) {}
 
     Poll<StatusFlag> operator()() {
       if (absl::holds_alternative<Dismissed>(state_)) return Success{};
@@ -3734,9 +3734,8 @@ class WaitForCqEndOp {
   Poll<Empty> operator()() {
     if (auto* n = absl::get_if<NotStarted>(&state_)) {
       if (n->is_closure) {
-        grpc_core::ExecCtx::Run(DEBUG_LOCATION,
-                                static_cast<grpc_closure*>(n->tag),
-                                std::move(n->error));
+        ExecCtx::Run(DEBUG_LOCATION, static_cast<grpc_closure*>(n->tag),
+                     std::move(n->error));
         return Empty{};
       } else {
         auto not_started = std::move(*n);
@@ -3898,7 +3897,7 @@ void ServerCallSpine::CommitBatch(const grpc_op* ops, size_t nops,
   if (got_ops[GRPC_OP_RECV_CLOSE_ON_SERVER] != 255) {
     auto recv_trailing_metadata = MaybeOp(
         ops, got_ops[GRPC_OP_RECV_CLOSE_ON_SERVER], [this](const grpc_op& op) {
-          return [this, cancelled = op.data.recv_close_on_server.cancelled]() {
+          return [this]() {
             return Seq(read_messages_.Wait(),
                        Map(server_trailing_metadata_.receiver.Next(),
                            [](NextResult<ServerMetadataHandle> result) {}));
