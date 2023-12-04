@@ -3668,6 +3668,7 @@ class ServerCallSpine final : public CallSpineInterface,
   Latch<ServerMetadataHandle> cancel_latch_;
   Latch<void> read_initial_metadata_;
   Latch<void> read_messages_;
+  grpc_byte_buffer** recv_message_ = nullptr;
 };
 
 grpc_call_error ServerCallSpine::StartBatch(const grpc_op* ops, size_t nops,
@@ -3836,6 +3837,17 @@ void ServerCallSpine::CommitBatch(const grpc_op* ops, size_t nops,
                      [](bool r) { return SuccessFlag(r); });
         };
       });
+  auto recv_message =
+      MaybeOp(ops, got_ops[GRPC_OP_RECV_MESSAGE], [this](const grpc_op& op) {
+        recv_message_ = op.data.recv_message.recv_message;
+        return [this]() mutable {
+          return Seq(read_initial_metadata_.Wait(),
+                     Map(client_to_server_messages_.receiver.Next(),
+                         [this](NextResult<MessageHandle> msg) {
+                           Crash("unimplemented");
+                         }));
+        };
+      });
   auto primary_ops =
       TryJoin(std::move(send_initial_metadata), std::move(send_message),
               std::move(send_trailing_metadata));
@@ -3845,7 +3857,7 @@ void ServerCallSpine::CommitBatch(const grpc_op* ops, size_t nops,
         Seq(std::move(primary_ops),
             [is_notify_tag_closure, notify_tag, this](StatusFlag r) {
               return WaitForCqEndOp(is_notify_tag_closure, notify_tag,
-                                    StatusCast<grpc_error_handle>(r), cq());
+                                    absl::OkStatus(), cq());
             }));
   } else {
     SpawnInfallible(
