@@ -1456,6 +1456,7 @@ grpc_cc_library(
         "//src/core:lib/surface/call_trace.h",
         "//src/core:lib/surface/channel.h",
         "//src/core:lib/surface/completion_queue.h",
+        "//src/core:lib/surface/wait_for_cq_end_op.h",
         "//src/core:lib/surface/completion_queue_factory.h",
         "//src/core:lib/surface/event_string.h",
         "//src/core:lib/surface/init.h",

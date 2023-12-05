@@ -99,6 +99,7 @@
 #include "src/core/lib/surface/completion_queue.h"
 #include "src/core/lib/surface/server.h"
 #include "src/core/lib/surface/validate_metadata.h"
+#include "src/core/lib/surface/wait_for_cq_end_op.h"
 #include "src/core/lib/transport/batch_builder.h"
 #include "src/core/lib/transport/error_utils.h"
 #include "src/core/lib/transport/metadata_batch.h"
@@ -3668,7 +3669,6 @@ class ServerCallSpine final : public CallSpineInterface,
   Pipe<ServerMetadataHandle> server_trailing_metadata_;
   // Latch that can be set to terminate the call
   Latch<ServerMetadataHandle> cancel_latch_;
-  Latch<void> read_initial_metadata_;
   Latch<void> read_messages_;
   grpc_byte_buffer** recv_message_ = nullptr;
 };
@@ -3734,66 +3734,6 @@ auto MaybeOp(const grpc_op* ops, uint8_t idx, SetupFn setup) {
     return Impl(setup(ops[idx]));
   }
 }
-
-class WaitForCqEndOp {
- public:
-  WaitForCqEndOp(bool is_closure, void* tag, grpc_error_handle error,
-                 grpc_completion_queue* cq)
-      : state_{NotStarted{is_closure, tag, std::move(error), cq}} {}
-
-  Poll<Empty> operator()() {
-    if (auto* n = absl::get_if<NotStarted>(&state_)) {
-      if (n->is_closure) {
-        grpc_core::ExecCtx::Run(DEBUG_LOCATION,
-                                static_cast<grpc_closure*>(n->tag),
-                                std::move(n->error));
-        return Empty{};
-      } else {
-        auto not_started = std::move(*n);
-        auto& started =
-            state_.emplace<Started>(Activity::current()->MakeOwningWaker());
-        grpc_cq_end_op(
-            not_started.cq, not_started.tag, std::move(not_started.error),
-            [](void* p, grpc_cq_completion*) {
-              auto started = static_cast<Started*>(p);
-              started->done.store(true, std::memory_order_release);
-            },
-            &started, &started.completion);
-      }
-    }
-    auto& started = absl::get<Started>(state_);
-    if (started.done.load(std::memory_order_acquire)) {
-      return Empty{};
-    } else {
-      return Pending{};
-    }
-  }
-
-  WaitForCqEndOp(const WaitForCqEndOp&) = delete;
-  WaitForCqEndOp& operator=(const WaitForCqEndOp&) = delete;
-  WaitForCqEndOp(WaitForCqEndOp&& other) noexcept
-      : state_(std::move(absl::get<NotStarted>(state_))) {}
-  WaitForCqEndOp& operator=(WaitForCqEndOp&& other) noexcept {
-    state_ = std::move(absl::get<NotStarted>(state_));
-    return *this;
-  }
-
- private:
-  struct NotStarted {
-    bool is_closure;
-    void* tag;
-    grpc_error_handle error;
-    grpc_completion_queue* cq;
-  };
-  struct Started {
-    explicit Started(Waker waker) : waker(std::move(waker)) {}
-    Waker waker;
-    grpc_cq_completion completion;
-    std::atomic<bool> done{false};
-  };
-  using State = absl::variant<NotStarted, Started>;
-  State state_;
-};
 }  // namespace
 
 StatusFlag ServerCallSpine::FinishRecvMessage(
@@ -3904,11 +3844,10 @@ void ServerCallSpine::CommitBatch(const grpc_op* ops, size_t nops,
         GPR_ASSERT(recv_message_ == nullptr);
         recv_message_ = op.data.recv_message.recv_message;
         return [this]() mutable {
-          return Seq(read_initial_metadata_.Wait(),
-                     Map(client_to_server_messages_.receiver.Next(),
-                         [this](NextResult<MessageHandle> msg) {
-                           return FinishRecvMessage(std::move(msg));
-                         }));
+          return Map(client_to_server_messages_.receiver.Next(),
+                     [this](NextResult<MessageHandle> msg) {
+                       return FinishRecvMessage(std::move(msg));
+                     });
         };
       });
   auto primary_ops = AllOk<StatusFlag>(

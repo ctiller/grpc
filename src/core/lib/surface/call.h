@@ -150,6 +150,8 @@ class CallContext {
 template <>
 struct ContextType<CallContext> {};
 
+RefCountedPtr<CallSpineInterface> MakeServerCall();
+
 }  // namespace grpc_core
 
 // Create a new call based on \a args.
