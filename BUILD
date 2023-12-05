@@ -1513,6 +1513,7 @@ grpc_cc_library(
     public_hdrs = GRPC_PUBLIC_HDRS + GRPC_PUBLIC_EVENT_ENGINE_HDRS,
     visibility = ["@grpc:alt_grpc_base_legacy"],
     deps = [
+        "//src/core:all_ok",
         "channel_arg_names",
         "channel_stack_builder",
         "config",

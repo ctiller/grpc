@@ -79,6 +79,7 @@
 #include "src/core/lib/iomgr/exec_ctx.h"
 #include "src/core/lib/iomgr/polling_entity.h"
 #include "src/core/lib/promise/activity.h"
+#include "src/core/lib/promise/all_ok.h"
 #include "src/core/lib/promise/arena_promise.h"
 #include "src/core/lib/promise/context.h"
 #include "src/core/lib/promise/latch.h"
@@ -89,7 +90,6 @@
 #include "src/core/lib/promise/race.h"
 #include "src/core/lib/promise/seq.h"
 #include "src/core/lib/promise/status_flag.h"
-#include "src/core/lib/promise/try_join.h"
 #include "src/core/lib/resource_quota/arena.h"
 #include "src/core/lib/slice/slice_buffer.h"
 #include "src/core/lib/slice/slice_internal.h"
@@ -2056,7 +2056,7 @@ class BasicPromiseBasedCall : public Call,
   }
 
   void ContextSet(grpc_context_index elem, void* value,
-                  void (*destroy)(void*)) {
+                  void (*destroy)(void*)) final {
     if (context_[elem].destroy != nullptr) {
       context_[elem].destroy(context_[elem].value);
     }
@@ -2064,7 +2064,7 @@ class BasicPromiseBasedCall : public Call,
     context_[elem].destroy = destroy;
   }
 
-  void* ContextGet(grpc_context_index elem) const {
+  void* ContextGet(grpc_context_index elem) const final {
     return context_[elem].value;
   }
 
@@ -2080,6 +2080,10 @@ class BasicPromiseBasedCall : public Call,
   void AcceptTransportStatsFromContext() {
     final_stats_ = *call_context_.call_stats();
   }
+
+  // This should return nullptr for the promise stack (and alternative means
+  // for that functionality be invented)
+  grpc_call_stack* call_stack() final { return nullptr; }
 
  protected:
   class ScopedContext
@@ -2105,6 +2109,10 @@ class BasicPromiseBasedCall : public Call,
   void SetFinalizationStatus(grpc_status_code status, Slice status_details) {
     final_message_ = std::move(status_details);
     final_status_ = status;
+  }
+
+  grpc_event_engine::experimental::EventEngine* event_engine() const final {
+    return channel()->event_engine();
   }
 
  private:
@@ -2189,16 +2197,8 @@ class PromiseBasedCall : public BasicPromiseBasedCall {
 
   bool Completed() final { return finished_.IsSet(); }
 
-  // This should return nullptr for the promise stack (and alternative means
-  // for that functionality be invented)
-  grpc_call_stack* call_stack() override { return nullptr; }
-
   bool failed_before_recv_message() const final {
     return failed_before_recv_message_.load(std::memory_order_relaxed);
-  }
-
-  grpc_event_engine::experimental::EventEngine* event_engine() const final {
-    return channel()->event_engine();
   }
 
   using Call::arena;
@@ -3648,6 +3648,9 @@ class ServerCallSpine final : public CallSpineInterface,
   grpc_call_error StartBatch(const grpc_op* ops, size_t nops, void* notify_tag,
                              bool is_notify_tag_closure) override;
 
+  bool Completed() final { Crash("unimplemented"); }
+  bool failed_before_recv_message() const final { Crash("unimplemented"); }
+
  private:
   void CommitBatch(const grpc_op* ops, size_t nops, void* notify_tag,
                    bool is_notify_tag_closure);
@@ -3723,8 +3726,7 @@ auto MaybeOp(const grpc_op* ops, uint8_t idx, SetupFn setup) {
 
    private:
     struct Dismissed {};
-    using State = absl::variant<Dismissed, PromiseFactory, Promise>;
-    State state_;
+    absl::variant<Dismissed, PromiseFactory, Promise> state_;
   };
   if (idx == 255) {
     return Impl();
@@ -3909,9 +3911,9 @@ void ServerCallSpine::CommitBatch(const grpc_op* ops, size_t nops,
                          }));
         };
       });
-  auto primary_ops =
-      TryJoin(std::move(send_initial_metadata), std::move(send_message),
-              std::move(send_trailing_metadata), std::move(recv_message));
+  auto primary_ops = AllOk<StatusFlag>(
+      std::move(send_initial_metadata), std::move(send_message),
+      std::move(send_trailing_metadata), std::move(recv_message));
   if (got_ops[GRPC_OP_RECV_CLOSE_ON_SERVER] != 255) {
     auto recv_trailing_metadata = MaybeOp(
         ops, got_ops[GRPC_OP_RECV_CLOSE_ON_SERVER], [this](const grpc_op& op) {
@@ -3919,7 +3921,8 @@ void ServerCallSpine::CommitBatch(const grpc_op* ops, size_t nops,
             return Seq(
                 read_messages_.Wait(),
                 Map(server_trailing_metadata_.receiver.Next(),
-                    [](NextResult<ServerMetadataHandle> result) -> Success {
+                    [cancelled](
+                        NextResult<ServerMetadataHandle> result) -> Success {
                       ServerMetadataHandle md;
                       if (!result.has_value()) {
                         md = GetContext<Arena>()->MakePooled<ServerMetadata>(
@@ -3929,6 +3932,9 @@ void ServerCallSpine::CommitBatch(const grpc_op* ops, size_t nops,
                       } else {
                         md = std::move(*result);
                       }
+                      *cancelled =
+                          md->get(GrpcCallWasCancelled()).value_or(true) ? 1
+                                                                         : 0;
                       Crash("return metadata here");
                       return Success{};
                     }));
