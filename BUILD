@@ -1574,6 +1574,7 @@ grpc_cc_library(
         "//src/core:if_list",
         "//src/core:init_internally",
         "//src/core:iomgr_fwd",
+        "//src/core:try_join",
         "//src/core:iomgr_port",
         "//src/core:json",
         "//src/core:json_writer",

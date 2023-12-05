@@ -89,6 +89,7 @@
 #include "src/core/lib/promise/race.h"
 #include "src/core/lib/promise/seq.h"
 #include "src/core/lib/promise/status_flag.h"
+#include "src/core/lib/promise/try_join.h"
 #include "src/core/lib/resource_quota/arena.h"
 #include "src/core/lib/slice/slice_buffer.h"
 #include "src/core/lib/slice/slice_internal.h"
@@ -3717,7 +3718,7 @@ auto MaybeOp(const grpc_op* ops, uint8_t idx, SetupFn setup) {
         state_.template emplace<Promise>(std::move(promise));
       }
       auto& promise = absl::get<Promise>(state_);
-      return promise();
+      return poll_cast<StatusFlag>(promise());
     }
 
    private:
@@ -3737,6 +3738,7 @@ class WaitForCqEndOp {
   WaitForCqEndOp(bool is_closure, void* tag, grpc_error_handle error,
                  grpc_completion_queue* cq)
       : state_{NotStarted{is_closure, tag, std::move(error), cq}} {}
+
   Poll<Empty> operator()() {
     if (auto* n = absl::get_if<NotStarted>(&state_)) {
       if (n->is_closure) {
@@ -3763,6 +3765,15 @@ class WaitForCqEndOp {
     } else {
       return Pending{};
     }
+  }
+
+  WaitForCqEndOp(const WaitForCqEndOp&) = delete;
+  WaitForCqEndOp& operator=(const WaitForCqEndOp&) = delete;
+  WaitForCqEndOp(WaitForCqEndOp&& other) noexcept
+      : state_(std::move(absl::get<NotStarted>(state_))) {}
+  WaitForCqEndOp& operator=(WaitForCqEndOp&& other) noexcept {
+    state_ = std::move(absl::get<NotStarted>(state_));
+    return *this;
   }
 
  private:
@@ -3882,7 +3893,7 @@ void ServerCallSpine::CommitBatch(const grpc_op* ops, size_t nops,
                         Slice(grpc_slice_copy(*details)));
         }
         return [this, metadata = std::move(metadata)]() mutable {
-          return Map(server_to_client_messages_.sender.Push(std::move(msg)),
+          return Map(server_trailing_metadata_.sender.Push(std::move(metadata)),
                      [](bool r) { return StatusFlag(r); });
         };
       });
@@ -3905,25 +3916,43 @@ void ServerCallSpine::CommitBatch(const grpc_op* ops, size_t nops,
     auto recv_trailing_metadata = MaybeOp(
         ops, got_ops[GRPC_OP_RECV_CLOSE_ON_SERVER], [this](const grpc_op& op) {
           return [this, cancelled = op.data.recv_close_on_server.cancelled]() {
-            return Seq(read_messages_.Wait(),
-                       Map(server_trailing_metadata_.receiver.Next(),
-                           [](NextResult<ServerMetadataHandle> result) {}));
+            return Seq(
+                read_messages_.Wait(),
+                Map(server_trailing_metadata_.receiver.Next(),
+                    [](NextResult<ServerMetadataHandle> result) -> Success {
+                      ServerMetadataHandle md;
+                      if (!result.has_value()) {
+                        md = GetContext<Arena>()->MakePooled<ServerMetadata>(
+                            GetContext<Arena>());
+                        md->Set(GrpcStatusMetadata(), GRPC_STATUS_CANCELLED);
+                        md->Set(GrpcCallWasCancelled(), true);
+                      } else {
+                        md = std::move(*result);
+                      }
+                      Crash("return metadata here");
+                      return Success{};
+                    }));
           };
         });
     SpawnInfallible(
-        "final-batch",
-        Seq(std::move(primary_ops),
-            [is_notify_tag_closure, notify_tag, this](StatusFlag r) {
-              return WaitForCqEndOp(is_notify_tag_closure, notify_tag,
-                                    absl::OkStatus(), cq());
-            }));
+        "final-batch", [primary_ops = std::move(primary_ops),
+                        is_notify_tag_closure, notify_tag, this]() mutable {
+          return Seq(std::move(primary_ops),
+                     [is_notify_tag_closure, notify_tag, this](StatusFlag r) {
+                       return WaitForCqEndOp(is_notify_tag_closure, notify_tag,
+                                             absl::OkStatus(), cq());
+                     });
+        });
   } else {
     SpawnInfallible(
-        "batch", Seq(std::move(primary_ops), [is_notify_tag_closure, notify_tag,
+        "batch", [primary_ops = std::move(primary_ops), is_notify_tag_closure,
+                  notify_tag, this]() mutable {
+          return Seq(std::move(primary_ops), [is_notify_tag_closure, notify_tag,
                                               this](StatusFlag r) {
-          return WaitForCqEndOp(is_notify_tag_closure, notify_tag,
-                                StatusCast<grpc_error_handle>(r), cq());
-        }));
+            return WaitForCqEndOp(is_notify_tag_closure, notify_tag,
+                                  StatusCast<grpc_error_handle>(r), cq());
+          });
+        });
   }
 }
 

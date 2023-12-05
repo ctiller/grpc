@@ -27,6 +27,7 @@
 #include "src/core/lib/promise/detail/join_state.h"
 #include "src/core/lib/promise/map.h"
 #include "src/core/lib/promise/poll.h"
+#include "src/core/lib/promise/status_flag.h"
 
 namespace grpc_core {
 
@@ -52,11 +53,13 @@ struct TryJoinTraits {
     return x.ok();
   }
   static bool IsOk(const absl::Status& x) { return x.ok(); }
+  static bool IsOk(StatusFlag x) { return x.ok(); }
   template <typename T>
   static T Unwrapped(absl::StatusOr<T> x) {
     return std::move(*x);
   }
   static Empty Unwrapped(absl::Status) { return Empty{}; }
+  static Empty Unwrapped(StatusFlag) { return Empty{}; }
   template <typename R, typename T>
   static R EarlyReturn(absl::StatusOr<T> x) {
     return x.status();
@@ -64,6 +67,10 @@ struct TryJoinTraits {
   template <typename R>
   static R EarlyReturn(absl::Status x) {
     return x;
+  }
+  template <typename R>
+  static R EarlyReturn(StatusFlag x) {
+    return StatusCast<R>(x);
   }
 };
 

@@ -73,6 +73,17 @@ To StatusCast(From&& from) {
   return StatusCastImpl<To, From>::Cast(std::forward<From>(from));
 }
 
+// Anything that can be first cast to absl::Status can then be cast to
+// StatusOr.
+template <typename U, typename T>
+struct StatusCastImpl<
+    absl::StatusOr<U>, T,
+    absl::void_t<decltype(StatusCast<absl::Status>(std::declval<T>()))>> {
+  static absl::StatusOr<U> Cast(const T& m) {
+    return StatusCast<absl::StatusOr<U>>(StatusCast<absl::Status>(m));
+  }
+};
+
 }  // namespace grpc_core
 
 #endif  // GRPC_SRC_CORE_LIB_PROMISE_DETAIL_STATUS_H
