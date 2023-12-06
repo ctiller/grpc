@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef GRPC_SRC_CORE_LIB_TRANSPORT_T_H
-#define GRPC_SRC_CORE_LIB_TRANSPORT_T_H
+#ifndef GRPC_SRC_CORE_LIB_SURFACE_WAIT_FOR_CQ_END_OP_H
+#define GRPC_SRC_CORE_LIB_SURFACE_WAIT_FOR_CQ_END_OP_H
 
 #include <grpc/support/port_platform.h>
 
@@ -32,9 +32,8 @@ class WaitForCqEndOp {
   Poll<Empty> operator()() {
     if (auto* n = absl::get_if<NotStarted>(&state_)) {
       if (n->is_closure) {
-        grpc_core::ExecCtx::Run(DEBUG_LOCATION,
-                                static_cast<grpc_closure*>(n->tag),
-                                std::move(n->error));
+        ExecCtx::Run(DEBUG_LOCATION, static_cast<grpc_closure*>(n->tag),
+                     std::move(n->error));
         return Empty{};
       } else {
         auto not_started = std::move(*n);
@@ -85,4 +84,4 @@ class WaitForCqEndOp {
 
 }  // namespace grpc_core
 
-#endif
+#endif  // GRPC_SRC_CORE_LIB_SURFACE_WAIT_FOR_CQ_END_OP_H
