@@ -1553,7 +1553,7 @@ void Server::ChannelData::InitCall(RefCountedPtr<CallSpineInterface> call) {
           // TODO(ctiller): publish metadata
           return Map(WaitForCqEndOp(false, rc->tag, absl::OkStatus(), mr.cq()),
                      [rc = std::unique_ptr<RequestedCall>(rc)](Empty) {
-                       return Empty{};
+                       return absl::OkStatus();
                      });
         });
   });

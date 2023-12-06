@@ -55,6 +55,10 @@ struct TryJoinTraits {
   static bool IsOk(const absl::Status& x) { return x.ok(); }
   static bool IsOk(StatusFlag x) { return x.ok(); }
   template <typename T>
+  static bool IsOk(const ValueOrFailure<T>& x) {
+    return x.ok();
+  }
+  template <typename T>
   static T Unwrapped(absl::StatusOr<T> x) {
     return std::move(*x);
   }
@@ -74,6 +78,10 @@ struct TryJoinTraits {
   }
   template <typename R>
   static R EarlyReturn(StatusFlag x) {
+    return StatusCast<R>(x);
+  }
+  template <typename R, typename T>
+  static R EarlyReturn(const ValueOrFailure<T>& x) {
     return StatusCast<R>(x);
   }
   template <typename... A>

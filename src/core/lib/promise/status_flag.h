@@ -119,7 +119,14 @@ inline T TakeValue(ValueOrFailure<T>&& value) {
 
 template <typename T>
 struct StatusCastImpl<absl::Status, ValueOrFailure<T>> {
-  static absl::Status Cast(const ValueOrFailure<T> flag) {
+  static absl::Status Cast(const ValueOrFailure<T>& flag) {
+    return flag.ok() ? absl::OkStatus() : absl::CancelledError();
+  }
+};
+
+template <typename T>
+struct StatusCastImpl<absl::Status, const ValueOrFailure<T>&> {
+  static absl::Status Cast(const ValueOrFailure<T>& flag) {
     return flag.ok() ? absl::OkStatus() : absl::CancelledError();
   }
 };
