@@ -231,19 +231,20 @@ struct Server::RequestedCall {
     data.registered.optional_payload = optional_payload;
   }
 
-  void Complete(NextResult<MessageHandle> payload, ClientMetadataHandle md) {
+  void Complete(NextResult<MessageHandle> payload, ClientMetadata& md) {
     Timestamp deadline = GetContext<CallContext>()->deadline();
     switch (type) {
       case RequestedCall::Type::BATCH_CALL:
         GPR_ASSERT(!payload.has_value());
         data.batch.details->host =
-            CSliceRef(md->get_pointer(HttpAuthorityMetadata())->c_slice());
+            CSliceRef(md.get_pointer(HttpAuthorityMetadata())->c_slice());
         data.batch.details->method =
-            CSliceRef(md->Take(HttpPathMetadata())->c_slice());
+            CSliceRef(md.Take(HttpPathMetadata())->c_slice());
         data.batch.details->deadline =
             deadline.as_timespec(GPR_CLOCK_MONOTONIC);
         break;
       case RequestedCall::Type::REGISTERED_CALL:
+        md.Remove(HttpPathMetadata());
         *data.registered.deadline = deadline.as_timespec(GPR_CLOCK_MONOTONIC);
         if (data.registered.optional_payload != nullptr) {
           if (payload.has_value()) {
@@ -1503,20 +1504,22 @@ auto CancelledDueToServerShutdown() {
 void Server::ChannelData::InitCall(RefCountedPtr<CallSpineInterface> call) {
   call->SpawnGuarded("request_matcher", [this, call]() {
     return TrySeq(
-        call->client_initial_metadata().receiver.Next(),
-        [](NextResult<ClientMetadataHandle> md)
-            -> absl::StatusOr<ClientMetadataHandle> {
-          if (!md.has_value()) {
-            return absl::InternalError("Missing metadata");
-          }
-          if (!md.value()->get_pointer(HttpPathMetadata())) {
-            return absl::InternalError("Missing :path header");
-          }
-          if (!md.value()->get_pointer(HttpAuthorityMetadata())) {
-            return absl::InternalError("Missing :authority header");
-          }
-          return std::move(*md);
-        },
+        // Wait for initial metadata to pass through all filters
+        Map(call->client_initial_metadata().receiver.Next(),
+            [](NextResult<ClientMetadataHandle> md)
+                -> absl::StatusOr<ClientMetadataHandle> {
+              if (!md.has_value()) {
+                return absl::InternalError("Missing metadata");
+              }
+              if (!md.value()->get_pointer(HttpPathMetadata())) {
+                return absl::InternalError("Missing :path header");
+              }
+              if (!md.value()->get_pointer(HttpAuthorityMetadata())) {
+                return absl::InternalError("Missing :authority header");
+              }
+              return std::move(*md);
+            }),
+        // Match request with requested call
         [this, call](ClientMetadataHandle md) {
           RegisteredMethod* rm =
               static_cast<ChannelRegisteredMethod*>(
@@ -1542,6 +1545,7 @@ void Server::ChannelData::InitCall(RefCountedPtr<CallSpineInterface> call) {
                 return ValueOrFailure<ClientMetadataHandle>(std::move(md));
               });
         },
+        // Publish call to cq
         [](std::tuple<NextResult<MessageHandle>,
                       RequestMatcherInterface::MatchResult,
                       ClientMetadataHandle>
@@ -1549,7 +1553,10 @@ void Server::ChannelData::InitCall(RefCountedPtr<CallSpineInterface> call) {
           RequestMatcherInterface::MatchResult& mr = std::get<1>(r);
           auto md = std::move(std::get<2>(r));
           auto* rc = mr.TakeCall();
-          rc->Complete(std::move(std::get<0>(r)), std::move(md));
+          rc->Complete(std::move(std::get<0>(r)), *md);
+          GetContext<CallContext>()
+              ->server_call_context()
+              ->PublishInitialMetadata(std::move(md), rc->initial_metadata);
           // TODO(ctiller): publish metadata
           return Map(WaitForCqEndOp(false, rc->tag, absl::OkStatus(), mr.cq()),
                      [rc = std::unique_ptr<RequestedCall>(rc)](Empty) {
@@ -1575,9 +1582,9 @@ ArenaPromise<ServerMetadataHandle> Server::ChannelData::MakeCallPromise(
   auto cleanup_ref =
       absl::MakeCleanup([server] { server->ShutdownUnrefOnRequest(); });
   if (!server->ShutdownRefOnRequest()) return CancelledDueToServerShutdown();
-  absl::optional<Slice> path =
-      call_args.client_initial_metadata->get(HttpPathMetadata());
-  if (!path.has_value()) {
+  auto path_ptr =
+      call_args.client_initial_metadata->get_pointer(HttpPathMetadata());
+  if (path_ptr == nullptr) {
     return [] {
       return ServerMetadataFromStatus(
           absl::InternalError("Missing :path header"));
@@ -1600,10 +1607,10 @@ ArenaPromise<ServerMetadataHandle> Server::ChannelData::MakeCallPromise(
             .value_or(nullptr));
   } else {
     if (!IsRegisteredMethodsMapEnabled()) {
-      rm = chand->GetRegisteredMethod(host_ptr->c_slice(), path->c_slice());
+      rm = chand->GetRegisteredMethod(host_ptr->c_slice(), path_ptr->c_slice());
     } else {
       rm = chand->GetRegisteredMethod(host_ptr->as_string_view(),
-                                      path->as_string_view());
+                                      path_ptr->as_string_view());
     }
   }
   ArenaPromise<absl::StatusOr<NextResult<MessageHandle>>>
@@ -1649,18 +1656,19 @@ ArenaPromise<ServerMetadataHandle> Server::ChannelData::MakeCallPromise(
         auto& payload = r.second;
         auto* rc = mr.TakeCall();
         auto* cq_for_new_request = mr.cq();
+        auto* server_call_context =
+            GetContext<CallContext>()->server_call_context();
         rc->Complete(std::move(payload), *call_args.client_initial_metadata);
-        return GetContext<CallContext>()
-            ->server_call_context()
-            ->MakeTopOfServerCallPromise(
-                std::move(call_args), rc->cq_bound_to_call,
-                rc->initial_metadata,
-                [rc, cq_for_new_request](grpc_call* call) {
-                  *rc->call = call;
-                  grpc_cq_end_op(cq_for_new_request, rc->tag, absl::OkStatus(),
-                                 Server::DoneRequestEvent, rc, &rc->completion,
-                                 true);
-                });
+        server_call_context->PublishInitialMetadata(
+            std::move(call_args.client_initial_metadata), rc->initial_metadata);
+        return server_call_context->MakeTopOfServerCallPromise(
+            std::move(call_args), rc->cq_bound_to_call,
+            [rc, cq_for_new_request](grpc_call* call) {
+              *rc->call = call;
+              grpc_cq_end_op(cq_for_new_request, rc->tag, absl::OkStatus(),
+                             Server::DoneRequestEvent, rc, &rc->completion,
+                             true);
+            });
       });
 }
 

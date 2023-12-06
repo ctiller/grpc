@@ -82,23 +82,19 @@ class ServerPromiseBasedCall;
 
 class ServerCallContext {
  public:
-  ServerCallContext(ServerPromiseBasedCall* call,
-                    const void* server_stream_data)
-      : call_(call), server_stream_data_(server_stream_data) {}
-  ArenaPromise<ServerMetadataHandle> MakeTopOfServerCallPromise(
+  virtual void PublishInitialMetadata(
+      ClientMetadataHandle metadata,
+      grpc_metadata_array* publish_initial_metadata) = 0;
+
+  virtual ArenaPromise<ServerMetadataHandle> MakeTopOfServerCallPromise(
       CallArgs call_args, grpc_completion_queue* cq,
-      grpc_metadata_array* publish_initial_metadata,
-      absl::FunctionRef<void(grpc_call* call)> publish);
+      absl::FunctionRef<void(grpc_call* call)> publish) = 0;
 
   // Server stream data as supplied by the transport (so we can link the
   // transport stream up with the call again).
   // TODO(ctiller): legacy API - once we move transports to promises we'll
   // create the promise directly and not need to pass around this token.
-  const void* server_stream_data() { return server_stream_data_; }
-
- private:
-  ServerPromiseBasedCall* const call_;
-  const void* const server_stream_data_;
+  virtual const void* server_stream_data() = 0;
 };
 
 // TODO(ctiller): move more call things into this type

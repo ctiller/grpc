@@ -3160,7 +3160,8 @@ void ClientPromiseBasedCall::StartRecvStatusOnClient(
 
 #ifdef GRPC_EXPERIMENT_IS_INCLUDED_PROMISE_BASED_SERVER_CALL
 
-class ServerPromiseBasedCall final : public PromiseBasedCall {
+class ServerPromiseBasedCall final : public PromiseBasedCall,
+                                     public ServerCallContext {
  public:
   ServerPromiseBasedCall(Arena* arena, grpc_call_create_args* args);
 
@@ -3203,7 +3204,15 @@ class ServerPromiseBasedCall final : public PromiseBasedCall {
     return absl::StrFormat("SERVER_CALL[%p]: ", this);
   }
 
-  ServerCallContext* server_call_context() override { return &call_context_; }
+  ServerCallContext* server_call_context() override { return this; }
+
+  const void* server_stream_data() override { return server_transport_data_; }
+  void PublishInitialMetadata(
+      ClientMetadataHandle metadata,
+      grpc_metadata_array* publish_initial_metadata) override;
+  ArenaPromise<ServerMetadataHandle> MakeTopOfServerCallPromise(
+      CallArgs call_args, grpc_completion_queue* cq,
+      absl::FunctionRef<void(grpc_call* call)> publish) override;
 
  private:
   class RecvCloseOpCancelState {
@@ -3292,9 +3301,8 @@ class ServerPromiseBasedCall final : public PromiseBasedCall {
                    const Completion& completion);
   void Finish(ServerMetadataHandle result);
 
-  friend class ServerCallContext;
-  ServerCallContext call_context_;
   Server* const server_;
+  const void* const server_transport_data_;
   PipeSender<ServerMetadataHandle>* server_initial_metadata_ = nullptr;
   PipeSender<MessageHandle>* server_to_client_messages_ = nullptr;
   PipeReceiver<MessageHandle>* client_to_server_messages_ = nullptr;
@@ -3308,8 +3316,8 @@ class ServerPromiseBasedCall final : public PromiseBasedCall {
 ServerPromiseBasedCall::ServerPromiseBasedCall(Arena* arena,
                                                grpc_call_create_args* args)
     : PromiseBasedCall(arena, 0, *args),
-      call_context_(this, args->server_transport_data),
-      server_(args->server) {
+      server_(args->server),
+      server_transport_data_(args->server_transport_data) {
   global_stats().IncrementServerCallsCreated();
   channelz::ServerNode* channelz_node = server_->channelz_node();
   if (channelz_node != nullptr) {
@@ -3573,27 +3581,33 @@ void ServerPromiseBasedCall::CancelWithError(absl::Status error) {
 #endif
 
 #ifdef GRPC_EXPERIMENT_IS_INCLUDED_PROMISE_BASED_SERVER_CALL
+void ServerPromiseBasedCall::PublishInitialMetadata(
+    ClientMetadataHandle metadata,
+    grpc_metadata_array* publish_initial_metadata) {
+  if (grpc_call_trace.enabled()) {
+    gpr_log(GPR_INFO, "%s[call] PublishInitialMetadata: %s", DebugTag().c_str(),
+            metadata->DebugString().c_str());
+  }
+  PublishMetadataArray(metadata.get(), publish_initial_metadata, false);
+  client_initial_metadata_ = std::move(metadata);
+}
+
 ArenaPromise<ServerMetadataHandle>
-ServerCallContext::MakeTopOfServerCallPromise(
+ServerPromiseBasedCall::MakeTopOfServerCallPromise(
     CallArgs call_args, grpc_completion_queue* cq,
-    grpc_metadata_array* publish_initial_metadata,
     absl::FunctionRef<void(grpc_call* call)> publish) {
-  call_->SetCompletionQueue(cq);
+  SetCompletionQueue(cq);
   call_args.polling_entity->Set(
       grpc_polling_entity_create_from_pollset(grpc_cq_pollset(cq)));
-  call_->server_to_client_messages_ = call_args.server_to_client_messages;
-  call_->client_to_server_messages_ = call_args.client_to_server_messages;
-  call_->server_initial_metadata_ = call_args.server_initial_metadata;
-  call_->client_initial_metadata_ =
-      std::move(call_args.client_initial_metadata);
-  call_->set_send_deadline(call_->deadline());
-  call_->ProcessIncomingInitialMetadata(*call_->client_initial_metadata_);
-  PublishMetadataArray(call_->client_initial_metadata_.get(),
-                       publish_initial_metadata, false);
-  call_->ExternalRef();
-  publish(call_->c_ptr());
-  return Seq(call_->server_to_client_messages_->AwaitClosed(),
-             call_->send_trailing_metadata_.Wait());
+  server_to_client_messages_ = call_args.server_to_client_messages;
+  client_to_server_messages_ = call_args.client_to_server_messages;
+  server_initial_metadata_ = call_args.server_initial_metadata;
+  set_send_deadline(deadline());
+  ProcessIncomingInitialMetadata(*client_initial_metadata_);
+  ExternalRef();
+  publish(c_ptr());
+  return Seq(server_to_client_messages_->AwaitClosed(),
+             send_trailing_metadata_.Wait());
 }
 #else
 ArenaPromise<ServerMetadataHandle>
@@ -3609,6 +3623,7 @@ ServerCallContext::MakeTopOfServerCallPromise(
 // CallSpine based Server Call
 
 class ServerCallSpine final : public CallSpineInterface,
+                              public ServerCallContext,
                               public BasicPromiseBasedCall {
  public:
   // CallSpineInterface
@@ -3651,6 +3666,8 @@ class ServerCallSpine final : public CallSpineInterface,
 
   bool Completed() final { Crash("unimplemented"); }
   bool failed_before_recv_message() const final { Crash("unimplemented"); }
+
+  ServerCallContext* server_call_context() override { return this; }
 
  private:
   void CommitBatch(const grpc_op* ops, size_t nops, void* notify_tag,
