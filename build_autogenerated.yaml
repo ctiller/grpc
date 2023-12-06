@@ -1027,10 +1027,12 @@ libs:
   - src/core/lib/load_balancing/subchannel_interface.h
   - src/core/lib/matchers/matchers.h
   - src/core/lib/promise/activity.h
+  - src/core/lib/promise/all_ok.h
   - src/core/lib/promise/arena_promise.h
   - src/core/lib/promise/cancel_callback.h
   - src/core/lib/promise/context.h
   - src/core/lib/promise/detail/basic_seq.h
+  - src/core/lib/promise/detail/join_state.h
   - src/core/lib/promise/detail/promise_factory.h
   - src/core/lib/promise/detail/promise_like.h
   - src/core/lib/promise/detail/seq_state.h
@@ -1052,6 +1054,7 @@ libs:
   - src/core/lib/promise/sleep.h
   - src/core/lib/promise/status_flag.h
   - src/core/lib/promise/trace.h
+  - src/core/lib/promise/try_join.h
   - src/core/lib/promise/try_seq.h
   - src/core/lib/resolver/endpoint_addresses.h
   - src/core/lib/resolver/resolver.h
@@ -2476,10 +2479,12 @@ libs:
   - src/core/lib/load_balancing/lb_policy_registry.h
   - src/core/lib/load_balancing/subchannel_interface.h
   - src/core/lib/promise/activity.h
+  - src/core/lib/promise/all_ok.h
   - src/core/lib/promise/arena_promise.h
   - src/core/lib/promise/cancel_callback.h
   - src/core/lib/promise/context.h
   - src/core/lib/promise/detail/basic_seq.h
+  - src/core/lib/promise/detail/join_state.h
   - src/core/lib/promise/detail/promise_factory.h
   - src/core/lib/promise/detail/promise_like.h
   - src/core/lib/promise/detail/seq_state.h
@@ -2501,6 +2506,7 @@ libs:
   - src/core/lib/promise/sleep.h
   - src/core/lib/promise/status_flag.h
   - src/core/lib/promise/trace.h
+  - src/core/lib/promise/try_join.h
   - src/core/lib/promise/try_seq.h
   - src/core/lib/resolver/endpoint_addresses.h
   - src/core/lib/resolver/resolver.h
@@ -4604,10 +4610,12 @@ libs:
   - src/core/lib/load_balancing/subchannel_interface.h
   - src/core/lib/matchers/matchers.h
   - src/core/lib/promise/activity.h
+  - src/core/lib/promise/all_ok.h
   - src/core/lib/promise/arena_promise.h
   - src/core/lib/promise/cancel_callback.h
   - src/core/lib/promise/context.h
   - src/core/lib/promise/detail/basic_seq.h
+  - src/core/lib/promise/detail/join_state.h
   - src/core/lib/promise/detail/promise_factory.h
   - src/core/lib/promise/detail/promise_like.h
   - src/core/lib/promise/detail/seq_state.h
@@ -4627,6 +4635,7 @@ libs:
   - src/core/lib/promise/seq.h
   - src/core/lib/promise/status_flag.h
   - src/core/lib/promise/trace.h
+  - src/core/lib/promise/try_join.h
   - src/core/lib/promise/try_seq.h
   - src/core/lib/resolver/endpoint_addresses.h
   - src/core/lib/resolver/resolver.h
@@ -7618,12 +7627,10 @@ targets:
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
-  - src/core/lib/promise/detail/join_state.h
   - src/core/lib/promise/event_engine_wakeup_scheduler.h
   - src/core/lib/promise/inter_activity_pipe.h
   - src/core/lib/promise/join.h
   - src/core/lib/promise/mpsc.h
-  - src/core/lib/promise/try_join.h
   - src/core/lib/promise/wait_set.h
   - src/core/lib/transport/promise_endpoint.h
   - test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.h
@@ -7648,12 +7655,10 @@ targets:
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
-  - src/core/lib/promise/detail/join_state.h
   - src/core/lib/promise/event_engine_wakeup_scheduler.h
   - src/core/lib/promise/inter_activity_pipe.h
   - src/core/lib/promise/join.h
   - src/core/lib/promise/mpsc.h
-  - src/core/lib/promise/try_join.h
   - src/core/lib/promise/wait_set.h
   - src/core/lib/transport/promise_endpoint.h
   - test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.h
@@ -12906,7 +12911,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/lib/promise/detail/join_state.h
   - src/core/lib/promise/join.h
   - test/core/promise/test_wakeup_schedulers.h
   src:
@@ -13080,7 +13084,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/lib/promise/detail/join_state.h
   - src/core/lib/promise/join.h
   - src/core/lib/transport/promise_endpoint.h
   - test/core/promise/test_wakeup_schedulers.h
@@ -16960,10 +16963,12 @@ targets:
   - src/core/lib/load_balancing/lb_policy_registry.h
   - src/core/lib/load_balancing/subchannel_interface.h
   - src/core/lib/promise/activity.h
+  - src/core/lib/promise/all_ok.h
   - src/core/lib/promise/arena_promise.h
   - src/core/lib/promise/cancel_callback.h
   - src/core/lib/promise/context.h
   - src/core/lib/promise/detail/basic_seq.h
+  - src/core/lib/promise/detail/join_state.h
   - src/core/lib/promise/detail/promise_factory.h
   - src/core/lib/promise/detail/promise_like.h
   - src/core/lib/promise/detail/seq_state.h
@@ -16983,6 +16988,7 @@ targets:
   - src/core/lib/promise/seq.h
   - src/core/lib/promise/status_flag.h
   - src/core/lib/promise/trace.h
+  - src/core/lib/promise/try_join.h
   - src/core/lib/promise/try_seq.h
   - src/core/lib/resolver/endpoint_addresses.h
   - src/core/lib/resolver/resolver.h
