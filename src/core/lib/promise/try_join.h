@@ -58,6 +58,10 @@ struct TryJoinTraits {
   static T Unwrapped(absl::StatusOr<T> x) {
     return std::move(*x);
   }
+  template <typename T>
+  static T Unwrapped(ValueOrFailure<T> x) {
+    return std::move(*x);
+  }
   static Empty Unwrapped(absl::Status) { return Empty{}; }
   static Empty Unwrapped(StatusFlag) { return Empty{}; }
   template <typename R, typename T>
