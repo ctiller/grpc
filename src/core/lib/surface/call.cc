@@ -3626,6 +3626,8 @@ class ServerCallSpine final : public CallSpineInterface,
                               public ServerCallContext,
                               public BasicPromiseBasedCall {
  public:
+  ServerCallSpine(Server* server, Channel* channel, Arena* arena);
+
   // CallSpineInterface
   Pipe<ClientMetadataHandle>& client_initial_metadata() override {
     return client_initial_metadata_;
@@ -3689,6 +3691,23 @@ class ServerCallSpine final : public CallSpineInterface,
   Latch<void> read_messages_;
   grpc_byte_buffer** recv_message_ = nullptr;
 };
+
+ServerCallSpine::ServerCallSpine(Server* server, Channel* channel, Arena* arena)
+    : BasicPromiseBasedCall(
+          arena, 1, [channel, server]() -> grpc_call_create_args {
+            grpc_call_create_args args;
+            args.channel = channel->Ref();
+            args.server = server;
+            args.parent = nullptr;
+            args.propagation_mask = 0;
+            args.cq = nullptr;
+            args.pollset_set_alternative = nullptr;
+            args.server_transport_data = &args;  // Arbitrary non-null pointer
+            args.send_deadline = Timestamp::InfFuture();
+            return args;
+          }()) {
+  channel->channel_stack()->InitServerCallSpine(this);
+}
 
 grpc_call_error ServerCallSpine::StartBatch(const grpc_op* ops, size_t nops,
                                             void* notify_tag,
