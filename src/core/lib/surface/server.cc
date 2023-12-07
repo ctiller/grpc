@@ -1523,13 +1523,20 @@ void Server::ChannelData::InitCall(RefCountedPtr<CallSpineInterface> call) {
             }),
         // Match request with requested call
         [this, call](ClientMetadataHandle md) {
-          RegisteredMethod* rm =
+          auto* channel_registered_method =
               static_cast<ChannelRegisteredMethod*>(
-                  md->get(GrpcRegisteredMethod())
-                      .value_or(server_->unregistered_request_matcher_.get()))
-                  ->server_registered_method;
+                  md->get(GrpcRegisteredMethod()).value_or(nullptr));
+          RequestMatcherInterface* rm;
+          grpc_server_register_method_payload_handling payload_handling =
+              GRPC_SRM_PAYLOAD_NONE;
+          if (channel_registered_method == nullptr) {
+            rm = server_->unregistered_request_matcher_.get();
+          } else {
+            rm = channel_registered_method->server_registered_method->matcher
+                     .get();
+          }
           auto maybe_read_first_message = If(
-              rm->payload_handling == GRPC_SRM_PAYLOAD_READ_INITIAL_BYTE_BUFFER,
+            payload_handling == GRPC_SRM_PAYLOAD_READ_INITIAL_BYTE_BUFFER,
               [call]() {
                 return call->client_to_server_messages().receiver.Next();
               },
@@ -1542,7 +1549,7 @@ void Server::ChannelData::InitCall(RefCountedPtr<CallSpineInterface> call) {
                     return ValueOrFailure<NextResult<MessageHandle>>{
                         std::move(n)};
                   }),
-              rm->matcher->MatchRequest(cq_idx()),
+              rm->MatchRequest(cq_idx()),
               [md = std::move(md)]() mutable {
                 return ValueOrFailure<ClientMetadataHandle>(std::move(md));
               });
