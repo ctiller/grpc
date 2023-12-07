@@ -60,9 +60,12 @@ class WaitForCqEndOp {
   WaitForCqEndOp(const WaitForCqEndOp&) = delete;
   WaitForCqEndOp& operator=(const WaitForCqEndOp&) = delete;
   WaitForCqEndOp(WaitForCqEndOp&& other) noexcept
-      : state_(std::move(absl::get<NotStarted>(state_))) {}
+      : state_(std::move(absl::get<NotStarted>(other.state_))) {
+    other.state_.emplace<Invalid>();
+  }
   WaitForCqEndOp& operator=(WaitForCqEndOp&& other) noexcept {
-    state_ = std::move(absl::get<NotStarted>(state_));
+    state_ = std::move(absl::get<NotStarted>(other.state_));
+    other.state_.emplace<Invalid>();
     return *this;
   }
 
@@ -79,8 +82,9 @@ class WaitForCqEndOp {
     grpc_cq_completion completion;
     std::atomic<bool> done{false};
   };
-  using State = absl::variant<NotStarted, Started>;
-  State state_;
+  struct Invalid {};
+  using State = absl::variant<NotStarted, Started, Invalid>;
+  State state_{Invalid{}};
 };
 
 }  // namespace grpc_core
