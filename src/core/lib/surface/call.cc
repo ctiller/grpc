@@ -2707,6 +2707,8 @@ RefCountedPtr<CallSpineInterface> CallContext::MakeCallSpine(
   return call_->MakeCallSpine(std::move(call_args));
 }
 
+grpc_call* CallContext::c_call() { return call_->c_ptr(); }
+
 ///////////////////////////////////////////////////////////////////////////////
 // PublishMetadataArray
 

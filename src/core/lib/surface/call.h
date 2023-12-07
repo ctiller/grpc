@@ -137,6 +137,7 @@ class CallContext {
   // Allows interop between the v2 call stack and the v3 (which is required by
   // transports).
   RefCountedPtr<CallSpineInterface> MakeCallSpine(CallArgs call_args);
+  grpc_call* c_call();
 
  private:
   friend class PromiseBasedCall;

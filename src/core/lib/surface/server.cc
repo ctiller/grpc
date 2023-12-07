@@ -1536,7 +1536,7 @@ void Server::ChannelData::InitCall(RefCountedPtr<CallSpineInterface> call) {
                      .get();
           }
           auto maybe_read_first_message = If(
-            payload_handling == GRPC_SRM_PAYLOAD_READ_INITIAL_BYTE_BUFFER,
+              payload_handling == GRPC_SRM_PAYLOAD_READ_INITIAL_BYTE_BUFFER,
               [call]() {
                 return call->client_to_server_messages().receiver.Next();
               },
@@ -1549,8 +1549,7 @@ void Server::ChannelData::InitCall(RefCountedPtr<CallSpineInterface> call) {
                     return ValueOrFailure<NextResult<MessageHandle>>{
                         std::move(n)};
                   }),
-              rm->MatchRequest(cq_idx()),
-              [md = std::move(md)]() mutable {
+              rm->MatchRequest(cq_idx()), [md = std::move(md)]() mutable {
                 return ValueOrFailure<ClientMetadataHandle>(std::move(md));
               });
         },
@@ -1563,9 +1562,10 @@ void Server::ChannelData::InitCall(RefCountedPtr<CallSpineInterface> call) {
           auto md = std::move(std::get<2>(r));
           auto* rc = mr.TakeCall();
           rc->Complete(std::move(std::get<0>(r)), *md);
-          GetContext<CallContext>()
-              ->server_call_context()
-              ->PublishInitialMetadata(std::move(md), rc->initial_metadata);
+          auto* call_context = GetContext<CallContext>();
+          *rc->call = call_context->c_call();
+          call_context->server_call_context()->PublishInitialMetadata(
+              std::move(md), rc->initial_metadata);
           // TODO(ctiller): publish metadata
           return Map(WaitForCqEndOp(false, rc->tag, absl::OkStatus(), mr.cq()),
                      [rc = std::unique_ptr<RequestedCall>(rc)](Empty) {
