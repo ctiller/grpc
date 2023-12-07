@@ -320,6 +320,8 @@ class CallSpineInterface {
 
 class CallSpine final : public CallSpineInterface {
  public:
+  CallSpine() { Crash("unimplemented"); }
+
   Pipe<ClientMetadataHandle>& client_initial_metadata() override {
     return client_initial_metadata_;
   }
@@ -357,7 +359,7 @@ class CallSpine final : public CallSpineInterface {
 
 class CallInitiator {
  public:
-  explicit CallInitiator(RefCountedPtr<CallSpine> spine)
+  explicit CallInitiator(RefCountedPtr<CallSpineInterface> spine)
       : spine_(std::move(spine)) {}
 
   auto PushClientInitialMetadata(ClientMetadataHandle md) {
@@ -418,7 +420,7 @@ class CallInitiator {
 
 class CallHandler {
  public:
-  explicit CallHandler(RefCountedPtr<CallSpine> spine)
+  explicit CallHandler(RefCountedPtr<CallSpineInterface> spine)
       : spine_(std::move(spine)) {}
 
   auto PullClientInitialMetadata() {

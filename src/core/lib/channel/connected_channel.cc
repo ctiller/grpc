@@ -871,10 +871,12 @@ grpc_channel_filter MakeConnectedFilter() {
         // do this, and I'm not sure what that is yet. This is only "safe"
         // because call stacks place no additional data after the last call
         // element, and the last call element MUST be the connected channel.
-        channel_stack->call_stack_size +=
-            static_cast<channel_data*>(elem->channel_data)
-                ->transport->filter_stack_transport()
-                ->SizeOfStream();
+        auto* transport =
+            static_cast<channel_data*>(elem->channel_data)->transport;
+        if (transport->filter_stack_transport() != nullptr) {
+          channel_stack->call_stack_size +=
+              transport->filter_stack_transport()->SizeOfStream();
+        }
       },
       connected_channel_destroy_channel_elem,
       connected_channel_get_channel_info,
