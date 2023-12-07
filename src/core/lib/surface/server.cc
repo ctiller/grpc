@@ -1536,7 +1536,7 @@ void Server::ChannelData::InitCall(RefCountedPtr<CallSpineInterface> call) {
                      .get();
           }
           auto maybe_read_first_message = If(
-            payload_handling == GRPC_SRM_PAYLOAD_READ_INITIAL_BYTE_BUFFER,
+              payload_handling == GRPC_SRM_PAYLOAD_READ_INITIAL_BYTE_BUFFER,
               [call]() {
                 return call->client_to_server_messages().receiver.Next();
               },
@@ -1549,8 +1549,7 @@ void Server::ChannelData::InitCall(RefCountedPtr<CallSpineInterface> call) {
                     return ValueOrFailure<NextResult<MessageHandle>>{
                         std::move(n)};
                   }),
-              rm->MatchRequest(cq_idx()),
-              [md = std::move(md)]() mutable {
+              rm->MatchRequest(cq_idx()), [md = std::move(md)]() mutable {
                 return ValueOrFailure<ClientMetadataHandle>(std::move(md));
               });
         },
