@@ -2086,6 +2086,10 @@ class BasicPromiseBasedCall : public Call,
   // for that functionality be invented)
   grpc_call_stack* call_stack() final { return nullptr; }
 
+  virtual RefCountedPtr<CallSpineInterface> MakeCallSpine(CallArgs) {
+    Crash("Not implemented");
+  }
+
  protected:
   class ScopedContext
       : public ScopedActivity,
@@ -2698,6 +2702,11 @@ ServerCallContext* CallContext::server_call_context() {
   return call_->server_call_context();
 }
 
+RefCountedPtr<CallSpineInterface> CallContext::MakeCallSpine(
+    CallArgs call_args) {
+  return call_->MakeCallSpine(std::move(call_args));
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // PublishMetadataArray
 
@@ -2816,6 +2825,80 @@ class ClientPromiseBasedCall final : public PromiseBasedCall {
 
   std::string DebugTag() const override {
     return absl::StrFormat("CLIENT_CALL[%p]: ", this);
+  }
+
+  RefCountedPtr<CallSpineInterface> MakeCallSpine(CallArgs call_args) final {
+    class WrappingCallSpine final : public CallSpineInterface {
+     public:
+      WrappingCallSpine(ClientPromiseBasedCall* call,
+                        ClientMetadataHandle metadata)
+          : call_(call) {
+        call_->InternalRef("call-spine");
+        SpawnInfallible("send_client_initial_metadata",
+                        [this, metadata = std::move(metadata)]() mutable {
+                          return Map(client_initial_metadata_.sender.Push(
+                                         std::move(metadata)),
+                                     [](bool) { return Empty{}; });
+                        });
+        SpawnInfallible("monitor_cancellation", [this]() {
+          return Seq(cancel_error_.Wait(),
+                     [this](ServerMetadataHandle trailing_metadata) {
+                       return Map(server_trailing_metadata_.sender.Push(
+                                      std::move(trailing_metadata)),
+                                  [](bool) { return Empty{}; });
+                     });
+        });
+      }
+
+      ~WrappingCallSpine() { call_->InternalUnref("call-spine"); }
+
+      Pipe<ClientMetadataHandle>& client_initial_metadata() override {
+        return client_initial_metadata_;
+      }
+
+      Pipe<MessageHandle>& client_to_server_messages() override {
+        return call_->client_to_server_messages_;
+      }
+
+      Pipe<ServerMetadataHandle>& server_initial_metadata() override {
+        return call_->server_initial_metadata_;
+      }
+
+      Pipe<MessageHandle>& server_to_client_messages() override {
+        return call_->server_to_client_messages_;
+      }
+
+      Pipe<ServerMetadataHandle>& server_trailing_metadata() override {
+        return server_trailing_metadata_;
+      }
+
+      Latch<ServerMetadataHandle>& cancel_latch() override {
+        return cancel_error_;
+      }
+
+      Party& party() override { return *call_; }
+
+      void IncrementRefCount() override { refs_.Ref(); }
+      void Unref() override {
+        if (0 == refs_.Unref()) delete this;
+      }
+
+     private:
+      RefCount refs_;
+      ClientPromiseBasedCall* const call_;
+      std::atomic<bool> sent_trailing_metadata_{false};
+      Pipe<ClientMetadataHandle> client_initial_metadata_{call_->arena()};
+      Pipe<ServerMetadataHandle> server_trailing_metadata_{call_->arena()};
+      Latch<ServerMetadataHandle> cancel_error_;
+    };
+    GPR_ASSERT(call_args.server_initial_metadata ==
+               &server_initial_metadata_.sender);
+    GPR_ASSERT(call_args.client_to_server_messages ==
+               &client_to_server_messages_.receiver);
+    GPR_ASSERT(call_args.server_to_client_messages ==
+               &server_to_client_messages_.sender);
+    return MakeRefCounted<WrappingCallSpine>(
+        this, std::move(call_args.client_initial_metadata));
   }
 
  private:

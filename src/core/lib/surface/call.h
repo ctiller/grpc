@@ -131,6 +131,13 @@ class CallContext {
   void set_traced(bool traced) { traced_ = traced; }
   bool traced() const { return traced_; }
 
+  // TEMPORARY HACK
+  // Create a call spine object for this call.
+  // Said object should only be created once.
+  // Allows interop between the v2 call stack and the v3 (which is required by
+  // transports).
+  RefCountedPtr<CallSpineInterface> MakeCallSpine(CallArgs call_args);
+
  private:
   friend class PromiseBasedCall;
   // Call final info.

@@ -882,13 +882,23 @@ grpc_channel_filter MakeConnectedFilter() {
   };
 }
 
-ArenaPromise<ServerMetadataHandle> MakeTransportCallPromise(
-    Transport*, CallArgs, NextPromiseFactory) {
-  Crash("unimplemented");
+ArenaPromise<ServerMetadataHandle> MakeClientTransportCallPromise(
+    Transport* transport, CallArgs call_args, NextPromiseFactory) {
+  auto spine = GetContext<CallContext>()->MakeCallSpine(std::move(call_args));
+  transport->client_transport()->StartCall(CallHandler{spine});
+  return Map(spine->server_trailing_metadata().receiver.Next(),
+             [](NextResult<ServerMetadataHandle> r) {
+               if (r.has_value()) return std::move(r.value());
+               auto m = GetContext<Arena>()->MakePooled<ServerMetadata>(
+                   GetContext<Arena>());
+               m->Set(GrpcStatusMetadata(), GRPC_STATUS_CANCELLED);
+               m->Set(GrpcCallWasCancelled(), true);
+               return m;
+             });
 }
 
-const grpc_channel_filter kPromiseBasedTransportFilter =
-    MakeConnectedFilter<MakeTransportCallPromise>();
+const grpc_channel_filter kClientPromiseBasedTransportFilter =
+    MakeConnectedFilter<MakeClientTransportCallPromise>();
 
 #ifdef GRPC_EXPERIMENT_IS_INCLUDED_PROMISE_BASED_CLIENT_CALL
 const grpc_channel_filter kClientEmulatedFilter =
@@ -923,12 +933,13 @@ void RegisterConnectedChannel(CoreConfiguration::Builder* builder) {
   // Option 1, and our ideal: the transport supports promise based calls,
   // and so we simply use the transport directly.
   builder->channel_init()
-      ->RegisterFilter(GRPC_CLIENT_SUBCHANNEL, &kPromiseBasedTransportFilter)
+      ->RegisterFilter(GRPC_CLIENT_SUBCHANNEL,
+                       &kClientPromiseBasedTransportFilter)
       .Terminal()
       .If(TransportSupportsPromiseBasedCalls);
   builder->channel_init()
       ->RegisterFilter(GRPC_CLIENT_DIRECT_CHANNEL,
-                       &kPromiseBasedTransportFilter)
+                       &kClientPromiseBasedTransportFilter)
       .Terminal()
       .If(TransportSupportsPromiseBasedCalls);
 
