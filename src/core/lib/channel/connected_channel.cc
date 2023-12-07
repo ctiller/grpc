@@ -931,10 +931,6 @@ void RegisterConnectedChannel(CoreConfiguration::Builder* builder) {
                        &kPromiseBasedTransportFilter)
       .Terminal()
       .If(TransportSupportsPromiseBasedCalls);
-  builder->channel_init()
-      ->RegisterFilter(GRPC_SERVER_CHANNEL, &kPromiseBasedTransportFilter)
-      .Terminal()
-      .If(TransportSupportsPromiseBasedCalls);
 
   // Option 2: the transport does not support promise based calls.
   builder->channel_init()

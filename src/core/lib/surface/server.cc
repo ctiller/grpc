@@ -1379,7 +1379,7 @@ void Server::ChannelData::InitTransport(RefCountedPtr<Server> server,
     transport->server_transport()->SetAcceptFunction(
         [this](ClientMetadata& metadata) {
           SetRegisteredMethodOnMetadata(metadata);
-          auto call = MakeServerCall();
+          auto call = MakeServerCall(server_.get(), channel_.get());
           InitCall(call);
           return CallInitiator(std::move(call));
         });

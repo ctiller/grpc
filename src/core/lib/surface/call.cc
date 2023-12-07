@@ -3670,6 +3670,17 @@ class ServerCallSpine final : public CallSpineInterface,
   bool failed_before_recv_message() const final { Crash("unimplemented"); }
 
   ServerCallContext* server_call_context() override { return this; }
+  const void* server_stream_data() override { Crash("unimplemented"); }
+  void PublishInitialMetadata(
+      ClientMetadataHandle metadata,
+      grpc_metadata_array* publish_initial_metadata) override {
+    Crash("unimplemented");
+  }
+  ArenaPromise<ServerMetadataHandle> MakeTopOfServerCallPromise(
+      CallArgs call_args, grpc_completion_queue* cq,
+      absl::FunctionRef<void(grpc_call* call)> publish) override {
+    Crash("unimplemented");
+  }
 
  private:
   void CommitBatch(const grpc_op* ops, size_t nops, void* notify_tag,
@@ -3935,6 +3946,16 @@ void ServerCallSpine::CommitBatch(const grpc_op* ops, size_t nops,
           });
         });
   }
+}
+
+RefCountedPtr<CallSpineInterface> MakeServerCall(Server* server,
+                                                 Channel* channel) {
+  const auto initial_size = channel->CallSizeEstimate();
+  global_stats().IncrementCallInitialSize(initial_size);
+  auto alloc = Arena::CreateWithAlloc(initial_size, sizeof(ServerCallSpine),
+                                      channel->allocator());
+  auto* call = new (alloc.second) ServerCallSpine(server, channel, alloc.first);
+  return RefCountedPtr<ServerCallSpine>(call);
 }
 
 }  // namespace grpc_core
