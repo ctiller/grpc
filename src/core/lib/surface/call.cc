@@ -2209,12 +2209,12 @@ class PromiseBasedCall : public BasicPromiseBasedCall {
   using Call::arena;
 
  protected:
-  class ScopedActivity : public BasicPromiseBasedCall::ScopedActivity,
-                         public BatchBuilder,
-                         public promise_detail::Context<BatchBuilder> {
+  class ScopedContext : public BasicPromiseBasedCall::ScopedContext,
+                        public BatchBuilder,
+                        public promise_detail::Context<BatchBuilder> {
    public:
-    explicit ScopedActivity(PromiseBasedCall* call)
-        : BasicPromiseBasedCall::ScopedActivity(call),
+    explicit ScopedContext(PromiseBasedCall* call)
+        : BasicPromiseBasedCall::ScopedContext(call),
           BatchBuilder(&call->batch_payload_),
           promise_detail::Context<BatchBuilder>(this) {}
   };
@@ -3756,13 +3756,16 @@ class ServerCallSpine final : public CallSpineInterface,
   const void* server_stream_data() override { Crash("unimplemented"); }
   void PublishInitialMetadata(
       ClientMetadataHandle metadata,
-      grpc_metadata_array* publish_initial_metadata) override {
-    Crash("unimplemented");
-  }
+      grpc_metadata_array* publish_initial_metadata) override;
   ArenaPromise<ServerMetadataHandle> MakeTopOfServerCallPromise(
       CallArgs call_args, grpc_completion_queue* cq,
       absl::FunctionRef<void(grpc_call* call)> publish) override {
     Crash("unimplemented");
+  }
+
+  bool RunParty() override {
+    ScopedContext ctx(this);
+    return Party::RunParty();
   }
 
  private:
@@ -3784,6 +3787,7 @@ class ServerCallSpine final : public CallSpineInterface,
   Latch<ServerMetadataHandle> cancel_latch_;
   Latch<void> read_messages_;
   grpc_byte_buffer** recv_message_ = nullptr;
+  ClientMetadataHandle client_initial_metadata_stored_;
 };
 
 ServerCallSpine::ServerCallSpine(Server* server, Channel* channel, Arena* arena)
@@ -3801,6 +3805,17 @@ ServerCallSpine::ServerCallSpine(Server* server, Channel* channel, Arena* arena)
             return args;
           }()) {
   channel->channel_stack()->InitServerCallSpine(this);
+}
+
+void ServerCallSpine::PublishInitialMetadata(
+    ClientMetadataHandle metadata,
+    grpc_metadata_array* publish_initial_metadata) {
+  if (grpc_call_trace.enabled()) {
+    gpr_log(GPR_INFO, "%s[call] PublishInitialMetadata: %s", DebugTag().c_str(),
+            metadata->DebugString().c_str());
+  }
+  PublishMetadataArray(metadata.get(), publish_initial_metadata, false);
+  client_initial_metadata_stored_ = std::move(metadata);
 }
 
 grpc_call_error ServerCallSpine::StartBatch(const grpc_op* ops, size_t nops,
