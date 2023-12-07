@@ -1999,7 +1999,7 @@ class BasicPromiseBasedCall : public Call,
     }
   }
 
-  ~BasicPromiseBasedCall() {
+  ~BasicPromiseBasedCall() override {
     if (cq_) GRPC_CQ_INTERNAL_UNREF(cq_, "bind");
     for (int i = 0; i < GRPC_CONTEXT_COUNT; i++) {
       if (context_[i].destroy) {
@@ -3710,8 +3710,8 @@ auto MaybeOp(const grpc_op* ops, uint8_t idx, SetupFn setup) {
 
     Impl(const Impl&) = delete;
     Impl& operator=(const Impl&) = delete;
-    Impl(Impl&&) = default;
-    Impl& operator=(Impl&&) = default;
+    Impl(Impl&&) noexcept = default;
+    Impl& operator=(Impl&&) noexcept = default;
 
     Poll<StatusFlag> operator()() {
       if (absl::holds_alternative<Dismissed>(state_)) return Success{};
@@ -3744,9 +3744,8 @@ class WaitForCqEndOp {
   Poll<Empty> operator()() {
     if (auto* n = absl::get_if<NotStarted>(&state_)) {
       if (n->is_closure) {
-        grpc_core::ExecCtx::Run(DEBUG_LOCATION,
-                                static_cast<grpc_closure*>(n->tag),
-                                std::move(n->error));
+        ExecCtx::Run(DEBUG_LOCATION, static_cast<grpc_closure*>(n->tag),
+                     std::move(n->error));
         return Empty{};
       } else {
         auto not_started = std::move(*n);
