@@ -3775,6 +3775,10 @@ class ServerCallSpine final : public CallSpineInterface,
                    bool is_notify_tag_closure);
   StatusFlag FinishRecvMessage(NextResult<MessageHandle> result);
 
+  std::string DebugTag() const override {
+    return absl::StrFormat("SERVER_CALL_SPINE[%p]: ", this);
+  }
+
   // Initial metadata from client to server
   Pipe<ClientMetadataHandle> client_initial_metadata_;
   // Initial metadata from server to client
