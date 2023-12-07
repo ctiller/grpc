@@ -415,7 +415,7 @@ class CallInitiator {
   }
 
  private:
-  const RefCountedPtr<CallSpine> spine_;
+  const RefCountedPtr<CallSpineInterface> spine_;
 };
 
 class CallHandler {
@@ -471,7 +471,7 @@ class CallHandler {
   }
 
  private:
-  const RefCountedPtr<CallSpine> spine_;
+  const RefCountedPtr<CallSpineInterface> spine_;
 };
 
 struct CallInitiatorAndHandler {

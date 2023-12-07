@@ -2880,7 +2880,7 @@ class ClientPromiseBasedCall final : public PromiseBasedCall {
 
       void IncrementRefCount() override { refs_.Ref(); }
       void Unref() override {
-        if (0 == refs_.Unref()) delete this;
+        if (refs_.Unref()) delete this;
       }
 
      private:
