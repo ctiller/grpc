@@ -3986,6 +3986,7 @@ void ServerCallSpine::CommitBatch(const grpc_op* ops, size_t nops,
                         Slice(grpc_slice_copy(*details)));
         }
         return [this, metadata = std::move(metadata)]() mutable {
+          server_to_client_messages_.sender.Close();
           return Map(server_trailing_metadata_.sender.Push(std::move(metadata)),
                      [](bool r) { return StatusFlag(r); });
         };
