@@ -455,7 +455,7 @@ class CallHandler {
 
   auto PushServerTrailingMetadata(ClientMetadataHandle md) {
     GPR_DEBUG_ASSERT(Activity::current() == &spine_->party());
-    return Map(spine_->server_initial_metadata().sender.Push(std::move(md)),
+    return Map(spine_->server_trailing_metadata().sender.Push(std::move(md)),
                [](bool ok) { return StatusFlag(ok); });
   }
 

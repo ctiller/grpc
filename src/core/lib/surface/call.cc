@@ -2845,6 +2845,7 @@ class ClientPromiseBasedCall final : public PromiseBasedCall {
         SpawnInfallible("monitor_cancellation", [this]() {
           return Seq(cancel_error_.Wait(),
                      [this](ServerMetadataHandle trailing_metadata) {
+                       Crash("here");
                        return Map(server_trailing_metadata_.sender.Push(
                                       std::move(trailing_metadata)),
                                   [](bool) { return Empty{}; });
