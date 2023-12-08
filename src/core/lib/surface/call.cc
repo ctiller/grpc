@@ -3810,6 +3810,7 @@ ServerCallSpine::ServerCallSpine(Server* server, Channel* channel, Arena* arena)
             args.send_deadline = Timestamp::InfFuture();
             return args;
           }()) {
+  global_stats().IncrementServerCallsCreated();
   channel->channel_stack()->InitServerCallSpine(this);
 }
 
@@ -3939,6 +3940,7 @@ void ServerCallSpine::CommitBatch(const grpc_op* ops, size_t nops,
     const grpc_op& op = ops[op_idx];
     got_ops[op.op] = op_idx;
   }
+  if (!is_notify_tag_closure) grpc_cq_begin_op(cq(), notify_tag);
   auto send_initial_metadata = MaybeOp(
       ops, got_ops[GRPC_OP_SEND_INITIAL_METADATA], [this](const grpc_op& op) {
         auto metadata = arena()->MakePooled<ServerMetadata>(arena());
