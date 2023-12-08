@@ -3792,7 +3792,6 @@ class ServerCallSpine final : public CallSpineInterface,
   Pipe<ServerMetadataHandle> server_trailing_metadata_;
   // Latch that can be set to terminate the call
   Latch<ServerMetadataHandle> cancel_latch_;
-  Latch<void> read_messages_;
   grpc_byte_buffer** recv_message_ = nullptr;
   ClientMetadataHandle client_initial_metadata_stored_;
 };
@@ -3912,7 +3911,6 @@ StatusFlag ServerCallSpine::FinishRecvMessage(
     }
     return Success{};
   }
-  if (!read_messages_.is_set()) read_messages_.Set();
   if (result.cancelled()) {
     if (grpc_call_trace.enabled()) {
       gpr_log(GPR_INFO,
@@ -4012,33 +4010,21 @@ void ServerCallSpine::CommitBatch(const grpc_op* ops, size_t nops,
     auto recv_trailing_metadata = MaybeOp(
         ops, got_ops[GRPC_OP_RECV_CLOSE_ON_SERVER], [this](const grpc_op& op) {
           return [this, cancelled = op.data.recv_close_on_server.cancelled]() {
-            return Seq(
-                read_messages_.Wait(),
-                Map(server_trailing_metadata_.receiver.Next(),
-                    [cancelled](
-                        NextResult<ServerMetadataHandle> result) -> Success {
-                      ServerMetadataHandle md;
-                      if (!result.has_value()) {
-                        md = GetContext<Arena>()->MakePooled<ServerMetadata>(
-                            GetContext<Arena>());
-                        md->Set(GrpcStatusMetadata(), GRPC_STATUS_CANCELLED);
-                        md->Set(GrpcCallWasCancelled(), true);
-                      } else {
-                        md = std::move(*result);
-                      }
-                      *cancelled =
-                          md->get(GrpcCallWasCancelled()).value_or(true) ? 1
-                                                                         : 0;
-                      Crash("return metadata here");
-                      return Success{};
-                    }));
+            return Map(server_trailing_metadata_.receiver.AwaitClosed(),
+                       [cancelled](bool result) -> Success {
+                         *cancelled = result ? 1 : 0;
+                         Crash("return metadata here");
+                         return Success{};
+                       });
           };
         });
     SpawnInfallible(
-        "final-batch", [primary_ops = std::move(primary_ops),
-                        is_notify_tag_closure, notify_tag, this]() mutable {
-          return Seq(std::move(primary_ops),
-                     [is_notify_tag_closure, notify_tag, this](StatusFlag r) {
+        "final-batch",
+        [primary_ops = std::move(primary_ops),
+         recv_trailing_metadata = std::move(recv_trailing_metadata),
+         is_notify_tag_closure, notify_tag, this]() mutable {
+          return Seq(std::move(primary_ops), std::move(recv_trailing_metadata),
+                     [is_notify_tag_closure, notify_tag, this](StatusFlag) {
                        return WaitForCqEndOp(is_notify_tag_closure, notify_tag,
                                              absl::OkStatus(), cq());
                      });
