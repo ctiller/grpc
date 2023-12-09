@@ -1695,7 +1695,6 @@ libs:
   - src/core/lib/event_engine/default_event_engine_factory.cc
   - src/core/lib/event_engine/event_engine.cc
   - src/core/lib/event_engine/forkable.cc
-  - src/core/lib/event_engine/memory_allocator.cc
   - src/core/lib/event_engine/posix_engine/ev_epoll1_linux.cc
   - src/core/lib/event_engine/posix_engine/ev_poll_posix.cc
   - src/core/lib/event_engine/posix_engine/event_poller_posix_default.cc
@@ -2776,7 +2775,6 @@ libs:
   - src/core/lib/event_engine/default_event_engine_factory.cc
   - src/core/lib/event_engine/event_engine.cc
   - src/core/lib/event_engine/forkable.cc
-  - src/core/lib/event_engine/memory_allocator.cc
   - src/core/lib/event_engine/posix_engine/ev_epoll1_linux.cc
   - src/core/lib/event_engine/posix_engine/ev_poll_posix.cc
   - src/core/lib/event_engine/posix_engine/event_poller_posix_default.cc
@@ -4820,7 +4818,6 @@ libs:
   - src/core/lib/event_engine/default_event_engine_factory.cc
   - src/core/lib/event_engine/event_engine.cc
   - src/core/lib/event_engine/forkable.cc
-  - src/core/lib/event_engine/memory_allocator.cc
   - src/core/lib/event_engine/posix_engine/ev_epoll1_linux.cc
   - src/core/lib/event_engine/posix_engine/ev_poll_posix.cc
   - src/core/lib/event_engine/posix_engine/event_poller_posix_default.cc
@@ -7336,7 +7333,6 @@ targets:
   - src/core/ext/upb-gen/google/protobuf/descriptor.upb_minitable.c
   - src/core/ext/upb-gen/google/rpc/status.upb_minitable.c
   - src/core/lib/debug/trace.cc
-  - src/core/lib/event_engine/memory_allocator.cc
   - src/core/lib/experiments/config.cc
   - src/core/lib/experiments/experiments.cc
   - src/core/lib/gprpp/status_helper.cc
@@ -9321,7 +9317,6 @@ targets:
   - src/core/ext/upb-gen/google/protobuf/descriptor.upb_minitable.c
   - src/core/ext/upb-gen/google/rpc/status.upb_minitable.c
   - src/core/lib/debug/trace.cc
-  - src/core/lib/event_engine/memory_allocator.cc
   - src/core/lib/experiments/config.cc
   - src/core/lib/experiments/experiments.cc
   - src/core/lib/gprpp/status_helper.cc
@@ -9496,7 +9491,6 @@ targets:
   - src/core/ext/upb-gen/google/protobuf/descriptor.upb_minitable.c
   - src/core/ext/upb-gen/google/rpc/status.upb_minitable.c
   - src/core/lib/debug/trace.cc
-  - src/core/lib/event_engine/memory_allocator.cc
   - src/core/lib/experiments/config.cc
   - src/core/lib/experiments/experiments.cc
   - src/core/lib/gprpp/status_helper.cc
@@ -11035,7 +11029,6 @@ targets:
   - src/core/ext/upb-gen/google/protobuf/descriptor.upb_minitable.c
   - src/core/ext/upb-gen/google/rpc/status.upb_minitable.c
   - src/core/lib/debug/trace.cc
-  - src/core/lib/event_engine/memory_allocator.cc
   - src/core/lib/experiments/config.cc
   - src/core/lib/experiments/experiments.cc
   - src/core/lib/gprpp/status_helper.cc
@@ -11667,7 +11660,6 @@ targets:
   - src/core/ext/upb-gen/google/protobuf/descriptor.upb_minitable.c
   - src/core/ext/upb-gen/google/rpc/status.upb_minitable.c
   - src/core/lib/debug/trace.cc
-  - src/core/lib/event_engine/memory_allocator.cc
   - src/core/lib/experiments/config.cc
   - src/core/lib/experiments/experiments.cc
   - src/core/lib/gprpp/status_helper.cc
@@ -17189,7 +17181,6 @@ targets:
   - src/core/lib/event_engine/default_event_engine_factory.cc
   - src/core/lib/event_engine/event_engine.cc
   - src/core/lib/event_engine/forkable.cc
-  - src/core/lib/event_engine/memory_allocator.cc
   - src/core/lib/event_engine/posix_engine/ev_epoll1_linux.cc
   - src/core/lib/event_engine/posix_engine/ev_poll_posix.cc
   - src/core/lib/event_engine/posix_engine/event_poller_posix_default.cc
