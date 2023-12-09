@@ -82,7 +82,8 @@ struct TryJoinTraits {
   }
   template <typename R, typename T>
   static R EarlyReturn(const ValueOrFailure<T>& x) {
-    return StatusCast<R>(x);
+    GPR_ASSERT(!x.ok());
+    return absl::CancelledError();
   }
   template <typename... A>
   static auto FinalReturn(A&&... a) {

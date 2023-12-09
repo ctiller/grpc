@@ -706,6 +706,7 @@ grpc_cc_library(
         "join_state",
         "map",
         "poll",
+        "status_flag",
         "//:gpr_platform",
     ],
 )
@@ -801,6 +802,7 @@ grpc_cc_library(
         "promise_like",
         "promise_status",
         "seq_state",
+        "status_flag",
         "//:gpr_platform",
     ],
 )
