@@ -2000,7 +2000,7 @@ class BasicPromiseBasedCall : public Call,
     }
   }
 
-  ~BasicPromiseBasedCall() {
+  ~BasicPromiseBasedCall() override {
     if (cq_) GRPC_CQ_INTERNAL_UNREF(cq_, "bind");
     for (int i = 0; i < GRPC_CONTEXT_COUNT; i++) {
       if (context_[i].destroy) {
@@ -2853,7 +2853,7 @@ class ClientPromiseBasedCall final : public PromiseBasedCall {
         });
       }
 
-      ~WrappingCallSpine() { call_->InternalUnref("call-spine"); }
+      ~WrappingCallSpine() override { call_->InternalUnref("call-spine"); }
 
       Pipe<ClientMetadataHandle>& client_initial_metadata() override {
         return client_initial_metadata_;
@@ -3862,8 +3862,8 @@ auto MaybeOp(const grpc_op* ops, uint8_t idx, SetupFn setup) {
 
     Impl(const Impl&) = delete;
     Impl& operator=(const Impl&) = delete;
-    Impl(Impl&&) = default;
-    Impl& operator=(Impl&&) = default;
+    Impl(Impl&&) noexcept = default;
+    Impl& operator=(Impl&&) noexcept = default;
 
     Poll<StatusFlag> operator()() {
       if (absl::holds_alternative<Dismissed>(state_)) return Success{};
