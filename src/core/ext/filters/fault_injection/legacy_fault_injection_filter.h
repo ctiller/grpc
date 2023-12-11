@@ -68,4 +68,4 @@ class LegacyFaultInjectionFilter : public ChannelFilter {
 
 }  // namespace grpc_core
 
-#endif  // GRPC_SRC_CORE_EXT_FILTERS_FAULT_INJECTION_FAULT_INJECTION_FILTER_H
+#endif  // GRPC_SRC_CORE_EXT_FILTERS_FAULT_INJECTION_LEGACY_FAULT_INJECTION_FILTER_H
