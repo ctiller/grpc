@@ -2853,7 +2853,7 @@ class ClientPromiseBasedCall final : public PromiseBasedCall {
         });
       }
 
-      ~WrappingCallSpine() { call_->InternalUnref("call-spine"); }
+      ~WrappingCallSpine() override { call_->InternalUnref("call-spine"); }
 
       Pipe<ClientMetadataHandle>& client_initial_metadata() override {
         return client_initial_metadata_;
