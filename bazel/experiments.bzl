@@ -50,6 +50,7 @@ EXPERIMENT_ENABLES = {
     "tcp_rcv_lowat": "tcp_rcv_lowat",
     "trace_record_callops": "trace_record_callops",
     "unconstrained_max_quota_buffer_size": "unconstrained_max_quota_buffer_size",
+    "v3_fault": "v3_fault",
     "work_serializer_clears_time_cache": "work_serializer_clears_time_cache",
     "work_serializer_dispatch": "work_serializer_dispatch",
     "write_size_policy": "write_size_policy",

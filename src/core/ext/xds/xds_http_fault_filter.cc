@@ -38,6 +38,7 @@
 
 #include "src/core/ext/filters/fault_injection/fault_injection_filter.h"
 #include "src/core/ext/filters/fault_injection/fault_injection_service_config_parser.h"
+#include "src/core/ext/filters/fault_injection/legacy_fault_injection_filter.h"
 #include "src/core/ext/xds/xds_common_types.h"
 #include "src/core/ext/xds/xds_http_filters.h"
 #include "src/core/lib/channel/channel_args.h"
@@ -216,7 +217,11 @@ XdsHttpFaultFilter::GenerateFilterConfigOverride(
 }
 
 const grpc_channel_filter* XdsHttpFaultFilter::channel_filter() const {
-  return &FaultInjectionFilter::kFilter;
+  if (IsV3FaultEnabled()) {
+    return &FaultInjectionFilter::kFilter;
+  } else {
+    return &LegacyFaultInjectionFilter::kFilter;
+  }
 }
 
 ChannelArgs XdsHttpFaultFilter::ModifyChannelArgs(

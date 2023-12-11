@@ -4050,10 +4050,12 @@ grpc_cc_library(
     srcs = [
         "ext/filters/fault_injection/fault_injection_filter.cc",
         "ext/filters/fault_injection/fault_injection_service_config_parser.cc",
+        "ext/filters/fault_injection/legacy_fault_injection_filter.cc",
     ],
     hdrs = [
         "ext/filters/fault_injection/fault_injection_filter.h",
         "ext/filters/fault_injection/fault_injection_service_config_parser.h",
+        "ext/filters/fault_injection/legacy_fault_injection_filter.h",
     ],
     external_deps = [
         "absl/base:core_headers",
