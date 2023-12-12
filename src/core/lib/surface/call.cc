@@ -2990,7 +2990,8 @@ void ClientPromiseBasedCall::CommitBatch(const grpc_op* ops, size_t nops,
         StartRecvMessage(
             op, completion,
             [this]() {
-              return server_initial_metadata_.receiver.AwaitClosed();
+              return Race(server_initial_metadata_.receiver.AwaitClosed(),
+                          server_to_client_messages_.receiver.AwaitClosed());
             },
             &server_to_client_messages_.receiver, false, spawner);
         break;
