@@ -214,8 +214,8 @@ void ClientTransport::AbortWithError() {
   }
   MutexLock lock(&mu_);
   for (const auto& pair : stream_map_) {
-    if (!pair.second->IsClose()) {
-      pair.second->MarkClose();
+    if (!pair.second.IsClose()) {
+      pair.second.MarkClose();
     }
   }
 }
