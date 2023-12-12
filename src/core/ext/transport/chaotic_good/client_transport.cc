@@ -38,7 +38,9 @@
 #include "src/core/lib/promise/activity.h"
 #include "src/core/lib/promise/event_engine_wakeup_scheduler.h"
 #include "src/core/lib/promise/loop.h"
+#include "src/core/lib/promise/map.h"
 #include "src/core/lib/promise/try_join.h"
+#include "src/core/lib/promise/try_seq.h"
 #include "src/core/lib/resource_quota/arena.h"
 #include "src/core/lib/resource_quota/resource_quota.h"
 #include "src/core/lib/slice/slice.h"
@@ -49,51 +51,39 @@
 namespace grpc_core {
 namespace chaotic_good {
 
-ClientTransport::ClientTransport(
-    std::unique_ptr<PromiseEndpoint> control_endpoint,
-    std::unique_ptr<PromiseEndpoint> data_endpoint,
-    std::shared_ptr<grpc_event_engine::experimental::EventEngine> event_engine)
-    : outgoing_frames_(MpscReceiver<ClientFrame>(4)),
-      control_endpoint_(std::move(control_endpoint)),
-      data_endpoint_(std::move(data_endpoint)),
-      control_endpoint_write_buffer_(SliceBuffer()),
-      data_endpoint_write_buffer_(SliceBuffer()),
-      hpack_compressor_(std::make_unique<HPackCompressor>()),
-      hpack_parser_(std::make_unique<HPackParser>()),
-      memory_allocator_(
-          ResourceQuota::Default()->memory_quota()->CreateMemoryAllocator(
-              "client_transport")),
-      arena_(MakeScopedArena(1024, &memory_allocator_)),
-      context_(arena_.get()),
-      event_engine_(event_engine) {
-  auto write_loop = Loop([this] {
+namespace {
+const uint8_t kZeros[64] = {};
+}
+
+auto ClientTransport::TransportWriteLoop() {
+  return Loop([this] {
     return TrySeq(
         // Get next outgoing frame.
-        this->outgoing_frames_.Next(),
-        // Construct data buffers that will be sent to the endpoints.
-        [this](ClientFrame client_frame) {
-          MatchMutable(
-              &client_frame,
-              [this](ClientFragmentFrame* frame) mutable {
-                control_endpoint_write_buffer_.Append(
-                    frame->Serialize(hpack_compressor_.get()));
-                if (frame->message != nullptr) {
-                  std::string message_padding(frame->message_padding, '0');
-                  Slice slice(grpc_slice_from_cpp_string(message_padding));
-                  // Append message padding to data_endpoint_buffer.
-                  data_endpoint_write_buffer_.Append(std::move(slice));
-                  // Append message payload to data_endpoint_buffer.
-                  frame->message->payload()->MoveFirstNBytesIntoSliceBuffer(
-                      frame->message->payload()->Length(),
-                      data_endpoint_write_buffer_);
-                }
-              },
-              [this](CancelFrame* frame) mutable {
-                control_endpoint_write_buffer_.Append(
-                    frame->Serialize(hpack_compressor_.get()));
-              });
-          return absl::OkStatus();
-        },
+        Map(outgoing_frames_.Next(),
+            // Construct data buffers that will be sent to the endpoints.
+            [this](ClientFrame client_frame) {
+              MatchMutable(
+                  &client_frame,
+                  [this](ClientFragmentFrame* frame) mutable {
+                    control_endpoint_write_buffer_.Append(
+                        frame->Serialize(hpack_compressor_.get()));
+                    if (frame->message != nullptr) {
+                      // Append message padding to data_endpoint_buffer.
+                      data_endpoint_write_buffer_.Append(
+                          Slice::FromStaticBuffer(kZeros,
+                                                  frame->message_padding));
+                      // Append message payload to data_endpoint_buffer.
+                      frame->message->payload()->MoveFirstNBytesIntoSliceBuffer(
+                          frame->message->payload()->Length(),
+                          data_endpoint_write_buffer_);
+                    }
+                  },
+                  [this](CancelFrame* frame) mutable {
+                    control_endpoint_write_buffer_.Append(
+                        frame->Serialize(hpack_compressor_.get()));
+                  });
+              return Success{};
+            }),
         // Write buffers to corresponding endpoints concurrently.
         [this]() {
           return TryJoin(
@@ -109,17 +99,10 @@ ClientTransport::ClientTransport(
           return Continue();
         });
   });
-  writer_ = MakeActivity(
-      // Continuously write next outgoing frames to promise endpoints.
-      std::move(write_loop), EventEngineWakeupScheduler(event_engine_),
-      [this](absl::Status status) {
-        if (!(status.ok() || status.code() == absl::StatusCode::kCancelled)) {
-          this->AbortWithError();
-        }
-      },
-      // Hold Arena in activity for GetContext<Arena> usage.
-      arena_.get());
-  auto read_loop = Loop([this] {
+}
+
+auto ClientTransport::TransportReadLoop() {
+  return Loop([this] {
     return TrySeq(
         // Read frame header from control endpoint.
         // TODO(ladynana): remove memcpy in ReadSlice.
@@ -127,60 +110,224 @@ ClientTransport::ClientTransport(
         // Read different parts of the server frame from control/data endpoints
         // based on frame header.
         [this](Slice read_buffer) mutable {
-          frame_header_ = std::make_shared<FrameHeader>(
-              FrameHeader::Parse(
-                  reinterpret_cast<const uint8_t*>(
-                      GRPC_SLICE_START_PTR(read_buffer.c_slice())))
-                  .value());
+          frame_header_ = FrameHeader::Parse(
+                              reinterpret_cast<const uint8_t*>(
+                                  GRPC_SLICE_START_PTR(read_buffer.c_slice())))
+                              .value();
           // Read header and trailers from control endpoint.
           // Read message padding and message from data endpoint.
           return TryJoin(
-              control_endpoint_->Read(frame_header_->GetFrameLength()),
-              data_endpoint_->Read(frame_header_->message_padding +
-                                   frame_header_->message_length));
+              control_endpoint_->Read(frame_header_.GetFrameLength()),
+              TrySeq(data_endpoint_->Read(frame_header_.message_padding),
+                     data_endpoint_->Read(frame_header_.message_length)));
         },
         // Construct and send the server frame to corresponding stream.
         [this](std::tuple<SliceBuffer, SliceBuffer> ret) mutable {
-          control_endpoint_read_buffer_ = std::move(std::get<0>(ret));
-          // Discard message padding and only keep message in data read buffer.
-          std::get<1>(ret).MoveLastNBytesIntoSliceBuffer(
-              frame_header_->message_length, data_endpoint_read_buffer_);
+          auto& control_endpoint_read_buffer = std::get<0>(ret);
+          auto& data_endpoint_read_buffer = std::get<1>(ret);
           ServerFragmentFrame frame;
-          // Initialized to get this_cpu() info in global_stat().
-          ExecCtx exec_ctx;
           // Deserialize frame from read buffer.
-          absl::BitGen bitgen;
-          auto status = frame.Deserialize(hpack_parser_.get(), *frame_header_,
-                                          absl::BitGenRef(bitgen),
-                                          control_endpoint_read_buffer_);
-          GPR_ASSERT(status.ok());
+          const auto status = frame.Deserialize(&hpack_parser_, frame_header_,
+                                                absl::BitGenRef(bitgen_),
+                                                control_endpoint_read_buffer);
+          const auto sender = [this, &frame,
+                               &status]() -> absl::StatusOr<FrameSender> {
+            if (!status.ok()) return status;
+            MutexLock lock(&mu_);
+            auto it = stream_map_.find(frame.stream_id);
+            if (it == stream_map_.end()) {
+              return absl::InternalError("Stream not found.");
+            }
+            return it->second;
+          }();
           // Move message into frame.
-          frame.message = arena_->MakePooled<Message>(
-              std::move(data_endpoint_read_buffer_), 0);
-          MutexLock lock(&mu_);
-          const uint32_t stream_id = frame_header_->stream_id;
-          return stream_map_[stream_id]->Push(ServerFrame(std::move(frame)));
-        },
-        // Check if send frame to corresponding stream successfully.
-        [](bool ret) -> LoopCtl<absl::Status> {
-          if (ret) {
-            // Send incoming frames successfully.
-            return Continue();
-          } else {
-            return absl::InternalError("Send incoming frames failed.");
+          if (sender.ok()) {
+            frame.message = arena_->MakePooled<Message>(
+                std::move(data_endpoint_read_buffer), 0);
           }
+          return If(
+              sender.ok(),
+              [&sender, &frame]() mutable {
+                return Map(
+                    sender->Push(ServerFrame(std::move(frame))), [](bool ret) {
+                      return ret ? absl::OkStatus() : absl::CancelledError();
+                    });
+              },
+              [&sender]() { return sender.status(); });
+        },
+        []() { return Continue{}; });
+  });
+}
+
+auto ClientTransport::OnTransportActivityDone() {
+  return [this](absl::Status status) {
+    if (!(status.ok() || status.code() == absl::StatusCode::kCancelled)) {
+      this->AbortWithError();
+    }
+  };
+}
+
+ClientTransport::ClientTransport(
+    std::unique_ptr<PromiseEndpoint> control_endpoint,
+    std::unique_ptr<PromiseEndpoint> data_endpoint,
+    std::shared_ptr<grpc_event_engine::experimental::EventEngine> event_engine)
+    : outgoing_frames_(MpscReceiver<ClientFrame>(4)),
+      control_endpoint_(std::move(control_endpoint)),
+      data_endpoint_(std::move(data_endpoint)),
+      control_endpoint_write_buffer_(SliceBuffer()),
+      data_endpoint_write_buffer_(SliceBuffer()),
+      memory_allocator_(
+          ResourceQuota::Default()->memory_quota()->CreateMemoryAllocator(
+              "client_transport")),
+      arena_(MakeScopedArena(1024, &memory_allocator_)),
+      context_(arena_.get()),
+      event_engine_(event_engine),
+      writer_{
+          MakeActivity(
+              // Continuously write next outgoing frames to promise endpoints.
+              TransportWriteLoop(), EventEngineWakeupScheduler(event_engine_),
+              OnTransportActivityDone(),
+              // Hold Arena in activity for GetContext<Arena> usage.
+              arena_.get()),
+      },
+      reader_{MakeActivity(
+          // Continuously read next incoming frames from promise endpoints.
+          TransportReadLoop(), EventEngineWakeupScheduler(event_engine_),
+          OnTransportActivityDone(),
+          // Hold Arena in activity for GetContext<Arena> usage.
+          arena_.get())} {}
+
+ClientTransport::~ClientTransport() {
+  if (writer_ != nullptr) {
+    writer_.reset();
+  }
+  if (reader_ != nullptr) {
+    reader_.reset();
+  }
+}
+
+void ClientTransport::AbortWithError() {
+  // Mark transport as unavailable when the endpoint write/read failed.
+  // Close all the available pipes.
+  if (!outgoing_frames_.IsClosed()) {
+    outgoing_frames_.MarkClosed();
+  }
+  MutexLock lock(&mu_);
+  for (const auto& pair : stream_map_) {
+    if (!pair.second->IsClose()) {
+      pair.second->MarkClose();
+    }
+  }
+}
+
+ClientTransport::NewStream ClientTransport::MakeStream() {
+  FramePipe pipe_server_frames;
+  MutexLock lock(&mu_);
+  const uint32_t stream_id = next_stream_id_++;
+  stream_map_.emplace(stream_id, std::make_shared<FrameSender>(
+                                     std::move(pipe_server_frames.sender)));
+  return NewStream{stream_id, std::move(pipe_server_frames.receiver)};
+}
+
+auto ClientTransport::CallOutboundLoop(uint32_t stream_id,
+                                       CallHandler call_handler) {
+  auto send_fragment = [stream_id,
+                        outgoing_frames = outgoing_frames_.MakeSender()](
+                           ClientFragmentFrame frame) mutable {
+    frame.stream_id = stream_id;
+    return Map(outgoing_frames.Send(std::move(frame)),
+               [](bool success) -> absl::Status {
+                 if (!success) {
+                   // Failed to send outgoing frame.
+                   return absl::UnavailableError("Transport closed.");
+                 }
+                 return absl::OkStatus();
+               });
+  };
+  return TrySeq(
+      // Wait for initial metadata then send it out.
+      call_handler.PullClientInitialMetadata(),
+      [send_fragment](ClientMetadataHandle md) mutable {
+        ClientFragmentFrame frame;
+        frame.headers = std::move(md);
+        return send_fragment(std::move(frame));
+      },
+      // Continuously send client frame with client to server messages.
+      ForEach(OutgoingMessages(call_handler),
+              [send_fragment,
+               aligned_bytes = aligned_bytes_](MessageHandle message) mutable {
+                ClientFragmentFrame frame;
+                // Construct frame header (flags, header_length and
+                // trailer_length will be added in serialization).
+                uint32_t message_length = message->payload()->Length();
+                frame.message_padding = message_length % aligned_bytes;
+                frame.message = std::move(message);
+                return send_fragment(std::move(frame));
+              }),
+      [send_fragment]() mutable {
+        ClientFragmentFrame frame;
+        frame.end_of_stream = true;
+        return send_fragment(std::move(frame));
+      });
+}
+
+auto ClientTransport::CallInboundLoop(CallHandler call_handler,
+                                      FrameReceiver receiver) {
+  return Loop([receiver = std::move(receiver),
+               call_handler = std::move(call_handler)]() mutable {
+    return TrySeq(
+        Map(receiver.Next(),
+            [](absl::optional<ServerFrame> server_frame)
+                -> absl::StatusOr<ServerFrame> {
+              if (!server_frame.has_value()) {
+                return absl::UnavailableError("Transport closed.");
+              }
+              return std::move(*server_frame);
+            }),
+        [call_handler](ServerFrame server_frame) {
+          auto frame = absl::get<ServerFragmentFrame>(std::move(server_frame));
+          bool has_headers = (frame.headers != nullptr);
+          bool has_message = (frame.message != nullptr);
+          bool has_trailers = (frame.trailers != nullptr);
+          return TrySeq(
+              TryJoin(If(
+                          has_headers,
+                          [call_handler,
+                           headers = std::move(frame.headers)]() mutable {
+                            return call_handler.PushServerInitialMetadata(
+                                std::move(headers));
+                          },
+                          [] { return Success{}; }),
+                      If(
+                          has_message,
+                          [call_handler,
+                           message = std::move(frame.message)]() mutable {
+                            return call_handler.PushMessage(std::move(message));
+                          },
+                          [] { return Success{}; })),
+              If(
+                  has_trailers,
+                  [call_handler,
+                   trailers = std::move(frame.trailers)]() mutable {
+                    return Map(
+                        call_handler.PushServerTrailingMetadata(
+                            std::move(trailers)),
+                        [](StatusFlag f) -> LoopCtl<StatusFlag> { return f; });
+                  },
+                  []() -> LoopCtl<StatusFlag> { return Continue{}; }));
         });
   });
-  reader_ = MakeActivity(
-      // Continuously read next incoming frames from promise endpoints.
-      std::move(read_loop), EventEngineWakeupScheduler(event_engine_),
-      [this](absl::Status status) {
-        if (!(status.ok() || status.code() == absl::StatusCode::kCancelled)) {
-          this->AbortWithError();
-        }
-      },
-      // Hold Arena in activity for GetContext<Arena> usage.
-      arena_.get());
+}
+
+void ClientTransport::StartCall(CallHandler call_handler) {
+  // At this point, the connection is set up.
+  // Start sending data frames.
+  NewStream stream = MakeStream();
+  call_handler.SpawnGuarded("outbound_loop",
+                            CallOutboundLoop(stream.stream_id, call_handler));
+  call_handler.SpawnGuarded(
+      "inbound_loop",
+      CallInboundLoop(std::move(call_handler), std::move(stream.receiver)));
 }
 
 }  // namespace chaotic_good

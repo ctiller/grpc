@@ -131,8 +131,8 @@ class MpscReceiver;
 template <typename T>
 class MpscSender {
  public:
-  MpscSender(const MpscSender&) = delete;
-  MpscSender& operator=(const MpscSender&) = delete;
+  MpscSender(const MpscSender&) = default;
+  MpscSender& operator=(const MpscSender&) = default;
   MpscSender(MpscSender&&) noexcept = default;
   MpscSender& operator=(MpscSender&&) noexcept = default;
 

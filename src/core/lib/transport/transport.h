@@ -447,14 +447,15 @@ class CallHandler {
                });
   }
 
-  auto PushServerInitialMetadata(ClientMetadataHandle md) {
+  auto PushServerInitialMetadata(ServerMetadataHandle md) {
     GPR_DEBUG_ASSERT(Activity::current() == &spine_->party());
     return Map(spine_->server_initial_metadata().sender.Push(std::move(md)),
                [](bool ok) { return StatusFlag(ok); });
   }
 
-  auto PushServerTrailingMetadata(ClientMetadataHandle md) {
+  auto PushServerTrailingMetadata(ServerMetadataHandle md) {
     GPR_DEBUG_ASSERT(Activity::current() == &spine_->party());
+    spine_->server_to_client_messages().sender.Close();
     return Map(spine_->server_trailing_metadata().sender.Push(std::move(md)),
                [](bool ok) { return StatusFlag(ok); });
   }
