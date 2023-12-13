@@ -63,8 +63,7 @@
 namespace grpc_core {
 namespace chaotic_good {
 
-class ClientTransport final : public grpc_core::Transport,
-                              public grpc_core::ClientTransport {
+class ClientTransport final : public Transport, public ClientTransport {
  public:
   ClientTransport(std::unique_ptr<PromiseEndpoint> control_endpoint,
                   std::unique_ptr<PromiseEndpoint> data_endpoint,
