@@ -72,7 +72,7 @@ struct TrySeqTraitsWithSfinae<absl::StatusOr<T>> {
   static bool IsOk(const absl::StatusOr<T>& status) { return status.ok(); }
   template <typename R>
   static R ReturnValue(absl::StatusOr<T>&& status) {
-    return StatusCast<R>(status.status());
+    return FailureStatusCast<R>(status.status());
   }
   template <typename F, typename Elem>
   static auto CallSeqFactory(F& f, Elem&& elem, absl::StatusOr<T> value)
@@ -114,7 +114,7 @@ struct TrySeqTraitsWithSfinae<
   static bool IsOk(const T& status) { return IsStatusOk(status); }
   template <typename R>
   static R ReturnValue(T&& status) {
-    return StatusCast<R>(std::move(status));
+    return FailureStatusCast<R>(std::move(status));
   }
   template <typename Result, typename RunNext>
   static Poll<Result> CheckResultAndRunNext(T prior, RunNext run_next) {
@@ -138,7 +138,7 @@ struct TrySeqTraitsWithSfinae<
   template <typename R>
   static R ReturnValue(T&& status) {
     GPR_DEBUG_ASSERT(!IsStatusOk(status));
-    return StatusCast<R>(status.status());
+    return FailureStatusCast<R>(status.status());
   }
   template <typename Result, typename RunNext>
   static Poll<Result> CheckResultAndRunNext(T prior, RunNext run_next) {
@@ -157,7 +157,7 @@ struct TrySeqTraitsWithSfinae<absl::Status> {
   static bool IsOk(const absl::Status& status) { return status.ok(); }
   template <typename R>
   static R ReturnValue(absl::Status&& status) {
-    return StatusCast<R>(std::move(status));
+    return FailureStatusCast<R>(std::move(status));
   }
   template <typename Result, typename RunNext>
   static Poll<Result> CheckResultAndRunNext(absl::Status prior,

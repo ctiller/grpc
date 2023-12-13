@@ -113,9 +113,9 @@ class InterActivityPipe {
       if (center_ != nullptr) center_->MarkClosed();
     }
 
-    bool IsClose() { return center_->IsClosed(); }
+    bool IsClosed() { return center_->IsClosed(); }
 
-    void MarkClose() {
+    void MarkClosed() {
       if (center_ != nullptr) center_->MarkClosed();
     }
 

@@ -467,7 +467,9 @@ class CallHandler {
 
   auto PushMessage(MessageHandle message) {
     GPR_DEBUG_ASSERT(Activity::current() == &spine_->party());
-    return spine_->server_to_client_messages().sender.Push(std::move(message));
+    return Map(
+        spine_->server_to_client_messages().sender.Push(std::move(message)),
+        [](bool ok) { return StatusFlag(ok); });
   }
 
   template <typename Promise>

@@ -103,7 +103,7 @@ class ClientTransport final : public grpc_core::Transport,
 
   NewStream MakeStream();
   auto CallOutboundLoop(uint32_t stream_id, CallHandler call_handler);
-  auto CallInboundLoop(CallHandler call_handler);
+  auto CallInboundLoop(CallHandler call_handler, FrameReceiver receiver);
   auto OnTransportActivityDone();
   auto TransportWriteLoop();
   auto TransportReadLoop();

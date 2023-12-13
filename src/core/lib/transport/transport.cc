@@ -317,8 +317,7 @@ void ForwardCall(CallHandler call_handler, CallInitiator call_initiator,
                           "recv_message",
                           [msg = std::move(msg), call_handler]() mutable {
                             return call_handler.CancelIfFails(
-                                Map(call_handler.PushMessage(std::move(msg)),
-                                    [](bool r) { return StatusFlag(r); }));
+                                call_handler.PushMessage(std::move(msg)));
                           });
                     }),
             ImmediateOkStatus())),

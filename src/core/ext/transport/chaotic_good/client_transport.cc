@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <tuple>
+#include <utility>
 
 #include "absl/random/bit_gen_ref.h"
 #include "absl/random/random.h"
@@ -66,7 +67,7 @@ auto ClientTransport::TransportWriteLoop() {
                   &client_frame,
                   [this](ClientFragmentFrame* frame) mutable {
                     control_endpoint_write_buffer_.Append(
-                        frame->Serialize(hpack_compressor_.get()));
+                        frame->Serialize(&hpack_compressor_));
                     if (frame->message != nullptr) {
                       // Append message padding to data_endpoint_buffer.
                       data_endpoint_write_buffer_.Append(
@@ -80,9 +81,9 @@ auto ClientTransport::TransportWriteLoop() {
                   },
                   [this](CancelFrame* frame) mutable {
                     control_endpoint_write_buffer_.Append(
-                        frame->Serialize(hpack_compressor_.get()));
+                        frame->Serialize(&hpack_compressor_));
                   });
-              return Success{};
+              return Empty{};
             }),
         // Write buffers to corresponding endpoints concurrently.
         [this]() {
@@ -130,15 +131,16 @@ auto ClientTransport::TransportReadLoop() {
           const auto status = frame.Deserialize(&hpack_parser_, frame_header_,
                                                 absl::BitGenRef(bitgen_),
                                                 control_endpoint_read_buffer);
-          const auto sender = [this, &frame,
-                               &status]() -> absl::StatusOr<FrameSender> {
+          using PushType = decltype(std::declval<FrameSender>().Push(
+              std::declval<ServerFrame>()));
+          auto sender = [this, &frame, &status]() -> absl::StatusOr<PushType> {
             if (!status.ok()) return status;
             MutexLock lock(&mu_);
             auto it = stream_map_.find(frame.stream_id);
             if (it == stream_map_.end()) {
               return absl::InternalError("Stream not found.");
             }
-            return it->second;
+            return it->second.Push(std::move(frame));
           }();
           // Move message into frame.
           if (sender.ok()) {
@@ -147,15 +149,14 @@ auto ClientTransport::TransportReadLoop() {
           }
           return If(
               sender.ok(),
-              [&sender, &frame]() mutable {
-                return Map(
-                    sender->Push(ServerFrame(std::move(frame))), [](bool ret) {
-                      return ret ? absl::OkStatus() : absl::CancelledError();
-                    });
+              [&sender]() mutable {
+                return Map(std::move(*sender), [](bool ret) {
+                  return ret ? absl::OkStatus() : absl::CancelledError();
+                });
               },
               [&sender]() { return sender.status(); });
         },
-        []() { return Continue{}; });
+        []() -> LoopCtl<absl::Status> { return Continue{}; });
   });
 }
 
@@ -213,9 +214,9 @@ void ClientTransport::AbortWithError() {
     outgoing_frames_.MarkClosed();
   }
   MutexLock lock(&mu_);
-  for (const auto& pair : stream_map_) {
-    if (!pair.second->IsClose()) {
-      pair.second->MarkClose();
+  for (auto& pair : stream_map_) {
+    if (!pair.second.IsClosed()) {
+      pair.second.MarkClosed();
     }
   }
 }
@@ -224,8 +225,7 @@ ClientTransport::NewStream ClientTransport::MakeStream() {
   FramePipe pipe_server_frames;
   MutexLock lock(&mu_);
   const uint32_t stream_id = next_stream_id_++;
-  stream_map_.emplace(stream_id, std::make_shared<FrameSender>(
-                                     std::move(pipe_server_frames.sender)));
+  stream_map_.emplace(stream_id, std::move(pipe_server_frames.sender));
   return NewStream{stream_id, std::move(pipe_server_frames.receiver)};
 }
 
@@ -297,24 +297,25 @@ auto ClientTransport::CallInboundLoop(CallHandler call_handler,
                             return call_handler.PushServerInitialMetadata(
                                 std::move(headers));
                           },
-                          [] { return Success{}; }),
+                          []() -> StatusFlag { return Success{}; }),
                       If(
                           has_message,
                           [call_handler,
                            message = std::move(frame.message)]() mutable {
                             return call_handler.PushMessage(std::move(message));
                           },
-                          [] { return Success{}; })),
+                          []() -> StatusFlag { return Success{}; })),
               If(
                   has_trailers,
                   [call_handler,
                    trailers = std::move(frame.trailers)]() mutable {
-                    return Map(
-                        call_handler.PushServerTrailingMetadata(
-                            std::move(trailers)),
-                        [](StatusFlag f) -> LoopCtl<StatusFlag> { return f; });
+                    return Map(call_handler.PushServerTrailingMetadata(
+                                   std::move(trailers)),
+                               [](StatusFlag f) -> LoopCtl<absl::Status> {
+                                 return StatusCast<absl::Status>(f);
+                               });
                   },
-                  []() -> LoopCtl<StatusFlag> { return Continue{}; }));
+                  []() -> LoopCtl<absl::Status> { return Continue{}; }));
         });
   });
 }

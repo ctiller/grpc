@@ -78,7 +78,7 @@ struct TryJoinTraits {
   }
   template <typename R>
   static R EarlyReturn(StatusFlag x) {
-    return StatusCast<R>(x);
+    return FailureStatusCast<R>(x);
   }
   template <typename R, typename T>
   static R EarlyReturn(const ValueOrFailure<T>& x) {
