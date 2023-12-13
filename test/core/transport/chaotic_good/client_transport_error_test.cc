@@ -151,9 +151,9 @@ class ClientTransportTest : public ::testing::Test {
 };
 
 TEST_F(ClientTransportTest, AddOneStreamWithWriteFailed) {
-  // Mock write failed and read is pending.
   MockPromiseEndpoint control_endpoint;
   MockPromiseEndpoint data_endpoint;
+  // Mock write failed and read is pending.
   EXPECT_CALL(*control_endpoint.endpoint, Write)
       .WillOnce(
           WithArgs<0>([](absl::AnyInvocable<void(absl::Status)> on_write) {
@@ -200,195 +200,195 @@ TEST_F(ClientTransportTest, AddOneStreamWithWriteFailed) {
   event_engine()->UnsetGlobalHooks();
 }
 
-#if 0
 TEST_F(ClientTransportTest, AddOneStreamWithReadFailed) {
+  MockPromiseEndpoint control_endpoint;
+  MockPromiseEndpoint data_endpoint;
   // Mock read failed.
-  EXPECT_CALL(control_endpoint_, Read)
-      .InSequence(control_endpoint_sequence_)
+  EXPECT_CALL(*control_endpoint.endpoint, Read)
       .WillOnce(WithArgs<0>(
           [](absl::AnyInvocable<void(absl::Status)> on_read) mutable {
             on_read(absl::InternalError("control endpoint read failed."));
             // Return false to mock EventEngine read not finish.
             return false;
           }));
-  InitialClientTransport();
-  ClientMetadataHandle md;
-  auto args = CallArgs{std::move(md),
-                       ClientInitialMetadataOutstandingToken::Empty(),
-                       nullptr,
-                       &pipe_server_intial_metadata_.sender,
-                       &pipe_client_to_server_messages_.receiver,
-                       &pipe_server_to_client_messages_.sender};
-  StrictMock<MockFunction<void(absl::Status)>> on_done;
-  EXPECT_CALL(on_done, Call(absl::OkStatus()));
-  auto activity = MakeActivity(
-      Seq(
-          // Concurrently: write and read messages in client transport.
-          Join(
-              // Add first stream with call_args into client transport.
-              // Expect return trailers "grpc-status:unavailable".
-              AddStream(std::move(args)),
-              // Send messages to call_args.client_to_server_messages pipe.
-              SendClientToServerMessages(pipe_client_to_server_messages_, 1)),
-          // Once complete, verify successful sending and the received value.
-          [](const std::tuple<ServerMetadataHandle, absl::Status>& ret) {
-            EXPECT_EQ(std::get<0>(ret)->get(GrpcStatusMetadata()).value(),
-                      GRPC_STATUS_UNAVAILABLE);
-            EXPECT_TRUE(std::get<1>(ret).ok());
-            return absl::OkStatus();
-          }),
-      EventEngineWakeupScheduler(event_engine_),
-      [&on_done](absl::Status status) { on_done.Call(std::move(status)); });
+  auto transport = MakeOrphanable<ClientTransport>(
+      std::move(control_endpoint.promise_endpoint),
+      std::move(data_endpoint.promise_endpoint), event_engine());
+  auto call = MakeCall(event_engine().get(), 8192, memory_allocator());
+  transport->StartCall(std::move(call.handler));
+  call.initiator.SpawnGuarded("test-send", [initiator =
+                                                call.initiator]() mutable {
+    return TrySeq(initiator.PushClientInitialMetadata(TestInitialMetadata()),
+                  SendClientToServerMessages(initiator, 1));
+  });
+  StrictMock<MockFunction<void()>> on_done;
+  EXPECT_CALL(on_done, Call());
+  call.initiator.SpawnInfallible(
+      "test-read", [&on_done, initiator = call.initiator]() mutable {
+        return Seq(
+            initiator.PullServerInitialMetadata(),
+            [](ValueOrFailure<ServerMetadataHandle> md) {
+              EXPECT_FALSE(md.ok());
+              return Empty{};
+            },
+            initiator.PullServerTrailingMetadata(),
+            [&on_done](ServerMetadataHandle md) {
+              EXPECT_EQ(md->get(GrpcStatusMetadata()).value(),
+                        GRPC_STATUS_UNAVAILABLE);
+              on_done.Call();
+              return Empty{};
+            });
+      });
   // Wait until ClientTransport's internal activities to finish.
-  event_engine_->TickUntilIdle();
-  event_engine_->UnsetGlobalHooks();
+  event_engine()->TickUntilIdle();
+  event_engine()->UnsetGlobalHooks();
 }
 
 TEST_F(ClientTransportTest, AddMultipleStreamWithWriteFailed) {
   // Mock write failed at first stream and second stream's write will fail too.
-  EXPECT_CALL(control_endpoint_, Write)
+  MockPromiseEndpoint control_endpoint;
+  MockPromiseEndpoint data_endpoint;
+  EXPECT_CALL(*control_endpoint.endpoint, Write)
       .Times(1)
       .WillRepeatedly(
           WithArgs<0>([](absl::AnyInvocable<void(absl::Status)> on_write) {
             on_write(absl::InternalError("control endpoint write failed."));
             return false;
           }));
-  EXPECT_CALL(data_endpoint_, Write)
+  EXPECT_CALL(*data_endpoint.endpoint, Write)
       .Times(1)
       .WillRepeatedly(
           WithArgs<0>([](absl::AnyInvocable<void(absl::Status)> on_write) {
             on_write(absl::InternalError("data endpoint write failed."));
             return false;
           }));
-  EXPECT_CALL(control_endpoint_, Read)
-      .InSequence(control_endpoint_sequence_)
-      .WillOnce(Return(false));
-  InitialClientTransport();
-  ClientMetadataHandle first_stream_md;
-  ClientMetadataHandle second_stream_md;
-  auto first_stream_args =
-      CallArgs{std::move(first_stream_md),
-               ClientInitialMetadataOutstandingToken::Empty(),
-               nullptr,
-               &pipe_server_intial_metadata_.sender,
-               &pipe_client_to_server_messages_.receiver,
-               &pipe_server_to_client_messages_.sender};
-  auto second_stream_args =
-      CallArgs{std::move(second_stream_md),
-               ClientInitialMetadataOutstandingToken::Empty(),
-               nullptr,
-               &pipe_server_intial_metadata_second_.sender,
-               &pipe_client_to_server_messages_second_.receiver,
-               &pipe_server_to_client_messages_second_.sender};
-  StrictMock<MockFunction<void(absl::Status)>> on_done;
-  EXPECT_CALL(on_done, Call(absl::OkStatus()));
-  auto activity = MakeActivity(
-      Seq(
-          // Concurrently: write and read messages from client transport.
-          Join(
-              // Add first stream with call_args into client transport.
-              // Expect return trailers "grpc-status:unavailable".
-              AddStream(std::move(first_stream_args)),
-              // Send messages to first stream's
-              // call_args.client_to_server_messages pipe.
-              SendClientToServerMessages(pipe_client_to_server_messages_, 1)),
-          // Once complete, verify successful sending and the received value.
-          [](const std::tuple<ServerMetadataHandle, absl::Status>& ret) {
-            EXPECT_EQ(std::get<0>(ret)->get(GrpcStatusMetadata()).value(),
-                      GRPC_STATUS_UNAVAILABLE);
-            EXPECT_TRUE(std::get<1>(ret).ok());
-            return absl::OkStatus();
-          },
-          Join(
-              // Add second stream with call_args into client transport.
-              // Expect return trailers "grpc-status:unavailable".
-              AddStream(std::move(second_stream_args)),
-              // Send messages to second stream's
-              // call_args.client_to_server_messages pipe.
-              SendClientToServerMessages(pipe_client_to_server_messages_second_,
-                                         1)),
-          // Once complete, verify successful sending and the received value.
-          [](const std::tuple<ServerMetadataHandle, absl::Status>& ret) {
-            EXPECT_EQ(std::get<0>(ret)->get(GrpcStatusMetadata()).value(),
-                      GRPC_STATUS_UNAVAILABLE);
-            EXPECT_TRUE(std::get<1>(ret).ok());
-            return absl::OkStatus();
-          }),
-      EventEngineWakeupScheduler(event_engine_),
-      [&on_done](absl::Status status) { on_done.Call(std::move(status)); });
+  EXPECT_CALL(*control_endpoint.endpoint, Read).WillOnce(Return(false));
+  auto transport = MakeOrphanable<ClientTransport>(
+      std::move(control_endpoint.promise_endpoint),
+      std::move(data_endpoint.promise_endpoint), event_engine());
+  auto call1 = MakeCall(event_engine().get(), 8192, memory_allocator());
+  transport->StartCall(std::move(call1.handler));
+  auto call2 = MakeCall(event_engine().get(), 8192, memory_allocator());
+  transport->StartCall(std::move(call2.handler));
+  call1.initiator.SpawnGuarded("test-send", [initiator =
+                                                 call1.initiator]() mutable {
+    return TrySeq(initiator.PushClientInitialMetadata(TestInitialMetadata()),
+                  SendClientToServerMessages(initiator, 1));
+  });
+  call2.initiator.SpawnGuarded("test-send", [initiator =
+                                                 call2.initiator]() mutable {
+    return TrySeq(initiator.PushClientInitialMetadata(TestInitialMetadata()),
+                  SendClientToServerMessages(initiator, 1));
+  });
+  StrictMock<MockFunction<void()>> on_done1;
+  EXPECT_CALL(on_done1, Call());
+  StrictMock<MockFunction<void()>> on_done2;
+  EXPECT_CALL(on_done2, Call());
+  call1.initiator.SpawnInfallible(
+      "test-read", [&on_done1, initiator = call1.initiator]() mutable {
+        return Seq(
+            initiator.PullServerInitialMetadata(),
+            [](ValueOrFailure<ServerMetadataHandle> md) {
+              EXPECT_FALSE(md.ok());
+              return Empty{};
+            },
+            initiator.PullServerTrailingMetadata(),
+            [&on_done1](ServerMetadataHandle md) {
+              EXPECT_EQ(md->get(GrpcStatusMetadata()).value(),
+                        GRPC_STATUS_UNAVAILABLE);
+              on_done1.Call();
+              return Empty{};
+            });
+      });
+  call2.initiator.SpawnInfallible(
+      "test-read", [&on_done2, initiator = call2.initiator]() mutable {
+        return Seq(
+            initiator.PullServerInitialMetadata(),
+            [](ValueOrFailure<ServerMetadataHandle> md) {
+              EXPECT_FALSE(md.ok());
+              return Empty{};
+            },
+            initiator.PullServerTrailingMetadata(),
+            [&on_done2](ServerMetadataHandle md) {
+              EXPECT_EQ(md->get(GrpcStatusMetadata()).value(),
+                        GRPC_STATUS_UNAVAILABLE);
+              on_done2.Call();
+              return Empty{};
+            });
+      });
   // Wait until ClientTransport's internal activities to finish.
-  event_engine_->TickUntilIdle();
-  event_engine_->UnsetGlobalHooks();
+  event_engine()->TickUntilIdle();
+  event_engine()->UnsetGlobalHooks();
 }
 
 TEST_F(ClientTransportTest, AddMultipleStreamWithReadFailed) {
+  MockPromiseEndpoint control_endpoint;
+  MockPromiseEndpoint data_endpoint;
   // Mock read failed at first stream, and second stream's write will fail too.
-  EXPECT_CALL(control_endpoint_, Read)
-      .InSequence(control_endpoint_sequence_)
+  EXPECT_CALL(*control_endpoint.endpoint, Read)
       .WillOnce(WithArgs<0>(
           [](absl::AnyInvocable<void(absl::Status)> on_read) mutable {
             on_read(absl::InternalError("control endpoint read failed."));
             // Return false to mock EventEngine read not finish.
             return false;
           }));
-  InitialClientTransport();
-  ClientMetadataHandle first_stream_md;
-  ClientMetadataHandle second_stream_md;
-  auto first_stream_args =
-      CallArgs{std::move(first_stream_md),
-               ClientInitialMetadataOutstandingToken::Empty(),
-               nullptr,
-               &pipe_server_intial_metadata_.sender,
-               &pipe_client_to_server_messages_.receiver,
-               &pipe_server_to_client_messages_.sender};
-  auto second_stream_args =
-      CallArgs{std::move(second_stream_md),
-               ClientInitialMetadataOutstandingToken::Empty(),
-               nullptr,
-               &pipe_server_intial_metadata_second_.sender,
-               &pipe_client_to_server_messages_second_.receiver,
-               &pipe_server_to_client_messages_second_.sender};
-  StrictMock<MockFunction<void(absl::Status)>> on_done;
-  EXPECT_CALL(on_done, Call(absl::OkStatus()));
-  auto activity = MakeActivity(
-      Seq(
-          // Concurrently: write and read messages from client transport.
-          Join(
-              // Add first stream with call_args into client transport.
-              AddStream(std::move(first_stream_args)),
-              // Send messages to first stream's
-              // call_args.client_to_server_messages pipe, which will be
-              // eventually sent to control/data endpoints.
-              SendClientToServerMessages(pipe_client_to_server_messages_, 1)),
-          // Once complete, verify successful sending and the received value.
-          [](const std::tuple<ServerMetadataHandle, absl::Status>& ret) {
-            EXPECT_EQ(std::get<0>(ret)->get(GrpcStatusMetadata()).value(),
-                      GRPC_STATUS_UNAVAILABLE);
-            EXPECT_TRUE(std::get<1>(ret).ok());
-            return absl::OkStatus();
-          },
-          Join(
-              // Add second stream with call_args into client transport.
-              AddStream(std::move(second_stream_args)),
-              // Send messages to second stream's
-              // call_args.client_to_server_messages pipe, which will be
-              // eventually sent to control/data endpoints.
-              SendClientToServerMessages(pipe_client_to_server_messages_second_,
-                                         1)),
-          // Once complete, verify successful sending and the received value.
-          [](const std::tuple<ServerMetadataHandle, absl::Status>& ret) {
-            EXPECT_EQ(std::get<0>(ret)->get(GrpcStatusMetadata()).value(),
-                      GRPC_STATUS_UNAVAILABLE);
-            EXPECT_TRUE(std::get<1>(ret).ok());
-            return absl::OkStatus();
-          }),
-      EventEngineWakeupScheduler(event_engine_),
-      [&on_done](absl::Status status) { on_done.Call(std::move(status)); });
+  auto transport = MakeOrphanable<ClientTransport>(
+      std::move(control_endpoint.promise_endpoint),
+      std::move(data_endpoint.promise_endpoint), event_engine());
+  auto call1 = MakeCall(event_engine().get(), 8192, memory_allocator());
+  transport->StartCall(std::move(call1.handler));
+  auto call2 = MakeCall(event_engine().get(), 8192, memory_allocator());
+  transport->StartCall(std::move(call2.handler));
+  call1.initiator.SpawnGuarded("test-send", [initiator =
+                                                 call1.initiator]() mutable {
+    return TrySeq(initiator.PushClientInitialMetadata(TestInitialMetadata()),
+                  SendClientToServerMessages(initiator, 1));
+  });
+  call2.initiator.SpawnGuarded("test-send", [initiator =
+                                                 call2.initiator]() mutable {
+    return TrySeq(initiator.PushClientInitialMetadata(TestInitialMetadata()),
+                  SendClientToServerMessages(initiator, 1));
+  });
+  StrictMock<MockFunction<void()>> on_done1;
+  EXPECT_CALL(on_done1, Call());
+  StrictMock<MockFunction<void()>> on_done2;
+  EXPECT_CALL(on_done2, Call());
+  call1.initiator.SpawnInfallible(
+      "test-read", [&on_done1, initiator = call1.initiator]() mutable {
+        return Seq(
+            initiator.PullServerInitialMetadata(),
+            [](ValueOrFailure<ServerMetadataHandle> md) {
+              EXPECT_FALSE(md.ok());
+              return Empty{};
+            },
+            initiator.PullServerTrailingMetadata(),
+            [&on_done1](ServerMetadataHandle md) {
+              EXPECT_EQ(md->get(GrpcStatusMetadata()).value(),
+                        GRPC_STATUS_UNAVAILABLE);
+              on_done1.Call();
+              return Empty{};
+            });
+      });
+  call2.initiator.SpawnInfallible(
+      "test-read", [&on_done2, initiator = call2.initiator]() mutable {
+        return Seq(
+            initiator.PullServerInitialMetadata(),
+            [](ValueOrFailure<ServerMetadataHandle> md) {
+              EXPECT_FALSE(md.ok());
+              return Empty{};
+            },
+            initiator.PullServerTrailingMetadata(),
+            [&on_done2](ServerMetadataHandle md) {
+              EXPECT_EQ(md->get(GrpcStatusMetadata()).value(),
+                        GRPC_STATUS_UNAVAILABLE);
+              on_done2.Call();
+              return Empty{};
+            });
+      });
   // Wait until ClientTransport's internal activities to finish.
-  event_engine_->TickUntilIdle();
-  event_engine_->UnsetGlobalHooks();
+  event_engine()->TickUntilIdle();
+  event_engine()->UnsetGlobalHooks();
 }
-#endif
 
 }  // namespace testing
 }  // namespace chaotic_good
