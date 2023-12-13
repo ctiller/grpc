@@ -327,9 +327,16 @@ class CallSpineInterface {
   }
 };
 
-class CallSpine final : public CallSpineInterface {
+class CallSpine final : public CallSpineInterface, public Party {
  public:
-  CallSpine() { Crash("unimplemented"); }
+  static RefCountedPtr<CallSpine> Create(
+      grpc_event_engine::experimental::EventEngine* event_engine,
+      size_t initial_arena_size, MemoryAllocator* allocator) {
+    auto alloc = Arena::CreateWithAlloc(initial_arena_size, sizeof(CallSpine),
+                                        allocator);
+    auto* spine = new (alloc.second) CallSpine(event_engine, alloc.first);
+    return RefCountedPtr<CallSpine>(spine);
+  }
 
   Pipe<ClientMetadataHandle>& client_initial_metadata() override {
     return client_initial_metadata_;
@@ -347,11 +354,42 @@ class CallSpine final : public CallSpineInterface {
     return server_trailing_metadata_;
   }
   Latch<ServerMetadataHandle>& cancel_latch() override { return cancel_latch_; }
-  Party& party() override { Crash("unimplemented"); }
-  void IncrementRefCount() override { Crash("unimplemented"); }
-  void Unref() override { Crash("unimplemented"); }
+  Party& party() override { return *this; }
+  void IncrementRefCount() override { Party::IncrementRefCount(); }
+  void Unref() override { Party::Unref(); }
 
  private:
+  CallSpine(grpc_event_engine::experimental::EventEngine* event_engine,
+            Arena* arena)
+      : Party(arena, 1), event_engine_(event_engine) {}
+
+  class ScopedContext : public ScopedActivity,
+                        public promise_detail::Context<Arena> {
+   public:
+    explicit ScopedContext(CallSpine* spine)
+        : ScopedActivity(&spine->party()), Context<Arena>(spine->arena()) {}
+  };
+
+  bool RunParty() override {
+    ScopedContext context(this);
+    return Party::RunParty();
+  }
+
+  void PartyOver() override {
+    Arena* a = arena();
+    {
+      ScopedContext context(this);
+      CancelRemainingParticipants();
+      a->DestroyManagedNewObjects();
+    }
+    this->~CallSpine();
+    a->Destroy();
+  }
+
+  grpc_event_engine::experimental::EventEngine* event_engine() const override {
+    return event_engine_;
+  }
+
   // Initial metadata from client to server
   Pipe<ClientMetadataHandle> client_initial_metadata_;
   // Initial metadata from server to client
@@ -364,6 +402,8 @@ class CallSpine final : public CallSpineInterface {
   Pipe<ServerMetadataHandle> server_trailing_metadata_;
   // Latch that can be set to terminate the call
   Latch<ServerMetadataHandle> cancel_latch_;
+  // Event engine associated with this call
+  grpc_event_engine::experimental::EventEngine* const event_engine_;
 };
 
 class CallInitiator {
@@ -406,6 +446,11 @@ class CallInitiator {
   auto PushMessage(MessageHandle message) {
     GPR_DEBUG_ASSERT(Activity::current() == &spine_->party());
     return spine_->client_to_server_messages().sender.Push(std::move(message));
+  }
+
+  void FinishSends() {
+    GPR_DEBUG_ASSERT(Activity::current() == &spine_->party());
+    spine_->client_to_server_messages().sender.Close();
   }
 
   template <typename Promise>
@@ -500,6 +545,10 @@ struct CallInitiatorAndHandler {
   CallInitiator initiator;
   CallHandler handler;
 };
+
+CallInitiatorAndHandler MakeCall(
+    grpc_event_engine::experimental::EventEngine* event_engine,
+    size_t initial_arena_size, MemoryAllocator* allocator);
 
 template <typename CallHalf>
 auto OutgoingMessages(CallHalf& h) {

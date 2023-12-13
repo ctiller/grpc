@@ -324,11 +324,16 @@ void ClientTransport::StartCall(CallHandler call_handler) {
   // At this point, the connection is set up.
   // Start sending data frames.
   NewStream stream = MakeStream();
-  call_handler.SpawnGuarded("outbound_loop",
-                            CallOutboundLoop(stream.stream_id, call_handler));
   call_handler.SpawnGuarded(
-      "inbound_loop",
-      CallInboundLoop(std::move(call_handler), std::move(stream.receiver)));
+      "outbound_loop",
+      [this, stream_id = stream.stream_id, call_handler]() mutable {
+        return CallOutboundLoop(stream_id, std::move(call_handler));
+      });
+  call_handler.SpawnGuarded(
+      "inbound_loop", [this, call_handler = std::move(call_handler),
+                       receiver = std::move(stream.receiver)]() mutable {
+        return CallInboundLoop(std::move(call_handler), std::move(receiver));
+      });
 }
 
 }  // namespace chaotic_good

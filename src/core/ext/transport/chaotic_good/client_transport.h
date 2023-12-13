@@ -81,7 +81,7 @@ class ClientTransport final : public grpc_core::Transport,
                      grpc_pollset_set* pollset_set) override {}
   void PerformOp(grpc_transport_op* op) override { Crash("unimplemented"); }
   grpc_endpoint* GetEndpoint() override { return nullptr; }
-  void Orphan() override;
+  void Orphan() override { delete this; }
 
   void StartCall(CallHandler call_handler) override;
 

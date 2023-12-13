@@ -28,6 +28,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "transport.h"
 
 #include <grpc/event_engine/event_engine.h>
 #include <grpc/grpc.h>
@@ -333,6 +334,13 @@ void ForwardCall(CallHandler call_handler, CallInitiator call_initiator,
           return Empty{};
         });
   });
+}
+
+CallInitiatorAndHandler MakeCall(
+    grpc_event_engine::experimental::EventEngine* event_engine,
+    size_t initial_arena_size, MemoryAllocator* allocator) {
+  auto spine = CallSpine::Create(event_engine, initial_arena_size, allocator);
+  return {CallInitiator(spine), CallHandler(spine)};
 }
 
 }  // namespace grpc_core
