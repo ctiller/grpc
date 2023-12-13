@@ -119,6 +119,13 @@ auto SendClientToServerMessages(CallInitiator initiator, int num_messages) {
   });
 }
 
+ClientMetadataHandle TestInitialMetadata() {
+  auto md =
+      GetContext<Arena>()->MakePooled<ClientMetadata>(GetContext<Arena>());
+  md->Set(HttpPathMetadata(), Slice::FromStaticString("/test"));
+  return md;
+}
+
 class ClientTransportTest : public ::testing::Test {
  protected:
   const std::shared_ptr<grpc_event_engine::experimental::FuzzingEventEngine>&
@@ -165,8 +172,10 @@ TEST_F(ClientTransportTest, AddOneStreamWithWriteFailed) {
       std::move(data_endpoint.promise_endpoint), event_engine());
   auto call = MakeCall(event_engine().get(), 8192, memory_allocator());
   transport->StartCall(std::move(call.handler));
-  call.initiator.SpawnGuarded("test-send", [initiator = call.initiator]() {
-    return SendClientToServerMessages(initiator, 1);
+  call.initiator.SpawnGuarded("test-send", [initiator =
+                                                call.initiator]() mutable {
+    return TrySeq(initiator.PushClientInitialMetadata(TestInitialMetadata()),
+                  SendClientToServerMessages(initiator, 1));
   });
   StrictMock<MockFunction<void()>> on_done;
   EXPECT_CALL(on_done, Call());

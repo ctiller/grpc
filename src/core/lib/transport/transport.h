@@ -276,6 +276,10 @@ class CallSpineInterface {
     auto& c = cancel_latch();
     if (c.is_set()) return absl::nullopt;
     c.Set(std::move(metadata));
+    client_initial_metadata().sender.CloseWithError();
+    server_initial_metadata().sender.CloseWithError();
+    client_to_server_messages().sender.CloseWithError();
+    server_to_client_messages().sender.CloseWithError();
     return absl::nullopt;
   }
 
@@ -551,12 +555,12 @@ CallInitiatorAndHandler MakeCall(
     size_t initial_arena_size, MemoryAllocator* allocator);
 
 template <typename CallHalf>
-auto OutgoingMessages(CallHalf& h) {
+auto OutgoingMessages(CallHalf h) {
   struct Wrapper {
-    CallHalf& h;
+    CallHalf h;
     auto Next() { return h.PullMessage(); }
   };
-  return Wrapper{h};
+  return Wrapper{std::move(h)};
 }
 
 // Forward a call from `call_handler` to `call_initiator` (with initial metadata
