@@ -14,27 +14,25 @@
 
 #include "src/core/ext/transport/chaotic_good/client_transport.h"
 
-// IWYU pragma: no_include <sys/socket.h>
-
-#include <algorithm>  // IWYU pragma: keep
+#include <algorithm>
 #include <memory>
-#include <string>  // IWYU pragma: keep
+#include <string>
 #include <tuple>
-#include <vector>  // IWYU pragma: keep
+#include <vector>
 
 #include "absl/functional/any_invocable.h"
-#include "absl/status/statusor.h"     // IWYU pragma: keep
-#include "absl/strings/str_format.h"  // IWYU pragma: keep
-#include "absl/types/optional.h"      // IWYU pragma: keep
+#include "absl/status/statusor.h"
+#include "absl/strings/str_format.h"
+#include "absl/types/optional.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include <grpc/event_engine/event_engine.h>
 #include <grpc/event_engine/memory_allocator.h>
-#include <grpc/event_engine/slice.h>  // IWYU pragma: keep
+#include <grpc/event_engine/slice.h>
 #include <grpc/event_engine/slice_buffer.h>
 #include <grpc/grpc.h>
-#include <grpc/status.h>  // IWYU pragma: keep
+#include <grpc/status.h>
 
 #include "src/core/lib/gprpp/ref_counted_ptr.h"
 #include "src/core/lib/iomgr/timer_manager.h"
@@ -50,8 +48,8 @@
 #include "src/core/lib/resource_quota/memory_quota.h"
 #include "src/core/lib/resource_quota/resource_quota.h"
 #include "src/core/lib/slice/slice_buffer.h"
-#include "src/core/lib/slice/slice_internal.h"      // IWYU pragma: keep
-#include "src/core/lib/transport/metadata_batch.h"  // IWYU pragma: keep
+#include "src/core/lib/slice/slice_internal.h"
+#include "src/core/lib/transport/metadata_batch.h"
 #include "test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.h"
 #include "test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.pb.h"
 
