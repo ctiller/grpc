@@ -333,7 +333,7 @@ class Arena {
   //          value in Arena::PoolSizes, and so this may pessimize total
   //          arena size.
   template <typename T, typename... Args>
-  PoolPtr<T> MakePooled(Args&&... args) {
+  static PoolPtr<T> MakePooled(Args&&... args) {
     return PoolPtr<T>(new T(std::forward<Args>(args)...), PooledDeleter());
   }
 

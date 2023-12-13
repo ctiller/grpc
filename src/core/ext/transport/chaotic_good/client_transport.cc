@@ -144,7 +144,7 @@ auto ClientTransport::TransportReadLoop() {
           }();
           // Move message into frame.
           if (sender.ok()) {
-            frame.message = arena_->MakePooled<Message>(
+            frame.message = Arena::MakePooled<Message>(
                 std::move(data_endpoint_read_buffer), 0);
           }
           return If(
@@ -177,26 +177,17 @@ ClientTransport::ClientTransport(
       data_endpoint_(std::move(data_endpoint)),
       control_endpoint_write_buffer_(SliceBuffer()),
       data_endpoint_write_buffer_(SliceBuffer()),
-      memory_allocator_(
-          ResourceQuota::Default()->memory_quota()->CreateMemoryAllocator(
-              "client_transport")),
-      arena_(MakeScopedArena(1024, &memory_allocator_)),
-      context_(arena_.get()),
       event_engine_(event_engine),
       writer_{
           MakeActivity(
               // Continuously write next outgoing frames to promise endpoints.
               TransportWriteLoop(), EventEngineWakeupScheduler(event_engine_),
-              OnTransportActivityDone(),
-              // Hold Arena in activity for GetContext<Arena> usage.
-              arena_.get()),
+              OnTransportActivityDone()),
       },
       reader_{MakeActivity(
           // Continuously read next incoming frames from promise endpoints.
           TransportReadLoop(), EventEngineWakeupScheduler(event_engine_),
-          OnTransportActivityDone(),
-          // Hold Arena in activity for GetContext<Arena> usage.
-          arena_.get())} {}
+          OnTransportActivityDone())} {}
 
 ClientTransport::~ClientTransport() {
   if (writer_ != nullptr) {

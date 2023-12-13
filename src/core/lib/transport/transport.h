@@ -395,15 +395,15 @@ class CallSpine final : public CallSpineInterface, public Party {
   }
 
   // Initial metadata from client to server
-  Pipe<ClientMetadataHandle> client_initial_metadata_;
+  Pipe<ClientMetadataHandle> client_initial_metadata_{arena()};
   // Initial metadata from server to client
-  Pipe<ServerMetadataHandle> server_initial_metadata_;
+  Pipe<ServerMetadataHandle> server_initial_metadata_{arena()};
   // Messages travelling from the application to the transport.
-  Pipe<MessageHandle> client_to_server_messages_;
+  Pipe<MessageHandle> client_to_server_messages_{arena()};
   // Messages travelling from the transport to the application.
-  Pipe<MessageHandle> server_to_client_messages_;
+  Pipe<MessageHandle> server_to_client_messages_{arena()};
   // Trailing metadata from server to client
-  Pipe<ServerMetadataHandle> server_trailing_metadata_;
+  Pipe<ServerMetadataHandle> server_trailing_metadata_{arena()};
   // Latch that can be set to terminate the call
   Latch<ServerMetadataHandle> cancel_latch_;
   // Event engine associated with this call

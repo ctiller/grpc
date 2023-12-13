@@ -124,9 +124,6 @@ class ClientTransport final : public grpc_core::Transport,
   HPackCompressor hpack_compressor_;
   HPackParser hpack_parser_;
   FrameHeader frame_header_;
-  MemoryAllocator memory_allocator_;
-  ScopedArenaPtr arena_;
-  promise_detail::Context<Arena> context_;
   absl::BitGen bitgen_;
   // Use to synchronize writer_ and reader_ activity with outside activities;
   std::shared_ptr<grpc_event_engine::experimental::EventEngine> event_engine_;
