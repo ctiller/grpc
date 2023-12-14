@@ -68,15 +68,16 @@ auto ClientTransport::TransportWriteLoop() {
                   [this](ClientFragmentFrame* frame) mutable {
                     control_endpoint_write_buffer_.Append(
                         frame->Serialize(&hpack_compressor_));
-                    if (frame->message != nullptr) {
+                    if (frame->message.has_value()) {
                       // Append message padding to data_endpoint_buffer.
                       data_endpoint_write_buffer_.Append(
                           Slice::FromStaticBuffer(kZeros,
-                                                  frame->message_padding));
+                                                  frame->message->padding));
                       // Append message payload to data_endpoint_buffer.
-                      frame->message->payload()->MoveFirstNBytesIntoSliceBuffer(
-                          frame->message->payload()->Length(),
-                          data_endpoint_write_buffer_);
+                      frame->message->message->payload()
+                          ->MoveFirstNBytesIntoSliceBuffer(
+                              frame->message->message->payload()->Length(),
+                              data_endpoint_write_buffer_);
                     }
                   },
                   [this](CancelFrame* frame) mutable {
@@ -144,8 +145,11 @@ auto ClientTransport::TransportReadLoop() {
           }();
           // Move message into frame.
           if (sender.ok()) {
-            frame.message = Arena::MakePooled<Message>(
-                std::move(data_endpoint_read_buffer), 0);
+            uint32_t message_length = data_endpoint_read_buffer.Length();
+            frame.message =
+                FragmentMessage(Arena::MakePooled<Message>(
+                                    std::move(data_endpoint_read_buffer), 0),
+                                0, message_length);
           }
           return If(
               sender.ok(),
@@ -251,8 +255,9 @@ auto ClientTransport::CallOutboundLoop(uint32_t stream_id,
                 // Construct frame header (flags, header_length and
                 // trailer_length will be added in serialization).
                 uint32_t message_length = message->payload()->Length();
-                frame.message_padding = message_length % aligned_bytes;
-                frame.message = std::move(message);
+                frame.message = FragmentMessage(std::move(message),
+                                                message_length % aligned_bytes,
+                                                message_length);
                 return send_fragment(std::move(frame));
               }),
       [send_fragment]() mutable {
@@ -278,7 +283,7 @@ auto ClientTransport::CallInboundLoop(CallHandler call_handler,
         [call_handler](ServerFrame server_frame) {
           auto frame = absl::get<ServerFragmentFrame>(std::move(server_frame));
           bool has_headers = (frame.headers != nullptr);
-          bool has_message = (frame.message != nullptr);
+          bool has_message = frame.message.has_value();
           bool has_trailers = (frame.trailers != nullptr);
           return TrySeq(
               TryJoin(If(
@@ -293,7 +298,8 @@ auto ClientTransport::CallInboundLoop(CallHandler call_handler,
                           has_message,
                           [call_handler,
                            message = std::move(frame.message)]() mutable {
-                            return call_handler.PushMessage(std::move(message));
+                            return call_handler.PushMessage(
+                                std::move(message->message));
                           },
                           []() -> StatusFlag { return Success{}; })),
               If(

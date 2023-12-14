@@ -73,6 +73,17 @@ struct SettingsFrame final : public FrameInterface {
   bool operator==(const SettingsFrame&) const { return true; }
 };
 
+struct FragmentMessage {
+  FragmentMessage(MessageHandle message, uint32_t padding, uint32_t length)
+      : message(std::move(message)), padding(padding), length(length) {}
+
+  MessageHandle message;
+  uint32_t padding;
+  uint32_t length;
+
+  std::string ToString() const;
+};
+
 struct ClientFragmentFrame final : public FrameInterface {
   absl::Status Deserialize(HPackParser* parser, const FrameHeader& header,
                            absl::BitGenRef bitsrc,
@@ -82,8 +93,7 @@ struct ClientFragmentFrame final : public FrameInterface {
 
   uint32_t stream_id;
   ClientMetadataHandle headers;
-  MessageHandle message;
-  uint32_t message_padding;
+  absl::optional<FragmentMessage> message;
   bool end_of_stream = false;
 
   bool operator==(const ClientFragmentFrame& other) const {
@@ -101,8 +111,7 @@ struct ServerFragmentFrame final : public FrameInterface {
 
   uint32_t stream_id;
   ServerMetadataHandle headers;
-  MessageHandle message;
-  uint32_t message_padding;
+  absl::optional<FragmentMessage> message;
   ServerMetadataHandle trailers;
 
   bool operator==(const ServerFragmentFrame& other) const {
