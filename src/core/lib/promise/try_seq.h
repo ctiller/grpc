@@ -91,6 +91,21 @@ struct TrySeqTraitsWithSfinae<absl::StatusOr<T>> {
   }
 };
 
+template <typename T>
+struct AllowGenericTrySeqTraits {
+  static constexpr bool value = true;
+};
+
+template <>
+struct AllowGenericTrySeqTraits<absl::Status> {
+  static constexpr bool value = false;
+};
+
+template <typename T>
+struct AllowGenericTrySeqTraits<absl::StatusOr<T>> {
+  static constexpr bool value = false;
+};
+
 template <typename T, typename AnyType = void>
 struct TakeValueExists {
   static constexpr bool value = false;
@@ -107,7 +122,7 @@ template <typename T>
 struct TrySeqTraitsWithSfinae<
     T, absl::enable_if_t<
            std::is_same<decltype(IsStatusOk(std::declval<T>())), bool>::value &&
-               !TakeValueExists<T>::value,
+               !TakeValueExists<T>::value && AllowGenericTrySeqTraits<T>::value,
            void>> {
   using UnwrappedType = void;
   using WrappedType = T;
@@ -133,7 +148,7 @@ template <typename T>
 struct TrySeqTraitsWithSfinae<
     T, absl::enable_if_t<
            std::is_same<decltype(IsStatusOk(std::declval<T>())), bool>::value &&
-               TakeValueExists<T>::value,
+               TakeValueExists<T>::value && AllowGenericTrySeqTraits<T>::value,
            void>> {
   using UnwrappedType = decltype(TakeValue(std::declval<T>()));
   using WrappedType = T;

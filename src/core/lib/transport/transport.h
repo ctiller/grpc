@@ -521,6 +521,11 @@ class CallHandler {
         [](bool ok) { return StatusFlag(ok); });
   }
 
+  void Cancel(ServerMetadataHandle status) {
+    GPR_DEBUG_ASSERT(Activity::current() == &spine_->party());
+    std::ignore = spine_->Cancel(std::move(status));
+  }
+
   template <typename Promise>
   auto CancelIfFails(Promise promise) {
     return spine_->CancelIfFails(std::move(promise));

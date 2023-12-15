@@ -25,6 +25,8 @@
 #include "absl/random/bit_gen_ref.h"
 #include "absl/random/random.h"
 #include "absl/status/statusor.h"
+#include "client_transport.h"
+#include "frame.h"
 
 #include <grpc/event_engine/event_engine.h>
 #include <grpc/slice.h>
@@ -40,6 +42,7 @@
 #include "src/core/lib/promise/event_engine_wakeup_scheduler.h"
 #include "src/core/lib/promise/loop.h"
 #include "src/core/lib/promise/map.h"
+#include "src/core/lib/promise/promise.h"
 #include "src/core/lib/promise/try_join.h"
 #include "src/core/lib/promise/try_seq.h"
 #include "src/core/lib/resource_quota/arena.h"
@@ -56,34 +59,38 @@ namespace {
 const uint8_t kZeros[64] = {};
 }
 
+auto ClientTransport::ReadAndSerializeSomeOutgoingFrames() {
+  return Map(
+      outgoing_frames_.Next(),
+      // Construct data buffers that will be sent to the endpoints.
+      [this](ClientFrame client_frame) {
+        MatchMutable(
+            &client_frame,
+            [this](ClientFragmentFrame* frame) mutable {
+              if (frame->message.has_value()) {
+                // Append message payload to data_endpoint_buffer.
+                data_endpoint_write_buffer_.Append(
+                    *frame->message->message->payload());
+                // Append message padding to data_endpoint_buffer.
+                data_endpoint_write_buffer_.Append(
+                    Slice::FromStaticBuffer(kZeros, frame->message->padding));
+              }
+              control_endpoint_write_buffer_.Append(
+                  frame->Serialize(&hpack_compressor_));
+            },
+            [this](CancelFrame* frame) mutable {
+              control_endpoint_write_buffer_.Append(
+                  frame->Serialize(&hpack_compressor_));
+            });
+        return Empty{};
+      });
+}
+
 auto ClientTransport::TransportWriteLoop() {
   return Loop([this] {
     return TrySeq(
         // Get next outgoing frame.
-        Map(outgoing_frames_.Next(),
-            // Construct data buffers that will be sent to the endpoints.
-            [this](ClientFrame client_frame) {
-              MatchMutable(
-                  &client_frame,
-                  [this](ClientFragmentFrame* frame) mutable {
-                    if (frame->message.has_value()) {
-                      // Append message payload to data_endpoint_buffer.
-                      data_endpoint_write_buffer_.Append(
-                          *frame->message->message->payload());
-                      // Append message padding to data_endpoint_buffer.
-                      data_endpoint_write_buffer_.Append(
-                          Slice::FromStaticBuffer(kZeros,
-                                                  frame->message->padding));
-                    }
-                    control_endpoint_write_buffer_.Append(
-                        frame->Serialize(&hpack_compressor_));
-                  },
-                  [this](CancelFrame* frame) mutable {
-                    control_endpoint_write_buffer_.Append(
-                        frame->Serialize(&hpack_compressor_));
-                  });
-              return Empty{};
-            }),
+        ReadAndSerializeSomeOutgoingFrames(),
         // Write buffers to corresponding endpoints concurrently.
         [this]() {
           return TryJoin(
@@ -101,6 +108,111 @@ auto ClientTransport::TransportWriteLoop() {
   });
 }
 
+auto ClientTransport::ReadFrameBody(Slice read_buffer) {
+  frame_header_ =
+      FrameHeader::Parse(reinterpret_cast<const uint8_t*>(
+                             GRPC_SLICE_START_PTR(read_buffer.c_slice())))
+          .value();
+  // Read header and trailers from control endpoint.
+  // Read message padding and message from data endpoint.
+  uint32_t message_padding =
+      std::exchange(last_message_padding_, frame_header_.message_padding);
+  return TryJoin(control_endpoint_->Read(frame_header_.GetFrameLength()),
+                 TrySeq(data_endpoint_->Read(message_padding), [this]() {
+                   return data_endpoint_->Read(frame_header_.message_length);
+                 }));
+}
+
+absl::optional<CallHandler> ClientTransport::LookupStream(uint32_t stream_id) {
+  MutexLock lock(&mu_);
+  auto it = stream_map_.find(stream_id);
+  if (it == stream_map_.end()) {
+    return absl::nullopt;
+  }
+  return it->second;
+}
+
+auto ClientTransport::PushFrameIntoCall(ServerFragmentFrame frame,
+                                        CallHandler call_handler) {
+  bool has_headers = (frame.headers != nullptr);
+  bool has_message = frame.message.has_value();
+  bool has_trailers = (frame.trailers != nullptr);
+  return TrySeq(
+      TryJoin(If(
+                  has_headers,
+                  [call_handler, headers = std::move(frame.headers)]() mutable {
+                    return call_handler.PushServerInitialMetadata(
+                        std::move(headers));
+                  },
+                  []() -> StatusFlag { return Success{}; }),
+              If(
+                  has_message,
+                  [call_handler, message = std::move(frame.message)]() mutable {
+                    return call_handler.PushMessage(
+                        std::move(message->message));
+                  },
+                  []() -> StatusFlag { return Success{}; })),
+      If(
+          has_trailers,
+          [call_handler, trailers = std::move(frame.trailers)]() mutable {
+            return Map(
+                call_handler.PushServerTrailingMetadata(std::move(trailers)),
+                [](StatusFlag f) -> absl::StatusOr<bool> {
+                  if (f.ok()) return true;
+                  return absl::CancelledError();
+                });
+          },
+          []() -> absl::StatusOr<bool> { return false; }));
+}
+
+auto ClientTransport::DeserializeFrameAndPassToCall(SliceBuffer control_buffer,
+                                                    SliceBuffer data_buffer,
+                                                    CallHandler call_handler) {
+  return call_handler.CancelIfFails([this, call_handler, &control_buffer,
+                                     &data_buffer]() mutable {
+    ServerFragmentFrame frame;
+    // Deserialize frame from read buffer.
+    const auto status =
+        frame.Deserialize(&hpack_parser_, frame_header_,
+                          absl::BitGenRef(bitgen_), control_buffer);
+    return If(
+        status.ok(),
+        [&frame, &data_buffer, &call_handler, this]() {
+          uint32_t message_length = data_buffer.Length();
+          frame.message = FragmentMessage(
+              Arena::MakePooled<Message>(std::move(data_buffer), 0), 0,
+              message_length);
+          return PushFrameIntoCall(std::move(frame), std::move(call_handler));
+        },
+        [&status] {
+          return Immediate(absl::StatusOr<bool>(std::move(status)));
+        });
+  }());
+}
+
+auto ClientTransport::MaybeDeserializeFrameAndPassToCall(
+    SliceBuffer control_buffer, SliceBuffer data_buffer) {
+  absl::optional<CallHandler> call_handler =
+      LookupStream(frame_header_.stream_id);
+  return If(
+      call_handler.has_value(),
+      [&call_handler, &control_buffer, &data_buffer, this] {
+        return call_handler->SpawnWaitable(
+            "deserialize-incoming",
+            [this, call_handler = std::move(*call_handler),
+             control_buffer = std::move(control_buffer),
+             data_buffer = std::move(data_buffer)]() mutable {
+              return DeserializeFrameAndPassToCall(std::move(control_buffer),
+                                                   std::move(data_buffer),
+                                                   std::move(call_handler));
+            });
+      },
+      [] {
+        // Stream not found, nothing to do.
+        return Immediate(absl::OkStatus());
+      });
+}
+
 auto ClientTransport::TransportReadLoop() {
   return Loop([this] {
     return TrySeq(
@@ -109,57 +221,13 @@ auto ClientTransport::TransportReadLoop() {
         this->control_endpoint_->ReadSlice(FrameHeader::frame_header_size_),
         // Read different parts of the server frame from control/data endpoints
         // based on frame header.
-        [this](Slice read_buffer) mutable {
-          frame_header_ = FrameHeader::Parse(
-                              reinterpret_cast<const uint8_t*>(
-                                  GRPC_SLICE_START_PTR(read_buffer.c_slice())))
-                              .value();
-          // Read header and trailers from control endpoint.
-          // Read message padding and message from data endpoint.
-          uint32_t message_padding = std::exchange(
-              last_message_padding_, frame_header_.message_padding);
-          return TryJoin(
-              control_endpoint_->Read(frame_header_.GetFrameLength()),
-              TrySeq(data_endpoint_->Read(message_padding), [this]() {
-                return data_endpoint_->Read(frame_header_.message_length);
-              }));
+        [this](Slice read_buffer) {
+          return ReadFrameBody(std::move(read_buffer));
         },
         // Construct and send the server frame to corresponding stream.
         [this](std::tuple<SliceBuffer, SliceBuffer> ret) mutable {
-          auto& control_endpoint_read_buffer = std::get<0>(ret);
-          auto& data_endpoint_read_buffer = std::get<1>(ret);
-          ServerFragmentFrame frame;
-          // Deserialize frame from read buffer.
-          const auto status = frame.Deserialize(&hpack_parser_, frame_header_,
-                                                absl::BitGenRef(bitgen_),
-                                                control_endpoint_read_buffer);
-          using PushType = decltype(std::declval<FrameSender>().Push(
-              std::declval<ServerFrame>()));
-          auto sender = [this, &frame, &status]() -> absl::StatusOr<PushType> {
-            if (!status.ok()) return status;
-            MutexLock lock(&mu_);
-            auto it = stream_map_.find(frame.stream_id);
-            if (it == stream_map_.end()) {
-              return absl::InternalError("Stream not found.");
-            }
-            return it->second.Push(std::move(frame));
-          }();
-          // Move message into frame.
-          if (sender.ok()) {
-            uint32_t message_length = data_endpoint_read_buffer.Length();
-            frame.message =
-                FragmentMessage(Arena::MakePooled<Message>(
-                                    std::move(data_endpoint_read_buffer), 0),
-                                0, message_length);
-          }
-          return If(
-              sender.ok(),
-              [&sender]() mutable {
-                return Map(std::move(*sender), [](bool ret) {
-                  return ret ? absl::OkStatus() : absl::CancelledError();
-                });
-              },
-              [&sender]() { return sender.status(); });
+          return MaybeDeserializeFrameAndPassToCall(
+              std::move(std::get<0>(ret)), std::move(std::get<1>(ret)));
         },
         []() -> LoopCtl<absl::Status> { return Continue{}; });
   });
@@ -210,19 +278,21 @@ void ClientTransport::AbortWithError() {
     outgoing_frames_.MarkClosed();
   }
   MutexLock lock(&mu_);
-  for (auto& pair : stream_map_) {
-    if (!pair.second.IsClosed()) {
-      pair.second.MarkClosed();
-    }
+  for (const auto& pair : stream_map_) {
+    auto call_handler = pair.second;
+    call_handler.SpawnInfallible("cancel", [call_handler]() mutable {
+      call_handler.Cancel(ServerMetadataFromStatus(
+          absl::UnavailableError("Transport closed.")));
+      return Empty{};
+    });
   }
 }
 
-ClientTransport::NewStream ClientTransport::MakeStream() {
-  FramePipe pipe_server_frames;
+uint32_t ClientTransport::MakeStream(CallHandler call_handler) {
   MutexLock lock(&mu_);
   const uint32_t stream_id = next_stream_id_++;
-  stream_map_.emplace(stream_id, std::move(pipe_server_frames.sender));
-  return NewStream{stream_id, std::move(pipe_server_frames.receiver)};
+  stream_map_.emplace(stream_id, std::move(call_handler));
+  return stream_id;
 }
 
 auto ClientTransport::CallOutboundLoop(uint32_t stream_id,
@@ -272,6 +342,7 @@ auto ClientTransport::CallOutboundLoop(uint32_t stream_id,
       });
 }
 
+#if 0
 auto ClientTransport::CallInboundLoop(CallHandler call_handler,
                                       FrameReceiver receiver) {
   return Loop([receiver = std::move(receiver),
@@ -287,55 +358,17 @@ auto ClientTransport::CallInboundLoop(CallHandler call_handler,
             }),
         [call_handler](ServerFrame server_frame) {
           auto frame = absl::get<ServerFragmentFrame>(std::move(server_frame));
-          bool has_headers = (frame.headers != nullptr);
-          bool has_message = frame.message.has_value();
-          bool has_trailers = (frame.trailers != nullptr);
-          return TrySeq(
-              TryJoin(If(
-                          has_headers,
-                          [call_handler,
-                           headers = std::move(frame.headers)]() mutable {
-                            return call_handler.PushServerInitialMetadata(
-                                std::move(headers));
-                          },
-                          []() -> StatusFlag { return Success{}; }),
-                      If(
-                          has_message,
-                          [call_handler,
-                           message = std::move(frame.message)]() mutable {
-                            return call_handler.PushMessage(
-                                std::move(message->message));
-                          },
-                          []() -> StatusFlag { return Success{}; })),
-              If(
-                  has_trailers,
-                  [call_handler,
-                   trailers = std::move(frame.trailers)]() mutable {
-                    return Map(call_handler.PushServerTrailingMetadata(
-                                   std::move(trailers)),
-                               [](StatusFlag f) -> LoopCtl<absl::Status> {
-                                 return StatusCast<absl::Status>(f);
-                               });
-                  },
-                  []() -> LoopCtl<absl::Status> { return Continue{}; }));
         });
   });
 }
+#endif
 
 void ClientTransport::StartCall(CallHandler call_handler) {
   // At this point, the connection is set up.
   // Start sending data frames.
-  NewStream stream = MakeStream();
-  call_handler.SpawnGuarded(
-      "outbound_loop",
-      [this, stream_id = stream.stream_id, call_handler]() mutable {
-        return CallOutboundLoop(stream_id, std::move(call_handler));
-      });
-  call_handler.SpawnGuarded(
-      "inbound_loop", [this, call_handler = std::move(call_handler),
-                       receiver = std::move(stream.receiver)]() mutable {
-        return CallInboundLoop(std::move(call_handler), std::move(receiver));
-      });
+  call_handler.SpawnGuarded("outbound_loop", [this, call_handler]() mutable {
+    return CallOutboundLoop(MakeStream(call_handler), call_handler);
+  });
 }
 
 }  // namespace chaotic_good

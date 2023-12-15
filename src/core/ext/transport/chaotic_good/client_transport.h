@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <cstdint>
 #include <initializer_list>  // IWYU pragma: keep
 #include <map>
 #include <memory>
@@ -33,6 +34,7 @@
 #include "absl/status/status.h"
 #include "absl/types/optional.h"
 #include "absl/types/variant.h"
+#include "frame.h"
 
 #include <grpc/event_engine/event_engine.h>
 #include <grpc/event_engine/memory_allocator.h>
@@ -92,21 +94,30 @@ class ClientTransport final : public grpc_core::Transport,
   // will queue at most 2 frames.
   static const size_t kServerFrameQueueSize = 2;
 
-  using FramePipe = InterActivityPipe<ServerFrame, kServerFrameQueueSize>;
-  using FrameReceiver = typename FramePipe::Receiver;
-  using FrameSender = typename FramePipe::Sender;
-
-  struct NewStream {
-    uint32_t stream_id;
-    FrameReceiver receiver;
-  };
-
-  NewStream MakeStream();
+  uint32_t MakeStream(CallHandler call_handler);
+  absl::optional<CallHandler> LookupStream(uint32_t stream_id);
   auto CallOutboundLoop(uint32_t stream_id, CallHandler call_handler);
-  auto CallInboundLoop(CallHandler call_handler, FrameReceiver receiver);
   auto OnTransportActivityDone();
   auto TransportWriteLoop();
   auto TransportReadLoop();
+  // Read frames from outgoing_frames_, serialize them into
+  // control_endpoint_write_buffer_ and data_endpoint_write_buffer_.
+  auto ReadAndSerializeSomeOutgoingFrames();
+  // Read different parts of the server frame from control/data endpoints
+  // based on frame header.
+  // Resolves to a StatusOr<tuple<SliceBuffer, SliceBuffer>>
+  auto ReadFrameBody(Slice read_buffer);
+  // Lookup the call.
+  // If it exists, deserialize the frame and pass it into relevant call.
+  // Otherwise do nothing (probably cancelled).
+  auto MaybeDeserializeFrameAndPassToCall(SliceBuffer control_buffer,
+                                          SliceBuffer data_buffer);
+  // Deserialize the frame and pass it into relevant call.
+  auto DeserializeFrameAndPassToCall(SliceBuffer control_buffer,
+                                     SliceBuffer data_buffer,
+                                     CallHandler call_handler);
+  // Push one frame into a call
+  auto PushFrameIntoCall(ServerFragmentFrame frame, CallHandler call_handler);
 
   // Max buffer is set to 4, so that for stream writes each time it will queue
   // at most 2 frames.
@@ -116,7 +127,7 @@ class ClientTransport final : public grpc_core::Transport,
   Mutex mu_;
   uint32_t next_stream_id_ ABSL_GUARDED_BY(mu_) = 1;
   // Map of stream incoming server frames, key is stream_id.
-  absl::flat_hash_map<uint32_t, FrameSender> stream_map_ ABSL_GUARDED_BY(mu_);
+  absl::flat_hash_map<uint32_t, CallHandler> stream_map_ ABSL_GUARDED_BY(mu_);
   std::unique_ptr<PromiseEndpoint> control_endpoint_;
   std::unique_ptr<PromiseEndpoint> data_endpoint_;
   SliceBuffer control_endpoint_write_buffer_;

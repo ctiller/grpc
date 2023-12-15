@@ -45,6 +45,11 @@ inline absl::Status IntoStatus(absl::Status* status) {
 // can participate in TrySeq as result types that affect control flow.
 inline bool IsStatusOk(const absl::Status& status) { return status.ok(); }
 
+template <typename T>
+inline bool IsStatusOk(const absl::StatusOr<T>& status) {
+  return status.ok();
+}
+
 template <typename To, typename From, typename SfinaeVoid = void>
 struct StatusCastImpl;
 
@@ -60,16 +65,19 @@ struct StatusCastImpl<To, const To&> {
 
 template <typename T>
 struct StatusCastImpl<absl::Status, absl::StatusOr<T>> {
-  static absl::StatusOr<T> Cast(absl::StatusOr<T>&& t) {
+  static absl::Status Cast(absl::StatusOr<T>&& t) {
     return std::move(t.status());
   }
 };
 
 template <typename T>
+struct StatusCastImpl<absl::Status, absl::StatusOr<T>&> {
+  static absl::Status Cast(const absl::StatusOr<T>& t) { return t.status(); }
+};
+
+template <typename T>
 struct StatusCastImpl<absl::Status, const absl::StatusOr<T>&> {
-  static absl::StatusOr<T> Cast(const absl::StatusOr<T>& t) {
-    return t.status();
-  }
+  static absl::Status Cast(const absl::StatusOr<T>& t) { return t.status(); }
 };
 
 // StatusCast<> allows casting from one status-bearing type to another,

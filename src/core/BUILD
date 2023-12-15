@@ -6407,6 +6407,7 @@ grpc_cc_library(
         "poll",
         "resource_quota",
         "slice",
+        "//:promise",
         "slice_buffer",
         "try_join",
         "try_seq",
