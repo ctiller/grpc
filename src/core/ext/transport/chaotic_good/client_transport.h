@@ -129,6 +129,7 @@ class ClientTransport final : public grpc_core::Transport,
   std::shared_ptr<grpc_event_engine::experimental::EventEngine> event_engine_;
   ActivityPtr writer_;
   ActivityPtr reader_;
+  uint32_t last_message_padding_ = 0;
 };
 
 }  // namespace chaotic_good

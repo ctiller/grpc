@@ -46,7 +46,6 @@ void FrameHeader::Serialize(uint8_t* data) const {
   WriteLittleEndianUint32(
       static_cast<uint32_t>(type) | (flags.ToInt<uint32_t>() << 8), data);
   if (flags.is_set(0)) GPR_ASSERT(header_length > 0);
-  if (flags.is_set(2)) GPR_ASSERT(trailer_length > 0);
   WriteLittleEndianUint32(stream_id, data + 4);
   WriteLittleEndianUint32(header_length, data + 8);
   WriteLittleEndianUint32(message_length, data + 12);
@@ -79,10 +78,6 @@ absl::StatusOr<FrameHeader> FrameHeader::Parse(const uint8_t* data) {
         absl::StrCat("Invalid message padding: ", header.message_padding));
   }
   header.trailer_length = ReadLittleEndianUint32(data + 20);
-  if (header.flags.is_set(2) && header.trailer_length <= 0) {
-    return absl::InvalidArgumentError(
-        absl::StrCat("Invalid trailer length", header.trailer_length));
-  }
   return header;
 }
 

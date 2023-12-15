@@ -66,19 +66,17 @@ auto ClientTransport::TransportWriteLoop() {
               MatchMutable(
                   &client_frame,
                   [this](ClientFragmentFrame* frame) mutable {
-                    control_endpoint_write_buffer_.Append(
-                        frame->Serialize(&hpack_compressor_));
                     if (frame->message.has_value()) {
+                      // Append message payload to data_endpoint_buffer.
+                      data_endpoint_write_buffer_.Append(
+                          *frame->message->message->payload());
                       // Append message padding to data_endpoint_buffer.
                       data_endpoint_write_buffer_.Append(
                           Slice::FromStaticBuffer(kZeros,
                                                   frame->message->padding));
-                      // Append message payload to data_endpoint_buffer.
-                      frame->message->message->payload()
-                          ->MoveFirstNBytesIntoSliceBuffer(
-                              frame->message->message->payload()->Length(),
-                              data_endpoint_write_buffer_);
                     }
+                    control_endpoint_write_buffer_.Append(
+                        frame->Serialize(&hpack_compressor_));
                   },
                   [this](CancelFrame* frame) mutable {
                     control_endpoint_write_buffer_.Append(
@@ -118,10 +116,13 @@ auto ClientTransport::TransportReadLoop() {
                               .value();
           // Read header and trailers from control endpoint.
           // Read message padding and message from data endpoint.
+          uint32_t message_padding = std::exchange(
+              last_message_padding_, frame_header_.message_padding);
           return TryJoin(
               control_endpoint_->Read(frame_header_.GetFrameLength()),
-              TrySeq(data_endpoint_->Read(frame_header_.message_padding),
-                     data_endpoint_->Read(frame_header_.message_length)));
+              TrySeq(data_endpoint_->Read(message_padding), [this]() {
+                return data_endpoint_->Read(frame_header_.message_length);
+              }));
         },
         // Construct and send the server frame to corresponding stream.
         [this](std::tuple<SliceBuffer, SliceBuffer> ret) mutable {
@@ -254,9 +255,13 @@ auto ClientTransport::CallOutboundLoop(uint32_t stream_id,
                 ClientFragmentFrame frame;
                 // Construct frame header (flags, header_length and
                 // trailer_length will be added in serialization).
-                uint32_t message_length = message->payload()->Length();
-                frame.message = FragmentMessage(std::move(message),
-                                                message_length % aligned_bytes,
+                const uint32_t message_length = message->payload()->Length();
+                const uint32_t padding =
+                    message_length % aligned_bytes == 0
+                        ? 0
+                        : aligned_bytes - message_length % aligned_bytes;
+                GPR_ASSERT((message_length + padding) % aligned_bytes == 0);
+                frame.message = FragmentMessage(std::move(message), padding,
                                                 message_length);
                 return send_fragment(std::move(frame));
               }),

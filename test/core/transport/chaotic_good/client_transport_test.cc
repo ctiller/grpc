@@ -94,13 +94,14 @@ struct MockPromiseEndpoint {
   std::unique_ptr<PromiseEndpoint> promise_endpoint =
       std::make_unique<PromiseEndpoint>(
           std::unique_ptr<StrictMock<MockEndpoint>>(endpoint), SliceBuffer());
-  Sequence sequence;
+  Sequence read_sequence;
+  Sequence write_sequence;
   void ExpectRead(std::initializer_list<EventEngineSlice> slices_init,
                   EventEngine* schedule_on_event_engine) {
     std::vector<EventEngineSlice> slices;
     for (auto&& slice : slices_init) slices.emplace_back(slice.Copy());
     EXPECT_CALL(*endpoint, Read)
-        .InSequence(sequence)
+        .InSequence(read_sequence)
         .WillOnce(WithArgs<0, 1>(
             [slices = std::move(slices), schedule_on_event_engine](
                 absl::AnyInvocable<void(absl::Status)> on_read,
@@ -126,7 +127,7 @@ struct MockPromiseEndpoint {
       expect.Append(SliceCast<Slice>(slice.Copy()));
     }
     EXPECT_CALL(*endpoint, Write)
-        .InSequence(sequence)
+        .InSequence(write_sequence)
         .WillOnce(WithArgs<0, 1>(
             [expect = expect.JoinIntoString(), schedule_on_event_engine](
                 absl::AnyInvocable<void(absl::Status)> on_writable,
@@ -150,7 +151,7 @@ struct MockPromiseEndpoint {
 
 // Encoded string of header ":path: /demo.Service/Step".
 const uint8_t kPathDemoServiceStep[] = {
-    0x10, 0x05, 0x3a, 0x70, 0x61, 0x74, 0x68, 0x12, 0x2f,
+    0x40, 0x05, 0x3a, 0x70, 0x61, 0x74, 0x68, 0x12, 0x2f,
     0x64, 0x65, 0x6d, 0x6f, 0x2e, 0x53, 0x65, 0x72, 0x76,
     0x69, 0x63, 0x65, 0x2f, 0x53, 0x74, 0x65, 0x70};
 
@@ -205,13 +206,14 @@ EventEngineSlice Zeros(uint32_t length) {
 
 // Send messages from client to server.
 auto SendClientToServerMessages(CallInitiator initiator, int num_messages) {
-  return Loop([initiator, num_messages]() mutable {
-    bool has_message = (num_messages > 0);
+  return Loop([initiator, num_messages, i = 0]() mutable {
+    bool has_message = (i < num_messages);
     return If(
         has_message,
-        Seq(initiator.PushMessage(GetContext<Arena>()->MakePooled<Message>()),
-            [&num_messages]() -> LoopCtl<absl::Status> {
-              --num_messages;
+        Seq(initiator.PushMessage(GetContext<Arena>()->MakePooled<Message>(
+                SliceBuffer(Slice::FromCopiedString(std::to_string(i))), 0)),
+            [&i]() -> LoopCtl<absl::Status> {
+              ++i;
               return Continue();
             }),
         [initiator]() mutable -> LoopCtl<absl::Status> {
@@ -222,58 +224,6 @@ auto SendClientToServerMessages(CallInitiator initiator, int num_messages) {
 }
 
 class ClientTransportTest : public ::testing::Test {
- public:
-#if 0
-  // Add stream into client transport, and expect return trailers of
-  // "grpc-status:code".
-  auto AddStream(CallArgs args, const grpc_status_code trailers) {
-    return Seq(client_transport_->AddStream(std::move(args)),
-               [trailers](ServerMetadataHandle ret) {
-                 // AddStream will finish with server trailers:
-                 // "grpc-status:code".
-                 EXPECT_EQ(ret->get(GrpcStatusMetadata()).value(), trailers);
-                 return trailers;
-               });
-  }
-  // Start read from control endpoints.
-  auto StartRead(const absl::Status& read_status) {
-    return [read_status, this] {
-      read_callback_(read_status);
-      return read_status;
-    };
-  }
-  // Receive messages from server to client.
-  auto ReceiveServerToClientMessages(
-      Pipe<ServerMetadataHandle>& pipe_server_intial_metadata,
-      Pipe<MessageHandle>& pipe_server_to_client_messages) {
-    return Seq(
-        // Receive server initial metadata.
-        Map(pipe_server_intial_metadata.receiver.Next(),
-            [](NextResult<ServerMetadataHandle> r) {
-              // Expect value: ":path: /demo.Service/Step"
-              EXPECT_TRUE(r.has_value());
-              EXPECT_EQ(
-                  r.value()->get_pointer(HttpPathMetadata())->as_string_view(),
-                  "/demo.Service/Step");
-              return absl::OkStatus();
-            }),
-        // Receive server to client messages.
-        Map(pipe_server_to_client_messages.receiver.Next(),
-            [this](NextResult<MessageHandle> r) {
-              EXPECT_TRUE(r.has_value());
-              EXPECT_EQ(r.value()->payload()->JoinIntoString(), message_);
-              return absl::OkStatus();
-            }),
-        [&pipe_server_intial_metadata,
-         &pipe_server_to_client_messages]() mutable {
-          // Close pipes after receive message.
-          pipe_server_to_client_messages.sender.Close();
-          pipe_server_intial_metadata.sender.Close();
-          return absl::OkStatus();
-        });
-  }
-#endif
-
  protected:
   const std::shared_ptr<grpc_event_engine::experimental::FuzzingEventEngine>&
   event_engine() {
@@ -310,7 +260,7 @@ TEST_F(ClientTransportTest, AddOneStream) {
   data_endpoint.ExpectRead(
       {Zeros(56), EventEngineSlice::FromCopiedString("12345678")}, nullptr);
   EXPECT_CALL(*control_endpoint.endpoint, Read)
-      .InSequence(control_endpoint.sequence)
+      .InSequence(control_endpoint.read_sequence)
       .WillOnce(Return(false));
   auto transport = MakeOrphanable<ClientTransport>(
       std::move(control_endpoint.promise_endpoint),
@@ -320,11 +270,18 @@ TEST_F(ClientTransportTest, AddOneStream) {
   StrictMock<MockFunction<void()>> on_done;
   EXPECT_CALL(on_done, Call());
   control_endpoint.ExpectWrite(
-      {SerializedFrameHeader(FrameType::kFragment, 1,
-                             sizeof(kPathDemoServiceStep), 0, 0, 0, 0),
+      {SerializedFrameHeader(FrameType::kFragment, 1, 1,
+                             sizeof(kPathDemoServiceStep), 0, 0, 0),
        EventEngineSlice::FromCopiedBuffer(kPathDemoServiceStep,
                                           sizeof(kPathDemoServiceStep))},
       nullptr);
+  control_endpoint.ExpectWrite(
+      {SerializedFrameHeader(FrameType::kFragment, 2, 1, 0, 1, 63, 0)},
+      nullptr);
+  data_endpoint.ExpectWrite(
+      {EventEngineSlice::FromCopiedString("0"), Zeros(63)}, nullptr);
+  control_endpoint.ExpectWrite(
+      {SerializedFrameHeader(FrameType::kFragment, 4, 1, 0, 0, 0, 0)}, nullptr);
   call.initiator.SpawnGuarded("test-send", [initiator =
                                                 call.initiator]() mutable {
     return TrySeq(initiator.PushClientInitialMetadata(TestInitialMetadata()),
