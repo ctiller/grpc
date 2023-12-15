@@ -46,6 +46,7 @@ struct TrySeqTraitsWithSfinae {
     return next->Make(std::forward<T>(value));
   }
   static bool IsOk(const T&) { return true; }
+  static const char* ErrorString(const T&) { abort(); }
   template <typename R>
   static R ReturnValue(T&&) {
     abort();
@@ -70,6 +71,9 @@ struct TrySeqTraitsWithSfinae<absl::StatusOr<T>> {
     return next->Make(std::move(*status));
   }
   static bool IsOk(const absl::StatusOr<T>& status) { return status.ok(); }
+  static std::string ErrorString(const absl::StatusOr<T>& status) {
+    return status.status().ToString();
+  }
   template <typename R>
   static R ReturnValue(absl::StatusOr<T>&& status) {
     return FailureStatusCast<R>(status.status());
@@ -112,6 +116,9 @@ struct TrySeqTraitsWithSfinae<
     return next->Make();
   }
   static bool IsOk(const T& status) { return IsStatusOk(status); }
+  static std::string ErrorString(const T& status) {
+    return IsStatusOk(status) ? "OK" : "FAILED";
+  }
   template <typename R>
   static R ReturnValue(T&& status) {
     return FailureStatusCast<R>(std::move(status));
@@ -135,6 +142,9 @@ struct TrySeqTraitsWithSfinae<
     return next->Make(TakeValue(std::forward<T>(status)));
   }
   static bool IsOk(const T& status) { return IsStatusOk(status); }
+  static std::string ErrorString(const T& status) {
+    return IsStatusOk(status) ? "OK" : "FAILED";
+  }
   template <typename R>
   static R ReturnValue(T&& status) {
     GPR_DEBUG_ASSERT(!IsStatusOk(status));
@@ -155,6 +165,9 @@ struct TrySeqTraitsWithSfinae<absl::Status> {
     return next->Make();
   }
   static bool IsOk(const absl::Status& status) { return status.ok(); }
+  static std::string ErrorString(const absl::Status& status) {
+    return status.ToString();
+  }
   template <typename R>
   static R ReturnValue(absl::Status&& status) {
     return FailureStatusCast<R>(std::move(status));
