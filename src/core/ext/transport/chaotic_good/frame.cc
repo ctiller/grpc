@@ -24,11 +24,11 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "frame.h"
 
 #include <grpc/slice.h>
 #include <grpc/support/log.h>
 
+#include "src/core/ext/transport/chaotic_good/frame.h"
 #include "src/core/ext/transport/chaotic_good/frame_header.h"
 #include "src/core/lib/gprpp/bitset.h"
 #include "src/core/lib/gprpp/no_destruct.h"
