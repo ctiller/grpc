@@ -755,7 +755,10 @@ grpc_cc_library(
 
 grpc_cc_library(
     name="seq_state",
-    external_deps=["absl/base:core_headers"],
+    external_deps=[
+        "absl/base:core_headers",
+        "absl/strings",
+    ],
     language="c++",
     public_hdrs=[
         "lib/promise/detail/seq_state.h",
