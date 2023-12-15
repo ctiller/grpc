@@ -342,27 +342,6 @@ auto ClientTransport::CallOutboundLoop(uint32_t stream_id,
       });
 }
 
-#if 0
-auto ClientTransport::CallInboundLoop(CallHandler call_handler,
-                                      FrameReceiver receiver) {
-  return Loop([receiver = std::move(receiver),
-               call_handler = std::move(call_handler)]() mutable {
-    return TrySeq(
-        Map(receiver.Next(),
-            [](absl::optional<ServerFrame> server_frame)
-                -> absl::StatusOr<ServerFrame> {
-              if (!server_frame.has_value()) {
-                return absl::UnavailableError("Transport closed.");
-              }
-              return std::move(*server_frame);
-            }),
-        [call_handler](ServerFrame server_frame) {
-          auto frame = absl::get<ServerFragmentFrame>(std::move(server_frame));
-        });
-  });
-}
-#endif
-
 void ClientTransport::StartCall(CallHandler call_handler) {
   // At this point, the connection is set up.
   // Start sending data frames.
