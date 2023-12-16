@@ -522,12 +522,10 @@ class CallHandler {
 
   auto PushServerTrailingMetadata(ServerMetadataHandle md) {
     GPR_DEBUG_ASSERT(Activity::current() == &spine_->party());
+    spine_->server_to_client_messages().sender.Close();
+    spine_->CallOnDone();
     return Map(spine_->server_trailing_metadata().sender.Push(std::move(md)),
-               [this](bool ok) {
-                 spine_->server_to_client_messages().sender.Close();
-                 spine_->CallOnDone();
-                 return StatusFlag(ok);
-               });
+               [](bool ok) { return StatusFlag(ok); });
   }
 
   auto PullMessage() {

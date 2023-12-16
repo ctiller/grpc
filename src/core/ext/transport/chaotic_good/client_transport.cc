@@ -136,30 +136,31 @@ absl::optional<CallHandler> ClientTransport::LookupStream(uint32_t stream_id) {
 
 auto ClientTransport::PushFrameIntoCall(ServerFragmentFrame frame,
                                         CallHandler call_handler) {
-  bool has_headers = (frame.headers != nullptr);
-  bool has_message = frame.message.has_value();
-  bool has_trailers = (frame.trailers != nullptr);
+  auto& headers = frame.headers;
   return TrySeq(
-      AllOk<StatusFlag>(
-          If(
-              has_headers,
-              [call_handler, headers = std::move(frame.headers)]() mutable {
-                return call_handler.PushServerInitialMetadata(
-                    std::move(headers));
-              },
-              []() -> StatusFlag { return Success{}; }),
-          If(
-              has_message,
-              [call_handler, message = std::move(frame.message)]() mutable {
-                return call_handler.PushMessage(std::move(message->message));
-              },
-              []() -> StatusFlag { return Success{}; })),
       If(
-          has_trailers,
-          [call_handler, trailers = std::move(frame.trailers)]() mutable {
-            return call_handler.PushServerTrailingMetadata(std::move(trailers));
+          headers != nullptr,
+          [call_handler, &headers]() mutable {
+            return call_handler.PushServerInitialMetadata(std::move(headers));
           },
-          []() -> StatusFlag { return Success{}; }));
+          []() -> StatusFlag { return Success{}; }),
+      [call_handler, message = std::move(frame.message)]() mutable {
+        return If(
+            message.has_value(),
+            [&call_handler, &message]() mutable {
+              return call_handler.PushMessage(std::move(message->message));
+            },
+            []() -> StatusFlag { return Success{}; });
+      },
+      [call_handler, trailers = std::move(frame.trailers)]() mutable {
+        return If(
+            trailers != nullptr,
+            [&call_handler, &trailers]() mutable {
+              return call_handler.PushServerTrailingMetadata(
+                  std::move(trailers));
+            },
+            []() -> StatusFlag { return Success{}; });
+      });
 }
 
 auto ClientTransport::DeserializeFrameAndPassToCall(SliceBuffer control_buffer,
