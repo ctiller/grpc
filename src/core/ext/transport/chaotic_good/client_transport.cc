@@ -26,13 +26,12 @@
 #include "absl/random/bit_gen_ref.h"
 #include "absl/random/random.h"
 #include "absl/status/statusor.h"
-#include "client_transport.h"
-#include "frame.h"
 
 #include <grpc/event_engine/event_engine.h>
 #include <grpc/slice.h>
 #include <grpc/support/log.h>
 
+#include "src/core/ext/transport/chaotic_good/client_transport.h"
 #include "src/core/ext/transport/chaotic_good/frame.h"
 #include "src/core/ext/transport/chaotic_good/frame_header.h"
 #include "src/core/ext/transport/chttp2/transport/hpack_encoder.h"
@@ -185,7 +184,7 @@ auto ClientTransport::DeserializeFrameAndPassToCall(SliceBuffer control_buffer,
                     return StatusCast<absl::Status>(flag);
                   });
             },
-            [&status] { return Immediate(std::move(status)); });
+            [&status] { return Immediate(status); });
       }());
 }
 
