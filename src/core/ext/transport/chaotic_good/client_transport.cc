@@ -17,6 +17,7 @@
 #include "src/core/ext/transport/chaotic_good/client_transport.h"
 
 #include <cstdint>
+#include <cstdlib>
 #include <memory>
 #include <string>
 #include <tuple>
@@ -39,6 +40,7 @@
 #include "src/core/lib/gprpp/ref_counted_ptr.h"
 #include "src/core/lib/iomgr/exec_ctx.h"
 #include "src/core/lib/promise/activity.h"
+#include "src/core/lib/promise/all_ok.h"
 #include "src/core/lib/promise/event_engine_wakeup_scheduler.h"
 #include "src/core/lib/promise/loop.h"
 #include "src/core/lib/promise/map.h"
@@ -138,56 +140,53 @@ auto ClientTransport::PushFrameIntoCall(ServerFragmentFrame frame,
   bool has_message = frame.message.has_value();
   bool has_trailers = (frame.trailers != nullptr);
   return TrySeq(
-      TryJoin(If(
-                  has_headers,
-                  [call_handler, headers = std::move(frame.headers)]() mutable {
-                    return call_handler.PushServerInitialMetadata(
-                        std::move(headers));
-                  },
-                  []() -> StatusFlag { return Success{}; }),
-              If(
-                  has_message,
-                  [call_handler, message = std::move(frame.message)]() mutable {
-                    return call_handler.PushMessage(
-                        std::move(message->message));
-                  },
-                  []() -> StatusFlag { return Success{}; })),
+      AllOk<StatusFlag>(
+          If(
+              has_headers,
+              [call_handler, headers = std::move(frame.headers)]() mutable {
+                return call_handler.PushServerInitialMetadata(
+                    std::move(headers));
+              },
+              []() -> StatusFlag { return Success{}; }),
+          If(
+              has_message,
+              [call_handler, message = std::move(frame.message)]() mutable {
+                return call_handler.PushMessage(std::move(message->message));
+              },
+              []() -> StatusFlag { return Success{}; })),
       If(
           has_trailers,
           [call_handler, trailers = std::move(frame.trailers)]() mutable {
-            return Map(
-                call_handler.PushServerTrailingMetadata(std::move(trailers)),
-                [](StatusFlag f) -> absl::StatusOr<bool> {
-                  if (f.ok()) return true;
-                  return absl::CancelledError();
-                });
+            return call_handler.PushServerTrailingMetadata(std::move(trailers));
           },
-          []() -> absl::StatusOr<bool> { return false; }));
+          []() -> StatusFlag { return Success{}; }));
 }
 
 auto ClientTransport::DeserializeFrameAndPassToCall(SliceBuffer control_buffer,
                                                     SliceBuffer data_buffer,
                                                     CallHandler call_handler) {
-  return call_handler.CancelIfFails([this, call_handler, &control_buffer,
-                                     &data_buffer]() mutable {
-    ServerFragmentFrame frame;
-    // Deserialize frame from read buffer.
-    const auto status =
-        frame.Deserialize(&hpack_parser_, frame_header_,
-                          absl::BitGenRef(bitgen_), control_buffer);
-    return If(
-        status.ok(),
-        [&frame, &data_buffer, &call_handler, this]() {
-          uint32_t message_length = data_buffer.Length();
-          frame.message = FragmentMessage(
-              Arena::MakePooled<Message>(std::move(data_buffer), 0), 0,
-              message_length);
-          return PushFrameIntoCall(std::move(frame), std::move(call_handler));
-        },
-        [&status] {
-          return Immediate(absl::StatusOr<bool>(std::move(status)));
-        });
-  }());
+  return call_handler.CancelIfFails(
+      [this, call_handler, &control_buffer, &data_buffer]() mutable {
+        ServerFragmentFrame frame;
+        // Deserialize frame from read buffer.
+        const auto status =
+            frame.Deserialize(&hpack_parser_, frame_header_,
+                              absl::BitGenRef(bitgen_), control_buffer);
+        return If(
+            status.ok(),
+            [&frame, &data_buffer, &call_handler, this]() {
+              uint32_t message_length = data_buffer.Length();
+              frame.message = FragmentMessage(
+                  Arena::MakePooled<Message>(std::move(data_buffer), 0), 0,
+                  message_length);
+              return Map(
+                  PushFrameIntoCall(std::move(frame), std::move(call_handler)),
+                  [](StatusFlag flag) -> absl::Status {
+                    return StatusCast<absl::Status>(flag);
+                  });
+            },
+            [&status] { return Immediate(std::move(status)); });
+      }());
 }
 
 auto ClientTransport::MaybeDeserializeFrameAndPassToCall(
@@ -277,8 +276,11 @@ void ClientTransport::AbortWithError() {
   if (!outgoing_frames_.IsClosed()) {
     outgoing_frames_.MarkClosed();
   }
-  MutexLock lock(&mu_);
-  for (const auto& pair : stream_map_) {
+  ReleasableMutexLock lock(&mu_);
+  StreamMap stream_map = std::move(stream_map_);
+  stream_map_.clear();
+  lock.Release();
+  for (const auto& pair : stream_map) {
     auto call_handler = pair.second;
     call_handler.SpawnInfallible("cancel", [call_handler]() mutable {
       call_handler.Cancel(ServerMetadataFromStatus(
@@ -289,9 +291,14 @@ void ClientTransport::AbortWithError() {
 }
 
 uint32_t ClientTransport::MakeStream(CallHandler call_handler) {
-  MutexLock lock(&mu_);
+  ReleasableMutexLock lock(&mu_);
   const uint32_t stream_id = next_stream_id_++;
   stream_map_.emplace(stream_id, std::move(call_handler));
+  lock.Release();
+  call_handler.OnDone([this, stream_id]() {
+    MutexLock lock(&mu_);
+    stream_map_.erase(stream_id);
+  });
   return stream_id;
 }
 

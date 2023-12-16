@@ -258,7 +258,7 @@ TEST_F(ClientTransportTest, AddOneStream) {
        EventEngineSlice::FromCopiedBuffer(kGrpcStatus0, sizeof(kGrpcStatus0))},
       event_engine().get());
   data_endpoint.ExpectRead(
-      {Zeros(56), EventEngineSlice::FromCopiedString("12345678")}, nullptr);
+      {EventEngineSlice::FromCopiedString("12345678"), Zeros(56)}, nullptr);
   EXPECT_CALL(*control_endpoint.endpoint, Read)
       .InSequence(control_endpoint.read_sequence)
       .WillOnce(Return(false));

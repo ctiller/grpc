@@ -6400,6 +6400,7 @@ grpc_cc_library(
         "if",
         "inter_activity_pipe",
         "loop",
+        "all_ok",
         "match",
         "memory_quota",
         "mpsc",

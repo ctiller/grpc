@@ -258,6 +258,20 @@ class CallSpineInterface {
   virtual Pipe<MessageHandle>& server_to_client_messages() = 0;
   virtual Pipe<ServerMetadataHandle>& server_trailing_metadata() = 0;
   virtual Latch<ServerMetadataHandle>& cancel_latch() = 0;
+  // Add a callback to be called when server trailing metadata is received.
+  void OnDone(absl::AnyInvocable<void()> fn) {
+    if (on_done_ == nullptr) {
+      on_done_ = std::move(fn);
+      return;
+    }
+    on_done_ = [first = std::move(fn), next = std::move(on_done_)]() mutable {
+      first();
+      next();
+    };
+  }
+  void CallOnDone() {
+    if (on_done_ != nullptr) std::exchange(on_done_, nullptr)();
+  }
   virtual Party& party() = 0;
   virtual void IncrementRefCount() = 0;
   virtual void Unref() = 0;
@@ -276,6 +290,7 @@ class CallSpineInterface {
     auto& c = cancel_latch();
     if (c.is_set()) return absl::nullopt;
     c.Set(std::move(metadata));
+    CallOnDone();
     client_initial_metadata().sender.CloseWithError();
     server_initial_metadata().sender.CloseWithError();
     client_to_server_messages().sender.CloseWithError();
@@ -329,6 +344,9 @@ class CallSpineInterface {
       }
     });
   }
+
+ private:
+  absl::AnyInvocable<void()> on_done_{nullptr};
 };
 
 class CallSpine final : public CallSpineInterface, public Party {
@@ -504,9 +522,12 @@ class CallHandler {
 
   auto PushServerTrailingMetadata(ServerMetadataHandle md) {
     GPR_DEBUG_ASSERT(Activity::current() == &spine_->party());
-    spine_->server_to_client_messages().sender.Close();
     return Map(spine_->server_trailing_metadata().sender.Push(std::move(md)),
-               [](bool ok) { return StatusFlag(ok); });
+               [this](bool ok) {
+                 spine_->server_to_client_messages().sender.Close();
+                 spine_->CallOnDone();
+                 return StatusFlag(ok);
+               });
   }
 
   auto PullMessage() {
@@ -525,6 +546,8 @@ class CallHandler {
     GPR_DEBUG_ASSERT(Activity::current() == &spine_->party());
     std::ignore = spine_->Cancel(std::move(status));
   }
+
+  void OnDone(absl::AnyInvocable<void()> fn) { spine_->OnDone(std::move(fn)); }
 
   template <typename Promise>
   auto CancelIfFails(Promise promise) {

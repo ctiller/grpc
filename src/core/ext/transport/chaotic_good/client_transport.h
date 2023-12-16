@@ -93,6 +93,7 @@ class ClientTransport final : public grpc_core::Transport,
   // Queue size of each stream pipe is set to 2, so that for each stream read it
   // will queue at most 2 frames.
   static const size_t kServerFrameQueueSize = 2;
+  using StreamMap = absl::flat_hash_map<uint32_t, CallHandler>;
 
   uint32_t MakeStream(CallHandler call_handler);
   absl::optional<CallHandler> LookupStream(uint32_t stream_id);
@@ -127,7 +128,7 @@ class ClientTransport final : public grpc_core::Transport,
   Mutex mu_;
   uint32_t next_stream_id_ ABSL_GUARDED_BY(mu_) = 1;
   // Map of stream incoming server frames, key is stream_id.
-  absl::flat_hash_map<uint32_t, CallHandler> stream_map_ ABSL_GUARDED_BY(mu_);
+  StreamMap stream_map_ ABSL_GUARDED_BY(mu_);
   std::unique_ptr<PromiseEndpoint> control_endpoint_;
   std::unique_ptr<PromiseEndpoint> data_endpoint_;
   SliceBuffer control_endpoint_write_buffer_;
