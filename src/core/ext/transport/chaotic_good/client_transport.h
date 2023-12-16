@@ -83,9 +83,9 @@ class ClientTransport final : public Transport, public ClientTransport {
   grpc_endpoint* GetEndpoint() override { return nullptr; }
   void Orphan() override { delete this; }
 
-  void StartCall(CallHandler call_handler) override;
-
-  void AbortWithError();
+  void StartCall(CallHandler call_handler);
+  ;
+  d AbortWithError();
 
  private:
   // Queue size of each stream pipe is set to 2, so that for each stream read it
