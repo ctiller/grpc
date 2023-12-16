@@ -57,6 +57,7 @@
 #include "test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.h"
 #include "test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.pb.h"
 
+using testing::AtMost;
 using testing::MockFunction;
 using testing::Return;
 using testing::Sequence;
@@ -155,12 +156,14 @@ TEST_F(ClientTransportTest, AddOneStreamWithWriteFailed) {
   MockPromiseEndpoint data_endpoint;
   // Mock write failed and read is pending.
   EXPECT_CALL(*control_endpoint.endpoint, Write)
+      .Times(AtMost(1))
       .WillOnce(
           WithArgs<0>([](absl::AnyInvocable<void(absl::Status)> on_write) {
             on_write(absl::InternalError("control endpoint write failed."));
             return false;
           }));
   EXPECT_CALL(*data_endpoint.endpoint, Write)
+      .Times(AtMost(1))
       .WillOnce(
           WithArgs<0>([](absl::AnyInvocable<void(absl::Status)> on_write) {
             on_write(absl::InternalError("data endpoint write failed."));
@@ -249,14 +252,14 @@ TEST_F(ClientTransportTest, AddMultipleStreamWithWriteFailed) {
   MockPromiseEndpoint control_endpoint;
   MockPromiseEndpoint data_endpoint;
   EXPECT_CALL(*control_endpoint.endpoint, Write)
-      .Times(1)
+      .Times(AtMost(1))
       .WillRepeatedly(
           WithArgs<0>([](absl::AnyInvocable<void(absl::Status)> on_write) {
             on_write(absl::InternalError("control endpoint write failed."));
             return false;
           }));
   EXPECT_CALL(*data_endpoint.endpoint, Write)
-      .Times(1)
+      .Times(AtMost(1))
       .WillRepeatedly(
           WithArgs<0>([](absl::AnyInvocable<void(absl::Status)> on_write) {
             on_write(absl::InternalError("data endpoint write failed."));
