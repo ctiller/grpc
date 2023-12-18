@@ -79,7 +79,7 @@ auto ChaoticGoodServerTransport::TransportReadLoop() {
           return ReadFrameBody(std::move(read_buffer));
         },
         // Construct and send the server frame to corresponding stream.
-        [this](std::tuple<SliceBuffer, SliceBuffer> ret) mutable {
+        [](std::tuple<SliceBuffer, SliceBuffer> ret) mutable {
           return MaybeDeserializeFrameAndPassToCall(
               std::move(std::get<0>(ret)), std::move(std::get<1>(ret)));
         },
@@ -167,7 +167,8 @@ void ChaoticGoodServerTransport::AddCall(std::shared_ptr<CallInitiator> r) {
           return If(
               has_result,
               [this, result = std::move(result), stream_id]() mutable {
-                std::cout << "write promise get message " << "\n";
+                std::cout << "write promise get message "
+                          << "\n";
                 fflush(stdout);
                 ServerFragmentFrame frame;
                 uint32_t message_length = result.value()->payload()->Length();
@@ -186,13 +187,15 @@ void ChaoticGoodServerTransport::AddCall(std::shared_ptr<CallInitiator> r) {
                             "Transport closed due to endpoint write/read "
                             "failed.");
                       }
-                      std::cout << "write promise continue " << "\n";
+                      std::cout << "write promise continue "
+                                << "\n";
                       fflush(stdout);
                       return Continue();
                     });
               },
               []() -> LoopCtl<absl::Status> {
-                std::cout << "write promise failed " << "\n";
+                std::cout << "write promise failed "
+                          << "\n";
                 fflush(stdout);
                 return absl::UnavailableError(
                     "Transport closed due to endpoint write/read "
@@ -229,7 +232,8 @@ void ChaoticGoodServerTransport::AddCall(std::shared_ptr<CallInitiator> r) {
                 GPR_ASSERT(client_frame.has_value());
                 auto frame = std::move(
                     absl::get<ClientFragmentFrame>(client_frame.value()));
-                std::cout << "receive frame from read " << "\n";
+                std::cout << "receive frame from read "
+                          << "\n";
                 fflush(stdout);
                 return Seq(
                     r->PushClientToServerMessage(std::move(frame.message)),
@@ -241,13 +245,15 @@ void ChaoticGoodServerTransport::AddCall(std::shared_ptr<CallInitiator> r) {
                             "Transport closed due to endpoint write/read "
                             "failed.");
                       }
-                      std::cout << "read promise continue " << "\n";
+                      std::cout << "read promise continue "
+                                << "\n";
                       fflush(stdout);
                       return Continue();
                     });
               },
               []() -> LoopCtl<absl::Status> {
-                std::cout << "read clientframe failed " << "\n";
+                std::cout << "read clientframe failed "
+                          << "\n";
                 fflush(stdout);
                 return absl::UnavailableError(
                     "Transport closed due to endpoint write/read "

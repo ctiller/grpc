@@ -82,7 +82,7 @@ class ChaoticGoodServerTransport final : public Transport,
       std::unique_ptr<PromiseEndpoint> data_endpoint,
       std::shared_ptr<grpc_event_engine::experimental::EventEngine>
           event_engine);
-  ~ChaoticGoodServerTransport();
+  ~ChaoticGoodServerTransport() override;
 
   FilterStackTransport* filter_stack_transport() override { return nullptr; }
   ClientTransport* client_transport() override { return nullptr; }
