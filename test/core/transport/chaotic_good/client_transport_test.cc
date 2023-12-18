@@ -321,50 +321,96 @@ TEST_F(ClientTransportTest, AddOneStream) {
   event_engine()->UnsetGlobalHooks();
 }
 
-#if 0
 TEST_F(ClientTransportTest, AddOneStreamMultipleMessages) {
-  InitialClientTransport(1);
-  ClientMetadataHandle md;
-  auto args = CallArgs{std::move(md),
-                       ClientInitialMetadataOutstandingToken::Empty(),
-                       nullptr,
-                       &pipe_server_intial_metadata_.sender,
-                       &pipe_client_to_server_messages_.receiver,
-                       &pipe_server_to_client_messages_.sender};
-  StrictMock<MockFunction<void(absl::Status)>> on_done;
-  EXPECT_CALL(on_done, Call(absl::OkStatus()));
-  EXPECT_CALL(control_endpoint_, Write).Times(3).WillRepeatedly(Return(true));
-  EXPECT_CALL(data_endpoint_, Write).Times(3).WillRepeatedly(Return(true));
-  auto activity = MakeActivity(
-      Seq(
-          // Concurrently: write and read messages in client transport.
-          Join(
-              // Add first stream with call_args into client transport.
-              AddStream(std::move(args), GRPC_STATUS_OK),
-              // Start read from control endpoints.
-              StartRead(absl::OkStatus()),
-              // Send messages to call_args.client_to_server_messages pipe,
-              // which will be eventually sent to control/data endpoints.
-              SendClientToServerMessages(pipe_client_to_server_messages_, 3),
-              // Receive messages from control/data endpoints.
-              ReceiveServerToClientMessages(pipe_server_intial_metadata_,
-                                            pipe_server_to_client_messages_)),
-          // Once complete, verify successful sending and the received value.
-          [](const std::tuple<grpc_status_code, absl::Status, absl::Status,
-                              absl::Status>& ret) {
-            EXPECT_EQ(std::get<0>(ret), GRPC_STATUS_OK);
-            EXPECT_TRUE(std::get<1>(ret).ok());
-            EXPECT_TRUE(std::get<2>(ret).ok());
-            EXPECT_TRUE(std::get<3>(ret).ok());
-            return absl::OkStatus();
-          }),
-      EventEngineWakeupScheduler(event_engine_),
-      [&on_done](absl::Status status) { on_done.Call(std::move(status)); });
+  MockPromiseEndpoint control_endpoint;
+  MockPromiseEndpoint data_endpoint;
+  control_endpoint.ExpectRead(
+      {SerializedFrameHeader(FrameType::kFragment, 3, 1, 26, 8, 56, 0),
+       EventEngineSlice::FromCopiedBuffer(kPathDemoServiceStep,
+                                          sizeof(kPathDemoServiceStep))},
+      event_engine().get());
+  control_endpoint.ExpectRead(
+      {SerializedFrameHeader(FrameType::kFragment, 6, 1, 0, 8, 56, 15),
+       EventEngineSlice::FromCopiedBuffer(kGrpcStatus0, sizeof(kGrpcStatus0))},
+      event_engine().get());
+  data_endpoint.ExpectRead(
+      {EventEngineSlice::FromCopiedString("12345678"), Zeros(56)}, nullptr);
+  data_endpoint.ExpectRead(
+      {EventEngineSlice::FromCopiedString("87654321"), Zeros(56)}, nullptr);
+  EXPECT_CALL(*control_endpoint.endpoint, Read)
+      .InSequence(control_endpoint.read_sequence)
+      .WillOnce(Return(false));
+  auto transport = MakeOrphanable<ClientTransport>(
+      std::move(control_endpoint.promise_endpoint),
+      std::move(data_endpoint.promise_endpoint), event_engine());
+  auto call = MakeCall(event_engine().get(), 8192, memory_allocator());
+  transport->StartCall(std::move(call.handler));
+  StrictMock<MockFunction<void()>> on_done;
+  EXPECT_CALL(on_done, Call());
+  control_endpoint.ExpectWrite(
+      {SerializedFrameHeader(FrameType::kFragment, 1, 1,
+                             sizeof(kPathDemoServiceStep), 0, 0, 0),
+       EventEngineSlice::FromCopiedBuffer(kPathDemoServiceStep,
+                                          sizeof(kPathDemoServiceStep))},
+      nullptr);
+  control_endpoint.ExpectWrite(
+      {SerializedFrameHeader(FrameType::kFragment, 2, 1, 0, 1, 63, 0)},
+      nullptr);
+  data_endpoint.ExpectWrite(
+      {EventEngineSlice::FromCopiedString("0"), Zeros(63)}, nullptr);
+  control_endpoint.ExpectWrite(
+      {SerializedFrameHeader(FrameType::kFragment, 2, 1, 0, 1, 63, 0)},
+      nullptr);
+  data_endpoint.ExpectWrite(
+      {EventEngineSlice::FromCopiedString("1"), Zeros(63)}, nullptr);
+  control_endpoint.ExpectWrite(
+      {SerializedFrameHeader(FrameType::kFragment, 4, 1, 0, 0, 0, 0)}, nullptr);
+  call.initiator.SpawnGuarded("test-send", [initiator =
+                                                call.initiator]() mutable {
+    return TrySeq(initiator.PushClientInitialMetadata(TestInitialMetadata()),
+                  SendClientToServerMessages(initiator, 2));
+  });
+  call.initiator.SpawnInfallible(
+      "test-read", [&on_done, initiator = call.initiator]() mutable {
+        return Seq(
+            initiator.PullServerInitialMetadata(),
+            [](ValueOrFailure<ServerMetadataHandle> md) {
+              EXPECT_TRUE(md.ok());
+              EXPECT_EQ(
+                  md.value()->get_pointer(HttpPathMetadata())->as_string_view(),
+                  "/demo.Service/Step");
+              return Empty{};
+            },
+            initiator.PullMessage(),
+            [](NextResult<MessageHandle> msg) {
+              EXPECT_TRUE(msg.has_value());
+              EXPECT_EQ(msg.value()->payload()->JoinIntoString(), "12345678");
+              return Empty{};
+            },
+            initiator.PullMessage(),
+            [](NextResult<MessageHandle> msg) {
+              EXPECT_TRUE(msg.has_value());
+              EXPECT_EQ(msg.value()->payload()->JoinIntoString(), "87654321");
+              return Empty{};
+            },
+            initiator.PullMessage(),
+            [](NextResult<MessageHandle> msg) {
+              EXPECT_FALSE(msg.has_value());
+              return Empty{};
+            },
+            initiator.PullServerTrailingMetadata(),
+            [&on_done](ServerMetadataHandle md) {
+              EXPECT_EQ(md->get(GrpcStatusMetadata()).value(), GRPC_STATUS_OK);
+              on_done.Call();
+              return Empty{};
+            });
+      });
   // Wait until ClientTransport's internal activities to finish.
-  event_engine_->TickUntilIdle();
-  event_engine_->UnsetGlobalHooks();
+  event_engine()->TickUntilIdle();
+  event_engine()->UnsetGlobalHooks();
 }
 
+#if 0
 TEST_F(ClientTransportTest, AddMultipleStreamsMultipleMessages) {
   InitialClientTransport(2);
   ClientMetadataHandle first_stream_md;
