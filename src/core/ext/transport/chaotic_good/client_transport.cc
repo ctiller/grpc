@@ -109,18 +109,26 @@ auto ChaoticGoodClientTransport::TransportWriteLoop() {
 }
 
 auto ChaoticGoodClientTransport::ReadFrameBody(Slice read_buffer) {
-  frame_header_ =
-      FrameHeader::Parse(reinterpret_cast<const uint8_t*>(
-                             GRPC_SLICE_START_PTR(read_buffer.c_slice())))
-          .value();
+  auto frame_header = FrameHeader::Parse(reinterpret_cast<const uint8_t*>(
+      GRPC_SLICE_START_PTR(read_buffer.c_slice())));
   // Read header and trailers from control endpoint.
   // Read message padding and message from data endpoint.
-  uint32_t message_padding =
-      std::exchange(last_message_padding_, frame_header_.message_padding);
-  return TryJoin(control_endpoint_->Read(frame_header_.GetFrameLength()),
-                 TrySeq(data_endpoint_->Read(message_padding), [this]() {
-                   return data_endpoint_->Read(frame_header_.message_length);
-                 }));
+  return If(
+      frame_header.ok(),
+      [this, &frame_header] {
+        frame_header_ = std::move(*frame_header);
+        uint32_t message_padding =
+            std::exchange(last_message_padding_, frame_header_.message_padding);
+        return TryJoin(
+            control_endpoint_->Read(frame_header_.GetFrameLength()),
+            TrySeq(data_endpoint_->Read(message_padding), [this]() {
+              return data_endpoint_->Read(frame_header_.message_length);
+            }));
+      },
+      [&frame_header]()
+          -> absl::StatusOr<std::tuple<SliceBuffer, SliceBuffer>> {
+        return frame_header.status();
+      });
 }
 
 absl::optional<CallHandler> ChaoticGoodClientTransport::LookupStream(
