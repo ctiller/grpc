@@ -72,7 +72,7 @@
 namespace grpc_core {
 namespace chaotic_good {
 
-class ServerTransport final : public grpc_core::ServerTransport {
+class ServerTransport final : public ServerTransport {
  public:
   ServerTransport(std::unique_ptr<PromiseEndpoint> control_endpoint,
                   std::unique_ptr<PromiseEndpoint> data_endpoint,
@@ -97,10 +97,9 @@ class ServerTransport final : public grpc_core::ServerTransport {
   static const size_t client_frame_queue_size_ = 2;
   Mutex mu_;
   // Map of stream incoming server frames, key is stream_id.
-  std::map<uint32_t,
-           std::shared_ptr<InterActivityPipe<
-               ClientFrame, client_frame_queue_size_>::Sender>> stream_map_
-      ABSL_GUARDED_BY(mu_);
+  std::map<uint32_t, std::shared_ptr<InterActivityPipe<
+                         ClientFrame, client_frame_queue_size_>::Sender>>
+      stream_map_ ABSL_GUARDED_BY(mu_);
   // Assigned aligned bytes from setting frame.
   size_t aligned_bytes = 64;
   ActivityPtr writer_;
