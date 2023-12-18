@@ -116,7 +116,7 @@ auto ChaoticGoodClientTransport::ReadFrameBody(Slice read_buffer) {
   return If(
       frame_header.ok(),
       [this, &frame_header] {
-        frame_header_ = std::move(*frame_header);
+        frame_header_ = *frame_header;
         uint32_t message_padding =
             std::exchange(last_message_padding_, frame_header_.message_padding);
         return TryJoin(
