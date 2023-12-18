@@ -262,7 +262,7 @@ TEST_F(ClientTransportTest, AddOneStream) {
   EXPECT_CALL(*control_endpoint.endpoint, Read)
       .InSequence(control_endpoint.read_sequence)
       .WillOnce(Return(false));
-  auto transport = MakeOrphanable<ClientTransport>(
+  auto transport = MakeOrphanable<ChaoticGoodClientTransport>(
       std::move(control_endpoint.promise_endpoint),
       std::move(data_endpoint.promise_endpoint), event_engine());
   auto call = MakeCall(event_engine().get(), 8192, memory_allocator());
@@ -340,7 +340,7 @@ TEST_F(ClientTransportTest, AddOneStreamMultipleMessages) {
   EXPECT_CALL(*control_endpoint.endpoint, Read)
       .InSequence(control_endpoint.read_sequence)
       .WillOnce(Return(false));
-  auto transport = MakeOrphanable<ClientTransport>(
+  auto transport = MakeOrphanable<ChaoticGoodClientTransport>(
       std::move(control_endpoint.promise_endpoint),
       std::move(data_endpoint.promise_endpoint), event_engine());
   auto call = MakeCall(event_engine().get(), 8192, memory_allocator());

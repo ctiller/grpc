@@ -64,16 +64,18 @@
 namespace grpc_core {
 namespace chaotic_good {
 
-class ClientTransport final : public Transport, public ClientTransport {
+class ChaoticGoodClientTransport final : public Transport,
+                                         public ClientTransport {
  public:
-  ClientTransport(std::unique_ptr<PromiseEndpoint> control_endpoint,
-                  std::unique_ptr<PromiseEndpoint> data_endpoint,
-                  std::shared_ptr<grpc_event_engine::experimental::EventEngine>
-                      event_engine);
-  ~ClientTransport() override;
+  ChaoticGoodClientTransport(
+      std::unique_ptr<PromiseEndpoint> control_endpoint,
+      std::unique_ptr<PromiseEndpoint> data_endpoint,
+      std::shared_ptr<grpc_event_engine::experimental::EventEngine>
+          event_engine);
+  ~ChaoticGoodClientTransport() override;
 
   FilterStackTransport* filter_stack_transport() override { return nullptr; }
-  ClientTransport* client_transport() override { return this; }
+  ChaoticGoodClientTransport* client_transport() override { return this; }
   ServerTransport* server_transport() override { return nullptr; }
   absl::string_view GetTransportName() const override { return "chaotic_good"; }
   void SetPollset(grpc_stream* stream, grpc_pollset* pollset) override {}
@@ -83,9 +85,8 @@ class ClientTransport final : public Transport, public ClientTransport {
   grpc_endpoint* GetEndpoint() override { return nullptr; }
   void Orphan() override { delete this; }
 
-  void StartCall(CallHandler call_handler);
-  ;
-  d AbortWithError();
+  void StartCall(CallHandler call_handler) override;
+  void AbortWithError();
 
  private:
   // Queue size of each stream pipe is set to 2, so that for each stream read it

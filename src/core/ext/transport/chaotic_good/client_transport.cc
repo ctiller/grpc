@@ -59,7 +59,7 @@ namespace {
 const uint8_t kZeros[64] = {};
 }
 
-auto ClientTransport::ReadAndSerializeSomeOutgoingFrames() {
+auto ChaoticGoodClientTransport::ReadAndSerializeSomeOutgoingFrames() {
   return Map(
       outgoing_frames_.Next(),
       // Construct data buffers that will be sent to the endpoints.
@@ -86,7 +86,7 @@ auto ClientTransport::ReadAndSerializeSomeOutgoingFrames() {
       });
 }
 
-auto ClientTransport::TransportWriteLoop() {
+auto ChaoticGoodClientTransport::TransportWriteLoop() {
   return Loop([this] {
     return TrySeq(
         // Get next outgoing frame.
@@ -108,7 +108,7 @@ auto ClientTransport::TransportWriteLoop() {
   });
 }
 
-auto ClientTransport::ReadFrameBody(Slice read_buffer) {
+auto ChaoticGoodClientTransport::ReadFrameBody(Slice read_buffer) {
   frame_header_ =
       FrameHeader::Parse(reinterpret_cast<const uint8_t*>(
                              GRPC_SLICE_START_PTR(read_buffer.c_slice())))
@@ -123,7 +123,8 @@ auto ClientTransport::ReadFrameBody(Slice read_buffer) {
                  }));
 }
 
-absl::optional<CallHandler> ClientTransport::LookupStream(uint32_t stream_id) {
+absl::optional<CallHandler> ChaoticGoodClientTransport::LookupStream(
+    uint32_t stream_id) {
   MutexLock lock(&mu_);
   auto it = stream_map_.find(stream_id);
   if (it == stream_map_.end()) {
@@ -132,8 +133,8 @@ absl::optional<CallHandler> ClientTransport::LookupStream(uint32_t stream_id) {
   return it->second;
 }
 
-auto ClientTransport::PushFrameIntoCall(ServerFragmentFrame frame,
-                                        CallHandler call_handler) {
+auto ChaoticGoodClientTransport::PushFrameIntoCall(ServerFragmentFrame frame,
+                                                   CallHandler call_handler) {
   auto& headers = frame.headers;
   return TrySeq(
       If(
@@ -161,9 +162,9 @@ auto ClientTransport::PushFrameIntoCall(ServerFragmentFrame frame,
       });
 }
 
-auto ClientTransport::DeserializeFrameAndPassToCall(SliceBuffer control_buffer,
-                                                    SliceBuffer data_buffer,
-                                                    CallHandler call_handler) {
+auto ChaoticGoodClientTransport::DeserializeFrameAndPassToCall(
+    SliceBuffer control_buffer, SliceBuffer data_buffer,
+    CallHandler call_handler) {
   return call_handler.CancelIfFails(
       [this, call_handler, &control_buffer, &data_buffer]() mutable {
         ServerFragmentFrame frame;
@@ -188,7 +189,7 @@ auto ClientTransport::DeserializeFrameAndPassToCall(SliceBuffer control_buffer,
       }());
 }
 
-auto ClientTransport::MaybeDeserializeFrameAndPassToCall(
+auto ChaoticGoodClientTransport::MaybeDeserializeFrameAndPassToCall(
     SliceBuffer control_buffer, SliceBuffer data_buffer) {
   absl::optional<CallHandler> call_handler =
       LookupStream(frame_header_.stream_id);
@@ -211,7 +212,7 @@ auto ClientTransport::MaybeDeserializeFrameAndPassToCall(
       });
 }
 
-auto ClientTransport::TransportReadLoop() {
+auto ChaoticGoodClientTransport::TransportReadLoop() {
   return Loop([this] {
     return TrySeq(
         // Read frame header from control endpoint.
@@ -231,7 +232,7 @@ auto ClientTransport::TransportReadLoop() {
   });
 }
 
-auto ClientTransport::OnTransportActivityDone() {
+auto ChaoticGoodClientTransport::OnTransportActivityDone() {
   return [this](absl::Status status) {
     if (!(status.ok() || status.code() == absl::StatusCode::kCancelled)) {
       this->AbortWithError();
@@ -239,7 +240,7 @@ auto ClientTransport::OnTransportActivityDone() {
   };
 }
 
-ClientTransport::ClientTransport(
+ChaoticGoodClientTransport::ChaoticGoodClientTransport(
     std::unique_ptr<PromiseEndpoint> control_endpoint,
     std::unique_ptr<PromiseEndpoint> data_endpoint,
     std::shared_ptr<grpc_event_engine::experimental::EventEngine> event_engine)
@@ -260,7 +261,7 @@ ClientTransport::ClientTransport(
           TransportReadLoop(), EventEngineWakeupScheduler(event_engine_),
           OnTransportActivityDone())} {}
 
-ClientTransport::~ClientTransport() {
+ChaoticGoodClientTransport::~ChaoticGoodClientTransport() {
   if (writer_ != nullptr) {
     writer_.reset();
   }
@@ -269,7 +270,7 @@ ClientTransport::~ClientTransport() {
   }
 }
 
-void ClientTransport::AbortWithError() {
+void ChaoticGoodClientTransport::AbortWithError() {
   // Mark transport as unavailable when the endpoint write/read failed.
   // Close all the available pipes.
   if (!outgoing_frames_.IsClosed()) {
@@ -289,7 +290,7 @@ void ClientTransport::AbortWithError() {
   }
 }
 
-uint32_t ClientTransport::MakeStream(CallHandler call_handler) {
+uint32_t ChaoticGoodClientTransport::MakeStream(CallHandler call_handler) {
   ReleasableMutexLock lock(&mu_);
   const uint32_t stream_id = next_stream_id_++;
   stream_map_.emplace(stream_id, std::move(call_handler));
@@ -301,8 +302,8 @@ uint32_t ClientTransport::MakeStream(CallHandler call_handler) {
   return stream_id;
 }
 
-auto ClientTransport::CallOutboundLoop(uint32_t stream_id,
-                                       CallHandler call_handler) {
+auto ChaoticGoodClientTransport::CallOutboundLoop(uint32_t stream_id,
+                                                  CallHandler call_handler) {
   auto send_fragment = [stream_id,
                         outgoing_frames = outgoing_frames_.MakeSender()](
                            ClientFragmentFrame frame) mutable {
@@ -348,7 +349,7 @@ auto ClientTransport::CallOutboundLoop(uint32_t stream_id,
       });
 }
 
-void ClientTransport::StartCall(CallHandler call_handler) {
+void ChaoticGoodClientTransport::StartCall(CallHandler call_handler) {
   // At this point, the connection is set up.
   // Start sending data frames.
   call_handler.SpawnGuarded("outbound_loop", [this, call_handler]() mutable {
