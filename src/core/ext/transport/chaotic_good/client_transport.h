@@ -34,7 +34,6 @@
 #include "absl/status/status.h"
 #include "absl/types/optional.h"
 #include "absl/types/variant.h"
-#include "frame.h"
 
 #include <grpc/event_engine/event_engine.h>
 #include <grpc/event_engine/memory_allocator.h>
@@ -65,8 +64,7 @@
 namespace grpc_core {
 namespace chaotic_good {
 
-class ClientTransport final : public grpc_core::Transport,
-                              public grpc_core::ClientTransport {
+class ClientTransport final : public Transport, public ClientTransport {
  public:
   ClientTransport(std::unique_ptr<PromiseEndpoint> control_endpoint,
                   std::unique_ptr<PromiseEndpoint> data_endpoint,
@@ -85,9 +83,9 @@ class ClientTransport final : public grpc_core::Transport,
   grpc_endpoint* GetEndpoint() override { return nullptr; }
   void Orphan() override { delete this; }
 
-  void StartCall(CallHandler call_handler) override;
-
-  void AbortWithError();
+  void StartCall(CallHandler call_handler);
+  ;
+  d AbortWithError();
 
  private:
   // Queue size of each stream pipe is set to 2, so that for each stream read it

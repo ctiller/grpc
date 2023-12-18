@@ -24,7 +24,6 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "frame.h"
 
 #include <grpc/slice.h>
 #include <grpc/support/log.h>
