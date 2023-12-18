@@ -199,10 +199,9 @@ class PartySyncUsingAtomics {
   //     That thread will run the main loop until no further work needs to
   //     be done.
   //   - 1 bit to indicate whether there are participants waiting to be
-  //   added
+  //     added
   //   - 16 bits, one per participant, indicating which participants have
-  //   been
-  //     woken up and should be polled next time the main loop runs.
+  //     been woken up and should be polled next time the main loop runs.
 
   // clang-format off
   // Bits used to store 16 bits of wakeups
