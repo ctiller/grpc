@@ -75,7 +75,7 @@ class ChaoticGoodClientTransport final : public Transport,
   ~ChaoticGoodClientTransport() override;
 
   FilterStackTransport* filter_stack_transport() override { return nullptr; }
-  ChaoticGoodClientTransport* client_transport() override { return this; }
+  ClientTransport* client_transport() override { return this; }
   ServerTransport* server_transport() override { return nullptr; }
   absl::string_view GetTransportName() const override { return "chaotic_good"; }
   void SetPollset(grpc_stream* stream, grpc_pollset* pollset) override {}
@@ -126,6 +126,7 @@ class ChaoticGoodClientTransport final : public Transport,
   size_t aligned_bytes_ = 64;
   Mutex mu_;
   uint32_t next_stream_id_ ABSL_GUARDED_BY(mu_) = 1;
+  uint32_t last_message_padding_ = 0;
   // Map of stream incoming server frames, key is stream_id.
   StreamMap stream_map_ ABSL_GUARDED_BY(mu_);
   std::unique_ptr<PromiseEndpoint> control_endpoint_;
@@ -140,7 +141,6 @@ class ChaoticGoodClientTransport final : public Transport,
   std::shared_ptr<grpc_event_engine::experimental::EventEngine> event_engine_;
   ActivityPtr writer_;
   ActivityPtr reader_;
-  uint32_t last_message_padding_ = 0;
 };
 
 }  // namespace chaotic_good

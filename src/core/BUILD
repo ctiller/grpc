@@ -6439,6 +6439,7 @@ grpc_cc_library(
         "absl/status:statusor",
         "absl/types:optional",
         "absl/types:variant",
+        "absl/container:flat_hash_map",
     ],
     language = "c++",
     deps = [
