@@ -769,6 +769,7 @@ grpc_cc_library(
         "promise_factory",
         "promise_like",
         "promise_trace",
+        "//:debug_location",
         "//:gpr",
     ],
 )
@@ -784,6 +785,7 @@ grpc_cc_library(
         "poll",
         "promise_like",
         "seq_state",
+        "//:debug_location",
         "//:gpr_platform",
     ],
 )
@@ -806,6 +808,7 @@ grpc_cc_library(
         "promise_status",
         "seq_state",
         "status_flag",
+        "//:debug_location",
         "//:gpr_platform",
     ],
 )
