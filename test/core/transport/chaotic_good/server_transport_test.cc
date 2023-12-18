@@ -232,7 +232,7 @@ class ServerTransportTest : public ::testing::Test {
                  [r](bool success) {
                    EXPECT_TRUE(success);
                    r->CloseServerToClientPipe();
-                   r->CloseServerInitialMetadataPipe();
+                   r->PullServerInitialMetadata();
                    std::cout << "write server message done"
                              << "\n";
                    fflush(stdout);
