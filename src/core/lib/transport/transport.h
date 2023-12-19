@@ -495,8 +495,10 @@ class CallInitiator {
     return spine_->party().SpawnWaitable(name, std::move(promise_factory));
   }
 
+  Arena* arena() { return spine_->party().arena(); }
+
  private:
-  const RefCountedPtr<CallSpineInterface> spine_;
+  RefCountedPtr<CallSpineInterface> spine_;
 };
 
 class CallHandler {
@@ -570,7 +572,7 @@ class CallHandler {
   Arena* arena() { return spine_->party().arena(); }
 
  private:
-  const RefCountedPtr<CallSpineInterface> spine_;
+  RefCountedPtr<CallSpineInterface> spine_;
 };
 
 struct CallInitiatorAndHandler {
@@ -1009,14 +1011,21 @@ class ClientTransport {
 
 class ServerTransport {
  public:
-  // AcceptFunction takes initial metadata for a new call and returns a
-  // CallInitiator object for it, for the transport to use to communicate with
-  // the CallHandler object passed to the application.
-  using AcceptFunction =
-      absl::AnyInvocable<absl::StatusOr<CallInitiator>(ClientMetadata&) const>;
+  // Acceptor helps transports create calls.
+  class Acceptor {
+   public:
+    // Returns an arena that can be used to allocate memory for initial metadata
+    // parsing, and later passed to CreateCall() as the underlying arena for
+    // that call.
+    virtual Arena* CreateArena() = 0;
+    // Create a call at the server (or fail)
+    // arena must have been previously allocated by CreateArena()
+    virtual absl::StatusOr<CallInitiator> CreateCall(
+        ClientMetadata& client_initial_metadata, Arena* arena) = 0;
+  };
 
   // Called once slightly after transport setup to register the accept function.
-  virtual void SetAcceptFunction(AcceptFunction accept_function) = 0;
+  virtual void SetAcceptor(Acceptor* acceptor) = 0;
 
  protected:
   ~ServerTransport() = default;

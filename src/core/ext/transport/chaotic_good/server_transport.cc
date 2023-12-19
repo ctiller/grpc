@@ -70,35 +70,68 @@ auto ChaoticGoodServerTransport::TransportReadLoop() {
   return Loop([this] {
     return TrySeq(
         transport_.ReadFrameBytes(),
-        [](std::tuple<FrameHeader, BufferPair> frame_bytes)
-            -> absl::StatusOr<std::tuple<FrameHeader, BufferPair>> {
-          const auto& frame_header = std::get<0>(frame_bytes);
-          if (frame_header.type != FrameType::kFragment) {
-            return absl::InternalError(
-                absl::StrCat("Expected fragment frame, got ",
-                             static_cast<int>(frame_header.type)));
-          }
-          return frame_bytes;
-        },
         [this](std::tuple<FrameHeader, BufferPair> frame_bytes) {
           const auto& frame_header = std::get<0>(frame_bytes);
           auto& buffers = std::get<1>(frame_bytes);
-          absl::optional<CallHandler> call_handler =
-              LookupStream(frame_header.stream_id);
-          ServerFragmentFrame frame;
-          absl::Status deserialize_status;
-          if (call_handler.has_value()) {
-            deserialize_status = transport_.DeserializeFrame(
-                frame_header, std::move(buffers), call_handler->arena(), frame);
-          } else {
-            // Stream not found, skip the frame.
-            transport_.SkipFrame(frame_header, std::move(buffers));
-            deserialize_status = absl::OkStatus();
+          ClientFrame frame;
+          absl::Status deserialize_status = absl::OkStatus();
+          absl::optional<CallInitiator> call_initiator;
+          switch (frame_header.type) {
+            case FrameType::kSettings:
+              deserialize_status =
+                  absl::InternalError("Unexpected settings frame");
+              break;
+            case FrameType::kFragment: {
+              ClientFragmentFrame fragment_frame;
+              if (frame_header.flags.is_set(0)) {
+                ScopedArenaPtr arena(acceptor_->CreateArena());
+                deserialize_status = transport_.DeserializeFrame(
+                    frame_header, std::move(buffers), arena.get(),
+                    fragment_frame);
+                if (deserialize_status.ok()) {
+                  auto create_call_result = acceptor_->CreateCall(
+                      *fragment_frame.headers, arena.get());
+                  if (create_call_result.ok()) {
+                    auto new_stream_result =
+                        NewStream(frame_header.stream_id, *create_call_result);
+                    if (new_stream_result.ok()) {
+                      call_initiator.emplace(std::move(*create_call_result));
+                    } else {
+                      deserialize_status = new_stream_result;
+                      SendCancel(frame_header.stream_id,
+                                 std::move(new_stream_result));
+                    }
+                  } else {
+                    deserialize_status = create_call_result.status();
+                    SendCancel(frame_header.stream_id, deserialize_status);
+                  }
+                }
+              } else {
+                call_initiator = LookupStream(frame_header.stream_id);
+                if (call_initiator.has_value()) {
+                  deserialize_status = transport_.DeserializeFrame(
+                      frame_header, std::move(buffers), call_initiator->arena(),
+                      fragment_frame);
+                } else {
+                  deserialize_status = absl::OkStatus();
+                }
+              }
+              frame = std::move(fragment_frame);
+              break;
+            }
+            case FrameType::kCancel: {
+              CancelFrame cancel_frame;
+              call_initiator = LookupStream(frame_header.stream_id);
+              deserialize_status = transport_.DeserializeFrame(
+                  frame_header, std::move(buffers), nullptr, cancel_frame);
+              frame = std::move(cancel_frame);
+              break;
+            }
           }
           return If(
-              deserialize_status.ok() && call_handler.has_value(),
-              [this, &frame, &call_handler]() {
-                return call_handler->SpawnWaitable(
+              deserialize_status.ok() && call_initiator.has_value(),
+              [this, &frame, &call_initiator]() {
+                return call_initiator->SpawnWaitable(
                     "push-frame",
                     Map(call_handler->CancelIfFails(PushFrameIntoCall(
                             std::move(frame), std::move(*call_handler))),

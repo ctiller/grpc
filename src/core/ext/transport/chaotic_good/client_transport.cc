@@ -173,7 +173,7 @@ ChaoticGoodClientTransport::ChaoticGoodClientTransport(
     std::unique_ptr<PromiseEndpoint> control_endpoint,
     std::unique_ptr<PromiseEndpoint> data_endpoint,
     std::shared_ptr<grpc_event_engine::experimental::EventEngine> event_engine)
-    : outgoing_frames_(MpscReceiver<ClientFrame>(4)),
+    : outgoing_frames_(4),
       transport_(std::move(control_endpoint), std::move(data_endpoint)),
       writer_{
           MakeActivity(

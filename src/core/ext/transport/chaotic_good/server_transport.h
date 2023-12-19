@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <cstdint>
 #include <initializer_list>  // IWYU pragma: keep
 #include <iostream>
 #include <map>
@@ -97,15 +98,15 @@ class ChaoticGoodServerTransport final : public Transport,
   grpc_endpoint* GetEndpoint() override { return nullptr; }
   void Orphan() override { delete this; }
 
-  void SetAcceptFunction(AcceptFunction accept_fn) override;
+  void SetAcceptor(Acceptor* acceptor) override;
   void AbortWithError();
 
  private:
   using StreamMap = absl::flat_hash_map<uint32_t, CallInitiator>;
 
-  CallInitiator MakeStream(uint32_t stream_id);
-  absl::optional<CallHandler> LookupStream(uint32_t stream_id);
-  auto CallOutboundLoop(uint32_t stream_id, CallHandler call_handler);
+  absl::Status NewStream(uint32_t stream_id, CallInitiator call_initiator);
+  absl::optional<CallInitiator> LookupStream(uint32_t stream_id);
+  auto CallOutboundLoop(uint32_t stream_id, CallInitiator call_initiator);
   auto OnTransportActivityDone();
   auto TransportReadLoop();
   auto TransportWriteLoop();
@@ -113,8 +114,9 @@ class ChaoticGoodServerTransport final : public Transport,
   // based on frame header.
   // Resolves to a StatusOr<tuple<SliceBuffer, SliceBuffer>>
   auto ReadFrameBody(Slice read_buffer);
+  void SendCancel(uint32_t stream_id, absl::Status why);
 
-  AcceptFunction accept_fn_;
+  Acceptor* acceptor_ = nullptr;
   MpscReceiver<ServerFrame> outgoing_frames_;
   ChaoticGoodTransport transport_;
   // Assigned aligned bytes from setting frame.
