@@ -567,6 +567,8 @@ class CallHandler {
     return spine_->party().SpawnWaitable(name, std::move(promise_factory));
   }
 
+  Arena* arena() { return spine_->party().arena(); }
+
  private:
   const RefCountedPtr<CallSpineInterface> spine_;
 };

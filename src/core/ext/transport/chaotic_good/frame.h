@@ -28,6 +28,7 @@
 #include "src/core/ext/transport/chaotic_good/frame_header.h"
 #include "src/core/ext/transport/chttp2/transport/hpack_encoder.h"
 #include "src/core/ext/transport/chttp2/transport/hpack_parser.h"
+#include "src/core/lib/gprpp/match.h"
 #include "src/core/lib/resource_quota/arena.h"
 #include "src/core/lib/slice/slice_buffer.h"
 #include "src/core/lib/transport/metadata_batch.h"
@@ -36,13 +37,18 @@
 namespace grpc_core {
 namespace chaotic_good {
 
+struct BufferPair {
+  SliceBuffer control;
+  SliceBuffer data;
+};
+
 class FrameInterface {
  public:
   virtual absl::Status Deserialize(HPackParser* parser,
                                    const FrameHeader& header,
-                                   absl::BitGenRef bitsrc,
-                                   SliceBuffer& slice_buffer) = 0;
-  virtual SliceBuffer Serialize(HPackCompressor* encoder) const = 0;
+                                   absl::BitGenRef bitsrc, Arena* arena,
+                                   BufferPair buffers) = 0;
+  virtual BufferPair Serialize(HPackCompressor* encoder) const = 0;
   virtual std::string ToString() const = 0;
 
  protected:
@@ -65,9 +71,9 @@ class FrameInterface {
 
 struct SettingsFrame final : public FrameInterface {
   absl::Status Deserialize(HPackParser* parser, const FrameHeader& header,
-                           absl::BitGenRef bitsrc,
-                           SliceBuffer& slice_buffer) override;
-  SliceBuffer Serialize(HPackCompressor* encoder) const override;
+                           absl::BitGenRef bitsrc, Arena* arena,
+                           BufferPair buffers) override;
+  BufferPair Serialize(HPackCompressor* encoder) const override;
   std::string ToString() const override;
 
   bool operator==(const SettingsFrame&) const { return true; }
@@ -86,9 +92,9 @@ struct FragmentMessage {
 
 struct ClientFragmentFrame final : public FrameInterface {
   absl::Status Deserialize(HPackParser* parser, const FrameHeader& header,
-                           absl::BitGenRef bitsrc,
-                           SliceBuffer& slice_buffer) override;
-  SliceBuffer Serialize(HPackCompressor* encoder) const override;
+                           absl::BitGenRef bitsrc, Arena* arena,
+                           BufferPair buffers) override;
+  BufferPair Serialize(HPackCompressor* encoder) const override;
   std::string ToString() const override;
 
   uint32_t stream_id;
@@ -104,9 +110,9 @@ struct ClientFragmentFrame final : public FrameInterface {
 
 struct ServerFragmentFrame final : public FrameInterface {
   absl::Status Deserialize(HPackParser* parser, const FrameHeader& header,
-                           absl::BitGenRef bitsrc,
-                           SliceBuffer& slice_buffer) override;
-  SliceBuffer Serialize(HPackCompressor* encoder) const override;
+                           absl::BitGenRef bitsrc, Arena* arena,
+                           BufferPair buffers) override;
+  BufferPair Serialize(HPackCompressor* encoder) const override;
   std::string ToString() const override;
 
   uint32_t stream_id;
@@ -122,9 +128,9 @@ struct ServerFragmentFrame final : public FrameInterface {
 
 struct CancelFrame final : public FrameInterface {
   absl::Status Deserialize(HPackParser* parser, const FrameHeader& header,
-                           absl::BitGenRef bitsrc,
-                           SliceBuffer& slice_buffer) override;
-  SliceBuffer Serialize(HPackCompressor* encoder) const override;
+                           absl::BitGenRef bitsrc, Arena* arena,
+                           BufferPair buffers) override;
+  BufferPair Serialize(HPackCompressor* encoder) const override;
   std::string ToString() const override;
 
   uint32_t stream_id;
@@ -136,6 +142,19 @@ struct CancelFrame final : public FrameInterface {
 
 using ClientFrame = absl::variant<ClientFragmentFrame, CancelFrame>;
 using ServerFrame = absl::variant<ServerFragmentFrame>;
+
+inline FrameInterface& GetFrameInterface(ClientFrame& frame) {
+  return MatchMutable(
+      &frame,
+      [](ClientFragmentFrame* frame) -> FrameInterface& { return *frame; },
+      [](CancelFrame* frame) -> FrameInterface& { return *frame; });
+}
+
+inline FrameInterface& GetFrameInterface(ServerFrame& frame) {
+  return MatchMutable(
+      &frame,
+      [](ServerFragmentFrame* frame) -> FrameInterface& { return *frame; });
+}
 
 }  // namespace chaotic_good
 }  // namespace grpc_core

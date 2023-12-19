@@ -48,15 +48,93 @@
 namespace grpc_core {
 namespace chaotic_good {
 
+auto ChaoticGoodServerTransport::TransportWriteLoop() {
+  return Loop([this] {
+    return TrySeq(
+        // Get next outgoing frame.
+        outgoing_frames_.Next(),
+        // Serialize and write it out.
+        [this](ServerFrame client_frame) {
+          return transport_.WriteFrame(GetFrameInterface(client_frame));
+        },
+        []() -> LoopCtl<absl::Status> {
+          // The write failures will be caught in TrySeq and exit loop.
+          // Therefore, only need to return Continue() in the last lambda
+          // function.
+          return Continue();
+        });
+  });
+}
+
+auto ChaoticGoodServerTransport::TransportReadLoop() {
+  return Loop([this] {
+    return TrySeq(
+        transport_.ReadFrameBytes(),
+        [](std::tuple<FrameHeader, BufferPair> frame_bytes)
+            -> absl::StatusOr<std::tuple<FrameHeader, BufferPair>> {
+          const auto& frame_header = std::get<0>(frame_bytes);
+          if (frame_header.type != FrameType::kFragment) {
+            return absl::InternalError(
+                absl::StrCat("Expected fragment frame, got ",
+                             static_cast<int>(frame_header.type)));
+          }
+          return frame_bytes;
+        },
+        [this](std::tuple<FrameHeader, BufferPair> frame_bytes) {
+          const auto& frame_header = std::get<0>(frame_bytes);
+          auto& buffers = std::get<1>(frame_bytes);
+          absl::optional<CallHandler> call_handler =
+              LookupStream(frame_header.stream_id);
+          ServerFragmentFrame frame;
+          absl::Status deserialize_status;
+          if (call_handler.has_value()) {
+            deserialize_status = transport_.DeserializeFrame(
+                frame_header, std::move(buffers), call_handler->arena(), frame);
+          } else {
+            // Stream not found, skip the frame.
+            transport_.SkipFrame(frame_header, std::move(buffers));
+            deserialize_status = absl::OkStatus();
+          }
+          return If(
+              deserialize_status.ok() && call_handler.has_value(),
+              [this, &frame, &call_handler]() {
+                return call_handler->SpawnWaitable(
+                    "push-frame",
+                    Map(call_handler->CancelIfFails(PushFrameIntoCall(
+                            std::move(frame), std::move(*call_handler))),
+                        [](StatusFlag f) {
+                          return StatusCast<absl::Status>(f);
+                        }));
+              },
+              [&deserialize_status]() -> absl::Status {
+                // Stream not found, nothing to do.
+                return std::move(deserialize_status);
+              });
+        },
+        []() -> LoopCtl<absl::Status> { return Continue{}; });
+  });
+}
+
+auto ChaoticGoodServerTransport::OnTransportActivityDone() {
+  return [this](absl::Status status) {
+    if (!(status.ok() || status.code() == absl::StatusCode::kCancelled)) {
+      this->AbortWithError();
+    }
+  };
+}
+
 ChaoticGoodServerTransport::ChaoticGoodServerTransport(
     std::unique_ptr<PromiseEndpoint> control_endpoint,
     std::unique_ptr<PromiseEndpoint> data_endpoint,
     std::shared_ptr<grpc_event_engine::experimental::EventEngine> event_engine)
-    : control_endpoint_(std::move(control_endpoint)),
-      data_endpoint_(std::move(data_endpoint)),
-      control_endpoint_write_buffer_(SliceBuffer()),
-      data_endpoint_write_buffer_(SliceBuffer()),
-      event_engine_(event_engine) {}
+    : outgoing_frames_(4),
+      transport_(std::move(control_endpoint), std::move(data_endpoint)),
+      writer_{MakeActivity(TransportWriteLoop(),
+                           EventEngineWakeupScheduler(event_engine),
+                           OnTransportActivityDone())},
+      reader_{MakeActivity(TransportReadLoop(),
+                           EventEngineWakeupScheduler(event_engine),
+                           OnTransportActivityDone())} {}
 
 ChaoticGoodServerTransport::~ChaoticGoodServerTransport() {
   if (writer_ != nullptr) {
@@ -65,6 +143,32 @@ ChaoticGoodServerTransport::~ChaoticGoodServerTransport() {
   if (reader_ != nullptr) {
     reader_.reset();
   }
+}
+
+// Read different parts of the server frame from control/data endpoints
+// based on frame header.
+// Resolves to a StatusOr<tuple<SliceBuffer, SliceBuffer>>
+auto ChaoticGoodServerTransport::ReadFrameBody(Slice read_buffer) {
+  auto frame_header = FrameHeader::Parse(reinterpret_cast<const uint8_t*>(
+      GRPC_SLICE_START_PTR(read_buffer.c_slice())));
+  // Read header and trailers from control endpoint.
+  // Read message padding and message from data endpoint.
+  return If(
+      frame_header.ok(),
+      [this, &frame_header] {
+        frame_header_ = std::move(*frame_header);
+        uint32_t message_padding =
+            std::exchange(last_message_padding_, frame_header_.message_padding);
+        return TryJoin(
+            control_endpoint_->Read(frame_header_.GetFrameLength()),
+            TrySeq(data_endpoint_->Read(message_padding), [this]() {
+              return data_endpoint_->Read(frame_header_.message_length);
+            }));
+      },
+      [&frame_header]()
+          -> absl::StatusOr<std::tuple<SliceBuffer, SliceBuffer>> {
+        return frame_header.status();
+      });
 }
 
 auto ChaoticGoodServerTransport::TransportReadLoop() {

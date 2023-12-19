@@ -38,6 +38,7 @@
 #include <grpc/event_engine/event_engine.h>
 #include <grpc/event_engine/memory_allocator.h>
 
+#include "src/core/ext/transport/chaotic_good/chaotic_good_transport.h"
 #include "src/core/ext/transport/chaotic_good/frame.h"
 #include "src/core/ext/transport/chaotic_good/frame_header.h"
 #include "src/core/ext/transport/chttp2/transport/hpack_encoder.h"
@@ -100,45 +101,19 @@ class ChaoticGoodClientTransport final : public Transport,
   auto OnTransportActivityDone();
   auto TransportWriteLoop();
   auto TransportReadLoop();
-  // Read frames from outgoing_frames_, serialize them into
-  // control_endpoint_write_buffer_ and data_endpoint_write_buffer_.
-  auto ReadAndSerializeSomeOutgoingFrames();
-  // Read different parts of the server frame from control/data endpoints
-  // based on frame header.
-  // Resolves to a StatusOr<tuple<SliceBuffer, SliceBuffer>>
-  auto ReadFrameBody(Slice read_buffer);
-  // Lookup the call.
-  // If it exists, deserialize the frame and pass it into relevant call.
-  // Otherwise do nothing (probably cancelled).
-  auto MaybeDeserializeFrameAndPassToCall(SliceBuffer control_buffer,
-                                          SliceBuffer data_buffer);
-  // Deserialize the frame and pass it into relevant call.
-  auto DeserializeFrameAndPassToCall(SliceBuffer control_buffer,
-                                     SliceBuffer data_buffer,
-                                     CallHandler call_handler);
   // Push one frame into a call
   auto PushFrameIntoCall(ServerFragmentFrame frame, CallHandler call_handler);
 
   // Max buffer is set to 4, so that for stream writes each time it will queue
   // at most 2 frames.
   MpscReceiver<ClientFrame> outgoing_frames_;
+  ChaoticGoodTransport transport_;
   // Assigned aligned bytes from setting frame.
   size_t aligned_bytes_ = 64;
   Mutex mu_;
   uint32_t next_stream_id_ ABSL_GUARDED_BY(mu_) = 1;
-  uint32_t last_message_padding_ = 0;
   // Map of stream incoming server frames, key is stream_id.
   StreamMap stream_map_ ABSL_GUARDED_BY(mu_);
-  std::unique_ptr<PromiseEndpoint> control_endpoint_;
-  std::unique_ptr<PromiseEndpoint> data_endpoint_;
-  SliceBuffer control_endpoint_write_buffer_;
-  SliceBuffer data_endpoint_write_buffer_;
-  HPackCompressor hpack_compressor_;
-  HPackParser hpack_parser_;
-  FrameHeader frame_header_;
-  absl::BitGen bitgen_;
-  // Use to synchronize writer_ and reader_ activity with outside activities;
-  std::shared_ptr<grpc_event_engine::experimental::EventEngine> event_engine_;
   ActivityPtr writer_;
   ActivityPtr reader_;
 };

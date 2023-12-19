@@ -44,6 +44,7 @@
 #include <grpc/slice.h>
 #include <grpc/support/log.h>
 
+#include "src/core/ext/transport/chaotic_good/chaotic_good_transport.h"
 #include "src/core/ext/transport/chaotic_good/frame.h"
 #include "src/core/ext/transport/chaotic_good/frame_header.h"
 #include "src/core/ext/transport/chttp2/transport/hpack_encoder.h"
@@ -56,6 +57,7 @@
 #include "src/core/lib/promise/if.h"
 #include "src/core/lib/promise/inter_activity_pipe.h"
 #include "src/core/lib/promise/loop.h"
+#include "src/core/lib/promise/mpsc.h"
 #include "src/core/lib/promise/party.h"
 #include "src/core/lib/promise/pipe.h"
 #include "src/core/lib/promise/poll.h"
@@ -101,28 +103,25 @@ class ChaoticGoodServerTransport final : public Transport,
  private:
   using StreamMap = absl::flat_hash_map<uint32_t, CallInitiator>;
 
+  CallInitiator MakeStream(uint32_t stream_id);
+  absl::optional<CallHandler> LookupStream(uint32_t stream_id);
+  auto CallOutboundLoop(uint32_t stream_id, CallHandler call_handler);
+  auto OnTransportActivityDone();
   auto TransportReadLoop();
+  auto TransportWriteLoop();
   // Read different parts of the server frame from control/data endpoints
   // based on frame header.
   // Resolves to a StatusOr<tuple<SliceBuffer, SliceBuffer>>
   auto ReadFrameBody(Slice read_buffer);
 
   AcceptFunction accept_fn_;
+  MpscReceiver<ServerFrame> outgoing_frames_;
+  ChaoticGoodTransport transport_;
   // Assigned aligned bytes from setting frame.
   size_t aligned_bytes_ = 64;
   Mutex mu_;
   // Map of stream incoming server frames, key is stream_id.
   StreamMap stream_map_ ABSL_GUARDED_BY(mu_);
-  std::unique_ptr<PromiseEndpoint> control_endpoint_;
-  std::unique_ptr<PromiseEndpoint> data_endpoint_;
-  SliceBuffer control_endpoint_write_buffer_;
-  SliceBuffer data_endpoint_write_buffer_;
-  HPackCompressor hpack_compressor_;
-  HPackParser hpack_parser_;
-  FrameHeader frame_header_;
-  absl::BitGen bitgen_;
-  // Use to synchronize writer_ and reader_ activity with outside activities;
-  std::shared_ptr<grpc_event_engine::experimental::EventEngine> event_engine_;
   ActivityPtr writer_;
   ActivityPtr reader_;
 };
