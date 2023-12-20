@@ -1705,9 +1705,10 @@ grpc_cc_library(
     language = "c++",
     tags = ["nofixdeps"],
     deps = [
-        "gpr",
-        "grpc++",
-        "lb_load_reporter",
+        ":gpr",
+        ":grpc++",
+        ":lb_load_reporter",
+        "//src/proto/grpc/lb/v1:load_reporter_proto",
     ],
 )
 
@@ -2714,7 +2715,6 @@ grpc_cc_library(
         "absl/strings:str_format",
     ],
     tags = ["nofixdeps"],
-    visibility = ["@grpc:iomgr_timer"],
     deps = [
         "event_engine_base_hdrs",
         "exec_ctx",
