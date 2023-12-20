@@ -615,6 +615,17 @@ grpc_cc_library(
 )
 
 grpc_cc_library(
+    name = "switch",
+    language = "c++",
+    public_hdrs = ["lib/promise/switch.h"],
+    deps = [
+        "if",
+        "promise_factory",
+        "//:gpr_platform",
+    ],
+)
+
+grpc_cc_library(
     name = "promise_status",
     external_deps = [
         "absl/status",
@@ -729,15 +740,6 @@ grpc_cc_library(
         "status_flag",
         "//:gpr_platform",
     ],
-)
-
-grpc_cc_library(
-    name = "switch",
-    language = "c++",
-    public_hdrs = [
-        "lib/promise/detail/switch.h",
-    ],
-    deps = ["//:gpr_platform"],
 )
 
 grpc_cc_library(
