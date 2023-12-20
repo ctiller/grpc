@@ -26,8 +26,9 @@
 namespace grpc_core {
 
 namespace promise_detail {
-template <int K, typename F>
+template <typename D, typename F>
 struct Case {
+  D discriminator;
   F factory;
 };
 
@@ -37,9 +38,9 @@ struct Default {
 };
 }  // namespace promise_detail
 
-template <int K, typename PromiseFactory>
-auto Case(PromiseFactory f) {
-  return promise_detail::Case<K, PromiseFactory>{std::move(f)};
+template <typename D, typename PromiseFactory>
+auto Case(D discriminator, PromiseFactory f) {
+  return promise_detail::Case<D, PromiseFactory>{discriminator, std::move(f)};
 }
 
 template <typename PromiseFactory>
@@ -54,15 +55,15 @@ auto Default(PromiseFactory f) {
 // resolves to 43.
 // TODO(ctiller): consider writing a code-generator like we do for seq/join
 // so that this lowers into a C switch statement.
-template <typename F>
-auto Switch(int, promise_detail::Default<F> def) {
+template <typename D, typename F>
+auto Switch(D, promise_detail::Default<F> def) {
   return promise_detail::OncePromiseFactory<void, F>(std::move(def.factory))
       .Make();
 }
 
-template <int K, typename F, typename... Others>
-auto Switch(int discriminator, promise_detail::Case<K, F> c, Others... others) {
-  return If(discriminator == K, std::move(c.factory),
+template <typename D, typename F, typename... Others>
+auto Switch(int discriminator, promise_detail::Case<D, F> c, Others... others) {
+  return If(discriminator == c.discriminator, std::move(c.factory),
             Switch(discriminator, std::move(others)...));
 }
 
