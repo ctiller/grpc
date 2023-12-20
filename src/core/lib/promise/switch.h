@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef GRPC_SRC_CORE_LIB_PROMISE_IF_H
-#define GRPC_SRC_CORE_LIB_PROMISE_IF_H
+#ifndef GRPC_SRC_CORE_LIB_PROMISE_SWITCH_H
+#define GRPC_SRC_CORE_LIB_PROMISE_SWITCH_H
 
 #include <grpc/support/port_platform.h>
 
@@ -62,7 +62,7 @@ auto Switch(D, promise_detail::Default<F> def) {
 }
 
 template <typename D, typename F, typename... Others>
-auto Switch(int discriminator, promise_detail::Case<D, F> c, Others... others) {
+auto Switch(D discriminator, promise_detail::Case<D, F> c, Others... others) {
   return If(discriminator == c.discriminator, std::move(c.factory),
             Switch(discriminator, std::move(others)...));
 }
