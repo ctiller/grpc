@@ -98,8 +98,10 @@ auto ChaoticGoodServerTransport::MaybePushFragmentIntoCall(
   return If(
       call_initiator.has_value() && error.ok(),
       [this, &call_initiator, &frame]() {
-        return call_initiator->CancelIfFails(
-            PushFragmentIntoCall(std::move(*call_initiator), std::move(frame)));
+        return Map(
+            call_initiator->CancelIfFails(PushFragmentIntoCall(
+                std::move(*call_initiator), std::move(frame))),
+            [](StatusFlag status) { return StatusCast<absl::Status>(status); });
       },
       [&error]() { return error; });
 }
@@ -164,15 +166,17 @@ auto ChaoticGoodServerTransport::TransportReadLoop() {
                          });
                    }),
               Case(FrameType::kCancel,
-                   [this, &frame_header, &buffers]() {
+                   [this, &frame_header]() {
                      absl::optional<CallInitiator> call_initiator =
                          ExtractStream(frame_header.stream_id);
                      return If(
                          call_initiator.has_value(),
                          [&call_initiator]() {
                            auto c = std::move(*call_initiator);
-                           return c.SpawnWaitable(
-                               "cancel", [c]() mutable { return c.Cancel(); });
+                           return c.SpawnWaitable("cancel", [c]() mutable {
+                             c.Cancel();
+                             return absl::OkStatus();
+                           });
                          },
                          []() -> absl::Status {
                            return absl::InternalError(
@@ -198,11 +202,14 @@ auto ChaoticGoodServerTransport::OnTransportActivityDone() {
 }
 
 ChaoticGoodServerTransport::ChaoticGoodServerTransport(
-    std::unique_ptr<PromiseEndpoint> control_endpoint,
+    const ChannelArgs& args, std::unique_ptr<PromiseEndpoint> control_endpoint,
     std::unique_ptr<PromiseEndpoint> data_endpoint,
     std::shared_ptr<grpc_event_engine::experimental::EventEngine> event_engine)
     : outgoing_frames_(4),
       transport_(std::move(control_endpoint), std::move(data_endpoint)),
+      allocator_(args.GetObject<ResourceQuota>()
+                     ->memory_quota()
+                     ->CreateMemoryAllocator("chaotic-good")),
       writer_{MakeActivity(TransportWriteLoop(),
                            EventEngineWakeupScheduler(event_engine),
                            OnTransportActivityDone())},

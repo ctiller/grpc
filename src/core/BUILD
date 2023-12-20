@@ -6493,6 +6493,7 @@ grpc_cc_library(
     ],
     external_deps = [
         "absl/base:core_headers",
+        "absl/container:flat_hash_map",
         "absl/functional:any_invocable",
         "absl/random",
         "absl/random:bit_gen_ref",
@@ -6500,7 +6501,6 @@ grpc_cc_library(
         "absl/status:statusor",
         "absl/types:optional",
         "absl/types:variant",
-        "absl/container:flat_hash_map",
     ],
     language = "c++",
     deps = [
@@ -6525,6 +6525,7 @@ grpc_cc_library(
         "seq",
         "slice",
         "slice_buffer",
+        "switch",
         "try_join",
         "try_seq",
         "//:exec_ctx",

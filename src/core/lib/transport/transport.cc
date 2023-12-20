@@ -291,9 +291,8 @@ void ForwardCall(CallHandler call_handler, CallInitiator call_initiator,
                          return call_initiator.SpawnWaitable(
                              "send_message",
                              [msg = std::move(msg), call_initiator]() mutable {
-                               return call_initiator.CancelIfFails(Map(
-                                   call_initiator.PushMessage(std::move(msg)),
-                                   [](bool r) { return StatusFlag(r); }));
+                               return call_initiator.CancelIfFails(
+                                   call_initiator.PushMessage(std::move(msg)));
                              });
                        });
       });

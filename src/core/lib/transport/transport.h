@@ -467,7 +467,9 @@ class CallInitiator {
 
   auto PushMessage(MessageHandle message) {
     GPR_DEBUG_ASSERT(Activity::current() == &spine_->party());
-    return spine_->client_to_server_messages().sender.Push(std::move(message));
+    return Map(
+        spine_->client_to_server_messages().sender.Push(std::move(message)),
+        [](bool r) { return StatusFlag(r); });
   }
 
   void FinishSends() {
