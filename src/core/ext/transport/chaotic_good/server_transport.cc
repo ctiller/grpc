@@ -37,6 +37,7 @@
 #include "src/core/lib/promise/activity.h"
 #include "src/core/lib/promise/event_engine_wakeup_scheduler.h"
 #include "src/core/lib/promise/loop.h"
+#include "src/core/lib/promise/switch.h"
 #include "src/core/lib/promise/try_join.h"
 #include "src/core/lib/promise/try_seq.h"
 #include "src/core/lib/resource_quota/arena.h"
@@ -66,6 +67,76 @@ auto ChaoticGoodServerTransport::TransportWriteLoop() {
   });
 }
 
+auto ChaoticGoodServerTransport::PushFragmentIntoCall(
+    CallInitiator call_initiator, ClientFragmentFrame frame) {
+  auto& headers = frame.headers;
+  return TrySeq(
+      If(
+          headers != nullptr,
+          [call_initiator, &headers]() mutable {
+            return call_initiator.PushClientInitialMetadata(std::move(headers));
+          },
+          []() -> StatusFlag { return Success{}; }),
+      [call_initiator, message = std::move(frame.message)]() mutable {
+        return If(
+            message.has_value(),
+            [&call_initiator, &message]() mutable {
+              return call_initiator.PushMessage(std::move(message->message));
+            },
+            []() -> StatusFlag { return Success{}; });
+      },
+      [call_initiator,
+       end_of_stream = frame.end_of_stream]() mutable -> StatusFlag {
+        if (end_of_stream) call_initiator.FinishSends();
+        return Success{};
+      });
+}
+
+auto ChaoticGoodServerTransport::MaybePushFragmentIntoCall(
+    absl::optional<CallInitiator> call_initiator, absl::Status error,
+    ClientFragmentFrame frame) {
+  return If(
+      call_initiator.has_value() && error.ok(),
+      [this, &call_initiator, &frame]() {
+        return call_initiator->CancelIfFails(
+            PushFragmentIntoCall(std::move(*call_initiator), std::move(frame)));
+      },
+      [&error]() { return error; });
+}
+
+auto ChaoticGoodServerTransport::DeserializeAndPushFragmentToNewCall(
+    FrameHeader frame_header, BufferPair buffers) {
+  ClientFragmentFrame fragment_frame;
+  ScopedArenaPtr arena(acceptor_->CreateArena());
+  absl::Status status = transport_.DeserializeFrame(
+      frame_header, std::move(buffers), arena.get(), fragment_frame);
+  absl::optional<CallInitiator> call_initiator;
+  if (status.ok()) {
+    auto create_call_result =
+        acceptor_->CreateCall(*fragment_frame.headers, arena.release());
+    if (create_call_result.ok()) {
+      call_initiator.emplace(std::move(*create_call_result));
+    } else {
+      status = create_call_result.status();
+    }
+  }
+  return MaybePushFragmentIntoCall(std::move(call_initiator), std::move(status),
+                                   std::move(fragment_frame));
+}
+
+auto ChaoticGoodServerTransport::DeserializeAndPushFragmentToExistingCall(
+    FrameHeader frame_header, BufferPair buffers) {
+  absl::optional<CallInitiator> call_initiator =
+      LookupStream(frame_header.stream_id);
+  Arena* arena = nullptr;
+  if (call_initiator.has_value()) arena = call_initiator->arena();
+  ClientFragmentFrame fragment_frame;
+  absl::Status status = transport_.DeserializeFrame(
+      frame_header, std::move(buffers), arena, fragment_frame);
+  return MaybePushFragmentIntoCall(std::move(call_initiator), std::move(status),
+                                   std::move(fragment_frame));
+}
+
 auto ChaoticGoodServerTransport::TransportReadLoop() {
   return Loop([this] {
     return TrySeq(
@@ -73,76 +144,46 @@ auto ChaoticGoodServerTransport::TransportReadLoop() {
         [this](std::tuple<FrameHeader, BufferPair> frame_bytes) {
           const auto& frame_header = std::get<0>(frame_bytes);
           auto& buffers = std::get<1>(frame_bytes);
-          ClientFrame frame;
-          absl::Status deserialize_status = absl::OkStatus();
-          absl::optional<CallInitiator> call_initiator;
-          switch (frame_header.type) {
-            case FrameType::kSettings:
-              deserialize_status =
-                  absl::InternalError("Unexpected settings frame");
-              break;
-            case FrameType::kFragment: {
-              ClientFragmentFrame fragment_frame;
-              if (frame_header.flags.is_set(0)) {
-                ScopedArenaPtr arena(acceptor_->CreateArena());
-                deserialize_status = transport_.DeserializeFrame(
-                    frame_header, std::move(buffers), arena.get(),
-                    fragment_frame);
-                if (deserialize_status.ok()) {
-                  auto create_call_result = acceptor_->CreateCall(
-                      *fragment_frame.headers, arena.get());
-                  if (create_call_result.ok()) {
-                    auto new_stream_result =
-                        NewStream(frame_header.stream_id, *create_call_result);
-                    if (new_stream_result.ok()) {
-                      call_initiator.emplace(std::move(*create_call_result));
-                    } else {
-                      deserialize_status = new_stream_result;
-                      SendCancel(frame_header.stream_id,
-                                 std::move(new_stream_result));
-                    }
-                  } else {
-                    deserialize_status = create_call_result.status();
-                    SendCancel(frame_header.stream_id, deserialize_status);
-                  }
-                }
-              } else {
-                call_initiator = LookupStream(frame_header.stream_id);
-                if (call_initiator.has_value()) {
-                  deserialize_status = transport_.DeserializeFrame(
-                      frame_header, std::move(buffers), call_initiator->arena(),
-                      fragment_frame);
-                } else {
-                  deserialize_status = absl::OkStatus();
-                }
-              }
-              frame = std::move(fragment_frame);
-              break;
-            }
-            case FrameType::kCancel: {
-              CancelFrame cancel_frame;
-              call_initiator = LookupStream(frame_header.stream_id);
-              deserialize_status = transport_.DeserializeFrame(
-                  frame_header, std::move(buffers), nullptr, cancel_frame);
-              frame = std::move(cancel_frame);
-              break;
-            }
-          }
-          return If(
-              deserialize_status.ok() && call_initiator.has_value(),
-              [this, &frame, &call_initiator]() {
-                return call_initiator->SpawnWaitable(
-                    "push-frame",
-                    Map(call_handler->CancelIfFails(PushFrameIntoCall(
-                            std::move(frame), std::move(*call_handler))),
-                        [](StatusFlag f) {
-                          return StatusCast<absl::Status>(f);
-                        }));
-              },
-              [&deserialize_status]() -> absl::Status {
-                // Stream not found, nothing to do.
-                return std::move(deserialize_status);
-              });
+          return Switch(
+              frame_header.type,
+              Case(FrameType::kSettings,
+                   []() -> absl::Status {
+                     return absl::InternalError("Unexpected settings frame");
+                   }),
+              Case(FrameType::kFragment,
+                   [this, &frame_header, &buffers]() {
+                     return If(
+                         frame_header.flags.is_set(0),
+                         [this, &frame_header, &buffers]() {
+                           return DeserializeAndPushFragmentToNewCall(
+                               frame_header, std::move(buffers));
+                         },
+                         [this, &frame_header, &buffers]() {
+                           return DeserializeAndPushFragmentToExistingCall(
+                               frame_header, std::move(buffers));
+                         });
+                   }),
+              Case(FrameType::kCancel,
+                   [this, &frame_header, &buffers]() {
+                     absl::optional<CallInitiator> call_initiator =
+                         ExtractStream(frame_header.stream_id);
+                     return If(
+                         call_initiator.has_value(),
+                         [&call_initiator]() {
+                           auto c = std::move(*call_initiator);
+                           return c.SpawnWaitable(
+                               "cancel", [c]() mutable { return c.Cancel(); });
+                         },
+                         []() -> absl::Status {
+                           return absl::InternalError(
+                               "Unexpected cancel frame");
+                         });
+                   }),
+              Default([frame_header]() {
+                return absl::InternalError(
+                    absl::StrCat("Unexpected frame type: ",
+                                 static_cast<uint8_t>(frame_header.type)));
+              }));
         },
         []() -> LoopCtl<absl::Status> { return Continue{}; });
   });
@@ -178,52 +219,6 @@ ChaoticGoodServerTransport::~ChaoticGoodServerTransport() {
   }
 }
 
-// Read different parts of the server frame from control/data endpoints
-// based on frame header.
-// Resolves to a StatusOr<tuple<SliceBuffer, SliceBuffer>>
-auto ChaoticGoodServerTransport::ReadFrameBody(Slice read_buffer) {
-  auto frame_header = FrameHeader::Parse(reinterpret_cast<const uint8_t*>(
-      GRPC_SLICE_START_PTR(read_buffer.c_slice())));
-  // Read header and trailers from control endpoint.
-  // Read message padding and message from data endpoint.
-  return If(
-      frame_header.ok(),
-      [this, &frame_header] {
-        frame_header_ = std::move(*frame_header);
-        uint32_t message_padding =
-            std::exchange(last_message_padding_, frame_header_.message_padding);
-        return TryJoin(
-            control_endpoint_->Read(frame_header_.GetFrameLength()),
-            TrySeq(data_endpoint_->Read(message_padding), [this]() {
-              return data_endpoint_->Read(frame_header_.message_length);
-            }));
-      },
-      [&frame_header]()
-          -> absl::StatusOr<std::tuple<SliceBuffer, SliceBuffer>> {
-        return frame_header.status();
-      });
-}
-
-auto ChaoticGoodServerTransport::TransportReadLoop() {
-  return Loop([this] {
-    return TrySeq(
-        // Read frame header from control endpoint.
-        // TODO(ladynana): remove memcpy in ReadSlice.
-        this->control_endpoint_->ReadSlice(FrameHeader::frame_header_size_),
-        // Read different parts of the server frame from control/data endpoints
-        // based on frame header.
-        [this](Slice read_buffer) {
-          return ReadFrameBody(std::move(read_buffer));
-        },
-        // Construct and send the server frame to corresponding stream.
-        [this](std::tuple<SliceBuffer, SliceBuffer> ret) mutable {
-          return MaybeDeserializeFrameAndPassToCall(
-              std::move(std::get<0>(ret)), std::move(std::get<1>(ret)));
-        },
-        []() -> LoopCtl<absl::Status> { return Continue{}; });
-  });
-}
-
 void ChaoticGoodServerTransport::AbortWithError() {
   // Mark transport as unavailable when the endpoint write/read failed.
   // Close all the available pipes.
@@ -235,168 +230,13 @@ void ChaoticGoodServerTransport::AbortWithError() {
   stream_map_.clear();
   lock.Release();
   for (const auto& pair : stream_map) {
-    auto call_handler = pair.second;
-    call_handler.SpawnInfallible("cancel", [call_handler]() mutable {
-      call_handler.Cancel(ServerMetadataFromStatus(
-          absl::UnavailableError("Transport closed.")));
+    auto call_initiator = pair.second;
+    call_initiator.SpawnInfallible("cancel", [call_initiator]() mutable {
+      call_initiator.Cancel();
       return Empty{};
     });
   }
 }
 
-void ChaoticGoodServerTransport::AddCall(std::shared_ptr<CallInitiator> r) {
-  // Server write.
-  auto write_loop = Loop([this]() mutable {
-    return TrySeq(
-        // Get next outgoing frame.
-        outgoing_frames_.receiver.Next(),
-        // Construct data buffers that will be sent to the endpoints.
-        [this](absl::optional<ServerFrame> server_frame) {
-          GPR_ASSERT(server_frame.has_value());
-          ServerFragmentFrame frame =
-              std::move(absl::get<ServerFragmentFrame>(server_frame.value()));
-          control_endpoint_write_buffer_.Append(
-              frame.Serialize(hpack_compressor_.get()));
-          if (frame.message != nullptr) {
-            auto frame_header =
-                FrameHeader::Parse(
-                    reinterpret_cast<const uint8_t*>(GRPC_SLICE_START_PTR(
-                        control_endpoint_write_buffer_.c_slice_buffer()
-                            ->slices[0])))
-                    .value();
-            // TODO(ladynana): add message_padding calculation by
-            // accumulating bytes sent.
-            std::string message_padding(frame_header.message_padding, '0');
-            Slice slice(grpc_slice_from_cpp_string(message_padding));
-            // Append message payload to data_endpoint_buffer.
-            data_endpoint_write_buffer_.Append(std::move(slice));
-            // Append message payload to data_endpoint_buffer.
-            frame.message->payload()->MoveFirstNBytesIntoSliceBuffer(
-                frame.message->payload()->Length(),
-                data_endpoint_write_buffer_);
-          }
-          return absl::OkStatus();
-        },
-        // Write buffers to corresponding endpoints concurrently.
-        [this]() {
-          return TryJoin(
-              control_endpoint_->Write(
-                  std::move(control_endpoint_write_buffer_)),
-              data_endpoint_->Write(std::move(data_endpoint_write_buffer_)));
-        },
-        // Finish writes to difference endpoints and continue the loop.
-        []() -> LoopCtl<absl::Status> {
-          // The write failures will be caught in TrySeq and exit loop.
-          // Therefore, only need to return Continue() in the last lambda
-          // function.
-          return Continue();
-        });
-  });
-  // r->Spawn(std::move(write_loop), [](absl::Status){});
-  // Add server write promise.
-  auto server_write = Loop([r, this]() mutable {
-    return TrySeq(
-        // TODO(ladynana): add initial metadata in server frame.
-        r->PullServerToClientMessage(),
-        [stream_id = r->GetStreamId(), r,
-         this](NextResult<MessageHandle> result) mutable {
-          bool has_result = result.has_value();
-          return If(
-              has_result,
-              [this, result = std::move(result), stream_id]() mutable {
-                std::cout << "write promise get message " << "\n";
-                fflush(stdout);
-                ServerFragmentFrame frame;
-                uint32_t message_length = result.value()->payload()->Length();
-                uint32_t message_padding = message_length % aligned_bytes;
-                frame.frame_header = FrameHeader{
-                    FrameType::kFragment, {}, stream_id, 0, message_length,
-                    message_padding,      0};
-                frame.message = std::move(result.value());
-                return Seq(
-                    outgoing_frames_.sender.Push(ServerFrame(std::move(frame))),
-                    [](bool success) -> LoopCtl<absl::Status> {
-                      if (!success) {
-                        // TODO(ladynana): propagate the actual error message
-                        // from EventEngine.
-                        return absl::UnavailableError(
-                            "Transport closed due to endpoint write/read "
-                            "failed.");
-                      }
-                      std::cout << "write promise continue " << "\n";
-                      fflush(stdout);
-                      return Continue();
-                    });
-              },
-              []() -> LoopCtl<absl::Status> {
-                std::cout << "write promise failed " << "\n";
-                fflush(stdout);
-                return absl::UnavailableError(
-                    "Transport closed due to endpoint write/read "
-                    "failed.");
-              });
-        });
-  });
-  // r->Spawn(std::move(server_write), [](absl::Status){});
-  auto stream_id = r->GetStreamId();
-  pipe_client_frames_ = std::make_shared<
-      InterActivityPipe<ClientFrame, client_frame_queue_size_>>();
-  {
-    MutexLock lock(&mu_);
-    if (stream_map_.count(stream_id) <= 0) {
-      stream_map_.insert(
-          std::pair<uint32_t,
-                    std::shared_ptr<InterActivityPipe<
-                        ClientFrame, client_frame_queue_size_>::Sender>>(
-              stream_id, std::make_shared<InterActivityPipe<
-                             ClientFrame, client_frame_queue_size_>::Sender>(
-                             std::move(pipe_client_frames_->sender))));
-    }
-  }
-  auto server_read = Loop([r, this]() mutable {
-    return TrySeq(
-        pipe_client_frames_->receiver.Next(),
-        [r](absl::optional<ClientFrame> client_frame) mutable {
-          bool has_frame = client_frame.has_value();
-          GPR_ASSERT(r != nullptr);
-          return If(
-              has_frame,
-              [r, client_frame = std::move(client_frame)]() mutable {
-                GPR_ASSERT(r != nullptr);
-                GPR_ASSERT(client_frame.has_value());
-                auto frame = std::move(
-                    absl::get<ClientFragmentFrame>(client_frame.value()));
-                std::cout << "receive frame from read " << "\n";
-                fflush(stdout);
-                return Seq(
-                    r->PushClientToServerMessage(std::move(frame.message)),
-                    [](bool success) -> LoopCtl<absl::Status> {
-                      if (!success) {
-                        // TODO(ladynana): propagate the actual error message
-                        // from EventEngine.
-                        return absl::UnavailableError(
-                            "Transport closed due to endpoint write/read "
-                            "failed.");
-                      }
-                      std::cout << "read promise continue " << "\n";
-                      fflush(stdout);
-                      return Continue();
-                    });
-              },
-              []() -> LoopCtl<absl::Status> {
-                std::cout << "read clientframe failed " << "\n";
-                fflush(stdout);
-                return absl::UnavailableError(
-                    "Transport closed due to endpoint write/read "
-                    "failed.");
-              });
-        });
-  });
-  auto call_promise =
-      TrySeq(TryJoin(std::move(server_read), std::move(server_write),
-                     std::move(write_loop)),
-             [](std::tuple<Empty, Empty, Empty>) { return absl::OkStatus(); });
-  r->Spawn(std::move(call_promise), [](absl::Status) {});
-}
 }  // namespace chaotic_good
 }  // namespace grpc_core

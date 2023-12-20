@@ -81,11 +81,12 @@ class ChaoticGoodServerTransport final : public Transport,
                                          public ServerTransport {
  public:
   ChaoticGoodServerTransport(
+      const ChannelArgs& args,
       std::unique_ptr<PromiseEndpoint> control_endpoint,
       std::unique_ptr<PromiseEndpoint> data_endpoint,
       std::shared_ptr<grpc_event_engine::experimental::EventEngine>
           event_engine);
-  ~ChaoticGoodServerTransport();
+  ~ChaoticGoodServerTransport() override;
 
   FilterStackTransport* filter_stack_transport() override { return nullptr; }
   ClientTransport* client_transport() override { return nullptr; }
@@ -106,6 +107,7 @@ class ChaoticGoodServerTransport final : public Transport,
 
   absl::Status NewStream(uint32_t stream_id, CallInitiator call_initiator);
   absl::optional<CallInitiator> LookupStream(uint32_t stream_id);
+  absl::optional<CallInitiator> ExtractStream(uint32_t stream_id);
   auto CallOutboundLoop(uint32_t stream_id, CallInitiator call_initiator);
   auto OnTransportActivityDone();
   auto TransportReadLoop();
@@ -115,6 +117,14 @@ class ChaoticGoodServerTransport final : public Transport,
   // Resolves to a StatusOr<tuple<SliceBuffer, SliceBuffer>>
   auto ReadFrameBody(Slice read_buffer);
   void SendCancel(uint32_t stream_id, absl::Status why);
+  auto DeserializeAndPushFragmentToNewCall(FrameHeader frame_header,
+                                           BufferPair buffers);
+  auto DeserializeAndPushFragmentToExistingCall(FrameHeader frame_header,
+                                                BufferPair buffers);
+  auto MaybePushFragmentIntoCall(absl::optional<CallInitiator> call_initiator,
+                                 absl::Status error, ClientFragmentFrame frame);
+  auto PushFragmentIntoCall(CallInitiator call_initiator,
+                            ClientFragmentFrame frame);
 
   Acceptor* acceptor_ = nullptr;
   MpscReceiver<ServerFrame> outgoing_frames_;
@@ -124,6 +134,7 @@ class ChaoticGoodServerTransport final : public Transport,
   Mutex mu_;
   // Map of stream incoming server frames, key is stream_id.
   StreamMap stream_map_ ABSL_GUARDED_BY(mu_);
+  grpc_event_engine::experimental::MemoryAllocator allocator_;
   ActivityPtr writer_;
   ActivityPtr reader_;
 };
