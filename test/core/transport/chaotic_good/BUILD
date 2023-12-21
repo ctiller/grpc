@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//bazel:grpc_build_system.bzl", "grpc_cc_test", "grpc_package")
-load("//test/core/util:grpc_fuzzer.bzl", "grpc_fuzzer")
+load("//bazel:grpc_build_system.bzl", "grpc_cc_test", "grpc_package", "grpc_proto_library")
+load("//test/core/util:grpc_fuzzer.bzl", "grpc_fuzzer", "grpc_proto_fuzzer")
 
 licenses(["notice"])
 
@@ -54,7 +54,7 @@ grpc_cc_test(
     deps = ["//src/core:chaotic_good_frame"],
 )
 
-grpc_fuzzer(
+grpc_proto_fuzzer(
     name = "frame_fuzzer",
     srcs = ["frame_fuzzer.cc"],
     corpus = "frame_fuzzer_corpus",
@@ -64,6 +64,9 @@ grpc_fuzzer(
     ],
     language = "C++",
     tags = ["no_windows"],
+    uses_event_engine = False,
+    uses_polling = False,
+    proto = "frame_fuzzer.proto",
     deps = [
         "//:exec_ctx",
         "//:gpr",

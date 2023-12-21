@@ -52,10 +52,6 @@ class FrameInterface {
   virtual std::string ToString() const = 0;
 
  protected:
-  static bool EqVal(const Message& a, const Message& b) {
-    return a.payload()->JoinIntoString() == b.payload()->JoinIntoString() &&
-           a.flags() == b.flags();
-  }
   static bool EqVal(const grpc_metadata_batch& a,
                     const grpc_metadata_batch& b) {
     return a.DebugString() == b.DebugString();
@@ -88,6 +84,15 @@ struct FragmentMessage {
   uint32_t length;
 
   std::string ToString() const;
+
+  static bool EqVal(const Message& a, const Message& b) {
+    return a.payload()->JoinIntoString() == b.payload()->JoinIntoString() &&
+           a.flags() == b.flags();
+  }
+
+  bool operator==(const FragmentMessage& other) const {
+    return EqVal(*message, *other.message) && length == other.length;
+  }
 };
 
 struct ClientFragmentFrame final : public FrameInterface {
@@ -104,7 +109,7 @@ struct ClientFragmentFrame final : public FrameInterface {
 
   bool operator==(const ClientFragmentFrame& other) const {
     return stream_id == other.stream_id && EqHdl(headers, other.headers) &&
-           end_of_stream == other.end_of_stream;
+           message == other.message && end_of_stream == other.end_of_stream;
   }
 };
 
@@ -122,7 +127,7 @@ struct ServerFragmentFrame final : public FrameInterface {
 
   bool operator==(const ServerFragmentFrame& other) const {
     return stream_id == other.stream_id && EqHdl(headers, other.headers) &&
-           EqHdl(trailers, other.trailers);
+           message == other.message && EqHdl(trailers, other.trailers);
   }
 };
 
