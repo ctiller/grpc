@@ -68,6 +68,24 @@ const uint8_t kPathDemoServiceStep[] = {
     0x64, 0x65, 0x6d, 0x6f, 0x2e, 0x53, 0x65, 0x72, 0x76,
     0x69, 0x63, 0x65, 0x2f, 0x53, 0x74, 0x65, 0x70};
 
+// Encoded string of trailer "grpc-status: 0".
+const uint8_t kGrpcStatus0[] = {0x40, 0x0b, 0x67, 0x72, 0x70, 0x63, 0x2d, 0x73,
+                                0x74, 0x61, 0x74, 0x75, 0x73, 0x01, 0x30};
+
+ServerMetadataHandle TestInitialMetadata() {
+  auto md =
+      GetContext<Arena>()->MakePooled<ServerMetadata>(GetContext<Arena>());
+  md->Set(HttpPathMetadata(), Slice::FromStaticString("/demo.Service/Step"));
+  return md;
+}
+
+ServerMetadataHandle TestTrailingMetadata() {
+  auto md =
+      GetContext<Arena>()->MakePooled<ServerMetadata>(GetContext<Arena>());
+  md->Set(GrpcStatusMetadata(), GRPC_STATUS_OK);
+  return md;
+}
+
 class MockAcceptor : public ServerTransport::Acceptor {
  public:
   MOCK_METHOD(Arena*, CreateArena, (), (override));
@@ -86,6 +104,8 @@ TEST_F(TransportTest, ReadAndWriteOneMessage) {
           .PreconditionChannelArgs(nullptr),
       std::move(control_endpoint.promise_endpoint),
       std::move(data_endpoint.promise_endpoint), event_engine());
+  // Once we set the acceptor, expect to read some frames.
+  // We'll return a new request with a payload of "12345678".
   control_endpoint.ExpectRead(
       {SerializedFrameHeader(FrameType::kFragment, 7, 1, 26, 8, 56, 0),
        EventEngineSlice::FromCopiedBuffer(kPathDemoServiceStep,
@@ -93,9 +113,7 @@ TEST_F(TransportTest, ReadAndWriteOneMessage) {
       event_engine().get());
   data_endpoint.ExpectRead(
       {EventEngineSlice::FromCopiedString("12345678"), Zeros(56)}, nullptr);
-  EXPECT_CALL(*control_endpoint.endpoint, Read)
-      .InSequence(control_endpoint.read_sequence)
-      .WillOnce(Return(false));
+  // Once that's read we'll create a new call
   auto* call_arena = Arena::Create(1024, memory_allocator());
   CallInitiatorAndHandler call = MakeCall(event_engine().get(), call_arena);
   EXPECT_CALL(acceptor, CreateArena).WillOnce(Return(call_arena));
@@ -110,6 +128,58 @@ TEST_F(TransportTest, ReadAndWriteOneMessage) {
   transport->SetAcceptor(&acceptor);
   StrictMock<MockFunction<void()>> on_done;
   EXPECT_CALL(on_done, Call());
+  EXPECT_CALL(*control_endpoint.endpoint, Read)
+      .InSequence(control_endpoint.read_sequence)
+      .WillOnce(Return(false));
+  control_endpoint.ExpectWrite(
+      {SerializedFrameHeader(FrameType::kFragment, 1, 1,
+                             sizeof(kPathDemoServiceStep), 0, 0, 0),
+       EventEngineSlice::FromCopiedBuffer(kPathDemoServiceStep,
+                                          sizeof(kPathDemoServiceStep))},
+      nullptr);
+  control_endpoint.ExpectWrite(
+      {SerializedFrameHeader(FrameType::kFragment, 2, 1, 0, 8, 56, 0)},
+      nullptr);
+  data_endpoint.ExpectWrite(
+      {EventEngineSlice::FromCopiedString("87654321"), Zeros(56)}, nullptr);
+  control_endpoint.ExpectWrite(
+      {SerializedFrameHeader(FrameType::kFragment, 4, 1, 0, 0, 0,
+                             sizeof(kGrpcStatus0)),
+       EventEngineSlice::FromCopiedBuffer(kGrpcStatus0, sizeof(kGrpcStatus0))},
+      nullptr);
+  call.handler.SpawnInfallible(
+      "test-io", [&on_done, handler = call.handler]() mutable {
+        return Seq(
+            handler.PullClientInitialMetadata(),
+            [](ValueOrFailure<ServerMetadataHandle> md) {
+              EXPECT_TRUE(md.ok());
+              EXPECT_EQ(
+                  md.value()->get_pointer(HttpPathMetadata())->as_string_view(),
+                  "/demo.Service/Step");
+              return Empty{};
+            },
+            handler.PullMessage(),
+            [](NextResult<MessageHandle> msg) {
+              EXPECT_TRUE(msg.has_value());
+              EXPECT_EQ(msg.value()->payload()->JoinIntoString(), "12345678");
+              return Empty{};
+            },
+            handler.PullMessage(),
+            [](NextResult<MessageHandle> msg) {
+              EXPECT_FALSE(msg.has_value());
+              return Empty{};
+            },
+            handler.PushServerInitialMetadata(TestInitialMetadata()),
+            handler.PushMessage(Arena::MakePooled<Message>(
+                SliceBuffer(Slice::FromCopiedString("87654321")), 0)),
+            [handler]() mutable {
+              return handler.PushServerTrailingMetadata(TestTrailingMetadata());
+            },
+            [&on_done]() mutable {
+              on_done.Call();
+              return Empty{};
+            });
+      });
   // Wait until ClientTransport's internal activities to finish.
   event_engine()->TickUntilIdle();
   event_engine()->UnsetGlobalHooks();

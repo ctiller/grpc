@@ -191,7 +191,8 @@ TEST_F(TransportTest, AddOneStreamMultipleMessages) {
   auto transport = MakeOrphanable<ChaoticGoodClientTransport>(
       std::move(control_endpoint.promise_endpoint),
       std::move(data_endpoint.promise_endpoint), event_engine());
-  auto call = MakeCall(event_engine().get(), 8192, memory_allocator());
+  auto call =
+      MakeCall(event_engine().get(), Arena::Create(8192, memory_allocator()));
   transport->StartCall(std::move(call.handler));
   StrictMock<MockFunction<void()>> on_done;
   EXPECT_CALL(on_done, Call());

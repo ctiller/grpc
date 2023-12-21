@@ -21,6 +21,9 @@
 #include "absl/status/statusor.h"
 #include "gtest/gtest.h"
 
+#include "src/core/lib/resource_quota/memory_quota.h"
+#include "src/core/lib/resource_quota/resource_quota.h"
+
 namespace grpc_core {
 namespace chaotic_good {
 namespace {
@@ -41,9 +44,13 @@ void AssertRoundTrips(const T& input, FrameType expected_frame_type) {
   T output;
   HPackParser hpack_parser;
   absl::BitGen bitgen;
+  MemoryAllocator allocator = MakeResourceQuota("test-quota")
+                                  ->memory_quota()
+                                  ->CreateMemoryAllocator("test-allocator");
+  ScopedArenaPtr arena = MakeScopedArena(1024, &allocator);
   auto deser =
       output.Deserialize(&hpack_parser, header.value(), absl::BitGenRef(bitgen),
-                         GetContext<Arena>(), std::move(serialized));
+                         arena.get(), std::move(serialized));
   GPR_ASSERT(deser.ok());
   GPR_ASSERT(output == input);
 }

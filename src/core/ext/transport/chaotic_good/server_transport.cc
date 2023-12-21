@@ -36,9 +36,9 @@
 #include "src/core/lib/iomgr/exec_ctx.h"
 #include "src/core/lib/promise/activity.h"
 #include "src/core/lib/promise/event_engine_wakeup_scheduler.h"
+#include "src/core/lib/promise/for_each.h"
 #include "src/core/lib/promise/loop.h"
 #include "src/core/lib/promise/switch.h"
-#include "src/core/lib/promise/try_join.h"
 #include "src/core/lib/promise/try_seq.h"
 #include "src/core/lib/resource_quota/arena.h"
 #include "src/core/lib/resource_quota/resource_quota.h"
@@ -102,12 +102,62 @@ auto ChaoticGoodServerTransport::MaybePushFragmentIntoCall(
             call_initiator->SpawnWaitable(
                 "push-fragment",
                 [call_initiator, frame = std::move(frame), this]() mutable {
-                  return call_initiator->CancelIfFails(PushFragmentIntoCall(
-                      std::move(*call_initiator), std::move(frame)));
+                  return call_initiator->CancelIfFails(
+                      PushFragmentIntoCall(*call_initiator, std::move(frame)));
                 }),
             [](StatusFlag status) { return StatusCast<absl::Status>(status); });
       },
       [error = std::move(error)]() { return error; });
+}
+
+auto ChaoticGoodServerTransport::CallOutboundLoop(
+    uint32_t stream_id, CallInitiator call_initiator) {
+  auto send_fragment = [stream_id,
+                        outgoing_frames = outgoing_frames_.MakeSender()](
+                           ServerFragmentFrame frame) mutable {
+    frame.stream_id = stream_id;
+    return Map(outgoing_frames.Send(std::move(frame)),
+               [](bool success) -> absl::Status {
+                 if (!success) {
+                   // Failed to send outgoing frame.
+                   return absl::UnavailableError("Transport closed.");
+                 }
+                 return absl::OkStatus();
+               });
+  };
+  return Seq(
+      TrySeq(
+          // Wait for initial metadata then send it out.
+          call_initiator.PullServerInitialMetadata(),
+          [send_fragment](ServerMetadataHandle md) mutable {
+            ServerFragmentFrame frame;
+            frame.headers = std::move(md);
+            return send_fragment(std::move(frame));
+          },
+          // Continuously send client frame with client to server messages.
+          ForEach(OutgoingMessages(call_initiator),
+                  [send_fragment, aligned_bytes = aligned_bytes_](
+                      MessageHandle message) mutable {
+                    ServerFragmentFrame frame;
+                    // Construct frame header (flags, header_length and
+                    // trailer_length will be added in serialization).
+                    const uint32_t message_length =
+                        message->payload()->Length();
+                    const uint32_t padding =
+                        message_length % aligned_bytes == 0
+                            ? 0
+                            : aligned_bytes - message_length % aligned_bytes;
+                    GPR_ASSERT((message_length + padding) % aligned_bytes == 0);
+                    frame.message = FragmentMessage(std::move(message), padding,
+                                                    message_length);
+                    return send_fragment(std::move(frame));
+                  })),
+      call_initiator.PullServerTrailingMetadata(),
+      [send_fragment](ServerMetadataHandle md) mutable {
+        ServerFragmentFrame frame;
+        frame.trailers = std::move(md);
+        return send_fragment(std::move(frame));
+      });
 }
 
 auto ChaoticGoodServerTransport::DeserializeAndPushFragmentToNewCall(
@@ -122,6 +172,11 @@ auto ChaoticGoodServerTransport::DeserializeAndPushFragmentToNewCall(
         acceptor_->CreateCall(*fragment_frame.headers, arena.release());
     if (create_call_result.ok()) {
       call_initiator.emplace(std::move(*create_call_result));
+      call_initiator->SpawnGuarded(
+          "server-write", [this, stream_id = frame_header.stream_id,
+                           call_initiator = *call_initiator]() {
+            return CallOutboundLoop(stream_id, call_initiator);
+          });
     } else {
       status = create_call_result.status();
     }

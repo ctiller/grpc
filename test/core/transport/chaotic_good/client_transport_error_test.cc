@@ -173,7 +173,8 @@ TEST_F(ClientTransportTest, AddOneStreamWithWriteFailed) {
   auto transport = MakeOrphanable<ChaoticGoodClientTransport>(
       std::move(control_endpoint.promise_endpoint),
       std::move(data_endpoint.promise_endpoint), event_engine());
-  auto call = MakeCall(event_engine().get(), 8192, memory_allocator());
+  auto call =
+      MakeCall(event_engine().get(), Arena::Create(8192, memory_allocator()));
   transport->StartCall(std::move(call.handler));
   call.initiator.SpawnGuarded("test-send", [initiator =
                                                 call.initiator]() mutable {
@@ -217,7 +218,8 @@ TEST_F(ClientTransportTest, AddOneStreamWithReadFailed) {
   auto transport = MakeOrphanable<ChaoticGoodClientTransport>(
       std::move(control_endpoint.promise_endpoint),
       std::move(data_endpoint.promise_endpoint), event_engine());
-  auto call = MakeCall(event_engine().get(), 8192, memory_allocator());
+  auto call =
+      MakeCall(event_engine().get(), Arena::Create(8192, memory_allocator()));
   transport->StartCall(std::move(call.handler));
   call.initiator.SpawnGuarded("test-send", [initiator =
                                                 call.initiator]() mutable {
@@ -269,9 +271,11 @@ TEST_F(ClientTransportTest, AddMultipleStreamWithWriteFailed) {
   auto transport = MakeOrphanable<ChaoticGoodClientTransport>(
       std::move(control_endpoint.promise_endpoint),
       std::move(data_endpoint.promise_endpoint), event_engine());
-  auto call1 = MakeCall(event_engine().get(), 8192, memory_allocator());
+  auto call1 =
+      MakeCall(event_engine().get(), Arena::Create(8192, memory_allocator()));
   transport->StartCall(std::move(call1.handler));
-  auto call2 = MakeCall(event_engine().get(), 8192, memory_allocator());
+  auto call2 =
+      MakeCall(event_engine().get(), Arena::Create(8192, memory_allocator()));
   transport->StartCall(std::move(call2.handler));
   call1.initiator.SpawnGuarded("test-send", [initiator =
                                                  call1.initiator]() mutable {
@@ -338,9 +342,11 @@ TEST_F(ClientTransportTest, AddMultipleStreamWithReadFailed) {
   auto transport = MakeOrphanable<ChaoticGoodClientTransport>(
       std::move(control_endpoint.promise_endpoint),
       std::move(data_endpoint.promise_endpoint), event_engine());
-  auto call1 = MakeCall(event_engine().get(), 8192, memory_allocator());
+  auto call1 =
+      MakeCall(event_engine().get(), Arena::Create(8192, memory_allocator()));
   transport->StartCall(std::move(call1.handler));
-  auto call2 = MakeCall(event_engine().get(), 8192, memory_allocator());
+  auto call2 =
+      MakeCall(event_engine().get(), Arena::Create(8192, memory_allocator()));
   transport->StartCall(std::move(call2.handler));
   call1.initiator.SpawnGuarded("test-send", [initiator =
                                                  call1.initiator]() mutable {

@@ -145,12 +145,14 @@ auto ChaoticGoodClientTransport::TransportReadLoop() {
               deserialize_status.ok() && call_handler.has_value(),
               [this, &frame, &call_handler]() {
                 return call_handler->SpawnWaitable(
-                    "push-frame",
-                    Map(call_handler->CancelIfFails(PushFrameIntoCall(
-                            std::move(frame), std::move(*call_handler))),
-                        [](StatusFlag f) {
-                          return StatusCast<absl::Status>(f);
-                        }));
+                    "push-frame", [this, call_handler = *call_handler,
+                                   frame = std::move(frame)]() mutable {
+                      return Map(call_handler.CancelIfFails(PushFrameIntoCall(
+                                     std::move(frame), call_handler)),
+                                 [](StatusFlag f) {
+                                   return StatusCast<absl::Status>(f);
+                                 });
+                    });
               },
               [&deserialize_status]() -> absl::Status {
                 // Stream not found, nothing to do.
@@ -218,7 +220,7 @@ void ChaoticGoodClientTransport::AbortWithError() {
 uint32_t ChaoticGoodClientTransport::MakeStream(CallHandler call_handler) {
   ReleasableMutexLock lock(&mu_);
   const uint32_t stream_id = next_stream_id_++;
-  stream_map_.emplace(stream_id, std::move(call_handler));
+  stream_map_.emplace(stream_id, call_handler);
   lock.Release();
   call_handler.OnDone([this, stream_id]() {
     MutexLock lock(&mu_);
