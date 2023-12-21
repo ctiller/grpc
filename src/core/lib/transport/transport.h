@@ -353,11 +353,8 @@ class CallSpine final : public CallSpineInterface, public Party {
  public:
   static RefCountedPtr<CallSpine> Create(
       grpc_event_engine::experimental::EventEngine* event_engine,
-      size_t initial_arena_size, MemoryAllocator* allocator) {
-    auto alloc = Arena::CreateWithAlloc(initial_arena_size, sizeof(CallSpine),
-                                        allocator);
-    auto* spine = new (alloc.second) CallSpine(event_engine, alloc.first);
-    return RefCountedPtr<CallSpine>(spine);
+      Arena* arena) {
+    return RefCountedPtr<CallSpine>(arena->New<CallSpine>(event_engine, arena));
   }
 
   Pipe<ClientMetadataHandle>& client_initial_metadata() override {
@@ -381,6 +378,7 @@ class CallSpine final : public CallSpineInterface, public Party {
   void Unref() override { Party::Unref(); }
 
  private:
+  friend class Arena;
   CallSpine(grpc_event_engine::experimental::EventEngine* event_engine,
             Arena* arena)
       : Party(arena, 1), event_engine_(event_engine) {}
@@ -589,8 +587,7 @@ struct CallInitiatorAndHandler {
 };
 
 CallInitiatorAndHandler MakeCall(
-    grpc_event_engine::experimental::EventEngine* event_engine,
-    size_t initial_arena_size, MemoryAllocator* allocator);
+    grpc_event_engine::experimental::EventEngine* event_engine, Arena* arena);
 
 template <typename CallHalf>
 auto OutgoingMessages(CallHalf h) {

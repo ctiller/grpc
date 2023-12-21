@@ -227,11 +227,12 @@ absl::Status ClientFragmentFrame::Deserialize(HPackParser* parser,
                         header.message_padding, header.message_length};
   } else if (buffers.data.Length() != 0) {
     return absl::InvalidArgumentError(absl::StrCat(
-        "Unexpected non-zero message length", buffers.data.Length()));
+        "Unexpected non-zero message length ", buffers.data.Length()));
   }
   if (header.flags.is_set(2)) {
     if (header.trailer_length != 0) {
-      return absl::InvalidArgumentError("Unexpected trailer length");
+      return absl::InvalidArgumentError(
+          absl::StrCat("Unexpected trailer length ", header.trailer_length));
     }
     end_of_stream = true;
   } else {

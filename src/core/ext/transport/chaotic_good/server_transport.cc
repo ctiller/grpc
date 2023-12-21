@@ -99,11 +99,15 @@ auto ChaoticGoodServerTransport::MaybePushFragmentIntoCall(
       call_initiator.has_value() && error.ok(),
       [this, &call_initiator, &frame]() {
         return Map(
-            call_initiator->CancelIfFails(PushFragmentIntoCall(
-                std::move(*call_initiator), std::move(frame))),
+            call_initiator->SpawnWaitable(
+                "push-fragment",
+                [call_initiator, frame = std::move(frame), this]() mutable {
+                  return call_initiator->CancelIfFails(PushFragmentIntoCall(
+                      std::move(*call_initiator), std::move(frame)));
+                }),
             [](StatusFlag status) { return StatusCast<absl::Status>(status); });
       },
-      [&error]() { return error; });
+      [error = std::move(error)]() { return error; });
 }
 
 auto ChaoticGoodServerTransport::DeserializeAndPushFragmentToNewCall(
@@ -210,12 +214,20 @@ ChaoticGoodServerTransport::ChaoticGoodServerTransport(
       allocator_(args.GetObject<ResourceQuota>()
                      ->memory_quota()
                      ->CreateMemoryAllocator("chaotic-good")),
+      event_engine_(event_engine),
       writer_{MakeActivity(TransportWriteLoop(),
                            EventEngineWakeupScheduler(event_engine),
                            OnTransportActivityDone())},
-      reader_{MakeActivity(TransportReadLoop(),
-                           EventEngineWakeupScheduler(event_engine),
-                           OnTransportActivityDone())} {}
+      reader_{nullptr} {}
+
+void ChaoticGoodServerTransport::SetAcceptor(Acceptor* acceptor) {
+  GPR_ASSERT(acceptor_ == nullptr);
+  GPR_ASSERT(acceptor != nullptr);
+  acceptor_ = acceptor;
+  reader_ = MakeActivity(TransportReadLoop(),
+                         EventEngineWakeupScheduler(event_engine_),
+                         OnTransportActivityDone());
+}
 
 ChaoticGoodServerTransport::~ChaoticGoodServerTransport() {
   if (writer_ != nullptr) {
@@ -243,6 +255,24 @@ void ChaoticGoodServerTransport::AbortWithError() {
       return Empty{};
     });
   }
+}
+
+absl::optional<CallInitiator> ChaoticGoodServerTransport::LookupStream(
+    uint32_t stream_id) {
+  MutexLock lock(&mu_);
+  auto it = stream_map_.find(stream_id);
+  if (it == stream_map_.end()) return absl::nullopt;
+  return it->second;
+}
+
+absl::optional<CallInitiator> ChaoticGoodServerTransport::ExtractStream(
+    uint32_t stream_id) {
+  MutexLock lock(&mu_);
+  auto it = stream_map_.find(stream_id);
+  if (it == stream_map_.end()) return absl::nullopt;
+  auto r = std::move(it->second);
+  stream_map_.erase(it);
+  return std::move(r);
 }
 
 }  // namespace chaotic_good

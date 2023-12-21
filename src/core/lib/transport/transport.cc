@@ -335,9 +335,8 @@ void ForwardCall(CallHandler call_handler, CallInitiator call_initiator,
 }
 
 CallInitiatorAndHandler MakeCall(
-    grpc_event_engine::experimental::EventEngine* event_engine,
-    size_t initial_arena_size, MemoryAllocator* allocator) {
-  auto spine = CallSpine::Create(event_engine, initial_arena_size, allocator);
+    grpc_event_engine::experimental::EventEngine* event_engine, Arena* arena) {
+  auto spine = CallSpine::Create(event_engine, arena);
   return {CallInitiator(spine), CallHandler(spine)};
 }
 

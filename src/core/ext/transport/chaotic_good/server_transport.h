@@ -135,6 +135,7 @@ class ChaoticGoodServerTransport final : public Transport,
   // Map of stream incoming server frames, key is stream_id.
   StreamMap stream_map_ ABSL_GUARDED_BY(mu_);
   grpc_event_engine::experimental::MemoryAllocator allocator_;
+  std::shared_ptr<grpc_event_engine::experimental::EventEngine> event_engine_;
   ActivityPtr writer_;
   ActivityPtr reader_;
 };

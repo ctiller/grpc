@@ -36,24 +36,14 @@
 #include <grpc/grpc.h>
 #include <grpc/status.h>
 
-#include "src/core/lib/gprpp/ref_counted_ptr.h"
-#include "src/core/lib/iomgr/timer_manager.h"
-#include "src/core/lib/promise/activity.h"
-#include "src/core/lib/promise/event_engine_wakeup_scheduler.h"
 #include "src/core/lib/promise/if.h"
-#include "src/core/lib/promise/join.h"
 #include "src/core/lib/promise/loop.h"
-#include "src/core/lib/promise/map.h"
-#include "src/core/lib/promise/pipe.h"
 #include "src/core/lib/promise/seq.h"
 #include "src/core/lib/resource_quota/arena.h"
-#include "src/core/lib/resource_quota/memory_quota.h"
-#include "src/core/lib/resource_quota/resource_quota.h"
 #include "src/core/lib/slice/slice_buffer.h"
-#include "src/core/lib/slice/slice_internal.h"
 #include "src/core/lib/transport/metadata_batch.h"
-#include "test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.h"
-#include "test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.pb.h"
+#include "test/core/transport/chaotic_good/mock_promise_endpoint.h"
+#include "test/core/transport/chaotic_good/transport_test.h"
 
 using testing::MockFunction;
 using testing::Return;
@@ -68,86 +58,6 @@ using grpc_event_engine::experimental::internal::SliceCast;
 namespace grpc_core {
 namespace chaotic_good {
 namespace testing {
-
-class MockEndpoint : public EventEngine::Endpoint {
- public:
-  MOCK_METHOD(bool, Read,
-              (absl::AnyInvocable<void(absl::Status)> on_read,
-               grpc_event_engine::experimental::SliceBuffer* buffer,
-               const EventEngine::Endpoint::ReadArgs* args),
-              (override));
-
-  MOCK_METHOD(bool, Write,
-              (absl::AnyInvocable<void(absl::Status)> on_writable,
-               grpc_event_engine::experimental::SliceBuffer* data,
-               const EventEngine::Endpoint::WriteArgs* args),
-              (override));
-
-  MOCK_METHOD(const EventEngine::ResolvedAddress&, GetPeerAddress, (),
-              (const, override));
-  MOCK_METHOD(const EventEngine::ResolvedAddress&, GetLocalAddress, (),
-              (const, override));
-};
-
-struct MockPromiseEndpoint {
-  StrictMock<MockEndpoint>* endpoint = new StrictMock<MockEndpoint>();
-  std::unique_ptr<PromiseEndpoint> promise_endpoint =
-      std::make_unique<PromiseEndpoint>(
-          std::unique_ptr<StrictMock<MockEndpoint>>(endpoint), SliceBuffer());
-  Sequence read_sequence;
-  Sequence write_sequence;
-  void ExpectRead(std::initializer_list<EventEngineSlice> slices_init,
-                  EventEngine* schedule_on_event_engine) {
-    std::vector<EventEngineSlice> slices;
-    for (auto&& slice : slices_init) slices.emplace_back(slice.Copy());
-    EXPECT_CALL(*endpoint, Read)
-        .InSequence(read_sequence)
-        .WillOnce(WithArgs<0, 1>(
-            [slices = std::move(slices), schedule_on_event_engine](
-                absl::AnyInvocable<void(absl::Status)> on_read,
-                grpc_event_engine::experimental::SliceBuffer* buffer) mutable {
-              for (auto& slice : slices) {
-                buffer->Append(std::move(slice));
-              }
-              if (schedule_on_event_engine != nullptr) {
-                schedule_on_event_engine->Run(
-                    [on_read = std::move(on_read)]() mutable {
-                      on_read(absl::OkStatus());
-                    });
-                return false;
-              } else {
-                return true;
-              }
-            }));
-  }
-  void ExpectWrite(std::initializer_list<EventEngineSlice> slices,
-                   EventEngine* schedule_on_event_engine) {
-    SliceBuffer expect;
-    for (auto&& slice : slices) {
-      expect.Append(SliceCast<Slice>(slice.Copy()));
-    }
-    EXPECT_CALL(*endpoint, Write)
-        .InSequence(write_sequence)
-        .WillOnce(WithArgs<0, 1>(
-            [expect = expect.JoinIntoString(), schedule_on_event_engine](
-                absl::AnyInvocable<void(absl::Status)> on_writable,
-                grpc_event_engine::experimental::SliceBuffer* buffer) mutable {
-              SliceBuffer tmp;
-              grpc_slice_buffer_swap(buffer->c_slice_buffer(),
-                                     tmp.c_slice_buffer());
-              EXPECT_EQ(tmp.JoinIntoString(), expect);
-              if (schedule_on_event_engine != nullptr) {
-                schedule_on_event_engine->Run(
-                    [on_writable = std::move(on_writable)]() mutable {
-                      on_writable(absl::OkStatus());
-                    });
-                return false;
-              } else {
-                return true;
-              }
-            }));
-  }
-};
 
 // Encoded string of header ":path: /demo.Service/Step".
 const uint8_t kPathDemoServiceStep[] = {
@@ -164,44 +74,6 @@ ClientMetadataHandle TestInitialMetadata() {
       GetContext<Arena>()->MakePooled<ClientMetadata>(GetContext<Arena>());
   md->Set(HttpPathMetadata(), Slice::FromStaticString("/demo.Service/Step"));
   return md;
-}
-
-EventEngineSlice SerializedFrameHeader(FrameType type, uint8_t flags,
-                                       uint32_t stream_id,
-                                       uint32_t header_length,
-                                       uint32_t message_length,
-                                       uint32_t message_padding,
-                                       uint32_t trailer_length) {
-  uint8_t buffer[24] = {static_cast<uint8_t>(type),
-                        flags,
-                        0,
-                        0,
-                        static_cast<uint8_t>(stream_id),
-                        static_cast<uint8_t>(stream_id >> 8),
-                        static_cast<uint8_t>(stream_id >> 16),
-                        static_cast<uint8_t>(stream_id >> 24),
-                        static_cast<uint8_t>(header_length),
-                        static_cast<uint8_t>(header_length >> 8),
-                        static_cast<uint8_t>(header_length >> 16),
-                        static_cast<uint8_t>(header_length >> 24),
-                        static_cast<uint8_t>(message_length),
-                        static_cast<uint8_t>(message_length >> 8),
-                        static_cast<uint8_t>(message_length >> 16),
-                        static_cast<uint8_t>(message_length >> 24),
-                        static_cast<uint8_t>(message_padding),
-                        static_cast<uint8_t>(message_padding >> 8),
-                        static_cast<uint8_t>(message_padding >> 16),
-                        static_cast<uint8_t>(message_padding >> 24),
-                        static_cast<uint8_t>(trailer_length),
-                        static_cast<uint8_t>(trailer_length >> 8),
-                        static_cast<uint8_t>(trailer_length >> 16),
-                        static_cast<uint8_t>(trailer_length >> 24)};
-  return EventEngineSlice::FromCopiedBuffer(buffer, 24);
-}
-
-EventEngineSlice Zeros(uint32_t length) {
-  std::string zeros(length, 0);
-  return EventEngineSlice::FromCopiedBuffer(zeros.data(), length);
 }
 
 // Send messages from client to server.
@@ -223,32 +95,7 @@ auto SendClientToServerMessages(CallInitiator initiator, int num_messages) {
   });
 }
 
-class ClientTransportTest : public ::testing::Test {
- protected:
-  const std::shared_ptr<grpc_event_engine::experimental::FuzzingEventEngine>&
-  event_engine() {
-    return event_engine_;
-  }
-
-  MemoryAllocator* memory_allocator() { return &allocator_; }
-
- private:
-  std::shared_ptr<grpc_event_engine::experimental::FuzzingEventEngine>
-      event_engine_{
-          std::make_shared<grpc_event_engine::experimental::FuzzingEventEngine>(
-              []() {
-                grpc_timer_manager_set_threading(false);
-                grpc_event_engine::experimental::FuzzingEventEngine::Options
-                    options;
-                return options;
-              }(),
-              fuzzing_event_engine::Actions())};
-  MemoryAllocator allocator_ = MakeResourceQuota("test-quota")
-                                   ->memory_quota()
-                                   ->CreateMemoryAllocator("test-allocator");
-};
-
-TEST_F(ClientTransportTest, AddOneStream) {
+TEST_F(TransportTest, AddOneStream) {
   MockPromiseEndpoint control_endpoint;
   MockPromiseEndpoint data_endpoint;
   control_endpoint.ExpectRead(
@@ -265,7 +112,8 @@ TEST_F(ClientTransportTest, AddOneStream) {
   auto transport = MakeOrphanable<ChaoticGoodClientTransport>(
       std::move(control_endpoint.promise_endpoint),
       std::move(data_endpoint.promise_endpoint), event_engine());
-  auto call = MakeCall(event_engine().get(), 8192, memory_allocator());
+  auto call =
+      MakeCall(event_engine().get(), Arena::Create(1024, memory_allocator()));
   transport->StartCall(std::move(call.handler));
   StrictMock<MockFunction<void()>> on_done;
   EXPECT_CALL(on_done, Call());
@@ -321,7 +169,7 @@ TEST_F(ClientTransportTest, AddOneStream) {
   event_engine()->UnsetGlobalHooks();
 }
 
-TEST_F(ClientTransportTest, AddOneStreamMultipleMessages) {
+TEST_F(TransportTest, AddOneStreamMultipleMessages) {
   MockPromiseEndpoint control_endpoint;
   MockPromiseEndpoint data_endpoint;
   control_endpoint.ExpectRead(
