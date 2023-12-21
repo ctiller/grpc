@@ -18,8 +18,7 @@ namespace grpc_core {
 namespace chaotic_good {
 namespace testing {
 
-grpc_event_engine::experimental::Slice
-grpc_core::chaotic_good::testing::SerializedFrameHeader(
+grpc_event_engine::experimental::Slice SerializedFrameHeader(
     FrameType type, uint8_t flags, uint32_t stream_id, uint32_t header_length,
     uint32_t message_length, uint32_t message_padding,
     uint32_t trailer_length) {
@@ -50,8 +49,7 @@ grpc_core::chaotic_good::testing::SerializedFrameHeader(
   return grpc_event_engine::experimental::Slice::FromCopiedBuffer(buffer, 24);
 }
 
-grpc_event_engine::experimental::Slice grpc_core::chaotic_good::testing::Zeros(
-    uint32_t length) {
+grpc_event_engine::experimental::Slice Zeros(uint32_t length) {
   std::string zeros(length, 0);
   return grpc_event_engine::experimental::Slice::FromCopiedBuffer(zeros.data(),
                                                                   length);
