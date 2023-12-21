@@ -258,12 +258,12 @@ def grpc_deps():
     if "com_google_protobuf" not in native.existing_rules():
         http_archive(
             name = "com_google_protobuf",
-            sha256 = "7ed5fc41fe1614e551025f8e14b79b026a015b3ed337d38920c586f3ea35d818",
-            strip_prefix = "protobuf-6b5d8db01fe47478e8d400f550e797e6230d464e",
+            sha256 = "70f480fe9cb0c6829dbf6be3c388103313aacb65de667b86d981bbc9eaedb905",
+            strip_prefix = "protobuf-7f94235e552599141950d7a4a3eaf93bc87d1b22",
             urls = [
                 # https://github.com/protocolbuffers/protobuf/commits/v25.0
-                "https://storage.googleapis.com/grpc-bazel-mirror/github.com/protocolbuffers/protobuf/archive/6b5d8db01fe47478e8d400f550e797e6230d464e.tar.gz",
-                "https://github.com/protocolbuffers/protobuf/archive/6b5d8db01fe47478e8d400f550e797e6230d464e.tar.gz",
+                "https://storage.googleapis.com/grpc-bazel-mirror/github.com/protocolbuffers/protobuf/archive/7f94235e552599141950d7a4a3eaf93bc87d1b22.tar.gz",
+                "https://github.com/protocolbuffers/protobuf/archive/7f94235e552599141950d7a4a3eaf93bc87d1b22.tar.gz",
             ],
             patches = [
                 "@com_github_grpc_grpc//third_party:protobuf.patch",
@@ -512,11 +512,11 @@ def grpc_deps():
     if "io_opentelemetry_cpp" not in native.existing_rules():
         http_archive(
             name = "io_opentelemetry_cpp",
-            sha256 = "149f076cc7a79bbd3a3c34fb3ab61d3a3e8dcfe2b9596f79153e17123c32f897",
-            strip_prefix = "opentelemetry-cpp-064fef0d871c57ffac6739d3311659a5770a9db4",
+            sha256 = "7735cc56507149686e6019e06f588317099d4522480be5f38a2a09ec69af1706",
+            strip_prefix = "opentelemetry-cpp-1.13.0",
             urls = [
-                "https://storage.googleapis.com/grpc-bazel-mirror/github.com/open-telemetry/opentelemetry-cpp/archive/064fef0d871c57ffac6739d3311659a5770a9db4.tar.gz",
-                "https://github.com/open-telemetry/opentelemetry-cpp/archive/064fef0d871c57ffac6739d3311659a5770a9db4.tar.gz",
+                "https://storage.googleapis.com/grpc-bazel-mirror/github.com/open-telemetry/opentelemetry-cpp/archive/refs/tags/v1.13.0.tar.gz",
+                "https://github.com/open-telemetry/opentelemetry-cpp/archive/refs/tags/v1.13.0.tar.gz",
             ],
         )
 
