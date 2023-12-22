@@ -16,10 +16,19 @@
 
 namespace grpc_core {
 
-TRANSPORT_TEST(CanCreateCall) {
+TRANSPORT_TEST(CanCreateCallThenAbandonIt) {
   SetServerAcceptor();
   auto initiator = CreateCall();
+  initiator.SpawnGuarded("start-call", [&]() {
+    auto md = Arena::MakePooled<ClientMetadata>(GetContext<Arena>());
+    md->Set(HttpPathMetadata(), Slice::FromExternalString("/foo/bar"));
+    return initiator.PushClientInitialMetadata(std::move(md));
+  });
   auto handler = TickUntilServerCall();
+  initiator.SpawnInfallible("end-call", [&]() {
+    initiator.Cancel();
+    return Empty{};
+  });
 }
 
 }  // namespace grpc_core

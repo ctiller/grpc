@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "src/core/lib/debug/trace.h"
 #include "test/core/transport/test_suite/fixture.h"
 #include "test/core/transport/test_suite/test.h"
 #include "test/core/util/test_config.h"
@@ -31,5 +32,6 @@ int main(int argc, char** argv) {
           });
     }
   }
+  grpc_tracer_init();
   return RUN_ALL_TESTS();
 }

@@ -48,4 +48,24 @@ void TransportTest::RunTest() {
   event_engine_->UnsetGlobalHooks();
 }
 
+Arena* TransportTest::Acceptor::CreateArena() {
+  return Arena::Create(1024, allocator_);
+}
+
+absl::StatusOr<CallInitiator> TransportTest::Acceptor::CreateCall(
+    ClientMetadata& client_initial_metadata, Arena* arena) {
+  auto call = MakeCall(event_engine_, arena);
+  handlers_.push(std::move(call.handler));
+  return std::move(call.initiator);
+}
+
+absl::optional<CallHandler> TransportTest::Acceptor::PopHandler() {
+  if (!handlers_.empty()) {
+    auto handler = std::move(handlers_.front());
+    handlers_.pop();
+    return handler;
+  }
+  return absl::nullopt;
+}
+
 }  // namespace grpc_core

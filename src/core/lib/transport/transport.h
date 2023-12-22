@@ -340,6 +340,10 @@ class CallSpineInterface {
         "SpawnGuarded promise must return a status-like object");
     party().Spawn(name, std::move(promise_factory), [this](ResultType r) {
       if (!IsStatusOk(r)) {
+        if (grpc_trace_promise_primitives.enabled()) {
+          gpr_log(GPR_DEBUG, "SpawnGuarded sees failure: %s",
+                  r.ToString().c_str());
+        }
         std::ignore = Cancel(StatusCast<ServerMetadataHandle>(std::move(r)));
       }
     });

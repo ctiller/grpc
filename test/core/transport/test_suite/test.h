@@ -16,6 +16,7 @@
 #define TESTSUITETEST_H
 
 #include <memory>
+#include <queue>
 
 #include "absl/functional/any_invocable.h"
 #include "absl/strings/string_view.h"
@@ -30,14 +31,6 @@
 
 namespace grpc_core {
 
-class MockAcceptor : public ServerTransport::Acceptor {
- public:
-  MOCK_METHOD(Arena*, CreateArena, (), (override));
-  MOCK_METHOD(absl::StatusOr<CallInitiator>, CreateCall,
-              (ClientMetadata & client_initial_metadata, Arena* arena),
-              (override));
-};
-
 class TransportTest : public ::testing::Test {
  protected:
   TransportTest(std::unique_ptr<TransportFixture> fixture)
@@ -48,30 +41,34 @@ class TransportTest : public ::testing::Test {
   void SetServerAcceptor();
   CallInitiator CreateCall();
 
-  MockAcceptor& acceptor() { return acceptor_; }
-
   CallHandler TickUntilServerCall() {
-    auto* arena = Arena::Create(1024, &allocator_);
-    EXPECT_CALL(acceptor_, CreateArena()).WillOnce(::testing::Return(arena));
-    absl::optional<CallHandler> call_handler;
-    EXPECT_CALL(acceptor_, CreateCall(::testing::_, arena))
-        .WillOnce(::testing::WithArgs<0, 1>(
-            [this, &call_handler](ClientMetadata& client_metadata,
-                                  Arena* arena) {
-              auto call = MakeCall(event_engine_.get(), arena);
-              call_handler.emplace(std::move(call.handler));
-              return call.initiator;
-            }));
-    while (!call_handler.has_value()) {
+    for (;;) {
+      auto handler = acceptor_.PopHandler();
+      if (handler.has_value()) return std::move(*handler);
       event_engine_->Tick();
     }
-    return std::move(call_handler.value());
   }
 
  private:
   virtual void TestImpl() = 0;
 
-  ::testing::StrictMock<MockAcceptor> acceptor_;
+  class Acceptor final : public ServerTransport::Acceptor {
+   public:
+    Acceptor(grpc_event_engine::experimental::EventEngine* event_engine,
+             MemoryAllocator* allocator)
+        : event_engine_(event_engine), allocator_(allocator) {}
+
+    Arena* CreateArena() override;
+    absl::StatusOr<CallInitiator> CreateCall(
+        ClientMetadata& client_initial_metadata, Arena* arena) override;
+    absl::optional<CallHandler> PopHandler();
+
+   private:
+    std::queue<CallHandler> handlers_;
+    grpc_event_engine::experimental::EventEngine* const event_engine_;
+    MemoryAllocator* const allocator_;
+  };
+
   std::unique_ptr<TransportFixture> fixture_;
   TransportFixture::ClientAndServerTransportPair transport_pair_ =
       fixture_->CreateTransportPair();
@@ -88,6 +85,7 @@ class TransportTest : public ::testing::Test {
   MemoryAllocator allocator_ = MakeResourceQuota("test-quota")
                                    ->memory_quota()
                                    ->CreateMemoryAllocator("test-allocator");
+  Acceptor acceptor_{event_engine_.get(), &allocator_};
 };
 
 class TransportTestRegistry {

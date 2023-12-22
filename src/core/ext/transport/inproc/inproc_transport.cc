@@ -112,17 +112,15 @@ class InprocClientTransport final : public Transport, public ClientTransport {
   void StartCall(CallHandler call_handler) override {
     call_handler.SpawnGuarded(
         "pull_initial_metadata",
-        TrySeq(
-            call_handler.PullClientInitialMetadata(),
-            [server_transport = server_transport_,
-             call_handler](ClientMetadataHandle md) {
-              auto call_initiator = server_transport->AcceptCall(*md);
-              if (!call_initiator.ok()) return call_initiator.status();
-              ForwardCall(call_handler, std::move(*call_initiator),
-                          std::move(md));
-              return absl::OkStatus();
-            },
-            ImmediateOkStatus()));
+        TrySeq(call_handler.PullClientInitialMetadata(),
+               [server_transport = server_transport_,
+                call_handler](ClientMetadataHandle md) {
+                 auto call_initiator = server_transport->AcceptCall(*md);
+                 if (!call_initiator.ok()) return call_initiator.status();
+                 ForwardCall(call_handler, std::move(*call_initiator),
+                             std::move(md));
+                 return absl::OkStatus();
+               }));
   }
 
   void Orphan() override { delete this; }

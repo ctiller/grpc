@@ -282,9 +282,9 @@ void ForwardCall(CallHandler call_handler, CallInitiator call_initiator,
             std::move(client_initial_metadata));
       });
   // Read messages from handler into initiator.
-  call_handler.SpawnGuarded(
-      "read_messages", [call_handler, call_initiator]() mutable {
-        return ForEach(OutgoingMessages(call_handler),
+  call_handler.SpawnGuarded("read_messages", [call_handler,
+                                              call_initiator]() mutable {
+    return Seq(ForEach(OutgoingMessages(call_handler),
                        [call_initiator](MessageHandle msg) mutable {
                          // Need to spawn a job into the initiator's activity to
                          // push the message in.
@@ -294,8 +294,18 @@ void ForwardCall(CallHandler call_handler, CallInitiator call_initiator,
                                return call_initiator.CancelIfFails(
                                    call_initiator.PushMessage(std::move(msg)));
                              });
-                       });
-      });
+                       }),
+               [call_initiator](StatusFlag x) mutable {
+                 if (!x.ok()) {
+                   call_initiator.SpawnInfallible("cancel-downstream",
+                                                  [call_initiator]() mutable {
+                                                    call_initiator.Cancel();
+                                                    return Empty{};
+                                                  });
+                 }
+                 return x;
+               });
+  });
   call_initiator.SpawnInfallible("read_the_things", [call_initiator,
                                                      call_handler]() mutable {
     return Seq(
