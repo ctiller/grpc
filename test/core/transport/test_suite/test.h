@@ -15,6 +15,7 @@
 #ifndef TESTSUITETEST_H
 #define TESTSUITETEST_H
 
+#include <initializer_list>
 #include <memory>
 #include <queue>
 
@@ -45,6 +46,30 @@ class TransportTest : public ::testing::Test {
     for (;;) {
       auto handler = acceptor_.PopHandler();
       if (handler.has_value()) return std::move(*handler);
+      event_engine_->Tick();
+    }
+  }
+
+  class Event {
+   public:
+    void Set() { *done_ = true; }
+    bool IsSet() const { return *done_; }
+
+   private:
+    std::shared_ptr<std::atomic<bool>> done_{
+        std::make_shared<std::atomic<bool>>(false)};
+  };
+
+  void TickUntilEvents(std::initializer_list<Event> events) {
+    for (;;) {
+      bool all_done = true;
+      for (const auto& event : events) {
+        if (!event.IsSet()) {
+          all_done = false;
+          break;
+        }
+      }
+      if (all_done) return;
       event_engine_->Tick();
     }
   }

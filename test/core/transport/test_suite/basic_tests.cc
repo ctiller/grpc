@@ -16,6 +16,60 @@
 
 namespace grpc_core {
 
+TRANSPORT_TEST(MetadataOnlyRequest) {
+  SetServerAcceptor();
+  auto initiator = CreateCall();
+  Event client_done;
+  initiator.SpawnInfallible("initiator", [&]() {
+    auto md = Arena::MakePooled<ClientMetadata>(GetContext<Arena>());
+    md->Set(HttpPathMetadata(), Slice::FromExternalString("/foo/bar"));
+    return Seq(
+        initiator.PushClientInitialMetadata(std::move(md)),
+        [initiator](StatusFlag status) mutable {
+          EXPECT_TRUE(status.ok());
+          initiator.FinishSends();
+          return Empty{};
+        },
+        [client_done]() mutable {
+          client_done.Set();
+          return Empty{};
+        });
+  });
+  auto handler = TickUntilServerCall();
+  Event server_done;
+  handler.SpawnInfallible("handler", [handler, server_done]() mutable {
+    return Seq(
+        handler.PullClientInitialMetadata(),
+        [](ValueOrFailure<ServerMetadataHandle> md) {
+          EXPECT_TRUE(md.ok());
+          EXPECT_EQ(
+              md.value()->get_pointer(HttpPathMetadata())->as_string_view(),
+              "/foo/bar");
+          return Empty{};
+        },
+        handler.PullMessage(),
+        [](NextResult<MessageHandle> msg) {
+          EXPECT_FALSE(msg.has_value());
+          return Empty{};
+        },
+        [handler]() mutable {
+          auto md = Arena::MakePooled<ServerMetadata>(GetContext<Arena>());
+          md->Set(ContentTypeMetadata(), ContentTypeMetadata::kApplicationGrpc);
+          return handler.PushServerInitialMetadata(std::move(md));
+        },
+        [handler]() mutable {
+          auto md = Arena::MakePooled<ServerMetadata>(GetContext<Arena>());
+          md->Set(GrpcStatusMetadata(), GRPC_STATUS_UNIMPLEMENTED);
+          return handler.PushServerTrailingMetadata(std::move(md));
+        },
+        [server_done]() mutable {
+          server_done.Set();
+          return Empty{};
+        });
+  });
+  TickUntilEvents({client_done, server_done});
+}
+
 TRANSPORT_TEST(CanCreateCallThenAbandonIt) {
   SetServerAcceptor();
   auto initiator = CreateCall();

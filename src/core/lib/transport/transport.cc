@@ -295,15 +295,17 @@ void ForwardCall(CallHandler call_handler, CallInitiator call_initiator,
                                    call_initiator.PushMessage(std::move(msg)));
                              });
                        }),
-               [call_initiator](StatusFlag x) mutable {
-                 if (!x.ok()) {
-                   call_initiator.SpawnInfallible("cancel-downstream",
-                                                  [call_initiator]() mutable {
-                                                    call_initiator.Cancel();
-                                                    return Empty{};
-                                                  });
-                 }
-                 return x;
+               [call_initiator](StatusFlag result) mutable {
+                 call_initiator.SpawnInfallible(
+                     "finish-downstream", [call_initiator, result]() mutable {
+                       if (result.ok()) {
+                         call_initiator.FinishSends();
+                       } else {
+                         call_initiator.Cancel();
+                       }
+                       return Empty{};
+                     });
+                 return result;
                });
   });
   call_initiator.SpawnInfallible("read_the_things", [call_initiator,
