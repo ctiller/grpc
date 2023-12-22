@@ -172,8 +172,9 @@ RefCountedPtr<Channel> MakeLameChannel(absl::string_view why,
 
 RefCountedPtr<Channel> MakeInprocChannel(Server* server,
                                          ChannelArgs client_channel_args) {
-  auto client_transport = MakeOrphanable<InprocClientTransport>();
-  auto server_transport = client_transport->GetServerTransport();
+  auto transports = MakeInProcessTransportPair();
+  auto client_transport = std::move(transports.first);
+  auto server_transport = std::move(transports.second);
   auto error =
       server->SetupTransport(server_transport.get(), nullptr,
                              server->channel_args()
@@ -194,6 +195,14 @@ RefCountedPtr<Channel> MakeInprocChannel(Server* server,
   return std::move(*channel);
 }
 }  // namespace
+
+std::pair<OrphanablePtr<Transport>, OrphanablePtr<Transport>>
+MakeInProcessTransportPair() {
+  auto client_transport = MakeOrphanable<InprocClientTransport>();
+  auto server_transport = client_transport->GetServerTransport();
+  return std::make_pair(std::move(client_transport),
+                        std::move(server_transport));
+}
 
 }  // namespace grpc_core
 
