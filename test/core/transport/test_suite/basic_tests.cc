@@ -23,6 +23,7 @@ TRANSPORT_TEST(MetadataOnlyRequest) {
   initiator.SpawnInfallible("initiator", [&]() {
     auto md = Arena::MakePooled<ClientMetadata>(GetContext<Arena>());
     md->Set(HttpPathMetadata(), Slice::FromExternalString("/foo/bar"));
+    // Send initial metadata, then end the outbound stream
     return Seq(
         initiator.PushClientInitialMetadata(std::move(md)),
         [initiator](StatusFlag status) mutable {
