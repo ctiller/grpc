@@ -26,44 +26,49 @@ TRANSPORT_TEST(MetadataOnlyRequest) {
     // Send initial metadata, then end the outbound stream
     return Seq(
         initiator.PushClientInitialMetadata(std::move(md)),
-        [initiator](StatusFlag status) mutable {
+        [&](StatusFlag status) mutable {
           EXPECT_TRUE(status.ok());
           initiator.FinishSends();
-          return Empty{};
+          return initiator.PullServerInitialMetadata();
         },
-        [client_done]() mutable {
+        [&](ValueOrFailure<ServerMetadataHandle> md) {
+          EXPECT_TRUE(md.ok());
+          EXPECT_EQ(*md.value()->get_pointer(ContentTypeMetadata()),
+                    ContentTypeMetadata::kApplicationGrpc);
+          return initiator.PullServerTrailingMetadata();
+        },
+        [&](ValueOrFailure<ServerMetadataHandle> md) {
+          EXPECT_TRUE(md.ok());
+          EXPECT_EQ(*md.value()->get_pointer(GrpcStatusMetadata()),
+                    GRPC_STATUS_UNIMPLEMENTED);
           client_done.Set();
           return Empty{};
         });
   });
   auto handler = TickUntilServerCall();
   Event server_done;
-  handler.SpawnInfallible("handler", [handler, server_done]() mutable {
+  handler.SpawnInfallible("handler", [&]() mutable {
     return Seq(
         handler.PullClientInitialMetadata(),
-        [](ValueOrFailure<ServerMetadataHandle> md) {
+        [&](ValueOrFailure<ServerMetadataHandle> md) {
           EXPECT_TRUE(md.ok());
           EXPECT_EQ(
               md.value()->get_pointer(HttpPathMetadata())->as_string_view(),
               "/foo/bar");
-          return Empty{};
+          return handler.PullMessage();
         },
-        handler.PullMessage(),
-        [](NextResult<MessageHandle> msg) {
+        [&](NextResult<MessageHandle> msg) {
           EXPECT_FALSE(msg.has_value());
-          return Empty{};
-        },
-        [handler]() mutable {
           auto md = Arena::MakePooled<ServerMetadata>(GetContext<Arena>());
           md->Set(ContentTypeMetadata(), ContentTypeMetadata::kApplicationGrpc);
           return handler.PushServerInitialMetadata(std::move(md));
         },
-        [handler]() mutable {
+        [&]() mutable {
           auto md = Arena::MakePooled<ServerMetadata>(GetContext<Arena>());
           md->Set(GrpcStatusMetadata(), GRPC_STATUS_UNIMPLEMENTED);
           return handler.PushServerTrailingMetadata(std::move(md));
         },
-        [server_done]() mutable {
+        [&]() mutable {
           server_done.Set();
           return Empty{};
         });
