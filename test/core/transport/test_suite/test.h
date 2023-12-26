@@ -47,8 +47,16 @@ class TransportTest : public ::testing::Test {
   struct NameAndLocation {
     NameAndLocation(const char* name, SourceLocation location = {})
         : location(location), name(name) {}
+    NameAndLocation Next() const {
+      return NameAndLocation(name, location, step + 1);
+    }
     SourceLocation location;
     absl::string_view name;
+    int step = 1;
+
+   private:
+    NameAndLocation(absl::string_view name, SourceLocation location, int step)
+        : location(location), name(name), step(step) {}
   };
 
   class ActionState {
@@ -66,11 +74,15 @@ class TransportTest : public ::testing::Test {
 
     State Get() const { return state_; }
     void Set(State state) {
-      gpr_log(GPR_ERROR, "SET %s -- %s:%d to %d",
+      gpr_log(GPR_ERROR, "SET %s/%d -- %s:%d to %d",
               std::string(name_and_location_.name).c_str(),
-              name_and_location_.location.file(),
+              name_and_location_.step, name_and_location_.location.file(),
               name_and_location_.location.line(), state);
       state_ = state;
+    }
+
+    const NameAndLocation& name_and_location() const {
+      return name_and_location_;
     }
 
     bool IsDone() {
@@ -168,7 +180,7 @@ class TransportTest : public ::testing::Test {
         std::move(first_follow_up_action), name_and_location);
     using FollowUpResult = decltype(follow_up.Continue());
     return Append(
-        name_and_location,
+        name_and_location.Next(),
         [first_done = false,
          first_wrapped_action = std::move(first_wrapped_action),
          follow_up = std::move(follow_up)]() mutable -> FollowUpResult {
@@ -189,7 +201,7 @@ class TransportTest : public ::testing::Test {
   template <typename FirstAction, typename... FollowUps>
   auto TestSeq(NameAndLocation name_and_location, FirstAction first_action,
                FollowUps... follow_ups) {
-    return Append(name_and_location,
+    return Append(name_and_location.Next(),
                   WrapPromise(std::move(first_action), name_and_location),
                   std::move(follow_ups)...);
   }
@@ -218,6 +230,13 @@ class TransportTest : public ::testing::Test {
   void WaitForAllPendingWork() {
     ScopedBetterComplete scoped_better_complete(this);
     while (!pending_actions_.empty()) {
+      gpr_log(GPR_ERROR, "CHECK %s/%d -- %s:%d -- @ %d",
+              std::string(pending_actions_.front()->name_and_location().name)
+                  .c_str(),
+              pending_actions_.front()->name_and_location().step,
+              pending_actions_.front()->name_and_location().location.file(),
+              pending_actions_.front()->name_and_location().location.line(),
+              pending_actions_.front()->Get());
       if (pending_actions_.front()->IsDone()) {
         pending_actions_.pop();
         continue;
