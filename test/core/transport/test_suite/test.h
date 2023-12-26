@@ -24,7 +24,9 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "src/core/lib/gprpp/time.h"
 #include "src/core/lib/iomgr/timer_manager.h"
+#include "src/core/lib/promise/cancel_callback.h"
 #include "src/core/lib/resource_quota/resource_quota.h"
 #include "test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.h"
 #include "test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.pb.h"
@@ -42,7 +44,170 @@ class TransportTest : public ::testing::Test {
   void SetServerAcceptor();
   CallInitiator CreateCall();
 
+  struct NameAndLocation {
+    NameAndLocation(const char* name, SourceLocation location = {})
+        : location(location), name(name) {}
+    SourceLocation location;
+    absl::string_view name;
+  };
+
+  class ActionState {
+   public:
+    enum State : uint8_t {
+      kNotCreated,
+      kNotStarted,
+      kStarted,
+      kDone,
+      kCancelledAfterStart,
+    };
+
+    ActionState(NameAndLocation name_and_location, State state)
+        : name_and_location_(name_and_location), state_(state) {}
+
+    State Get() const { return state_; }
+    void Set(State state) {
+      gpr_log(GPR_ERROR, "SET %s -- %s:%d to %d",
+              std::string(name_and_location_.name).c_str(),
+              name_and_location_.location.file(),
+              name_and_location_.location.line(), state);
+      state_ = state;
+    }
+
+    bool IsDone() {
+      switch (state_) {
+        case kNotCreated:
+        case kNotStarted:
+        case kStarted:
+          return false;
+        case kDone:
+        case kCancelledAfterStart:
+          return true;
+      }
+    }
+
+   private:
+    const NameAndLocation name_and_location_;
+    std::atomic<State> state_;
+  };
+
+  template <typename Promise>
+  static auto WrapPromise(Promise promise,
+                          const std::shared_ptr<ActionState>& state) {
+    return OnCancel(
+        [state, promise = promise_detail::PromiseLike<Promise>(
+                    std::move(promise))]() mutable {
+          state->Set(ActionState::State::kStarted);
+          auto result = promise();
+          if (result.ready()) {
+            state->Set(ActionState::State::kDone);
+          }
+          return result;
+        },
+        [state]() mutable {
+          state->Set(ActionState::State::kCancelledAfterStart);
+        });
+  }
+
+  template <typename Promise>
+  auto WrapPromise(Promise promise, NameAndLocation name_and_location) {
+    auto state = std::make_shared<ActionState>(name_and_location,
+                                               ActionState::kNotStarted);
+    pending_actions_.push(state);
+    return WrapPromise(std::move(promise), std::move(state));
+  }
+
+  template <typename Arg, typename PromiseFactory>
+  auto WrapPromiseFactory(PromiseFactory promise_factory,
+                          NameAndLocation name_and_location) {
+    class Wrapper {
+     public:
+      Wrapper(PromiseFactory promise_factory,
+              std::shared_ptr<ActionState> state)
+          : promise_state_(Factory(std::move(promise_factory))),
+            action_state_(std::move(state)) {}
+
+      void Start(Arg arg) {
+        action_state_->Set(ActionState::State::kNotStarted);
+        promise_state_.template emplace<Promise>(
+            WrapPromise(absl::get<Factory>(promise_state_).Make(std::move(arg)),
+                        action_state_));
+      }
+
+      auto Continue() { return absl::get<Promise>(promise_state_)(); }
+
+     private:
+      using Factory = promise_detail::OncePromiseFactory<Arg, PromiseFactory>;
+      using PromiseFromFactory = typename Factory::Promise;
+      using Promise = decltype(WrapPromise(std::declval<PromiseFromFactory>(),
+                                           std::shared_ptr<ActionState>()));
+      using PromiseState = absl::variant<Factory, Promise>;
+      PromiseState promise_state_;
+      std::shared_ptr<ActionState> action_state_;
+    };
+
+    auto state = std::make_shared<ActionState>(name_and_location,
+                                               ActionState::kNotCreated);
+    pending_actions_.push(state);
+    return Wrapper(std::move(promise_factory), std::move(state));
+  }
+
+  template <typename FirstWrappedAction>
+  auto Append(NameAndLocation name_and_location,
+              FirstWrappedAction first_wrapped_action) {
+    return first_wrapped_action;
+  }
+
+  template <typename FirstWrappedAction, typename FirstFollowUpAction,
+            typename... FollowUps>
+  auto Append(NameAndLocation name_and_location,
+              FirstWrappedAction first_wrapped_action,
+              FirstFollowUpAction first_follow_up_action,
+              FollowUps... follow_up_actions) {
+    auto follow_up = WrapPromiseFactory<
+        typename PollTraits<decltype(first_wrapped_action())>::Type>(
+        std::move(first_follow_up_action), name_and_location);
+    using FollowUpResult = decltype(follow_up.Continue());
+    return Append(
+        name_and_location,
+        [first_done = false,
+         first_wrapped_action = std::move(first_wrapped_action),
+         follow_up = std::move(follow_up)]() mutable -> FollowUpResult {
+          if (!first_done) {
+            auto result = first_wrapped_action();
+            if (result.ready()) {
+              follow_up.Start(std::move(result.value()));
+              first_done = true;
+            } else {
+              return Pending{};
+            }
+          }
+          return follow_up.Continue();
+        },
+        std::move(follow_up_actions)...);
+  }
+
+  template <typename FirstAction, typename... FollowUps>
+  auto TestSeq(NameAndLocation name_and_location, FirstAction first_action,
+               FollowUps... follow_ups) {
+    return Append(name_and_location,
+                  WrapPromise(std::move(first_action), name_and_location),
+                  std::move(follow_ups)...);
+  }
+
+  class ScopedBetterComplete {
+   public:
+    explicit ScopedBetterComplete(TransportTest* test) : test_(test) {}
+    ~ScopedBetterComplete() { test_->event_engine_->Cancel(timer_); }
+
+   private:
+    TransportTest* const test_;
+    grpc_event_engine::experimental::EventEngine::TaskHandle const timer_{
+        test_->event_engine_->RunAfter(Duration::Minutes(5),
+                                       [this]() { test_->Timeout(); })};
+  };
+
   CallHandler TickUntilServerCall() {
+    ScopedBetterComplete scoped_better_complete(this);
     for (;;) {
       auto handler = acceptor_.PopHandler();
       if (handler.has_value()) return std::move(*handler);
@@ -50,32 +215,21 @@ class TransportTest : public ::testing::Test {
     }
   }
 
-  class Event {
-   public:
-    void Set() { *done_ = true; }
-    bool IsSet() const { return *done_; }
-
-   private:
-    std::shared_ptr<std::atomic<bool>> done_{
-        std::make_shared<std::atomic<bool>>(false)};
-  };
-
-  void TickUntilEvents(std::initializer_list<Event> events) {
-    for (;;) {
-      bool all_done = true;
-      for (const auto& event : events) {
-        if (!event.IsSet()) {
-          all_done = false;
-          break;
-        }
+  void WaitForAllPendingWork() {
+    ScopedBetterComplete scoped_better_complete(this);
+    while (!pending_actions_.empty()) {
+      if (pending_actions_.front()->IsDone()) {
+        pending_actions_.pop();
+        continue;
       }
-      if (all_done) return;
       event_engine_->Tick();
     }
   }
 
  private:
   virtual void TestImpl() = 0;
+
+  void Timeout() { Crash("explain what happened here (timeout)"); }
 
   class Acceptor final : public ServerTransport::Acceptor {
    public:
@@ -111,6 +265,7 @@ class TransportTest : public ::testing::Test {
                                    ->memory_quota()
                                    ->CreateMemoryAllocator("test-allocator");
   Acceptor acceptor_{event_engine_.get(), &allocator_};
+  std::queue<std::shared_ptr<ActionState>> pending_actions_;
 };
 
 class TransportTestRegistry {

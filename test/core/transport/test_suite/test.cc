@@ -44,6 +44,9 @@ void TransportTestRegistry::RegisterTest(
 
 void TransportTest::RunTest() {
   TestImpl();
+  EXPECT_EQ(pending_actions_.size(), 0)
+      << "There are still pending actions: did you forget to call "
+         "WaitForAllPendingWork()?";
   event_engine_->TickUntilIdle();
   event_engine_->UnsetGlobalHooks();
 }
