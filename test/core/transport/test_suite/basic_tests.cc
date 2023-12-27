@@ -31,9 +31,10 @@ TRANSPORT_TEST(MetadataOnlyRequest) {
         initiator.FinishSends();
         return initiator.PullServerInitialMetadata();
       },
-      [&](ValueOrFailure<ServerMetadataHandle> md) {
+      [&](ValueOrFailure<absl::optional<ServerMetadataHandle>> md) {
         EXPECT_TRUE(md.ok());
-        EXPECT_EQ(*md.value()->get_pointer(ContentTypeMetadata()),
+        EXPECT_TRUE(md.value().has_value());
+        EXPECT_EQ(*md.value().value()->get_pointer(ContentTypeMetadata()),
                   ContentTypeMetadata::kApplicationGrpc);
         return initiator.PullServerTrailingMetadata();
       },
@@ -86,9 +87,10 @@ TRANSPORT_TEST(MetadataOnlyRequestServerAbortsAfterInitialMetadata) {
         // We don't close the sending stream here.
         return initiator.PullServerInitialMetadata();
       },
-      [&](ValueOrFailure<ServerMetadataHandle> md) {
+      [&](ValueOrFailure<absl::optional<ServerMetadataHandle>> md) {
         EXPECT_TRUE(md.ok());
-        EXPECT_EQ(*md.value()->get_pointer(ContentTypeMetadata()),
+        EXPECT_TRUE(md.value().has_value());
+        EXPECT_EQ(*md.value().value()->get_pointer(ContentTypeMetadata()),
                   ContentTypeMetadata::kApplicationGrpc);
         return initiator.PullServerTrailingMetadata();
       },
@@ -140,8 +142,9 @@ TRANSPORT_TEST(MetadataOnlyRequestServerAbortsImmediately) {
         // We don't close the sending stream here.
         return initiator.PullServerInitialMetadata();
       },
-      [&](ValueOrFailure<ServerMetadataHandle> md) {
-        EXPECT_FALSE(md.ok());
+      [&](ValueOrFailure<absl::optional<ServerMetadataHandle>> md) {
+        EXPECT_TRUE(md.ok());
+        EXPECT_FALSE(md.value().has_value());
         return initiator.PullServerTrailingMetadata();
       },
       [&](ValueOrFailure<ServerMetadataHandle> md) {

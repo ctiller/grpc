@@ -313,25 +313,27 @@ void ForwardCall(CallHandler call_handler, CallInitiator call_initiator,
     return Seq(
         call_initiator.CancelIfFails(TrySeq(
             call_initiator.PullServerInitialMetadata(),
-            [call_handler](ServerMetadataHandle md) mutable {
+            [call_handler,
+             call_initiator](absl::optional<ServerMetadataHandle> md) mutable {
               call_handler.SpawnGuarded(
                   "recv_initial_metadata",
                   [md = std::move(md), call_handler]() mutable {
                     return call_handler.PushServerInitialMetadata(
                         std::move(md));
                   });
-              return Success{};
-            },
-            ForEach(OutgoingMessages(call_initiator),
-                    [call_handler](MessageHandle msg) mutable {
-                      return call_handler.SpawnWaitable(
-                          "recv_message",
-                          [msg = std::move(msg), call_handler]() mutable {
-                            return call_handler.CancelIfFails(
-                                call_handler.PushMessage(std::move(msg)));
-                          });
-                    }),
-            ImmediateOkStatus())),
+              return If(
+                  md.has_value(),
+                  ForEach(OutgoingMessages(call_initiator),
+                          [call_handler](MessageHandle msg) mutable {
+                            return call_handler.SpawnWaitable(
+                                "recv_message",
+                                [msg = std::move(msg), call_handler]() mutable {
+                                  return call_handler.CancelIfFails(
+                                      call_handler.PushMessage(std::move(msg)));
+                                });
+                          }),
+                  []() -> StatusFlag { return Success{}; });
+            })),
         call_initiator.PullServerTrailingMetadata(),
         [call_handler](ServerMetadataHandle md) mutable {
           call_handler.SpawnGuarded(

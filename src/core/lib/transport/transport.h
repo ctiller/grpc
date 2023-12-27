@@ -54,6 +54,7 @@
 #include "src/core/lib/promise/arena_promise.h"
 #include "src/core/lib/promise/context.h"
 #include "src/core/lib/promise/detail/status.h"
+#include "src/core/lib/promise/if.h"
 #include "src/core/lib/promise/latch.h"
 #include "src/core/lib/promise/party.h"
 #include "src/core/lib/promise/pipe.h"
@@ -444,10 +445,13 @@ class CallInitiator {
   auto PullServerInitialMetadata() {
     GPR_DEBUG_ASSERT(Activity::current() == &spine_->party());
     return Map(spine_->server_initial_metadata().receiver.Next(),
-               [](NextResult<ClientMetadataHandle> md)
-                   -> ValueOrFailure<ClientMetadataHandle> {
-                 if (!md.has_value()) return Failure{};
-                 return std::move(*md);
+               [](NextResult<ServerMetadataHandle> md)
+                   -> ValueOrFailure<absl::optional<ServerMetadataHandle>> {
+                 if (!md.has_value()) {
+                   if (md.cancelled()) return Failure{};
+                   return absl::optional<ServerMetadataHandle>();
+                 }
+                 return absl::optional<ClientMetadataHandle>(std::move(*md));
                });
   }
 
@@ -529,10 +533,19 @@ class CallHandler {
                });
   }
 
-  auto PushServerInitialMetadata(ServerMetadataHandle md) {
+  auto PushServerInitialMetadata(absl::optional<ServerMetadataHandle> md) {
     GPR_DEBUG_ASSERT(Activity::current() == &spine_->party());
-    return Map(spine_->server_initial_metadata().sender.Push(std::move(md)),
-               [](bool ok) { return StatusFlag(ok); });
+    return If(
+        md.has_value(),
+        [&md, this]() {
+          return Map(
+              spine_->server_initial_metadata().sender.Push(std::move(*md)),
+              [](bool ok) { return StatusFlag(ok); });
+        },
+        [this]() -> StatusFlag {
+          spine_->server_initial_metadata().sender.Close();
+          return Success{};
+        });
   }
 
   auto PushServerTrailingMetadata(ServerMetadataHandle md) {
