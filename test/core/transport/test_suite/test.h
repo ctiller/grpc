@@ -27,12 +27,153 @@
 #include "src/core/lib/gprpp/time.h"
 #include "src/core/lib/iomgr/timer_manager.h"
 #include "src/core/lib/promise/cancel_callback.h"
+#include "src/core/lib/promise/promise.h"
 #include "src/core/lib/resource_quota/resource_quota.h"
 #include "test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.h"
 #include "test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.pb.h"
 #include "test/core/transport/test_suite/fixture.h"
 
 namespace grpc_core {
+
+namespace transport_test_detail {
+
+struct NameAndLocation {
+  NameAndLocation(const char* name, SourceLocation location = {})
+      : location_(location), name_(name) {}
+  NameAndLocation Next() const {
+    return NameAndLocation(name_, location_, step_ + 1);
+  }
+
+  SourceLocation location() const { return location_; }
+  absl::string_view name() const { return name_; }
+  int step() const { return step_; }
+
+ private:
+  NameAndLocation(absl::string_view name, SourceLocation location, int step)
+      : location_(location), name_(name), step_(step) {}
+  SourceLocation location_;
+  absl::string_view name_;
+  int step_ = 1;
+};
+
+class ActionState {
+ public:
+  enum State : uint8_t {
+    kNotCreated,
+    kNotStarted,
+    kStarted,
+    kDone,
+    kCancelled,
+  };
+
+  explicit ActionState(NameAndLocation name_and_location);
+
+  State Get() const { return state_; }
+  void Set(State state) { state_ = state; }
+  const NameAndLocation& name_and_location() const {
+    return name_and_location_;
+  }
+  SourceLocation location() const { return name_and_location().location(); }
+  const char* file() const { return location().file(); }
+  int line() const { return location().line(); }
+  absl::string_view name() const { return name_and_location().name(); }
+  int step() const { return name_and_location().step(); }
+  bool IsDone();
+
+ private:
+  const NameAndLocation name_and_location_;
+  std::atomic<State> state_;
+};
+
+using PromiseSpawner = std::function<void(absl::string_view, Promise<Empty>)>;
+using ActionStateFactory =
+    absl::FunctionRef<std::shared_ptr<ActionState>(NameAndLocation)>;
+
+template <typename Context>
+PromiseSpawner SpawnerForContext(
+    Context context,
+    grpc_event_engine::experimental::EventEngine* event_engine) {
+  return [context = std::move(context), event_engine](absl::string_view name,
+                                                      Promise<Empty> promise) {
+    // Pass new promises via event engine to allow fuzzers to explore
+    // reorderings of possibly interleaved spawns.
+    event_engine->Run([name, context, promise = std::move(promise)]() mutable {
+      context.SpawnInfallible(name, std::move(promise));
+    });
+  };
+}
+
+template <typename Arg>
+using NextSpawner = absl::AnyInvocable<void(Arg)>;
+
+template <typename R>
+Promise<Empty> WrapPromiseAndNext(std::shared_ptr<ActionState> action_state,
+                                  Promise<R> promise, NextSpawner<R> next) {
+  return Promise<Empty>(OnCancel(
+      [action_state, promise = std::move(promise),
+       next = std::move(next)]() mutable -> Poll<Empty> {
+        action_state->Set(ActionState::kStarted);
+        auto r = promise();
+        if (auto* p = r.value_if_ready()) {
+          action_state->Set(ActionState::kDone);
+          next(std::move(*p));
+          return Empty{};
+        } else {
+          return Pending{};
+        }
+      },
+      [action_state]() { action_state->Set(ActionState::kCancelled); }));
+}
+
+template <typename Arg>
+NextSpawner<Arg> WrapFollowUps(NameAndLocation loc,
+                               ActionStateFactory action_state_factory,
+                               PromiseSpawner spawner) {
+  return [](Empty) {};
+}
+
+template <typename Arg, typename FirstFollowUp, typename... FollowUps>
+NextSpawner<Arg> WrapFollowUps(NameAndLocation loc,
+                               ActionStateFactory action_state_factory,
+                               PromiseSpawner spawner, FirstFollowUp first,
+                               FollowUps... follow_ups) {
+  using Factory = promise_detail::OncePromiseFactory<Arg, FirstFollowUp>;
+  using FactoryPromise = typename Factory::Promise;
+  using Result = typename FactoryPromise::Result;
+  return [spawner, factory = Factory(std::move(first)),
+          next = WrapFollowUps<Result>(loc.Next(), action_state_factory,
+                                       spawner, std::move(follow_ups)...),
+          action_state = action_state_factory(loc),
+          name = loc.name()](Arg arg) mutable {
+    action_state->Set(ActionState::kNotStarted);
+    spawner(name,
+            WrapPromiseAndNext(std::move(action_state),
+                               Promise<Result>(factory.Make(std::move(arg))),
+                               std::move(next)));
+  };
+}
+
+template <typename First, typename... FollowUps>
+void StartSeq(NameAndLocation loc, ActionStateFactory action_state_factory,
+              PromiseSpawner spawner, First first, FollowUps... followups) {
+  using Factory = promise_detail::OncePromiseFactory<void, First>;
+  using FactoryPromise = typename Factory::Promise;
+  using Result = typename FactoryPromise::Result;
+  auto next = WrapFollowUps<Result>(loc.Next(), action_state_factory, spawner,
+                                    std::move(followups)...);
+  spawner(
+      loc.name(),
+      [spawner, first = Factory(std::move(first)), next = std::move(next),
+       action_state = action_state_factory(loc), name = loc.name()]() mutable {
+        action_state->Set(ActionState::kNotStarted);
+        spawner(name, WrapPromiseAndNext(std::move(action_state),
+                                         Promise<Result>(first.Make()),
+                                         std::move(next)));
+        return Empty{};
+      });
+}
+
+};  // namespace transport_test_detail
 
 class TransportTest : public ::testing::Test {
  protected:
@@ -47,196 +188,22 @@ class TransportTest : public ::testing::Test {
   CallHandler TickUntilServerCall();
   void WaitForAllPendingWork();
 
-  struct NameAndLocation {
-    NameAndLocation(const char* name, SourceLocation location = {})
-        : location_(location), name_(name) {}
-    NameAndLocation Next() const {
-      return NameAndLocation(name_, location_, step_ + 1);
-    }
-
-    SourceLocation location() const { return location_; }
-    absl::string_view name() const { return name_; }
-    int step() const { return step_; }
-
-   private:
-    NameAndLocation(absl::string_view name, SourceLocation location, int step)
-        : location_(location), name_(name), step_(step) {}
-    SourceLocation location_;
-    absl::string_view name_;
-    int step_ = 1;
-  };
-
- private:
-  class ActionState {
-   public:
-    enum State : uint8_t {
-      kNotCreated,
-      kNotStarted,
-      kStarted,
-      kDone,
-      kCancelledAfterStart,
-    };
-
-    ActionState(NameAndLocation name_and_location, State state);
-
-    State Get() const { return state_; }
-    void Set(State state) { state_ = state; }
-    const NameAndLocation& name_and_location() const {
-      return name_and_location_;
-    }
-    SourceLocation location() const { return name_and_location().location(); }
-    const char* file() const { return location().file(); }
-    int line() const { return location().line(); }
-    absl::string_view name() const { return name_and_location().name(); }
-    int step() const { return name_and_location().step(); }
-    bool IsDone();
-
-   private:
-    const NameAndLocation name_and_location_;
-    std::atomic<State> state_;
-  };
-
-  template <typename Promise>
-  static auto WrapPromise(Promise promise,
-                          const std::shared_ptr<ActionState>& state) {
-    return OnCancel(
-        [state, promise = promise_detail::PromiseLike<Promise>(
-                    std::move(promise))]() mutable {
-          state->Set(ActionState::State::kStarted);
-          auto result = promise();
-          if (result.ready()) {
-            state->Set(ActionState::State::kDone);
-          }
-          return result;
-        },
-        [state]() mutable {
-          state->Set(ActionState::State::kCancelledAfterStart);
-        });
-  }
-
-  template <typename Promise>
-  auto WrapPromise(Promise promise, NameAndLocation name_and_location) {
-    auto state = std::make_shared<ActionState>(name_and_location,
-                                               ActionState::kNotStarted);
-    pending_actions_.push(state);
-    return WrapPromise(std::move(promise), std::move(state));
-  }
-
-  template <typename Arg, typename PromiseFactory>
-  auto WrapPromiseFactory(PromiseFactory promise_factory,
-                          NameAndLocation name_and_location) {
-    class Wrapper {
-     public:
-      Wrapper(PromiseFactory promise_factory,
-              std::shared_ptr<ActionState> state)
-          : promise_state_(Factory(std::move(promise_factory))),
-            action_state_(std::move(state)) {}
-
-      void Start(Arg arg) {
-        action_state_->Set(ActionState::State::kNotStarted);
-        promise_state_.template emplace<Promise>(
-            WrapPromise(absl::get<Factory>(promise_state_).Make(std::move(arg)),
-                        action_state_));
-      }
-
-      auto Continue() { return absl::get<Promise>(promise_state_)(); }
-
-     private:
-      using Factory = promise_detail::OncePromiseFactory<Arg, PromiseFactory>;
-      using PromiseFromFactory = typename Factory::Promise;
-      using Promise = decltype(WrapPromise(std::declval<PromiseFromFactory>(),
-                                           std::shared_ptr<ActionState>()));
-      using PromiseState = absl::variant<Factory, Promise>;
-      PromiseState promise_state_;
-      std::shared_ptr<ActionState> action_state_;
-    };
-
-    auto state = std::make_shared<ActionState>(name_and_location,
-                                               ActionState::kNotCreated);
-    pending_actions_.push(state);
-    return Wrapper(std::move(promise_factory), std::move(state));
-  }
-
-  template <typename FirstWrappedAction>
-  auto Append(NameAndLocation name_and_location,
-              FirstWrappedAction first_wrapped_action) {
-    return first_wrapped_action;
-  }
-
-  template <typename FirstWrappedAction, typename FirstFollowUpAction,
-            typename... FollowUps>
-  auto Append(NameAndLocation name_and_location,
-              FirstWrappedAction first_wrapped_action,
-              FirstFollowUpAction first_follow_up_action,
-              FollowUps... follow_up_actions) {
-    auto follow_up = WrapPromiseFactory<
-        typename PollTraits<decltype(first_wrapped_action())>::Type>(
-        std::move(first_follow_up_action), name_and_location);
-    using FollowUpResult = decltype(follow_up.Continue());
-    return Append(
-        name_and_location.Next(),
-        [first_done = false,
-         first_wrapped_action = std::move(first_wrapped_action),
-         follow_up = std::move(follow_up)]() mutable -> FollowUpResult {
-          if (!first_done) {
-            auto result = first_wrapped_action();
-            if (result.ready()) {
-              follow_up.Start(std::move(result.value()));
-              first_done = true;
-            } else {
-              return Pending{};
-            }
-          }
-          return follow_up.Continue();
-        },
-        std::move(follow_up_actions)...);
-  }
-
  protected:
-  template <typename Context, typename FirstAction, typename... FollowUps>
-  void SpawnTestSeq(Context& context, NameAndLocation name_and_location,
-                    FirstAction first_action, FollowUps... follow_ups) {
-    class Wrapper {
-     public:
-      Wrapper(FirstAction promise_factory, std::shared_ptr<ActionState> state)
-          : promise_state_(Factory(std::move(promise_factory))),
-            action_state_(std::move(state)) {}
-
-      void Start() {
-        action_state_->Set(ActionState::State::kNotStarted);
-        promise_state_.template emplace<Promise>(WrapPromise(
-            absl::get<Factory>(promise_state_).Make(), action_state_));
-      }
-
-      auto Continue() { return absl::get<Promise>(promise_state_)(); }
-
-     private:
-      using Factory = promise_detail::OncePromiseFactory<void, FirstAction>;
-      using PromiseFromFactory = typename Factory::Promise;
-      using Promise = decltype(WrapPromise(std::declval<PromiseFromFactory>(),
-                                           std::shared_ptr<ActionState>()));
-      using PromiseState = absl::variant<Factory, Promise>;
-      PromiseState promise_state_;
-      std::shared_ptr<ActionState> action_state_;
-    };
-
-    auto state = std::make_shared<ActionState>(name_and_location,
-                                               ActionState::kNotCreated);
-    pending_actions_.push(state);
-
-    context.SpawnInfallible(
-        name_and_location.name(),
-        Append(
-            name_and_location.Next(),
-            [wrapper = Wrapper(std::move(first_action), state),
-             started = false]() mutable {
-              if (!started) {
-                wrapper.Start();
-                started = true;
-              }
-              return wrapper.Continue();
-            },
-            std::move(follow_ups)...));
+  template <typename Context, typename... Actions>
+  void SpawnTestSeq(Context context,
+                    transport_test_detail::NameAndLocation name_and_location,
+                    Actions... actions) {
+    transport_test_detail::StartSeq(
+        name_and_location,
+        [this](transport_test_detail::NameAndLocation name_and_location) {
+          auto action = std::make_shared<transport_test_detail::ActionState>(
+              name_and_location);
+          pending_actions_.push(action);
+          return action;
+        },
+        transport_test_detail::SpawnerForContext(std::move(context),
+                                                 event_engine_.get()),
+        std::move(actions)...);
   }
 
  private:
@@ -290,7 +257,8 @@ class TransportTest : public ::testing::Test {
                                    ->memory_quota()
                                    ->CreateMemoryAllocator("test-allocator");
   Acceptor acceptor_{event_engine_.get(), &allocator_};
-  std::queue<std::shared_ptr<ActionState>> pending_actions_;
+  std::queue<std::shared_ptr<transport_test_detail::ActionState>>
+      pending_actions_;
 };
 
 class TransportTestRegistry {

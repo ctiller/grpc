@@ -85,17 +85,17 @@ void TransportTest::Timeout() {
     pending_actions_.pop();
     absl::string_view state_name;
     switch (action->Get()) {
-      case ActionState::kNotCreated:
+      case transport_test_detail::ActionState::kNotCreated:
         state_name = "[!created]";
         break;
-      case ActionState::kNotStarted:
+      case transport_test_detail::ActionState::kNotStarted:
         state_name = "[!started]";
         break;
-      case ActionState::kStarted:
+      case transport_test_detail::ActionState::kStarted:
         state_name = "[pending ]";
         break;
-      case ActionState::kDone:
-      case ActionState::kCancelledAfterStart:
+      case transport_test_detail::ActionState::kDone:
+      case transport_test_detail::ActionState::kCancelled:
         continue;
     }
     absl::string_view file_name = action->file();
@@ -134,22 +134,25 @@ absl::optional<CallHandler> TransportTest::Acceptor::PopHandler() {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// TransportTest::ActionState
+// ActionState
 
-TransportTest::ActionState::ActionState(NameAndLocation name_and_location,
-                                        State state)
-    : name_and_location_(name_and_location), state_(state) {}
+namespace transport_test_detail {
 
-bool TransportTest::ActionState::IsDone() {
+ActionState::ActionState(NameAndLocation name_and_location)
+    : name_and_location_(name_and_location), state_(kNotCreated) {}
+
+bool ActionState::IsDone() {
   switch (state_) {
     case kNotCreated:
     case kNotStarted:
     case kStarted:
       return false;
     case kDone:
-    case kCancelledAfterStart:
+    case kCancelled:
       return true;
   }
 }
+
+}  // namespace transport_test_detail
 
 }  // namespace grpc_core
