@@ -140,10 +140,11 @@ NextSpawner<Arg> WrapFollowUps(NameAndLocation loc,
   using Factory = promise_detail::OncePromiseFactory<Arg, FirstFollowUp>;
   using FactoryPromise = typename Factory::Promise;
   using Result = typename FactoryPromise::Result;
+  auto action_state = action_state_factory(loc);
   return [spawner, factory = Factory(std::move(first)),
           next = WrapFollowUps<Result>(loc.Next(), action_state_factory,
                                        spawner, std::move(follow_ups)...),
-          action_state = action_state_factory(loc),
+          action_state = std::move(action_state),
           name = loc.name()](Arg arg) mutable {
     action_state->Set(ActionState::kNotStarted);
     spawner(name,
@@ -159,12 +160,13 @@ void StartSeq(NameAndLocation loc, ActionStateFactory action_state_factory,
   using Factory = promise_detail::OncePromiseFactory<void, First>;
   using FactoryPromise = typename Factory::Promise;
   using Result = typename FactoryPromise::Result;
+  auto action_state = action_state_factory(loc);
   auto next = WrapFollowUps<Result>(loc.Next(), action_state_factory, spawner,
                                     std::move(followups)...);
   spawner(
       loc.name(),
       [spawner, first = Factory(std::move(first)), next = std::move(next),
-       action_state = action_state_factory(loc), name = loc.name()]() mutable {
+       action_state = std::move(action_state), name = loc.name()]() mutable {
         action_state->Set(ActionState::kNotStarted);
         spawner(name, WrapPromiseAndNext(std::move(action_state),
                                          Promise<Result>(first.Make()),

@@ -12,15 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//bazel:grpc_build_system.bzl", "grpc_cc_library", "grpc_cc_test", "grpc_package", "grpc_proto_library")
-load("//test/core/util:grpc_fuzzer.bzl", "grpc_fuzzer", "grpc_proto_fuzzer")
+load(
+    "//bazel:grpc_build_system.bzl",
+    "grpc_cc_library",
+)
 load("grpc_transport_test.bzl", "grpc_transport_test")
 
 grpc_cc_library(
     name = "fixture",
     testonly = 1,
-    hdrs = ["fixture.h"],
     srcs = ["fixture.cc"],
+    hdrs = ["fixture.h"],
     deps = ["//:grpc"],
 )
 
@@ -66,7 +68,7 @@ grpc_cc_library(
 )
 
 grpc_transport_test(
-    name = "basic_tests",
+    name = "call_shapes_test",
     deps = [
         ":inproc_fixture",
     ],
