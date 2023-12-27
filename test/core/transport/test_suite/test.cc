@@ -69,16 +69,45 @@ CallHandler TransportTest::TickUntilServerCall() {
 void TransportTest::WaitForAllPendingWork() {
   WatchDog watchdog(this);
   while (!pending_actions_.empty()) {
-    gpr_log(GPR_ERROR, "CHECK %s/%d -- %s:%d -- @ %d",
-            std::string(pending_actions_.front()->name()).c_str(),
-            pending_actions_.front()->step(), pending_actions_.front()->file(),
-            pending_actions_.front()->line(), pending_actions_.front()->Get());
     if (pending_actions_.front()->IsDone()) {
       pending_actions_.pop();
       continue;
     }
     event_engine_->Tick();
   }
+}
+
+void TransportTest::Timeout() {
+  std::vector<std::string> lines;
+  lines.emplace_back("Timeout waiting for pending actions to complete");
+  while (!pending_actions_.empty()) {
+    auto action = std::move(pending_actions_.front());
+    pending_actions_.pop();
+    absl::string_view state_name;
+    switch (action->Get()) {
+      case ActionState::kNotCreated:
+        state_name = "[!created]";
+        break;
+      case ActionState::kNotStarted:
+        state_name = "[!started]";
+        break;
+      case ActionState::kStarted:
+        state_name = "[pending ]";
+        break;
+      case ActionState::kDone:
+      case ActionState::kCancelledAfterStart:
+        continue;
+    }
+    absl::string_view file_name = action->file();
+    auto pos = file_name.find_last_of('/');
+    if (pos != absl::string_view::npos) {
+      file_name = file_name.substr(pos + 1);
+    }
+    lines.emplace_back(absl::StrCat("  ", state_name, " ", action->name(), " [",
+                                    action->step(), "]: ", file_name, ":",
+                                    action->line()));
+  }
+  Crash(absl::StrJoin(lines, "\n"));
 }
 
 ///////////////////////////////////////////////////////////////////////////////

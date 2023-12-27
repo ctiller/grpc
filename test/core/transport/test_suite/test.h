@@ -80,12 +80,7 @@ class TransportTest : public ::testing::Test {
     ActionState(NameAndLocation name_and_location, State state);
 
     State Get() const { return state_; }
-    void Set(State state) {
-      gpr_log(GPR_INFO, "Set %s/%d -- %s:%d -- @ %d",
-              std::string(name_and_location().name()).c_str(), step(), file(),
-              line(), state);
-      state_ = state;
-    }
+    void Set(State state) { state_ = state; }
     const NameAndLocation& name_and_location() const {
       return name_and_location_;
     }
@@ -247,7 +242,7 @@ class TransportTest : public ::testing::Test {
  private:
   virtual void TestImpl() = 0;
 
-  void Timeout() { Crash("explain what happened here (timeout)"); }
+  void Timeout();
 
   class Acceptor final : public ServerTransport::Acceptor {
    public:
