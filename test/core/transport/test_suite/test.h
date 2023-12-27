@@ -80,7 +80,12 @@ class TransportTest : public ::testing::Test {
     ActionState(NameAndLocation name_and_location, State state);
 
     State Get() const { return state_; }
-    void Set(State state) { state_ = state; }
+    void Set(State state) {
+      gpr_log(GPR_INFO, "Set %s/%d -- %s:%d -- @ %d",
+              std::string(name_and_location().name()).c_str(), step(), file(),
+              line(), state);
+      state_ = state;
+    }
     const NameAndLocation& name_and_location() const {
       return name_and_location_;
     }
@@ -220,14 +225,15 @@ class TransportTest : public ::testing::Test {
       std::shared_ptr<ActionState> action_state_;
     };
 
+    auto state = std::make_shared<ActionState>(name_and_location,
+                                               ActionState::kNotCreated);
+    pending_actions_.push(state);
+
     context.SpawnInfallible(
         name_and_location.name(),
         Append(
             name_and_location.Next(),
-            [wrapper =
-                 Wrapper(std::move(first_action),
-                         std::make_shared<ActionState>(
-                             name_and_location, ActionState::kNotCreated)),
+            [wrapper = Wrapper(std::move(first_action), state),
              started = false]() mutable {
               if (!started) {
                 wrapper.Start();
