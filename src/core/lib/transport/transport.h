@@ -57,7 +57,7 @@
 #include "src/core/lib/promise/latch.h"
 #include "src/core/lib/promise/party.h"
 #include "src/core/lib/promise/pipe.h"
-#include "src/core/lib/promise/race.h"
+#include "src/core/lib/promise/prioritized_race.h"
 #include "src/core/lib/promise/status_flag.h"
 #include "src/core/lib/resource_quota/arena.h"
 #include "src/core/lib/slice/slice_buffer.h"
@@ -453,13 +453,16 @@ class CallInitiator {
 
   auto PullServerTrailingMetadata() {
     GPR_DEBUG_ASSERT(Activity::current() == &spine_->party());
-    return Race(spine_->WaitForCancel(),
-                Map(spine_->server_trailing_metadata().receiver.Next(),
-                    [spine = spine_](NextResult<ServerMetadataHandle> md)
-                        -> ServerMetadataHandle {
-                      GPR_ASSERT(md.has_value());
-                      return std::move(*md);
-                    }));
+    return PrioritizedRace(
+        Map(spine_->server_trailing_metadata().receiver.Next(),
+            [spine = spine_](
+                NextResult<ServerMetadataHandle> md) -> ServerMetadataHandle {
+              GPR_ASSERT(md.has_value());
+              gpr_log(GPR_ERROR, "[%p] PullServerTrailingMetadata: %s",
+                      spine.get(), md.value()->DebugString().c_str());
+              return std::move(*md);
+            }),
+        spine_->WaitForCancel());
   }
 
   auto PullMessage() {
@@ -533,6 +536,8 @@ class CallHandler {
   }
 
   auto PushServerTrailingMetadata(ServerMetadataHandle md) {
+    gpr_log(GPR_ERROR, "[%p] PushServerTrailingMetadata: %s", spine_.get(),
+            md->DebugString().c_str());
     GPR_DEBUG_ASSERT(Activity::current() == &spine_->party());
     spine_->server_initial_metadata().sender.Close();
     spine_->server_to_client_messages().sender.Close();

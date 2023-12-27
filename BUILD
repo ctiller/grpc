@@ -1594,6 +1594,7 @@ grpc_cc_library(
         "//src/core:posix_event_engine_base_hdrs",
         "//src/core:promise_status",
         "//src/core:race",
+        "//src/core:prioritized_race",
         "//src/core:random_early_detection",
         "//src/core:ref_counted",
         "//src/core:ref_counted_string",
