@@ -44,21 +44,29 @@ class TransportTest : public ::testing::Test {
   void SetServerAcceptor();
   CallInitiator CreateCall();
 
+  CallHandler TickUntilServerCall();
+  void WaitForAllPendingWork();
+
   struct NameAndLocation {
     NameAndLocation(const char* name, SourceLocation location = {})
-        : location(location), name(name) {}
+        : location_(location), name_(name) {}
     NameAndLocation Next() const {
-      return NameAndLocation(name, location, step + 1);
+      return NameAndLocation(name_, location_, step_ + 1);
     }
-    SourceLocation location;
-    absl::string_view name;
-    int step = 1;
+
+    SourceLocation location() const { return location_; }
+    absl::string_view name() const { return name_; }
+    int step() const { return step_; }
 
    private:
     NameAndLocation(absl::string_view name, SourceLocation location, int step)
-        : location(location), name(name), step(step) {}
+        : location_(location), name_(name), step_(step) {}
+    SourceLocation location_;
+    absl::string_view name_;
+    int step_ = 1;
   };
 
+ private:
   class ActionState {
    public:
     enum State : uint8_t {
@@ -69,33 +77,19 @@ class TransportTest : public ::testing::Test {
       kCancelledAfterStart,
     };
 
-    ActionState(NameAndLocation name_and_location, State state)
-        : name_and_location_(name_and_location), state_(state) {}
+    ActionState(NameAndLocation name_and_location, State state);
 
     State Get() const { return state_; }
-    void Set(State state) {
-      gpr_log(GPR_ERROR, "SET %s/%d -- %s:%d to %d",
-              std::string(name_and_location_.name).c_str(),
-              name_and_location_.step, name_and_location_.location.file(),
-              name_and_location_.location.line(), state);
-      state_ = state;
-    }
-
+    void Set(State state) { state_ = state; }
     const NameAndLocation& name_and_location() const {
       return name_and_location_;
     }
-
-    bool IsDone() {
-      switch (state_) {
-        case kNotCreated:
-        case kNotStarted:
-        case kStarted:
-          return false;
-        case kDone:
-        case kCancelledAfterStart:
-          return true;
-      }
-    }
+    SourceLocation location() const { return name_and_location().location(); }
+    const char* file() const { return location().file(); }
+    int line() const { return location().line(); }
+    absl::string_view name() const { return name_and_location().name(); }
+    int step() const { return name_and_location().step(); }
+    bool IsDone();
 
    private:
     const NameAndLocation name_and_location_;
@@ -198,51 +192,13 @@ class TransportTest : public ::testing::Test {
         std::move(follow_up_actions)...);
   }
 
+ public:
   template <typename FirstAction, typename... FollowUps>
   auto TestSeq(NameAndLocation name_and_location, FirstAction first_action,
                FollowUps... follow_ups) {
     return Append(name_and_location.Next(),
                   WrapPromise(std::move(first_action), name_and_location),
                   std::move(follow_ups)...);
-  }
-
-  class ScopedBetterComplete {
-   public:
-    explicit ScopedBetterComplete(TransportTest* test) : test_(test) {}
-    ~ScopedBetterComplete() { test_->event_engine_->Cancel(timer_); }
-
-   private:
-    TransportTest* const test_;
-    grpc_event_engine::experimental::EventEngine::TaskHandle const timer_{
-        test_->event_engine_->RunAfter(Duration::Minutes(5),
-                                       [this]() { test_->Timeout(); })};
-  };
-
-  CallHandler TickUntilServerCall() {
-    ScopedBetterComplete scoped_better_complete(this);
-    for (;;) {
-      auto handler = acceptor_.PopHandler();
-      if (handler.has_value()) return std::move(*handler);
-      event_engine_->Tick();
-    }
-  }
-
-  void WaitForAllPendingWork() {
-    ScopedBetterComplete scoped_better_complete(this);
-    while (!pending_actions_.empty()) {
-      gpr_log(GPR_ERROR, "CHECK %s/%d -- %s:%d -- @ %d",
-              std::string(pending_actions_.front()->name_and_location().name)
-                  .c_str(),
-              pending_actions_.front()->name_and_location().step,
-              pending_actions_.front()->name_and_location().location.file(),
-              pending_actions_.front()->name_and_location().location.line(),
-              pending_actions_.front()->Get());
-      if (pending_actions_.front()->IsDone()) {
-        pending_actions_.pop();
-        continue;
-      }
-      event_engine_->Tick();
-    }
   }
 
  private:
@@ -265,6 +221,18 @@ class TransportTest : public ::testing::Test {
     std::queue<CallHandler> handlers_;
     grpc_event_engine::experimental::EventEngine* const event_engine_;
     MemoryAllocator* const allocator_;
+  };
+
+  class WatchDog {
+   public:
+    explicit WatchDog(TransportTest* test) : test_(test) {}
+    ~WatchDog() { test_->event_engine_->Cancel(timer_); }
+
+   private:
+    TransportTest* const test_;
+    grpc_event_engine::experimental::EventEngine::TaskHandle const timer_{
+        test_->event_engine_->RunAfter(Duration::Minutes(5),
+                                       [this]() { test_->Timeout(); })};
   };
 
   std::unique_ptr<TransportFixture> fixture_;
