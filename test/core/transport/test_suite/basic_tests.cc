@@ -19,132 +19,128 @@ namespace grpc_core {
 TRANSPORT_TEST(MetadataOnlyRequest) {
   SetServerAcceptor();
   auto initiator = CreateCall();
-  initiator.SpawnInfallible("initiator", [&]() {
-    auto md = Arena::MakePooled<ClientMetadata>(GetContext<Arena>());
-    md->Set(HttpPathMetadata(), Slice::FromExternalString("/foo/bar"));
-    // Send initial metadata, then end the outbound stream
-    return TestSeq(
-        "initiator", initiator.PushClientInitialMetadata(std::move(md)),
-        [&](StatusFlag status) mutable {
-          EXPECT_TRUE(status.ok());
-          initiator.FinishSends();
-          return initiator.PullServerInitialMetadata();
-        },
-        [&](ValueOrFailure<ServerMetadataHandle> md) {
-          EXPECT_TRUE(md.ok());
-          EXPECT_EQ(*md.value()->get_pointer(ContentTypeMetadata()),
-                    ContentTypeMetadata::kApplicationGrpc);
-          return initiator.PullServerTrailingMetadata();
-        },
-        [&](ValueOrFailure<ServerMetadataHandle> md) {
-          EXPECT_TRUE(md.ok());
-          EXPECT_EQ(*md.value()->get_pointer(GrpcStatusMetadata()),
-                    GRPC_STATUS_UNIMPLEMENTED);
-          return Empty{};
-        });
-  });
+  SpawnTestSeq(
+      initiator, "initiator",
+      [&]() {
+        auto md = Arena::MakePooled<ClientMetadata>(GetContext<Arena>());
+        md->Set(HttpPathMetadata(), Slice::FromExternalString("/foo/bar"));
+        return initiator.PushClientInitialMetadata(std::move(md));
+      },
+      [&](StatusFlag status) mutable {
+        EXPECT_TRUE(status.ok());
+        initiator.FinishSends();
+        return initiator.PullServerInitialMetadata();
+      },
+      [&](ValueOrFailure<ServerMetadataHandle> md) {
+        EXPECT_TRUE(md.ok());
+        EXPECT_EQ(*md.value()->get_pointer(ContentTypeMetadata()),
+                  ContentTypeMetadata::kApplicationGrpc);
+        return initiator.PullServerTrailingMetadata();
+      },
+      [&](ValueOrFailure<ServerMetadataHandle> md) {
+        EXPECT_TRUE(md.ok());
+        EXPECT_EQ(*md.value()->get_pointer(GrpcStatusMetadata()),
+                  GRPC_STATUS_UNIMPLEMENTED);
+        return Empty{};
+      });
   auto handler = TickUntilServerCall();
-  handler.SpawnInfallible("handler", [&]() mutable {
-    return TestSeq(
-        "handler", handler.PullClientInitialMetadata(),
-        [&](ValueOrFailure<ServerMetadataHandle> md) {
-          EXPECT_TRUE(md.ok());
-          EXPECT_EQ(
-              md.value()->get_pointer(HttpPathMetadata())->as_string_view(),
-              "/foo/bar");
-          return handler.PullMessage();
-        },
-        [&](NextResult<MessageHandle> msg) {
-          EXPECT_FALSE(msg.has_value());
-          auto md = Arena::MakePooled<ServerMetadata>(GetContext<Arena>());
-          md->Set(ContentTypeMetadata(), ContentTypeMetadata::kApplicationGrpc);
-          return handler.PushServerInitialMetadata(std::move(md));
-        },
-        [&](StatusFlag result) mutable {
-          EXPECT_TRUE(result.ok());
-          auto md = Arena::MakePooled<ServerMetadata>(GetContext<Arena>());
-          md->Set(GrpcStatusMetadata(), GRPC_STATUS_UNIMPLEMENTED);
-          return handler.PushServerTrailingMetadata(std::move(md));
-        },
-        [&](StatusFlag result) mutable {
-          EXPECT_TRUE(result.ok());
-          return Empty{};
-        });
-  });
+  SpawnTestSeq(
+      handler, "handler", [&] { return handler.PullClientInitialMetadata(); },
+      [&](ValueOrFailure<ServerMetadataHandle> md) {
+        EXPECT_TRUE(md.ok());
+        EXPECT_EQ(md.value()->get_pointer(HttpPathMetadata())->as_string_view(),
+                  "/foo/bar");
+        return handler.PullMessage();
+      },
+      [&](NextResult<MessageHandle> msg) {
+        EXPECT_FALSE(msg.has_value());
+        auto md = Arena::MakePooled<ServerMetadata>(GetContext<Arena>());
+        md->Set(ContentTypeMetadata(), ContentTypeMetadata::kApplicationGrpc);
+        return handler.PushServerInitialMetadata(std::move(md));
+      },
+      [&](StatusFlag result) mutable {
+        EXPECT_TRUE(result.ok());
+        auto md = Arena::MakePooled<ServerMetadata>(GetContext<Arena>());
+        md->Set(GrpcStatusMetadata(), GRPC_STATUS_UNIMPLEMENTED);
+        return handler.PushServerTrailingMetadata(std::move(md));
+      },
+      [&](StatusFlag result) mutable {
+        EXPECT_TRUE(result.ok());
+        return Empty{};
+      });
   WaitForAllPendingWork();
 }
 
 TRANSPORT_TEST(MetadataOnlyRequestServerAborts) {
   SetServerAcceptor();
   auto initiator = CreateCall();
-  initiator.SpawnInfallible("initiator", [&]() {
-    auto md = Arena::MakePooled<ClientMetadata>(GetContext<Arena>());
-    md->Set(HttpPathMetadata(), Slice::FromExternalString("/foo/bar"));
-    // Send initial metadata, then end the outbound stream
-    return TestSeq(
-        "initiator", initiator.PushClientInitialMetadata(std::move(md)),
-        [&](StatusFlag status) mutable {
-          EXPECT_TRUE(status.ok());
-          // We don't close the sending stream here.
-          return initiator.PullServerInitialMetadata();
-        },
-        [&](ValueOrFailure<ServerMetadataHandle> md) {
-          EXPECT_TRUE(md.ok());
-          EXPECT_EQ(*md.value()->get_pointer(ContentTypeMetadata()),
-                    ContentTypeMetadata::kApplicationGrpc);
-          return initiator.PullServerTrailingMetadata();
-        },
-        [&](ValueOrFailure<ServerMetadataHandle> md) {
-          EXPECT_TRUE(md.ok());
-          EXPECT_EQ(*md.value()->get_pointer(GrpcStatusMetadata()),
-                    GRPC_STATUS_UNIMPLEMENTED);
-          return Empty{};
-        });
-  });
+  SpawnTestSeq(
+      initiator, "initiator",
+      [&]() {
+        auto md = Arena::MakePooled<ClientMetadata>(GetContext<Arena>());
+        md->Set(HttpPathMetadata(), Slice::FromExternalString("/foo/bar"));
+        return initiator.PushClientInitialMetadata(std::move(md));
+      },
+      [&](StatusFlag status) mutable {
+        EXPECT_TRUE(status.ok());
+        // We don't close the sending stream here.
+        return initiator.PullServerInitialMetadata();
+      },
+      [&](ValueOrFailure<ServerMetadataHandle> md) {
+        EXPECT_TRUE(md.ok());
+        EXPECT_EQ(*md.value()->get_pointer(ContentTypeMetadata()),
+                  ContentTypeMetadata::kApplicationGrpc);
+        return initiator.PullServerTrailingMetadata();
+      },
+      [&](ValueOrFailure<ServerMetadataHandle> md) {
+        EXPECT_TRUE(md.ok());
+        EXPECT_EQ(*md.value()->get_pointer(GrpcStatusMetadata()),
+                  GRPC_STATUS_UNIMPLEMENTED);
+        return Empty{};
+      });
   auto handler = TickUntilServerCall();
-  handler.SpawnInfallible("handler", [&]() mutable {
-    return TestSeq(
-        "handler", handler.PullClientInitialMetadata(),
-        [&](ValueOrFailure<ServerMetadataHandle> got_md) {
-          EXPECT_TRUE(got_md.ok());
-          EXPECT_EQ(
-              got_md.value()->get_pointer(HttpPathMetadata())->as_string_view(),
-              "/foo/bar");
-          // Don't wait for end of stream for client->server messages, just
-          // publish our results.
-          auto md = Arena::MakePooled<ServerMetadata>(GetContext<Arena>());
-          md->Set(ContentTypeMetadata(), ContentTypeMetadata::kApplicationGrpc);
-          return handler.PushServerInitialMetadata(std::move(md));
-        },
-        [&](StatusFlag result) mutable {
-          EXPECT_TRUE(result.ok());
-          auto md = Arena::MakePooled<ServerMetadata>(GetContext<Arena>());
-          md->Set(GrpcStatusMetadata(), GRPC_STATUS_UNIMPLEMENTED);
-          return handler.PushServerTrailingMetadata(std::move(md));
-        },
-        [&](StatusFlag result) mutable {
-          EXPECT_TRUE(result.ok());
-          return Empty{};
-        });
-  });
+  SpawnTestSeq(
+      handler, "handler", [&] { return handler.PullClientInitialMetadata(); },
+      [&](ValueOrFailure<ServerMetadataHandle> got_md) {
+        EXPECT_TRUE(got_md.ok());
+        EXPECT_EQ(
+            got_md.value()->get_pointer(HttpPathMetadata())->as_string_view(),
+            "/foo/bar");
+        // Don't wait for end of stream for client->server messages, just
+        // publish our results.
+        auto md = Arena::MakePooled<ServerMetadata>(GetContext<Arena>());
+        md->Set(ContentTypeMetadata(), ContentTypeMetadata::kApplicationGrpc);
+        return handler.PushServerInitialMetadata(std::move(md));
+      },
+      [&](StatusFlag result) mutable {
+        EXPECT_TRUE(result.ok());
+        auto md = Arena::MakePooled<ServerMetadata>(GetContext<Arena>());
+        md->Set(GrpcStatusMetadata(), GRPC_STATUS_UNIMPLEMENTED);
+        return handler.PushServerTrailingMetadata(std::move(md));
+      },
+      [&](StatusFlag result) mutable {
+        EXPECT_TRUE(result.ok());
+        return Empty{};
+      });
   WaitForAllPendingWork();
 }
 
 TRANSPORT_TEST(CanCreateCallThenAbandonIt) {
   SetServerAcceptor();
   auto initiator = CreateCall();
-  initiator.SpawnInfallible("start-call", [&]() {
-    auto md = Arena::MakePooled<ClientMetadata>(GetContext<Arena>());
-    md->Set(HttpPathMetadata(), Slice::FromExternalString("/foo/bar"));
-    return TestSeq("start-call",
-                   initiator.PushClientInitialMetadata(std::move(md)),
-                   [&](StatusFlag status) mutable {
-                     EXPECT_TRUE(status.ok());
-                     return Empty{};
-                   });
-  });
+  SpawnTestSeq(
+      initiator, "start-call",
+      [&]() {
+        auto md = Arena::MakePooled<ClientMetadata>(GetContext<Arena>());
+        md->Set(HttpPathMetadata(), Slice::FromExternalString("/foo/bar"));
+        return initiator.PushClientInitialMetadata(std::move(md));
+      },
+      [&](StatusFlag status) mutable {
+        EXPECT_TRUE(status.ok());
+        return Empty{};
+      });
   auto handler = TickUntilServerCall();
-  initiator.SpawnInfallible("end-call", [&]() {
+  SpawnTestSeq(initiator, "end-call", [&]() {
     initiator.Cancel();
     return Empty{};
   });

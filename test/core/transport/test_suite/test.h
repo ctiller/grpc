@@ -192,13 +192,50 @@ class TransportTest : public ::testing::Test {
         std::move(follow_up_actions)...);
   }
 
- public:
-  template <typename FirstAction, typename... FollowUps>
-  auto TestSeq(NameAndLocation name_and_location, FirstAction first_action,
-               FollowUps... follow_ups) {
-    return Append(name_and_location.Next(),
-                  WrapPromise(std::move(first_action), name_and_location),
-                  std::move(follow_ups)...);
+ protected:
+  template <typename Context, typename FirstAction, typename... FollowUps>
+  void SpawnTestSeq(Context& context, NameAndLocation name_and_location,
+                    FirstAction first_action, FollowUps... follow_ups) {
+    class Wrapper {
+     public:
+      Wrapper(FirstAction promise_factory, std::shared_ptr<ActionState> state)
+          : promise_state_(Factory(std::move(promise_factory))),
+            action_state_(std::move(state)) {}
+
+      void Start() {
+        action_state_->Set(ActionState::State::kNotStarted);
+        promise_state_.template emplace<Promise>(WrapPromise(
+            absl::get<Factory>(promise_state_).Make(), action_state_));
+      }
+
+      auto Continue() { return absl::get<Promise>(promise_state_)(); }
+
+     private:
+      using Factory = promise_detail::OncePromiseFactory<void, FirstAction>;
+      using PromiseFromFactory = typename Factory::Promise;
+      using Promise = decltype(WrapPromise(std::declval<PromiseFromFactory>(),
+                                           std::shared_ptr<ActionState>()));
+      using PromiseState = absl::variant<Factory, Promise>;
+      PromiseState promise_state_;
+      std::shared_ptr<ActionState> action_state_;
+    };
+
+    context.SpawnInfallible(
+        name_and_location.name(),
+        Append(
+            name_and_location.Next(),
+            [wrapper =
+                 Wrapper(std::move(first_action),
+                         std::make_shared<ActionState>(
+                             name_and_location, ActionState::kNotCreated)),
+             started = false]() mutable {
+              if (!started) {
+                wrapper.Start();
+                started = true;
+              }
+              return wrapper.Continue();
+            },
+            std::move(follow_ups)...));
   }
 
  private:
