@@ -78,17 +78,13 @@ class PartySyncUsingAtomics {
       : state_(kOneRef * initial_refs) {}
 
   void IncrementRefCount() {
-    auto prev = state_.fetch_add(kOneRef, std::memory_order_relaxed);
-    gpr_log(GPR_DEBUG, "IncrementRefCount: %p %016" PRIx64 " %016" PRIx64, this,
-            prev, prev + kOneRef);
+    state_.fetch_add(kOneRef, std::memory_order_relaxed);
   }
   GRPC_MUST_USE_RESULT bool RefIfNonZero();
   // Returns true if the ref count is now zero and the caller should call
   // PartyOver
   GRPC_MUST_USE_RESULT bool Unref() {
     uint64_t prev_state = state_.fetch_sub(kOneRef, std::memory_order_acq_rel);
-    gpr_log(GPR_DEBUG, "Unref: %p %016" PRIx64 " %016" PRIx64, this, prev_state,
-            prev_state - kOneRef);
     if ((prev_state & kRefMask) == kOneRef) {
       return UnreffedLast();
     }
