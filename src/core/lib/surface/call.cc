@@ -3705,15 +3705,6 @@ ServerPromiseBasedCall::MakeTopOfServerCallPromise(
   return Seq(server_to_client_messages_->AwaitClosed(),
              send_trailing_metadata_.Wait());
 }
-#else
-ArenaPromise<ServerMetadataHandle>
-ServerCallContext::MakeTopOfServerCallPromise(
-    CallArgs, grpc_completion_queue*, grpc_metadata_array*,
-    absl::FunctionRef<void(grpc_call*)>) {
-  (void)call_;
-  Crash("Promise-based server call is not enabled");
-}
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // CallSpine based Server Call
@@ -3771,8 +3762,8 @@ class ServerCallSpine final : public CallSpineInterface,
       ClientMetadataHandle metadata,
       grpc_metadata_array* publish_initial_metadata) override;
   ArenaPromise<ServerMetadataHandle> MakeTopOfServerCallPromise(
-      CallArgs call_args, grpc_completion_queue* cq,
-      absl::FunctionRef<void(grpc_call* call)> publish) override {
+      CallArgs, grpc_completion_queue*,
+      absl::FunctionRef<void(grpc_call* call)>) override {
     Crash("unimplemented");
   }
 
@@ -3851,6 +3842,54 @@ grpc_call_error ServerCallSpine::StartBatch(const grpc_op* ops, size_t nops,
 }
 
 namespace {
+template <typename SetupFn>
+class MaybeOpImpl {
+ public:
+  using SetupResult = decltype(std::declval<SetupFn>()(grpc_op()));
+  using PromiseFactory = promise_detail::OncePromiseFactory<void, SetupResult>;
+  using Promise = typename PromiseFactory::Promise;
+  struct Dismissed {};
+  using State = absl::variant<Dismissed, PromiseFactory, Promise>;
+
+  MaybeOpImpl() : state_(Dismissed{}) {}
+  explicit MaybeOpImpl(SetupResult result)
+      : state_(PromiseFactory(std::move(result))) {}
+
+  MaybeOpImpl(const MaybeOpImpl&) = delete;
+  MaybeOpImpl& operator=(const MaybeOpImpl&) = delete;
+  MaybeOpImpl(MaybeOpImpl&& other) noexcept : state_(MoveState(other.state_)) {}
+  MaybeOpImpl& operator=(MaybeOpImpl&& other) noexcept {
+    if (absl::holds_alternative<Dismissed>(state_)) {
+      state_.template emplace<Dismissed>();
+      return *this;
+    }
+    // Can't move after first poll => Promise is not an option
+    state_.template emplace<PromiseFactory>(
+        std::move(absl::get<PromiseFactory>(other.state_)));
+    return *this;
+  }
+
+  Poll<StatusFlag> operator()() {
+    if (absl::holds_alternative<Dismissed>(state_)) return Success{};
+    if (absl::holds_alternative<PromiseFactory>(state_)) {
+      auto& factory = absl::get<PromiseFactory>(state_);
+      auto promise = factory.Make();
+      state_.template emplace<Promise>(std::move(promise));
+    }
+    auto& promise = absl::get<Promise>(state_);
+    return poll_cast<StatusFlag>(promise());
+  }
+
+ private:
+  State state_;
+
+  static State MoveState(State& state) {
+    if (absl::holds_alternative<Dismissed>(state)) return Dismissed{};
+    // Can't move after first poll => Promise is not an option
+    return std::move(absl::get<PromiseFactory>(state));
+  }
+};
+
 // MaybeOp captures a fairly complicated dance we need to do for the batch API.
 // We first check if an op is included or not, and if it is, we run the setup
 // function in the context of the API call (NOT in the call party).
@@ -3861,39 +3900,10 @@ namespace {
 // dance will go away.
 template <typename SetupFn>
 auto MaybeOp(const grpc_op* ops, uint8_t idx, SetupFn setup) {
-  using SetupResult = decltype(setup(*ops));
-  using PromiseFactory = promise_detail::OncePromiseFactory<void, SetupResult>;
-  using Promise = typename PromiseFactory::Promise;
-  class Impl {
-   public:
-    Impl() : state_(Dismissed{}) {}
-    explicit Impl(SetupResult result)
-        : state_(PromiseFactory(std::move(result))) {}
-
-    Impl(const Impl&) = delete;
-    Impl& operator=(const Impl&) = delete;
-    Impl(Impl&&) noexcept = default;
-    Impl& operator=(Impl&&) noexcept = default;
-
-    Poll<StatusFlag> operator()() {
-      if (absl::holds_alternative<Dismissed>(state_)) return Success{};
-      if (absl::holds_alternative<PromiseFactory>(state_)) {
-        auto& factory = absl::get<PromiseFactory>(state_);
-        auto promise = factory.Make();
-        state_.template emplace<Promise>(std::move(promise));
-      }
-      auto& promise = absl::get<Promise>(state_);
-      return poll_cast<StatusFlag>(promise());
-    }
-
-   private:
-    struct Dismissed {};
-    absl::variant<Dismissed, PromiseFactory, Promise> state_;
-  };
   if (idx == 255) {
-    return Impl();
+    return MaybeOpImpl<SetupFn>();
   } else {
-    return Impl(setup(ops[idx]));
+    return MaybeOpImpl<SetupFn>(setup(ops[idx]));
   }
 }
 }  // namespace
@@ -4058,6 +4068,12 @@ RefCountedPtr<CallSpineInterface> MakeServerCall(Server* server,
   return RefCountedPtr<ServerCallSpine>(
       arena->New<ServerCallSpine>(server, channel, arena));
 }
+#else
+RefCountedPtr<CallSpineInterface> MakeServerCall(Server* server,
+                                                 Channel* channel) {
+  Crash("not implemented");
+}
+#endif
 
 }  // namespace grpc_core
 
