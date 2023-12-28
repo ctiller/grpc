@@ -40,6 +40,8 @@ void TransportTest::RunTest() {
   EXPECT_EQ(pending_actions_.size(), 0)
       << "There are still pending actions: did you forget to call "
          "WaitForAllPendingWork()?";
+  transport_pair_.client.reset();
+  transport_pair_.server.reset();
   event_engine_->TickUntilIdle();
   event_engine_->UnsetGlobalHooks();
 }

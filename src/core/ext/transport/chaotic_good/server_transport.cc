@@ -108,11 +108,18 @@ auto ChaoticGoodServerTransport::MaybePushFragmentIntoCall(
                 }),
             [](StatusFlag status) { return StatusCast<absl::Status>(status); });
       },
-      [error = std::move(error)]() { return error; });
+      [&error, &frame]() {
+        gpr_log(GPR_INFO,
+                "CHAOTIC_GOOD: Cannot pass frame to stream. Error:%s Frame:%s",
+                error.ToString().c_str(), frame.ToString().c_str());
+        return Immediate(std::move(error));
+      });
 }
 
 auto ChaoticGoodServerTransport::SendFragment(
-    ServerFragmentFrame frame, MpscSender<ServerFrame>& outgoing_frames) {
+    ServerFragmentFrame frame, MpscSender<ServerFrame> outgoing_frames) {
+  gpr_log(GPR_INFO, "CHAOTIC_GOOD: SendFragment: frame=%s",
+          frame.ToString().c_str());
   return Map(outgoing_frames.Send(std::move(frame)),
              [](bool success) -> absl::Status {
                if (!success) {
@@ -124,7 +131,7 @@ auto ChaoticGoodServerTransport::SendFragment(
 }
 
 auto ChaoticGoodServerTransport::SendCallBody(
-    uint32_t stream_id, MpscSender<ServerFrame>& outgoing_frames,
+    uint32_t stream_id, MpscSender<ServerFrame> outgoing_frames,
     CallInitiator call_initiator) {
   // Continuously send client frame with client to server
   // messages.
@@ -149,7 +156,7 @@ auto ChaoticGoodServerTransport::SendCallBody(
 }
 
 auto ChaoticGoodServerTransport::SendCallInitialMetadataAndBody(
-    uint32_t stream_id, MpscSender<ServerFrame>& outgoing_frames,
+    uint32_t stream_id, MpscSender<ServerFrame> outgoing_frames,
     CallInitiator call_initiator) {
   return TrySeq(
       // Wait for initial metadata then send it out.
@@ -175,8 +182,17 @@ auto ChaoticGoodServerTransport::SendCallInitialMetadataAndBody(
 auto ChaoticGoodServerTransport::CallOutboundLoop(
     uint32_t stream_id, CallInitiator call_initiator) {
   auto outgoing_frames = outgoing_frames_.MakeSender();
-  return Seq(SendCallInitialMetadataAndBody(stream_id, outgoing_frames,
-                                            call_initiator),
+  return Seq(Map(SendCallInitialMetadataAndBody(stream_id, outgoing_frames,
+                                                call_initiator),
+                 [stream_id](absl::Status main_body_result) {
+                   if (grpc_chaotic_good_trace.enabled()) {
+                     gpr_log(GPR_DEBUG,
+                             "CHAOTIC_GOOD: CallOutboundLoop: stream_id=%d "
+                             "main_body_result=%s",
+                             stream_id, main_body_result.ToString().c_str());
+                   }
+                   return Empty{};
+                 }),
              call_initiator.PullServerTrailingMetadata(),
              [stream_id, outgoing_frames](ServerMetadataHandle md) mutable {
                ServerFragmentFrame frame;
@@ -204,11 +220,17 @@ auto ChaoticGoodServerTransport::DeserializeAndPushFragmentToNewCall(
                 : create_call_result.status().ToString().c_str());
     if (create_call_result.ok()) {
       call_initiator.emplace(std::move(*create_call_result));
-      call_initiator->SpawnGuarded(
-          "server-write", [this, stream_id = frame_header.stream_id,
-                           call_initiator = *call_initiator]() {
-            return CallOutboundLoop(stream_id, call_initiator);
-          });
+      auto add_result = NewStream(frame_header.stream_id, *call_initiator);
+      if (add_result.ok()) {
+        call_initiator->SpawnGuarded(
+            "server-write", [this, stream_id = frame_header.stream_id,
+                             call_initiator = *call_initiator]() {
+              return CallOutboundLoop(stream_id, call_initiator);
+            });
+      } else {
+        call_initiator.reset();
+        status = add_result;
+      }
     } else {
       status = create_call_result.status();
     }
@@ -360,6 +382,20 @@ absl::optional<CallInitiator> ChaoticGoodServerTransport::ExtractStream(
   auto r = std::move(it->second);
   stream_map_.erase(it);
   return std::move(r);
+}
+
+absl::Status ChaoticGoodServerTransport::NewStream(
+    uint32_t stream_id, CallInitiator call_initiator) {
+  MutexLock lock(&mu_);
+  auto it = stream_map_.find(stream_id);
+  if (it != stream_map_.end()) {
+    return absl::InternalError("Stream already exists");
+  }
+  if (stream_id <= last_seen_new_stream_id_) {
+    return absl::InternalError("Stream id is not increasing");
+  }
+  stream_map_.emplace(stream_id, std::move(call_initiator));
+  return absl::OkStatus();
 }
 
 }  // namespace chaotic_good

@@ -284,12 +284,12 @@ class TransportTest : public ::testing::Test {
               }(),
               fuzzing_event_engine::Actions())};
   std::unique_ptr<TransportFixture> fixture_;
-  TransportFixture::ClientAndServerTransportPair transport_pair_ =
-      fixture_->CreateTransportPair(event_engine_);
   MemoryAllocator allocator_ = MakeResourceQuota("test-quota")
                                    ->memory_quota()
                                    ->CreateMemoryAllocator("test-allocator");
   Acceptor acceptor_{event_engine_.get(), &allocator_};
+  TransportFixture::ClientAndServerTransportPair transport_pair_ =
+      fixture_->CreateTransportPair(event_engine_);
   std::queue<std::shared_ptr<transport_test_detail::ActionState>>
       pending_actions_;
 };
