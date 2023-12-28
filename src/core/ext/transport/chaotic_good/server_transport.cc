@@ -129,29 +129,42 @@ auto ChaoticGoodServerTransport::CallOutboundLoop(
       TrySeq(
           // Wait for initial metadata then send it out.
           call_initiator.PullServerInitialMetadata(),
-          [send_fragment](ServerMetadataHandle md) mutable {
-            ServerFragmentFrame frame;
-            frame.headers = std::move(md);
-            return send_fragment(std::move(frame));
-          },
-          // Continuously send client frame with client to server messages.
-          ForEach(OutgoingMessages(call_initiator),
-                  [send_fragment, aligned_bytes = aligned_bytes_](
-                      MessageHandle message) mutable {
-                    ServerFragmentFrame frame;
-                    // Construct frame header (flags, header_length and
-                    // trailer_length will be added in serialization).
-                    const uint32_t message_length =
-                        message->payload()->Length();
-                    const uint32_t padding =
-                        message_length % aligned_bytes == 0
-                            ? 0
-                            : aligned_bytes - message_length % aligned_bytes;
-                    GPR_ASSERT((message_length + padding) % aligned_bytes == 0);
-                    frame.message = FragmentMessage(std::move(message), padding,
+          [send_fragment, call_initiator,
+           this](absl::optional<ServerMetadataHandle> md) mutable {
+            return If(
+                md.has_value(),
+                [&md, &send_fragment, &call_initiator, this]() {
+                  ServerFragmentFrame frame;
+                  frame.headers = std::move(*md);
+                  return TrySeq(
+                      send_fragment(std::move(frame)),
+                      // Continuously send client frame with client to server
+                      // messages.
+                      ForEach(OutgoingMessages(call_initiator),
+                              [send_fragment, aligned_bytes = aligned_bytes_](
+                                  MessageHandle message) mutable {
+                                ServerFragmentFrame frame;
+                                // Construct frame header (flags, header_length
+                                // and trailer_length will be added in
+                                // serialization).
+                                const uint32_t message_length =
+                                    message->payload()->Length();
+                                const uint32_t padding =
+                                    message_length % aligned_bytes == 0
+                                        ? 0
+                                        : aligned_bytes -
+                                              message_length % aligned_bytes;
+                                GPR_ASSERT((message_length + padding) %
+                                               aligned_bytes ==
+                                           0);
+                                frame.message =
+                                    FragmentMessage(std::move(message), padding,
                                                     message_length);
-                    return send_fragment(std::move(frame));
-                  })),
+                                return send_fragment(std::move(frame));
+                              }));
+                },
+                []() { return absl::OkStatus(); });
+          }),
       call_initiator.PullServerTrailingMetadata(),
       [send_fragment](ServerMetadataHandle md) mutable {
         ServerFragmentFrame frame;

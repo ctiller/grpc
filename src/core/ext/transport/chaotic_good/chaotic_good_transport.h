@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef CHAOTIC_GOOD_TRANSPORT_H
+#define CHAOTIC_GOOD_TRANSPORT_H
+
 #include "absl/random/random.h"
 
 #include "src/core/ext/transport/chaotic_good/frame.h"
@@ -104,3 +107,5 @@ class ChaoticGoodTransport {
 
 }  // namespace chaotic_good
 }  // namespace grpc_core
+
+#endif

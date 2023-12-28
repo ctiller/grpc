@@ -24,7 +24,10 @@ grpc_cc_library(
     testonly = 1,
     srcs = ["fixture.cc"],
     hdrs = ["fixture.h"],
-    deps = ["//:grpc"],
+    deps = [
+        "//:grpc",
+        "//test/core/event_engine/fuzzing_event_engine",
+    ],
 )
 
 grpc_cc_library(
@@ -34,6 +37,23 @@ grpc_cc_library(
     deps = [
         "fixture",
         "//src/core:grpc_transport_inproc",
+    ],
+    alwayslink = 1,
+)
+
+grpc_cc_library(
+    name = "chaotic_good_fixture",
+    testonly = 1,
+    srcs = ["chaotic_good_fixture.cc"],
+    external_deps = ["gtest"],
+    deps = [
+        "fixture",
+        "//src/core:chaotic_good_client_transport",
+        "//src/core:chaotic_good_server_transport",
+        "//src/core:event_engine_memory_allocator_factory",
+        "//src/core:event_engine_tcp_socket_utils",
+        "//src/core:grpc_promise_endpoint",
+        "//src/core:resource_quota",
     ],
     alwayslink = 1,
 )
@@ -96,5 +116,13 @@ grpc_transport_test(
     deps = [
         ":call_shapes",
         ":inproc_fixture",
+    ],
+)
+
+grpc_transport_test(
+    name = "chaotic_good",
+    deps = [
+        ":call_shapes",
+        ":chaotic_good_fixture",
     ],
 )
