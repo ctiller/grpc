@@ -1159,6 +1159,7 @@ libs:
   - src/core/lib/surface/lame_client.h
   - src/core/lib/surface/server.h
   - src/core/lib/surface/validate_metadata.h
+  - src/core/lib/surface/wait_for_cq_end_op.h
   - src/core/lib/transport/batch_builder.h
   - src/core/lib/transport/bdp_estimator.h
   - src/core/lib/transport/connectivity_state.h
@@ -2588,6 +2589,7 @@ libs:
   - src/core/lib/surface/lame_client.h
   - src/core/lib/surface/server.h
   - src/core/lib/surface/validate_metadata.h
+  - src/core/lib/surface/wait_for_cq_end_op.h
   - src/core/lib/transport/batch_builder.h
   - src/core/lib/transport/bdp_estimator.h
   - src/core/lib/transport/connectivity_state.h
@@ -4725,6 +4727,7 @@ libs:
   - src/core/lib/surface/lame_client.h
   - src/core/lib/surface/server.h
   - src/core/lib/surface/validate_metadata.h
+  - src/core/lib/surface/wait_for_cq_end_op.h
   - src/core/lib/transport/batch_builder.h
   - src/core/lib/transport/connectivity_state.h
   - src/core/lib/transport/custom_metadata.h
@@ -16129,8 +16132,8 @@ targets:
   - test/core/promise/status_flag_test.cc
   deps:
   - gtest
-  - absl/status:status
   - absl/status:statusor
+  - gpr
   uses_polling: false
 - name: status_helper_test
   gtest: true
@@ -17077,6 +17080,7 @@ targets:
   - src/core/lib/surface/lame_client.h
   - src/core/lib/surface/server.h
   - src/core/lib/surface/validate_metadata.h
+  - src/core/lib/surface/wait_for_cq_end_op.h
   - src/core/lib/transport/batch_builder.h
   - src/core/lib/transport/connectivity_state.h
   - src/core/lib/transport/custom_metadata.h
@@ -18009,8 +18013,10 @@ targets:
   - src/core/lib/gprpp/bitset.h
   - src/core/lib/promise/detail/join_state.h
   - src/core/lib/promise/detail/promise_like.h
+  - src/core/lib/promise/detail/status.h
   - src/core/lib/promise/map.h
   - src/core/lib/promise/poll.h
+  - src/core/lib/promise/status_flag.h
   - src/core/lib/promise/trace.h
   - src/core/lib/promise/try_join.h
   src:
@@ -18047,6 +18053,7 @@ targets:
   - src/core/lib/promise/detail/seq_state.h
   - src/core/lib/promise/detail/status.h
   - src/core/lib/promise/poll.h
+  - src/core/lib/promise/status_flag.h
   - src/core/lib/promise/trace.h
   - src/core/lib/promise/try_seq.h
   src:
