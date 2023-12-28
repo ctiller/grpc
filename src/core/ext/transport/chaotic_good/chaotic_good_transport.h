@@ -35,8 +35,9 @@ class ChaoticGoodTransport {
 
   auto WriteFrame(const FrameInterface& frame) {
     auto buffers = frame.Serialize(&encoder_);
-    return TryJoin(control_endpoint_->Write(std::move(buffers.control)),
-                   data_endpoint_->Write(std::move(buffers.data)));
+    return TryJoin<absl::StatusOr>(
+        control_endpoint_->Write(std::move(buffers.control)),
+        data_endpoint_->Write(std::move(buffers.data)));
   }
 
   // Read frame header and payloads for control and data portions of one frame.
@@ -57,7 +58,7 @@ class ChaoticGoodTransport {
                     last_message_padding_, frame_header->message_padding);
                 const uint32_t message_length = frame_header->message_length;
                 return Map(
-                    TryJoin(
+                    TryJoin<absl::StatusOr>(
                         control_endpoint_->Read(frame_header->GetFrameLength()),
                         TrySeq(data_endpoint_->Read(message_padding),
                                [this, message_length]() {

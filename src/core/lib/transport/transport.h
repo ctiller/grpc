@@ -549,8 +549,6 @@ class CallHandler {
   }
 
   auto PushServerTrailingMetadata(ServerMetadataHandle md) {
-    gpr_log(GPR_ERROR, "[%p] PushServerTrailingMetadata: %s", spine_.get(),
-            md->DebugString().c_str());
     GPR_DEBUG_ASSERT(Activity::current() == &spine_->party());
     spine_->server_initial_metadata().sender.Close();
     spine_->server_to_client_messages().sender.Close();
