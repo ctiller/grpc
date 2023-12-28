@@ -24,6 +24,7 @@
 #include "absl/random/random.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "chaotic_good_transport.h"
 
 #include <grpc/event_engine/event_engine.h>
 #include <grpc/slice.h>
@@ -110,67 +111,79 @@ auto ChaoticGoodServerTransport::MaybePushFragmentIntoCall(
       [error = std::move(error)]() { return error; });
 }
 
+auto ChaoticGoodServerTransport::SendFragment(
+    ServerFragmentFrame frame, MpscSender<ServerFrame>& outgoing_frames) {
+  return Map(outgoing_frames.Send(std::move(frame)),
+             [](bool success) -> absl::Status {
+               if (!success) {
+                 // Failed to send outgoing frame.
+                 return absl::UnavailableError("Transport closed.");
+               }
+               return absl::OkStatus();
+             });
+}
+
+auto ChaoticGoodServerTransport::SendCallBody(
+    uint32_t stream_id, MpscSender<ServerFrame>& outgoing_frames,
+    CallInitiator call_initiator) {
+  // Continuously send client frame with client to server
+  // messages.
+  return ForEach(OutgoingMessages(call_initiator),
+                 [stream_id, outgoing_frames, aligned_bytes = aligned_bytes_](
+                     MessageHandle message) mutable {
+                   ServerFragmentFrame frame;
+                   // Construct frame header (flags, header_length
+                   // and trailer_length will be added in
+                   // serialization).
+                   const uint32_t message_length = message->payload()->Length();
+                   const uint32_t padding =
+                       message_length % aligned_bytes == 0
+                           ? 0
+                           : aligned_bytes - message_length % aligned_bytes;
+                   GPR_ASSERT((message_length + padding) % aligned_bytes == 0);
+                   frame.message = FragmentMessage(std::move(message), padding,
+                                                   message_length);
+                   frame.stream_id = stream_id;
+                   return SendFragment(std::move(frame), outgoing_frames);
+                 });
+}
+
+auto ChaoticGoodServerTransport::SendCallInitialMetadataAndBody(
+    uint32_t stream_id, MpscSender<ServerFrame>& outgoing_frames,
+    CallInitiator call_initiator) {
+  return TrySeq(
+      // Wait for initial metadata then send it out.
+      call_initiator.PullServerInitialMetadata(),
+      [stream_id, outgoing_frames, call_initiator,
+       this](absl::optional<ServerMetadataHandle> md) mutable {
+        gpr_log(GPR_INFO, "CHAOTIC_GOOD: SendCallInitialMetadataAndBody: md=%s",
+                md.has_value() ? (*md)->DebugString().c_str() : "null");
+        return If(
+            md.has_value(),
+            [&md, stream_id, &outgoing_frames, &call_initiator, this]() {
+              ServerFragmentFrame frame;
+              frame.headers = std::move(*md);
+              frame.stream_id = stream_id;
+              return TrySeq(
+                  SendFragment(std::move(frame), outgoing_frames),
+                  SendCallBody(stream_id, outgoing_frames, call_initiator));
+            },
+            []() { return absl::OkStatus(); });
+      });
+}
+
 auto ChaoticGoodServerTransport::CallOutboundLoop(
     uint32_t stream_id, CallInitiator call_initiator) {
-  auto send_fragment = [stream_id,
-                        outgoing_frames = outgoing_frames_.MakeSender()](
-                           ServerFragmentFrame frame) mutable {
-    frame.stream_id = stream_id;
-    return Map(outgoing_frames.Send(std::move(frame)),
-               [](bool success) -> absl::Status {
-                 if (!success) {
-                   // Failed to send outgoing frame.
-                   return absl::UnavailableError("Transport closed.");
-                 }
-                 return absl::OkStatus();
-               });
-  };
-  return Seq(
-      TrySeq(
-          // Wait for initial metadata then send it out.
-          call_initiator.PullServerInitialMetadata(),
-          [send_fragment, call_initiator,
-           this](absl::optional<ServerMetadataHandle> md) mutable {
-            return If(
-                md.has_value(),
-                [&md, &send_fragment, &call_initiator, this]() {
-                  ServerFragmentFrame frame;
-                  frame.headers = std::move(*md);
-                  return TrySeq(
-                      send_fragment(std::move(frame)),
-                      // Continuously send client frame with client to server
-                      // messages.
-                      ForEach(OutgoingMessages(call_initiator),
-                              [send_fragment, aligned_bytes = aligned_bytes_](
-                                  MessageHandle message) mutable {
-                                ServerFragmentFrame frame;
-                                // Construct frame header (flags, header_length
-                                // and trailer_length will be added in
-                                // serialization).
-                                const uint32_t message_length =
-                                    message->payload()->Length();
-                                const uint32_t padding =
-                                    message_length % aligned_bytes == 0
-                                        ? 0
-                                        : aligned_bytes -
-                                              message_length % aligned_bytes;
-                                GPR_ASSERT((message_length + padding) %
-                                               aligned_bytes ==
-                                           0);
-                                frame.message =
-                                    FragmentMessage(std::move(message), padding,
-                                                    message_length);
-                                return send_fragment(std::move(frame));
-                              }));
-                },
-                []() { return absl::OkStatus(); });
-          }),
-      call_initiator.PullServerTrailingMetadata(),
-      [send_fragment](ServerMetadataHandle md) mutable {
-        ServerFragmentFrame frame;
-        frame.trailers = std::move(md);
-        return send_fragment(std::move(frame));
-      });
+  auto outgoing_frames = outgoing_frames_.MakeSender();
+  return Seq(SendCallInitialMetadataAndBody(stream_id, outgoing_frames,
+                                            call_initiator),
+             call_initiator.PullServerTrailingMetadata(),
+             [stream_id, outgoing_frames](ServerMetadataHandle md) mutable {
+               ServerFragmentFrame frame;
+               frame.trailers = std::move(md);
+               frame.stream_id = stream_id;
+               return SendFragment(std::move(frame), outgoing_frames);
+             });
 }
 
 auto ChaoticGoodServerTransport::DeserializeAndPushFragmentToNewCall(
@@ -183,6 +196,12 @@ auto ChaoticGoodServerTransport::DeserializeAndPushFragmentToNewCall(
   if (status.ok()) {
     auto create_call_result =
         acceptor_->CreateCall(*fragment_frame.headers, arena.release());
+    gpr_log(GPR_INFO,
+            "CHAOTIC_GOOD: DeserializeAndPushFragmentToNewCall: "
+            "create_call_result=%s",
+            create_call_result.ok()
+                ? "ok"
+                : create_call_result.status().ToString().c_str());
     if (create_call_result.ok()) {
       call_initiator.emplace(std::move(*create_call_result));
       call_initiator->SpawnGuarded(

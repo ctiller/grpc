@@ -66,10 +66,31 @@ class ActionState {
     kCancelled,
   };
 
+  static absl::string_view StateString(State state) {
+    switch (state) {
+      case kNotCreated:
+        return "🚦";
+      case kNotStarted:
+        return "⏰";
+      case kStarted:
+        return "🚗";
+      case kDone:
+        return "🏁";
+      case kCancelled:
+        return "💥";
+    }
+  }
+
   explicit ActionState(NameAndLocation name_and_location);
 
   State Get() const { return state_; }
-  void Set(State state) { state_ = state; }
+  void Set(State state) {
+    gpr_log(GPR_INFO, "%s",
+            absl::StrCat(StateString(state), " ", name(), " [", step(), "] ",
+                         file(), ":", line())
+                .c_str());
+    state_ = state;
+  }
   const NameAndLocation& name_and_location() const {
     return name_and_location_;
   }

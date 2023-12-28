@@ -108,6 +108,14 @@ class ChaoticGoodServerTransport final : public Transport,
   absl::Status NewStream(uint32_t stream_id, CallInitiator call_initiator);
   absl::optional<CallInitiator> LookupStream(uint32_t stream_id);
   absl::optional<CallInitiator> ExtractStream(uint32_t stream_id);
+  auto SendCallInitialMetadataAndBody(uint32_t stream_id,
+                                      MpscSender<ServerFrame>& outgoing_frames,
+                                      CallInitiator call_initiator);
+  auto SendCallBody(uint32_t stream_id,
+                    MpscSender<ServerFrame>& outgoing_frames,
+                    CallInitiator call_initiator);
+  static auto SendFragment(ServerFragmentFrame frame,
+                           MpscSender<ServerFrame>& outgoing_frames);
   auto CallOutboundLoop(uint32_t stream_id, CallInitiator call_initiator);
   auto OnTransportActivityDone();
   auto TransportReadLoop();

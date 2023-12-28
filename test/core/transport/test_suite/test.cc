@@ -83,21 +83,9 @@ void TransportTest::Timeout() {
   while (!pending_actions_.empty()) {
     auto action = std::move(pending_actions_.front());
     pending_actions_.pop();
-    absl::string_view state_name;
-    switch (action->Get()) {
-      case transport_test_detail::ActionState::kNotCreated:
-        state_name = "[!created]";
-        break;
-      case transport_test_detail::ActionState::kNotStarted:
-        state_name = "[!started]";
-        break;
-      case transport_test_detail::ActionState::kStarted:
-        state_name = "[pending ]";
-        break;
-      case transport_test_detail::ActionState::kDone:
-      case transport_test_detail::ActionState::kCancelled:
-        continue;
-    }
+    if (action->IsDone()) continue;
+    absl::string_view state_name =
+        transport_test_detail::ActionState::StateString(action->Get());
     absl::string_view file_name = action->file();
     auto pos = file_name.find_last_of('/');
     if (pos != absl::string_view::npos) {
