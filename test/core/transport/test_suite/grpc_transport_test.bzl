@@ -16,21 +16,17 @@ load("//bazel:grpc_build_system.bzl", "grpc_cc_test")
 load("//test/core/util:grpc_fuzzer.bzl", "grpc_proto_fuzzer")
 
 def grpc_transport_test(name, deps):
-    if len(name) > 40:
-        fail("test name %s too long" % name)
-
     grpc_cc_test(
-        name = name,
-        srcs = ["%s.cc" % name],
+        name = name + "_test",
+        srcs = [],
         deps = [
-            ":test",
             ":test_main",
         ] + deps,
     )
 
     grpc_proto_fuzzer(
         name = name + "_fuzzer",
-        srcs = ["%s.cc" % name, "fuzzer_main.cc"],
+        srcs = ["fuzzer_main.cc"],
         deps = [
             ":test",
             ":fuzzer",

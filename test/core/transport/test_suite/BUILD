@@ -72,10 +72,12 @@ grpc_cc_library(
     ],
 )
 
-grpc_transport_test(
-    name = "call_shapes_test",
+grpc_cc_library(
+    name = "call_shapes",
+    testonly = 1,
+    srcs = ["call_shapes.cc"],
     deps = [
-        ":inproc_fixture",
+        ":test",
     ],
 )
 
@@ -86,5 +88,13 @@ grpc_proto_library(
     deps = [
         "//test/core/event_engine/fuzzing_event_engine:fuzzing_event_engine_proto",
         "//test/core/util:fuzz_config_vars_proto",
+    ],
+)
+
+grpc_transport_test(
+    name = "inproc",
+    deps = [
+        ":call_shapes",
+        ":inproc_fixture",
     ],
 )
