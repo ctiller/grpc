@@ -307,11 +307,7 @@ auto ChaoticGoodServerTransport::TransportReadLoop() {
 }
 
 auto ChaoticGoodServerTransport::OnTransportActivityDone() {
-  return [this](absl::Status status) {
-    if (!(status.ok() || status.code() == absl::StatusCode::kCancelled)) {
-      this->AbortWithError();
-    }
-  };
+  return [this](absl::Status status) { AbortWithError(); };
 }
 
 ChaoticGoodServerTransport::ChaoticGoodServerTransport(
