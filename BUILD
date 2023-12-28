@@ -1465,6 +1465,7 @@ grpc_cc_library(
         "//src/core:lib/surface/lame_client.h",
         "//src/core:lib/surface/server.h",
         "//src/core:lib/surface/validate_metadata.h",
+        "//src/core:lib/surface/wait_for_cq_end_op.h",
         "//src/core:lib/transport/batch_builder.h",
         "//src/core:lib/transport/connectivity_state.h",
         "//src/core:lib/transport/custom_metadata.h",
