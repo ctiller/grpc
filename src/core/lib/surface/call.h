@@ -86,6 +86,8 @@ class ServerCallContext {
       ClientMetadataHandle metadata,
       grpc_metadata_array* publish_initial_metadata) = 0;
 
+  // Construct the top of the server call promise for the v2 filter stack.
+  // TODO(ctiller): delete when v3 is available.
   virtual ArenaPromise<ServerMetadataHandle> MakeTopOfServerCallPromise(
       CallArgs call_args, grpc_completion_queue* cq,
       absl::FunctionRef<void(grpc_call* call)> publish) = 0;
@@ -95,6 +97,9 @@ class ServerCallContext {
   // TODO(ctiller): legacy API - once we move transports to promises we'll
   // create the promise directly and not need to pass around this token.
   virtual const void* server_stream_data() = 0;
+
+ protected:
+  ~ServerCallContext() = default;
 };
 
 // TODO(ctiller): move more call things into this type

@@ -924,6 +924,9 @@ const grpc_channel_filter kServerEmulatedFilter =
     MakeConnectedFilter<nullptr>();
 #endif
 
+// noop filter for the v3 stack: placeholder for now because other code requires
+// we have a terminator.
+// TODO(ctiller): delete when v3 transition is complete.
 const grpc_channel_filter kServerPromiseBasedTransportFilter = {
     nullptr,
     [](grpc_channel_element*, CallArgs, NextPromiseFactory)
@@ -936,7 +939,7 @@ const grpc_channel_filter kServerPromiseBasedTransportFilter = {
     nullptr,
     sizeof(channel_data),
     connected_channel_init_channel_elem,
-    +[](grpc_channel_stack* channel_stack, grpc_channel_element* elem) {},
+    +[](grpc_channel_stack*, grpc_channel_element*) {},
     connected_channel_destroy_channel_elem,
     connected_channel_get_channel_info,
     "connected",
