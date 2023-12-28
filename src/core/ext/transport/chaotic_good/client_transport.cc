@@ -93,7 +93,7 @@ auto ChaoticGoodClientTransport::TransportWriteLoop() {
         ReadAndSerializeSomeOutgoingFrames(),
         // Write buffers to corresponding endpoints concurrently.
         [this]() {
-          return TryJoin(
+          return TryJoin<absl::StatusOr>(
               control_endpoint_->Write(
                   std::move(control_endpoint_write_buffer_)),
               data_endpoint_->Write(std::move(data_endpoint_write_buffer_)));

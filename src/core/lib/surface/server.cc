@@ -1320,8 +1320,8 @@ void Server::ChannelData::InitTransport(RefCountedPtr<Server> server,
         static_cast<ChannelData*>(arg)->SetRegisteredMethodOnMetadata(
             *metadata);
       };
-      op->set_accept_stream_user_data = this;
     }
+    op->set_accept_stream_user_data = this;
   }
   if (transport->server_transport() != nullptr) {
     ++accept_stream_types;
@@ -1455,7 +1455,7 @@ void Server::ChannelData::InitCall(RefCountedPtr<CallSpineInterface> call) {
               []() -> NextResult<MessageHandle> {
                 return NextResult<MessageHandle>();
               });
-          return TryJoin(
+          return TryJoin<absl::StatusOr>(
               Map(std::move(maybe_read_first_message),
                   [](NextResult<MessageHandle> n) {
                     return ValueOrFailure<NextResult<MessageHandle>>{
@@ -1488,14 +1488,6 @@ void Server::ChannelData::InitCall(RefCountedPtr<CallSpineInterface> call) {
         });
   });
 }
-
-#if 0
-              [md = std::move(*md)](
-                  std::tuple<NextResult<MessageHandle>,
-                             RequestMatcherInterface::MatchResult>
-                      r) mutable {
-              }
-#endif
 
 ArenaPromise<ServerMetadataHandle> Server::ChannelData::MakeCallPromise(
     grpc_channel_element* elem, CallArgs call_args, NextPromiseFactory) {
