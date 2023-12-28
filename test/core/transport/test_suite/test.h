@@ -178,11 +178,22 @@ void StartSeq(NameAndLocation loc, ActionStateFactory action_state_factory,
 };  // namespace transport_test_detail
 
 class TransportTest : public ::testing::Test {
- protected:
-  TransportTest(std::unique_ptr<TransportFixture> fixture)
-      : fixture_(std::move(fixture)) {}
-
+ public:
   void RunTest();
+
+ protected:
+  TransportTest(std::unique_ptr<TransportFixture> fixture,
+                const fuzzing_event_engine::Actions& actions)
+      : event_engine_(std::make_shared<
+                      grpc_event_engine::experimental::FuzzingEventEngine>(
+            []() {
+              grpc_timer_manager_set_threading(false);
+              grpc_event_engine::experimental::FuzzingEventEngine::Options
+                  options;
+              return options;
+            }(),
+            fuzzing_event_engine::Actions())),
+        fixture_(std::move(fixture)) {}
 
   void SetServerAcceptor();
   CallInitiator CreateCall();
@@ -190,7 +201,6 @@ class TransportTest : public ::testing::Test {
   CallHandler TickUntilServerCall();
   void WaitForAllPendingWork();
 
- protected:
   template <typename Context, typename... Actions>
   void SpawnTestSeq(Context context,
                     transport_test_detail::NameAndLocation name_and_location,
@@ -242,9 +252,6 @@ class TransportTest : public ::testing::Test {
                                        [this]() { test_->Timeout(); })};
   };
 
-  std::unique_ptr<TransportFixture> fixture_;
-  TransportFixture::ClientAndServerTransportPair transport_pair_ =
-      fixture_->CreateTransportPair();
   std::shared_ptr<grpc_event_engine::experimental::FuzzingEventEngine>
       event_engine_{
           std::make_shared<grpc_event_engine::experimental::FuzzingEventEngine>(
@@ -255,6 +262,9 @@ class TransportTest : public ::testing::Test {
                 return options;
               }(),
               fuzzing_event_engine::Actions())};
+  std::unique_ptr<TransportFixture> fixture_;
+  TransportFixture::ClientAndServerTransportPair transport_pair_ =
+      fixture_->CreateTransportPair();
   MemoryAllocator allocator_ = MakeResourceQuota("test-quota")
                                    ->memory_quota()
                                    ->CreateMemoryAllocator("test-allocator");
@@ -268,13 +278,15 @@ class TransportTestRegistry {
   static TransportTestRegistry& Get();
   void RegisterTest(absl::string_view name,
                     absl::AnyInvocable<TransportTest*(
-                        std::unique_ptr<grpc_core::TransportFixture>) const>
+                        std::unique_ptr<grpc_core::TransportFixture>,
+                        const fuzzing_event_engine::Actions&) const>
                         create);
 
   struct Test {
     absl::string_view name;
     absl::AnyInvocable<TransportTest*(
-        std::unique_ptr<grpc_core::TransportFixture>) const>
+        std::unique_ptr<grpc_core::TransportFixture>,
+        const fuzzing_event_engine::Actions&) const>
         create;
   };
 
@@ -295,8 +307,9 @@ class TransportTestRegistry {
    private:                                                                  \
     void TestImpl() override;                                                \
     static grpc_core::TransportTest* Create(                                 \
-        std::unique_ptr<grpc_core::TransportFixture> fixture) {              \
-      return new TransportTest_##name(std::move(fixture));                   \
+        std::unique_ptr<grpc_core::TransportFixture> fixture,                \
+        const fuzzing_event_engine::Actions& actions) {                      \
+      return new TransportTest_##name(std::move(fixture), actions);          \
     }                                                                        \
     static int registered_;                                                  \
   };                                                                         \

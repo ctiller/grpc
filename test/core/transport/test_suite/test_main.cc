@@ -27,8 +27,9 @@ int main(int argc, char** argv) {
           "TransportTest", absl::StrCat(test.name, "/", fixture.name).c_str(),
           nullptr, nullptr, __FILE__, __LINE__,
           [test = &test, fixture = &fixture]() -> grpc_core::TransportTest* {
-            return test->create(std::unique_ptr<grpc_core::TransportFixture>(
-                fixture->create()));
+            return test->create(
+                std::unique_ptr<grpc_core::TransportFixture>(fixture->create()),
+                fuzzing_event_engine::Actions());
           });
     }
   }

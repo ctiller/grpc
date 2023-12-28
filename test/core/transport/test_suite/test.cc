@@ -25,10 +25,10 @@ TransportTestRegistry& TransportTestRegistry::Get() {
 }
 
 void TransportTestRegistry::RegisterTest(
-    absl::string_view name,
-    absl::AnyInvocable<
-        TransportTest*(std::unique_ptr<grpc_core::TransportFixture>) const>
-        create) {
+    absl::string_view name, absl::AnyInvocable<TransportTest*(
+                                std::unique_ptr<grpc_core::TransportFixture>,
+                                const fuzzing_event_engine::Actions&) const>
+                                create) {
   tests_.push_back({name, std::move(create)});
 }
 

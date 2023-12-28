@@ -15,6 +15,7 @@
 load(
     "//bazel:grpc_build_system.bzl",
     "grpc_cc_library",
+    "grpc_proto_library",
 )
 load("grpc_transport_test.bzl", "grpc_transport_test")
 
@@ -50,7 +51,10 @@ grpc_cc_library(
     deps = [
         "fixture",
         "//:iomgr_timer",
+        "//:promise",
+        "//src/core:cancel_callback",
         "//src/core:resource_quota",
+        "//src/core:time",
         "//test/core/event_engine/fuzzing_event_engine",
         "//test/core/event_engine/fuzzing_event_engine:fuzzing_event_engine_proto",
     ],
@@ -63,6 +67,7 @@ grpc_cc_library(
     deps = [
         "fixture",
         "test",
+        "//:grpc_trace",
         "//test/core/util:grpc_test_util",
     ],
 )
@@ -71,5 +76,15 @@ grpc_transport_test(
     name = "call_shapes_test",
     deps = [
         ":inproc_fixture",
+    ],
+)
+
+grpc_proto_library(
+    name = "fuzzer",
+    srcs = ["fuzzer.proto"],
+    has_services = False,
+    deps = [
+        "//test/core/event_engine/fuzzing_event_engine:fuzzing_event_engine_proto",
+        "//test/core/util:fuzz_config_vars_proto",
     ],
 )

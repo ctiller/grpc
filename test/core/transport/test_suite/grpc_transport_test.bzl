@@ -13,6 +13,7 @@
 # limitations under the License.
 
 load("//bazel:grpc_build_system.bzl", "grpc_cc_test")
+load("//test/core/util:grpc_fuzzer.bzl", "grpc_proto_fuzzer")
 
 def grpc_transport_test(name, deps):
     if len(name) > 40:
@@ -25,4 +26,25 @@ def grpc_transport_test(name, deps):
             ":test",
             ":test_main",
         ] + deps,
+    )
+
+    grpc_proto_fuzzer(
+        name = name + "_fuzzer",
+        srcs = ["%s.cc" % name, "fuzzer_main.cc"],
+        deps = [
+            ":test",
+            ":fuzzer",
+            "//:config_vars",
+            "//:exec_ctx",
+            "//:gpr",
+            "//:grpc_unsecure",
+            "//:iomgr_timer",
+            "//src/core:default_event_engine",
+            "//src/core:env",
+            "//src/core:experiments",
+            "//test/core/event_engine/fuzzing_event_engine",
+            "//test/core/util:fuzz_config_vars",
+        ] + deps,
+        corpus = "corpus/%s" % name,
+        proto = None,
     )
