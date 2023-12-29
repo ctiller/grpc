@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TESTSUITETEST_H
-#define TESTSUITETEST_H
+#ifndef GRPC_TEST_CORE_TRANSPORT_TEST_SUITE_TEST_H
+#define GRPC_TEST_CORE_TRANSPORT_TEST_SUITE_TEST_H
 
 #include <initializer_list>
 #include <memory>
@@ -39,7 +39,7 @@ namespace grpc_core {
 namespace transport_test_detail {
 
 struct NameAndLocation {
-  NameAndLocation(const char* name, SourceLocation location = {})
+  explicit NameAndLocation(const char* name, SourceLocation location = {})
       : location_(location), name_(name) {}
   NameAndLocation Next() const {
     return NameAndLocation(name_, location_, step_ + 1);
@@ -315,16 +315,16 @@ class TransportTestRegistry {
   static TransportTestRegistry& Get();
   void RegisterTest(
       absl::string_view name,
-      absl::AnyInvocable<TransportTest*(
-          std::unique_ptr<grpc_core::TransportFixture>,
-          const fuzzing_event_engine::Actions&, absl::BitGenRef) const>
+      absl::AnyInvocable<TransportTest*(std::unique_ptr<TransportFixture>,
+                                        const fuzzing_event_engine::Actions&,
+                                        absl::BitGenRef) const>
           create);
 
   struct Test {
     absl::string_view name;
-    absl::AnyInvocable<TransportTest*(
-        std::unique_ptr<grpc_core::TransportFixture>,
-        const fuzzing_event_engine::Actions&, absl::BitGenRef) const>
+    absl::AnyInvocable<TransportTest*(std::unique_ptr<TransportFixture>,
+                                      const fuzzing_event_engine::Actions&,
+                                      absl::BitGenRef) const>
         create;
   };
 
@@ -356,4 +356,4 @@ class TransportTestRegistry {
        0);                                                                   \
   void TransportTest_##name::TestImpl()
 
-#endif
+#endif  // GRPC_TEST_CORE_TRANSPORT_TEST_SUITE_TEST_H

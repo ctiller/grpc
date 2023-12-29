@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TESTSUITEFIXTURE_H
-#define TESTSUITEFIXTURE_H
+#ifndef GRPC_TEST_CORE_TRANSPORT_TEST_SUITE_FIXTURE_H
+#define GRPC_TEST_CORE_TRANSPORT_TEST_SUITE_FIXTURE_H
 
 #include "src/core/lib/transport/transport.h"
 #include "test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.h"
@@ -74,4 +74,4 @@ class TransportFixtureRegistry {
           std::shared_ptr<grpc_event_engine::experimental::FuzzingEventEngine> \
               event_engine)
 
-#endif
+#endif  // GRPC_TEST_CORE_TRANSPORT_TEST_SUITE_FIXTURE_H
