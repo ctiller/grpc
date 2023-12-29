@@ -14,6 +14,10 @@
 
 #include "test/core/transport/test_suite/test.h"
 
+#include <initializer_list>
+
+#include "absl/random/random.h"
+
 namespace grpc_core {
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -99,6 +103,120 @@ void TransportTest::Timeout() {
                                     action->line()));
   }
   Crash(absl::StrJoin(lines, "\n"));
+}
+
+std::string TransportTest::RandomString(int min_length, int max_length,
+                                        absl::string_view character_set) {
+  std::string out;
+  int length = absl::LogUniform<int>(rng_, min_length, max_length + 1);
+  for (int i = 0; i < length; ++i) {
+    out.push_back(
+        character_set[absl::Uniform<uint8_t>(rng_, 0, character_set.size())]);
+  }
+  return out;
+}
+
+std::string TransportTest::RandomStringFrom(
+    std::initializer_list<absl::string_view> choices) {
+  size_t idx = absl::Uniform<size_t>(rng_, 0, choices.size());
+  auto it = choices.begin();
+  for (size_t i = 0; i < idx; ++i) ++it;
+  return std::string(*it);
+}
+
+std::string TransportTest::RandomMetadataKey() {
+  if (absl::Bernoulli(rng_, 0.1)) {
+    return RandomStringFrom({
+        ":path",
+        ":method",
+        ":status",
+        ":authority",
+        ":scheme",
+    });
+  }
+  std::string out;
+  do {
+    out = RandomString(1, 128, "abcdefghijklmnopqrstuvwxyz-_");
+  } while (absl::EndsWith(out, "-bin"));
+  return out;
+}
+
+std::string TransportTest::RandomMetadataValue(absl::string_view key) {
+  if (key == ":method") {
+    return RandomStringFrom({"GET", "POST", "PUT"});
+  }
+  if (key == ":status") {
+    return absl::StrCat(absl::Uniform<int>(rng_, 100, 600));
+  }
+  if (key == ":scheme") {
+    return RandomStringFrom({"http", "https"});
+  }
+  static const NoDestruct<std::string> kChars{[]() {
+    std::string out;
+    for (char c = 32; c < 127; c++) out.push_back(c);
+    return out;
+  }()};
+  return RandomString(0, 128, *kChars);
+}
+
+std::string TransportTest::RandomMetadataBinaryKey() {
+  return RandomString(1, 128, "abcdefghijklmnopqrstuvwxyz-_") + "-bin";
+}
+
+std::string TransportTest::RandomMetadataBinaryValue() {
+  static const NoDestruct<std::string> kChars{[]() {
+    std::string out;
+    for (int c = 0; c < 256; c++) {
+      out.push_back(static_cast<char>(static_cast<uint8_t>(c)));
+    }
+    return out;
+  }()};
+  return RandomString(0, 4096, *kChars);
+}
+
+std::vector<std::pair<std::string, std::string>>
+TransportTest::RandomMetadata() {
+  size_t size = 0;
+  const size_t max_size = absl::LogUniform<size_t>(rng_, 64, 8000);
+  std::vector<std::pair<std::string, std::string>> out;
+  for (;;) {
+    std::string key;
+    std::string value;
+    if (absl::Bernoulli(rng_, 0.1)) {
+      key = RandomMetadataBinaryKey();
+      value = RandomMetadataBinaryValue();
+    } else {
+      key = RandomMetadataKey();
+      value = RandomMetadataValue(key);
+    }
+    bool include = true;
+    for (size_t i = 0; i < out.size(); ++i) {
+      if (out[i].first == key) {
+        include = false;
+        break;
+      }
+    }
+    if (!include) continue;
+    size_t this_size = 32 + key.size() + value.size();
+    if (size + this_size > max_size) {
+      if (out.empty()) continue;
+      break;
+    }
+    size += this_size;
+    out.emplace_back(std::move(key), std::move(value));
+  }
+  return out;
+}
+
+std::string TransportTest::RandomMessage() {
+  static const NoDestruct<std::string> kChars{[]() {
+    std::string out;
+    for (int c = 0; c < 256; c++) {
+      out.push_back(static_cast<char>(static_cast<uint8_t>(c)));
+    }
+    return out;
+  }()};
+  return RandomString(0, 1024 * 1024, *kChars);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

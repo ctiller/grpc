@@ -94,6 +94,15 @@ grpc_cc_library(
 )
 
 grpc_cc_library(
+    name = "call_content",
+    testonly = 1,
+    srcs = ["call_content.cc"],
+    deps = [
+        ":test",
+    ],
+)
+
+grpc_cc_library(
     name = "call_shapes",
     testonly = 1,
     srcs = ["call_shapes.cc"],
@@ -124,6 +133,7 @@ grpc_proto_library(
 grpc_transport_test(
     name = "inproc",
     deps = [
+        ":call_content",
         ":call_shapes",
         ":inproc_fixture",
         ":no_op",
@@ -133,6 +143,7 @@ grpc_transport_test(
 grpc_transport_test(
     name = "chaotic_good",
     deps = [
+        ":call_content",
         ":call_shapes",
         ":chaotic_good_fixture",
         ":no_op",

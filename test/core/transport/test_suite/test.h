@@ -222,6 +222,17 @@ class TransportTest : public ::testing::Test {
   void SetServerAcceptor();
   CallInitiator CreateCall();
 
+  std::string RandomString(int min_length, int max_length,
+                           absl::string_view character_set);
+  std::string RandomStringFrom(
+      std::initializer_list<absl::string_view> choices);
+  std::string RandomMetadataKey();
+  std::string RandomMetadataValue(absl::string_view key);
+  std::string RandomMetadataBinaryKey();
+  std::string RandomMetadataBinaryValue();
+  std::vector<std::pair<std::string, std::string>> RandomMetadata();
+  std::string RandomMessage();
+
   CallHandler TickUntilServerCall();
   void WaitForAllPendingWork();
 
