@@ -65,6 +65,7 @@ grpc_cc_library(
     hdrs = ["test.h"],
     external_deps = [
         "absl/functional:any_invocable",
+        "absl/random:bit_gen_ref",
         "absl/strings",
         "gtest",
     ],

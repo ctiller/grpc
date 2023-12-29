@@ -20,6 +20,7 @@
 #include <queue>
 
 #include "absl/functional/any_invocable.h"
+#include "absl/random/bit_gen_ref.h"
 #include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -204,7 +205,8 @@ class TransportTest : public ::testing::Test {
 
  protected:
   TransportTest(std::unique_ptr<TransportFixture> fixture,
-                const fuzzing_event_engine::Actions& actions)
+                const fuzzing_event_engine::Actions& actions,
+                absl::BitGenRef rng)
       : event_engine_(std::make_shared<
                       grpc_event_engine::experimental::FuzzingEventEngine>(
             []() {
@@ -214,7 +216,8 @@ class TransportTest : public ::testing::Test {
               return options;
             }(),
             fuzzing_event_engine::Actions())),
-        fixture_(std::move(fixture)) {}
+        fixture_(std::move(fixture)),
+        rng_(rng) {}
 
   void SetServerAcceptor();
   CallInitiator CreateCall();
@@ -292,22 +295,24 @@ class TransportTest : public ::testing::Test {
       fixture_->CreateTransportPair(event_engine_);
   std::queue<std::shared_ptr<transport_test_detail::ActionState>>
       pending_actions_;
+  absl::BitGenRef rng_;
 };
 
 class TransportTestRegistry {
  public:
   static TransportTestRegistry& Get();
-  void RegisterTest(absl::string_view name,
-                    absl::AnyInvocable<TransportTest*(
-                        std::unique_ptr<grpc_core::TransportFixture>,
-                        const fuzzing_event_engine::Actions&) const>
-                        create);
+  void RegisterTest(
+      absl::string_view name,
+      absl::AnyInvocable<TransportTest*(
+          std::unique_ptr<grpc_core::TransportFixture>,
+          const fuzzing_event_engine::Actions&, absl::BitGenRef) const>
+          create);
 
   struct Test {
     absl::string_view name;
     absl::AnyInvocable<TransportTest*(
         std::unique_ptr<grpc_core::TransportFixture>,
-        const fuzzing_event_engine::Actions&) const>
+        const fuzzing_event_engine::Actions&, absl::BitGenRef) const>
         create;
   };
 
@@ -329,8 +334,8 @@ class TransportTestRegistry {
     void TestImpl() override;                                                \
     static grpc_core::TransportTest* Create(                                 \
         std::unique_ptr<grpc_core::TransportFixture> fixture,                \
-        const fuzzing_event_engine::Actions& actions) {                      \
-      return new TransportTest_##name(std::move(fixture), actions);          \
+        const fuzzing_event_engine::Actions& actions, absl::BitGenRef rng) { \
+      return new TransportTest_##name(std::move(fixture), actions, rng);     \
     }                                                                        \
     static int registered_;                                                  \
   };                                                                         \

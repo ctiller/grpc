@@ -29,6 +29,7 @@
 #include "test/core/transport/test_suite/fuzzer.pb.h"
 #include "test/core/transport/test_suite/test.h"
 #include "test/core/util/fuzz_config_vars.h"
+#include "test/core/util/proto_bit_gen.h"
 
 using ::grpc_event_engine::experimental::FuzzingEventEngine;
 using ::grpc_event_engine::experimental::GetDefaultEventEngine;
@@ -61,10 +62,11 @@ DEFINE_PROTO_FUZZER(const transport_test_suite::Msg& msg) {
             std::string(tests[test_id].name).c_str(),
             std::string(fixtures[fixture_id].name).c_str());
   }
+  grpc_core::ProtoBitGen bitgen(msg.rng());
   auto test =
       tests[test_id].create(std::unique_ptr<grpc_core::TransportFixture>(
                                 fixtures[fixture_id].create()),
-                            msg.event_engine_actions());
+                            msg.event_engine_actions(), bitgen);
   test->RunTest();
   delete test;
   GPR_ASSERT(!::testing::Test::HasFailure());

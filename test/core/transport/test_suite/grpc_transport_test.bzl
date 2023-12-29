@@ -40,6 +40,7 @@ def grpc_transport_test(name, deps):
             "//src/core:experiments",
             "//test/core/event_engine/fuzzing_event_engine",
             "//test/core/util:fuzz_config_vars",
+            "//test/core/util:proto_bit_gen",
         ] + deps,
         corpus = "corpus/%s" % name,
         proto = None,

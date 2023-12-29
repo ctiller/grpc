@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "absl/random/random.h"
+
 #include "src/core/lib/debug/trace.h"
 #include "test/core/transport/test_suite/fixture.h"
 #include "test/core/transport/test_suite/test.h"
@@ -19,6 +21,7 @@
 
 int main(int argc, char** argv) {
   grpc::testing::TestEnvironment env(&argc, argv);
+  absl::BitGen bitgen;
   ::testing::InitGoogleTest(&argc, argv);
   for (const auto& test : grpc_core::TransportTestRegistry::Get().tests()) {
     for (const auto& fixture :
@@ -26,10 +29,11 @@ int main(int argc, char** argv) {
       ::testing::RegisterTest(
           "TransportTest", absl::StrCat(test.name, "/", fixture.name).c_str(),
           nullptr, nullptr, __FILE__, __LINE__,
-          [test = &test, fixture = &fixture]() -> grpc_core::TransportTest* {
+          [test = &test, fixture = &fixture,
+           &bitgen]() -> grpc_core::TransportTest* {
             return test->create(
                 std::unique_ptr<grpc_core::TransportFixture>(fixture->create()),
-                fuzzing_event_engine::Actions());
+                fuzzing_event_engine::Actions(), bitgen);
           });
     }
   }

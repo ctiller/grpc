@@ -25,4 +25,5 @@ message Msg {
 
     fuzzing_event_engine.Actions event_engine_actions = 10;
     grpc.testing.FuzzConfigVars config_vars = 11;
+    repeated uint64 rng = 12;
 }
