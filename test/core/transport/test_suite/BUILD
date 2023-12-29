@@ -120,6 +120,15 @@ grpc_cc_library(
     ],
 )
 
+grpc_cc_library(
+    name = "stress",
+    testonly = 1,
+    srcs = ["stress.cc"],
+    deps = [
+        ":test",
+    ],
+)
+
 grpc_proto_library(
     name = "fuzzer",
     srcs = ["fuzzer.proto"],
@@ -137,6 +146,7 @@ grpc_transport_test(
         ":call_shapes",
         ":inproc_fixture",
         ":no_op",
+        ":stress",
     ],
 )
 
@@ -147,5 +157,6 @@ grpc_transport_test(
         ":call_shapes",
         ":chaotic_good_fixture",
         ":no_op",
+        ":stress",
     ],
 )

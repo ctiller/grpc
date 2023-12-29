@@ -232,6 +232,7 @@ class TransportTest : public ::testing::Test {
   std::string RandomMetadataBinaryValue();
   std::vector<std::pair<std::string, std::string>> RandomMetadata();
   std::string RandomMessage();
+  absl::BitGenRef rng() { return rng_; }
 
   CallHandler TickUntilServerCall();
   void WaitForAllPendingWork();

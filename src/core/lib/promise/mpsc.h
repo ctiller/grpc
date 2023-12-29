@@ -141,7 +141,6 @@ class MpscSender {
   // will never be successfully sent).
   auto Send(T t) {
     return [center = center_, t = std::move(t)]() mutable -> Poll<bool> {
-      gpr_log(GPR_DEBUG, "MpscSender::Send: center:%p", center.get());
       if (center == nullptr) return false;
       return center->PollSend(t);
     };

@@ -98,9 +98,11 @@ class ChaoticGoodTransport {
                                      std::move(std::get<1>(*buffers))});
                     });
               },
-              [&frame_header]()
-                  -> absl::StatusOr<std::tuple<FrameHeader, BufferPair>> {
-                return frame_header.status();
+              [&frame_header]() {
+                return [status = frame_header.status()]() mutable
+                       -> absl::StatusOr<std::tuple<FrameHeader, BufferPair>> {
+                  return std::move(status);
+                };
               });
         });
   }
