@@ -584,7 +584,6 @@ GRPC_XDS_TARGETS = [
     "//src/core:grpc_lb_policy_cds",
     "//src/core:grpc_lb_policy_xds_cluster_impl",
     "//src/core:grpc_lb_policy_xds_cluster_manager",
-    "//src/core:grpc_lb_policy_xds_cluster_resolver",
     "//src/core:grpc_lb_policy_xds_override_host",
     "//src/core:grpc_lb_policy_xds_wrr_locality",
     "//src/core:grpc_lb_policy_ring_hash",
@@ -3675,6 +3674,7 @@ grpc_cc_library(
     ],
     external_deps = [
         "absl/base:core_headers",
+        "absl/cleanup",
         "absl/memory",
         "absl/status",
         "absl/status:statusor",
