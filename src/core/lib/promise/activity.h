@@ -66,7 +66,7 @@ class Wakeable {
   virtual std::string ActivityDebugTag(WakeupMask wakeup_mask) const = 0;
 
  protected:
-  inline ~Wakeable() {}
+  ~Wakeable() = default;
 };
 
 namespace promise_detail {
@@ -164,6 +164,39 @@ class IntraActivityWaiter {
  private:
   WakeupMask wakeups_ = 0;
 };
+
+namespace activity_detail {
+
+class ContextFetcherBase {
+ protected:
+  static uint8_t CreateId() {
+    auto n = next_id_.fetch_add(1, std::memory_order_relaxed);
+    GPR_ASSERT(n < 127);
+    return n;
+  }
+
+  static uint8_t FinalCount() {
+    return next_id_.fetch_or(0x80u, std::memory_order_relaxed) & 0x7fu;
+  }
+
+ private:
+  static std::atomic<uint8_t> next_id_;
+};
+
+template <typename T>
+class ContextFetcher : public ContextFetcherBase {
+ public:
+  static T* Get(void** table) {}
+
+ private:
+  ContextFetcher() = delete;
+  static const uint8_t id_;
+};
+
+template <typename T>
+const uint8_t ContextFetcher<T>::id_ = ContextFetcherBase::CreateId();
+
+}  // namespace activity_detail
 
 // An Activity tracks execution of a single promise.
 // It executes the promise under a mutex.
