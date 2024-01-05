@@ -44,6 +44,49 @@ namespace grpc_core {
 
 class Activity;
 
+// To avoid accidentally creating context types, we require an explicit
+// specialization of this template per context type. The specialization need
+// not contain any members, only exist.
+// The reason for avoiding this is that context types each use a thread local.
+template <typename T>
+struct ContextType;  // IWYU pragma: keep
+
+namespace activity_detail {
+
+class ContextIdManager {
+ public:
+  static uint8_t Allocate() {
+    uint8_t r = allocated_ids_;
+    GPR_ASSERT(r != 255);
+    ++allocated_ids_;
+    return r;
+  }
+
+  static uint8_t FinalCount() { return allocated_ids_; }
+
+ private:
+  ContextIdManager() = delete;
+  static uint8_t allocated_ids_;
+};
+
+template <typename T, typename SfinaeVoid = void>
+class ContextId;
+
+template <typename T>
+class ContextId<T, absl::void_t<ContextType<T>>> {
+ public:
+  static const uint8_t kId;
+
+ private:
+  ContextId() = delete;
+};
+
+template <typename T>
+const uint8_t ContextId<T, absl::void_t<ContextType<T>>>::kId =
+    ContextIdManager::Allocate();
+
+}  // namespace activity_detail
+
 // WakeupMask is a bitfield representing which parts of an activity should be
 // woken up.
 using WakeupMask = uint16_t;
@@ -165,39 +208,6 @@ class IntraActivityWaiter {
   WakeupMask wakeups_ = 0;
 };
 
-namespace activity_detail {
-
-class ContextFetcherBase {
- protected:
-  static uint8_t CreateId() {
-    auto n = next_id_.fetch_add(1, std::memory_order_relaxed);
-    GPR_ASSERT(n < 127);
-    return n;
-  }
-
-  static uint8_t FinalCount() {
-    return next_id_.fetch_or(0x80u, std::memory_order_relaxed) & 0x7fu;
-  }
-
- private:
-  static std::atomic<uint8_t> next_id_;
-};
-
-template <typename T>
-class ContextFetcher : public ContextFetcherBase {
- public:
-  static T* Get(void** table) {}
-
- private:
-  ContextFetcher() = delete;
-  static const uint8_t id_;
-};
-
-template <typename T>
-const uint8_t ContextFetcher<T>::id_ = ContextFetcherBase::CreateId();
-
-}  // namespace activity_detail
-
 // An Activity tracks execution of a single promise.
 // It executes the promise under a mutex.
 // When the promise stalls, it registers the containing activity to be woken up
@@ -246,7 +256,18 @@ class Activity : public Orphanable {
   // Some descriptive text to add to log messages to identify this activity.
   virtual std::string DebugTag() const;
 
+  template <typename T>
+  T* context() const {
+    return static_cast<T*>(context_table_[activity_detail::ContextId<T>::kId]);
+  }
+
  protected:
+  static size_t ContextTableEntries() {
+    return activity_detail::ContextIdManager::FinalCount();
+  }
+
+  explicit Activity(void** context_table) : context_table_(context_table) {}
+
   // Check if this activity is the current activity executing on the current
   // thread.
   bool is_current() const { return this == g_current_activity_; }
@@ -267,14 +288,44 @@ class Activity : public Orphanable {
     Activity* const prior_activity_;
   };
 
+  template <typename T>
+  void SetContext(T* x) {
+    context_table_[activity_detail::ContextId<T>::kId] = x;
+  }
+
  private:
   // Set during RunLoop to the Activity that's executing.
   // Being set implies that mu_ is held.
   static thread_local Activity* g_current_activity_;
+  void** const context_table_;
 };
 
 // Owned pointer to one Activity.
 using ActivityPtr = OrphanablePtr<Activity>;
+
+namespace activity_detail {
+
+template <typename T, typename SfinaeVoid = void>
+class ContextFetcher;
+
+template <>
+class ContextFetcher<Activity> {
+ public:
+  static Activity* Get() { return Activity::current(); }
+};
+
+template <typename T>
+class ContextFetcher<T, absl::void_t<ContextId<T>>> {
+ public:
+  static T* Get() { return Activity::current()->context<T>(); }
+};
+
+}  // namespace activity_detail
+
+template <typename T>
+T* GetContext() {
+  return activity_detail::ContextFetcher<T>::Get();
+}
 
 namespace promise_detail {
 
@@ -323,17 +374,6 @@ class ActivityContexts : public ContextHolder<Contexts>... {
  public:
   explicit ActivityContexts(Contexts&&... contexts)
       : ContextHolder<Contexts>(std::forward<Contexts>(contexts))... {}
-
-  class ScopedContext : public Context<ContextTypeFromHeld<Contexts>>... {
-   public:
-    explicit ScopedContext(ActivityContexts* contexts)
-        : Context<ContextTypeFromHeld<Contexts>>(
-              static_cast<ContextHolder<Contexts>*>(contexts)
-                  ->GetContext())... {
-      // Silence `unused-but-set-parameter` in case of Contexts = {}
-      (void)contexts;
-    }
-  };
 };
 
 // A free standing activity: an activity that owns its own synchronization and
@@ -374,6 +414,8 @@ class FreestandingActivity : public Activity, private Wakeable {
     kWakeup,  // A wakeup occured during run.
     kCancel,  // Cancel was called during run.
   };
+
+  FreestandingActivity() : Activity(context_) {}
 
   inline ~FreestandingActivity() override {
     if (handle_) {
