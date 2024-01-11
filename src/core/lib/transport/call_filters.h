@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef GRPC_FILTER_RUNNER_H
-#define GRPC_FILTER_RUNNER_H
+#ifndef GRPC_SRC_CORE_LIB_TRANSPORT_CALL_FILTERS_H
+#define GRPC_SRC_CORE_LIB_TRANSPORT_CALL_FILTERS_H
+
+#include <grpc/support/port_platform.h>
 
 #include <cstdint>
 #include <memory>
@@ -591,10 +593,10 @@ class PipeTransformer {
   ~PipeTransformer();
   PipeTransformer(const PipeTransformer&) = delete;
   PipeTransformer& operator=(const PipeTransformer&) = delete;
-  PipeTransformer(PipeTransformer&& other) {
+  PipeTransformer(PipeTransformer&& other) noexcept {
     GPR_DEBUG_ASSERT(other.promise_data_ == nullptr);
   }
-  PipeTransformer& operator=(PipeTransformer&& other) {
+  PipeTransformer& operator=(PipeTransformer&& other) noexcept {
     GPR_DEBUG_ASSERT(other.promise_data_ == nullptr);
     GPR_DEBUG_ASSERT(promise_data_ == nullptr);
     return *this;
@@ -621,10 +623,11 @@ class InfalliblePipeTransformer {
   InfalliblePipeTransformer(const InfalliblePipeTransformer&) = delete;
   InfalliblePipeTransformer& operator=(const InfalliblePipeTransformer&) =
       delete;
-  InfalliblePipeTransformer(InfalliblePipeTransformer&& other) {
+  InfalliblePipeTransformer(InfalliblePipeTransformer&& other) noexcept {
     GPR_DEBUG_ASSERT(other.promise_data_ == nullptr);
   }
-  InfalliblePipeTransformer& operator=(InfalliblePipeTransformer&& other) {
+  InfalliblePipeTransformer& operator=(
+      InfalliblePipeTransformer&& other) noexcept {
     GPR_DEBUG_ASSERT(other.promise_data_ == nullptr);
     GPR_DEBUG_ASSERT(promise_data_ == nullptr);
     return *this;
@@ -765,7 +768,7 @@ class CallFilters {
 
       Push(const Push&) = delete;
       Push& operator=(const Push&) = delete;
-      Push(Push&& other)
+      Push(Push&& other) noexcept
           : filters_(std::exchange(other.filters_, nullptr)),
             value_(std::move(other.value_)) {
         if (filters_ != nullptr) {
@@ -923,4 +926,4 @@ inline auto CallFilters::PullServerTrailingMetadata() {
 
 }  // namespace grpc_core
 
-#endif  // GRPC_FILTER_RUNNER_H
+#endif  // GRPC_SRC_CORE_LIB_TRANSPORT_CALL_FILTERS_H
