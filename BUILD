@@ -1543,7 +1543,6 @@ grpc_cc_library(
         "//src/core:compression_internal",
         "//src/core:connectivity_state",
         "//src/core:construct_destruct",
-        "//src/core:context",
         "//src/core:default_event_engine",
         "//src/core:dual_ref_counted",
         "//src/core:error",
@@ -1614,7 +1613,7 @@ grpc_cc_library(
     visibility = ["@grpc:alt_grpc_base_legacy"],
     deps = [
         "gpr_platform",
-        "//src/core:context",
+        "//src/core:arena",
     ],
 )
 
@@ -1800,7 +1799,6 @@ grpc_cc_library(
         "//src/core:channel_args",
         "//src/core:channel_fwd",
         "//src/core:closure",
-        "//src/core:context",
         "//src/core:error",
         "//src/core:event_engine_memory_allocator",
         "//src/core:gpr_atm",
@@ -2351,7 +2349,6 @@ grpc_cc_library(
         "//src/core:channel_args",
         "//src/core:channel_fwd",
         "//src/core:channel_stack_type",
-        "//src/core:context",
         "//src/core:error",
         "//src/core:logging_filter",
         "//src/core:metadata_batch",
@@ -3097,7 +3094,6 @@ grpc_cc_library(
         "//src/core:closure",
         "//src/core:connectivity_state",
         "//src/core:construct_destruct",
-        "//src/core:context",
         "//src/core:delegating_helper",
         "//src/core:dual_ref_counted",
         "//src/core:env",
@@ -3612,7 +3608,6 @@ grpc_cc_library(
         "//src/core:channel_fwd",
         "//src/core:channel_stack_type",
         "//src/core:compression_internal",
-        "//src/core:context",
         "//src/core:experiments",
         "//src/core:grpc_message_size_filter",
         "//src/core:latch",
