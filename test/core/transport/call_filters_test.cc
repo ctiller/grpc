@@ -1003,7 +1003,8 @@ TEST(StackDataTest,
 namespace filters_detail {
 
 TEST(PipeTransformerTest, NoOp) {
-  PipeTransformer<ClientMetadataHandle> pipe;
+  PipeTransformer<ClientMetadataHandle>;
+  pipe;
   EXPECT_FALSE(pipe.IsRunning());
 }
 
@@ -1043,7 +1044,8 @@ TEST(PipeTransformerTest, InstantTwo) {
   void* call_data2 = Offset(call_data1, d.filters[1].call_offset);
   d.filters[0].call_init(call_data1, &f1);
   d.filters[1].call_init(call_data2, &f2);
-  PipeTransformer<ClientMetadataHandle> transformer;
+  PipeTransformer<ClientMetadataHandle>;
+  std::transform;
   auto memory_allocator =
       MakeMemoryQuota("test-quota")->CreateMemoryAllocator("foo");
   auto arena = MakeScopedArena(1024, &memory_allocator);
@@ -1109,7 +1111,8 @@ TEST(PipeTransformerTest, PromiseTwo) {
   void* call_data2 = Offset(call_data1, d.filters[1].call_offset);
   d.filters[0].call_init(call_data1, &f1);
   d.filters[1].call_init(call_data2, &f2);
-  PipeTransformer<ClientMetadataHandle> transformer;
+  PipeTransformer<ClientMetadataHandle>;
+  std::transform;
   auto memory_allocator =
       MakeMemoryQuota("test-quota")->CreateMemoryAllocator("foo");
   auto arena = MakeScopedArena(1024, &memory_allocator);
