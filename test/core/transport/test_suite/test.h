@@ -40,7 +40,7 @@ namespace transport_test_detail {
 
 struct NameAndLocation {
   // NOLINTNEXTLINE(runtime/explicit)
-  NameAndLocation(const char* name, SourceLocation location = {})
+  explicit NameAndLocation(const char* name, SourceLocation location = {})
       : location_(location), name_(name) {}
   NameAndLocation Next() const {
     return NameAndLocation(name_, location_, step_ + 1);
