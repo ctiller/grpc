@@ -45,6 +45,7 @@
 #include <grpc/slice.h>
 #include <grpc/support/log.h>
 
+#include "src/core/ext/transport/chaotic_good/call_batcher.h"
 #include "src/core/ext/transport/chaotic_good/chaotic_good_transport.h"
 #include "src/core/ext/transport/chaotic_good/frame.h"
 #include "src/core/ext/transport/chaotic_good/frame_header.h"
@@ -107,13 +108,12 @@ class ChaoticGoodServerTransport final : public Transport,
   absl::Status NewStream(uint32_t stream_id, CallInitiator call_initiator);
   absl::optional<CallInitiator> LookupStream(uint32_t stream_id);
   absl::optional<CallInitiator> ExtractStream(uint32_t stream_id);
-  auto SendCallInitialMetadataAndBody(uint32_t stream_id,
-                                      MpscSender<ServerFrame> outgoing_frames,
-                                      CallInitiator call_initiator);
-  auto SendCallBody(uint32_t stream_id, MpscSender<ServerFrame> outgoing_frames,
-                    CallInitiator call_initiator);
-  static auto SendFragment(ServerFragmentFrame frame,
-                           MpscSender<ServerFrame> outgoing_frames);
+  auto SendCallInitialMetadataAndBody(
+      CallBatcher<ServerFragmentFrame, MpscSender<ServerFrame>>* batcher,
+      CallInitiator call_initiator);
+  auto SendCallBody(
+      CallBatcher<ServerFragmentFrame, MpscSender<ServerFrame>>* batcher,
+      CallInitiator call_initiator);
   auto CallOutboundLoop(uint32_t stream_id, CallInitiator call_initiator);
   auto OnTransportActivityDone(absl::string_view activity);
   auto TransportReadLoop();

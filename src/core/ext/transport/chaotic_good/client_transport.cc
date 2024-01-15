@@ -31,6 +31,7 @@
 #include <grpc/slice.h>
 #include <grpc/support/log.h>
 
+#include "src/core/ext/transport/chaotic_good/call_batcher.h"
 #include "src/core/ext/transport/chaotic_good/frame.h"
 #include "src/core/ext/transport/chaotic_good/frame_header.h"
 #include "src/core/ext/transport/chttp2/transport/hpack_encoder.h"
@@ -226,48 +227,26 @@ uint32_t ChaoticGoodClientTransport::MakeStream(CallHandler call_handler) {
 
 auto ChaoticGoodClientTransport::CallOutboundLoop(uint32_t stream_id,
                                                   CallHandler call_handler) {
-  auto send_fragment = [stream_id,
-                        outgoing_frames = outgoing_frames_.MakeSender()](
-                           ClientFragmentFrame frame) mutable {
-    frame.stream_id = stream_id;
-    return Map(outgoing_frames.Send(std::move(frame)),
-               [](bool success) -> absl::Status {
-                 if (!success) {
-                   // Failed to send outgoing frame.
-                   return absl::UnavailableError("Transport closed.");
-                 }
-                 return absl::OkStatus();
-               });
-  };
+  auto* batcher =
+      GetContext<Arena>()
+          ->ManagedNew<
+              CallBatcher<ClientFragmentFrame, MpscSender<ClientFrame>>>(
+              outgoing_frames_.MakeSender(), stream_id);
   return TrySeq(
       // Wait for initial metadata then send it out.
       call_handler.PullClientInitialMetadata(),
-      [send_fragment](ClientMetadataHandle md) mutable {
-        ClientFragmentFrame frame;
-        frame.headers = std::move(md);
-        return send_fragment(std::move(frame));
+      [batcher, call_handler](ClientMetadataHandle md) mutable {
+        return batcher->SendHeaders(call_handler, std::move(md));
       },
       // Continuously send client frame with client to server messages.
       ForEach(OutgoingMessages(call_handler),
-              [send_fragment,
+              [batcher, call_handler,
                aligned_bytes = aligned_bytes_](MessageHandle message) mutable {
-                ClientFragmentFrame frame;
-                // Construct frame header (flags, header_length and
-                // trailer_length will be added in serialization).
-                const uint32_t message_length = message->payload()->Length();
-                const uint32_t padding =
-                    message_length % aligned_bytes == 0
-                        ? 0
-                        : aligned_bytes - message_length % aligned_bytes;
-                GPR_ASSERT((message_length + padding) % aligned_bytes == 0);
-                frame.message = FragmentMessage(std::move(message), padding,
-                                                message_length);
-                return send_fragment(std::move(frame));
+                return batcher->SendMessage(call_handler, std::move(message),
+                                            aligned_bytes);
               }),
-      [send_fragment]() mutable {
-        ClientFragmentFrame frame;
-        frame.end_of_stream = true;
-        return send_fragment(std::move(frame));
+      [batcher, call_handler]() mutable {
+        return batcher->SendEndOfStream(call_handler);
       });
 }
 

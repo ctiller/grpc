@@ -6314,6 +6314,19 @@ grpc_cc_library(
 )
 
 grpc_cc_library(
+    name = "call_batcher",
+    hdrs = [
+        "ext/transport/chaotic_good/call_batcher.h",
+    ],
+    deps = [
+        "1999",
+        "chaotic_good_frame",
+        "try_seq",
+        "//:grpc_base",
+    ],
+)
+
+grpc_cc_library(
     name = "chaotic_good_frame",
     srcs = [
         "ext/transport/chaotic_good/frame.cc",
@@ -6540,6 +6553,7 @@ grpc_cc_library(
         "activity",
         "all_ok",
         "arena",
+        "call_batcher",
         "chaotic_good_frame",
         "chaotic_good_frame_header",
         "chaotic_good_transport",
@@ -6597,6 +6611,7 @@ grpc_cc_library(
         "1999",
         "activity",
         "arena",
+        "call_batcher",
         "chaotic_good_frame",
         "chaotic_good_frame_header",
         "chaotic_good_transport",
