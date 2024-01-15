@@ -15,6 +15,8 @@
 #ifndef GRPC_SRC_CORE_EXT_TRANSPORT_CHAOTIC_GOOD_CALL_BATCHER_H
 #define GRPC_SRC_CORE_EXT_TRANSPORT_CHAOTIC_GOOD_CALL_BATCHER_H
 
+#include <grpc/support/port_platform.h>
+
 #include <type_traits>
 
 #include "src/core/ext/transport/chaotic_good/frame.h"
@@ -95,8 +97,9 @@ class CallBatcher {
   auto SendFragment(Fragment fragment) {
     return Map(sender_.Send(std::move(fragment)),
                [](bool success) -> absl::Status {
-                 if (!success)
+                 if (!success) {
                    return absl::UnavailableError("Transport closed.");
+                 }
                  return absl::OkStatus();
                });
   }
@@ -144,4 +147,4 @@ class CallBatcher {
 }  // namespace chaotic_good
 }  // namespace grpc_core
 
-#endif
+#endif  // GRPC_SRC_CORE_EXT_TRANSPORT_CHAOTIC_GOOD_CALL_BATCHER_H

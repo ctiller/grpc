@@ -7077,6 +7077,7 @@ targets:
   build: test
   language: c++
   headers:
+  - src/core/ext/transport/chaotic_good/call_batcher.h
   - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/frame.h
