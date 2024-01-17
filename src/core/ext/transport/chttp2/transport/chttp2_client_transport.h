@@ -17,6 +17,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "frame.h"
+#include "hpack_encoder.h"
 
 #include "src/core/ext/transport/chttp2/transport/http2_settings.h"
 #include "src/core/lib/promise/wait_set.h"
@@ -136,6 +137,7 @@ class Chttp2ClientTransport final : public Transport, public ClientTransport {
   class WriteQueue {
    public:
     void Push(Http2Frame frame);
+    std::vector<Http2Frame>& PushBuffer();
 
    private:
     std::vector<Http2Frame> frames_;
@@ -144,7 +146,8 @@ class Chttp2ClientTransport final : public Transport, public ClientTransport {
   struct TransportState {
     StreamMap stream_map;
     WriteQueue write_queue;
-    Http2Settings settings;
+    Http2SettingsManager settings;
+    HPackCompressor hpack_encoder;
   };
 
   auto CallOutboundLoop(CallHandler call_handler);

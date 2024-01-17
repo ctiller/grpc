@@ -15,6 +15,7 @@
 #include "src/core/ext/transport/chttp2/transport/chttp2_client_transport.h"
 
 #include "frame.h"
+#include "hpack_encoder.h"
 
 #include "src/core/lib/promise/for_each.h"
 #include "src/core/lib/promise/try_seq.h"
@@ -60,7 +61,12 @@ auto Chttp2ClientTransport::CallOutboundLoop(CallHandler call_handler) {
               return TrySeq(
                   t.stream_map.AllocateStreamId(call_handler),
                   [&t, call_handler, md = std::move(md)](StreamId id) mutable {
-                    t.write_queue.Push(SendInitialMetadata{id, std::move(md)});
+                    t.hpack_encoder.EncodeHeaders(
+                        HPackCompressor::EncodeHeaderOptions{
+                            id.id(), false,
+                            t.settings.peer().allow_true_binary_metadata(),
+                            t.settings.peer().max_frame_size(), nullptr},
+                        *md, t.write_queue.PushBuffer());
                     return Map(ForEach(OutgoingMessages(call_handler),
                                        [&t, id](MessageHandle message) {
                                          t.write_queue.Push(SendMessage{
