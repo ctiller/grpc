@@ -143,7 +143,12 @@
   expiry: 2024/03/15
   owner: roth@google.com
   test_tags: ["lb_unit_test", "cpp_lb_end2end_test", "xds_end2end_test"]
-- name: promise_based_chttp2
+- name: promise_based_chttp2_client
+  description:
+    Use promise based chttp2 implementation
+  owner: ctiller@google.com
+  expiry: 2024/06/14
+- name: promise_based_chttp2_server
   description:
     Use promise based chttp2 implementation
   owner: ctiller@google.com

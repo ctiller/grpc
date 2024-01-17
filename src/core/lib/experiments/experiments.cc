@@ -82,9 +82,12 @@ const char* const additional_constraints_pending_queue_cap = "{}";
 const char* const description_pick_first_happy_eyeballs =
     "Use Happy Eyeballs in pick_first.";
 const char* const additional_constraints_pick_first_happy_eyeballs = "{}";
-const char* const description_promise_based_chttp2 =
+const char* const description_promise_based_chttp2_client =
     "Use promise based chttp2 implementation";
-const char* const additional_constraints_promise_based_chttp2 = "{}";
+const char* const additional_constraints_promise_based_chttp2_client = "{}";
+const char* const description_promise_based_chttp2_server =
+    "Use promise based chttp2 implementation";
+const char* const additional_constraints_promise_based_chttp2_server = "{}";
 const char* const description_promise_based_client_call =
     "If set, use the new gRPC promise based call code when it's appropriate "
     "(ie when all filters in a stack are promise based)";
@@ -221,8 +224,12 @@ const ExperimentMetadata g_experiment_metadata[] = {
      additional_constraints_pending_queue_cap, nullptr, 0, true, true},
     {"pick_first_happy_eyeballs", description_pick_first_happy_eyeballs,
      additional_constraints_pick_first_happy_eyeballs, nullptr, 0, true, true},
-    {"promise_based_chttp2", description_promise_based_chttp2,
-     additional_constraints_promise_based_chttp2, nullptr, 0, true, true},
+    {"promise_based_chttp2_client", description_promise_based_chttp2_client,
+     additional_constraints_promise_based_chttp2_client, nullptr, 0, true,
+     true},
+    {"promise_based_chttp2_server", description_promise_based_chttp2_server,
+     additional_constraints_promise_based_chttp2_server, nullptr, 0, true,
+     true},
     {"promise_based_client_call", description_promise_based_client_call,
      additional_constraints_promise_based_client_call, nullptr, 0, false, true},
     {"promise_based_server_call", description_promise_based_server_call,
@@ -347,9 +354,12 @@ const char* const additional_constraints_pending_queue_cap = "{}";
 const char* const description_pick_first_happy_eyeballs =
     "Use Happy Eyeballs in pick_first.";
 const char* const additional_constraints_pick_first_happy_eyeballs = "{}";
-const char* const description_promise_based_chttp2 =
+const char* const description_promise_based_chttp2_client =
     "Use promise based chttp2 implementation";
-const char* const additional_constraints_promise_based_chttp2 = "{}";
+const char* const additional_constraints_promise_based_chttp2_client = "{}";
+const char* const description_promise_based_chttp2_server =
+    "Use promise based chttp2 implementation";
+const char* const additional_constraints_promise_based_chttp2_server = "{}";
 const char* const description_promise_based_client_call =
     "If set, use the new gRPC promise based call code when it's appropriate "
     "(ie when all filters in a stack are promise based)";
@@ -486,8 +496,12 @@ const ExperimentMetadata g_experiment_metadata[] = {
      additional_constraints_pending_queue_cap, nullptr, 0, true, true},
     {"pick_first_happy_eyeballs", description_pick_first_happy_eyeballs,
      additional_constraints_pick_first_happy_eyeballs, nullptr, 0, true, true},
-    {"promise_based_chttp2", description_promise_based_chttp2,
-     additional_constraints_promise_based_chttp2, nullptr, 0, true, true},
+    {"promise_based_chttp2_client", description_promise_based_chttp2_client,
+     additional_constraints_promise_based_chttp2_client, nullptr, 0, true,
+     true},
+    {"promise_based_chttp2_server", description_promise_based_chttp2_server,
+     additional_constraints_promise_based_chttp2_server, nullptr, 0, true,
+     true},
     {"promise_based_client_call", description_promise_based_client_call,
      additional_constraints_promise_based_client_call, nullptr, 0, false, true},
     {"promise_based_server_call", description_promise_based_server_call,
@@ -612,9 +626,12 @@ const char* const additional_constraints_pending_queue_cap = "{}";
 const char* const description_pick_first_happy_eyeballs =
     "Use Happy Eyeballs in pick_first.";
 const char* const additional_constraints_pick_first_happy_eyeballs = "{}";
-const char* const description_promise_based_chttp2 =
+const char* const description_promise_based_chttp2_client =
     "Use promise based chttp2 implementation";
-const char* const additional_constraints_promise_based_chttp2 = "{}";
+const char* const additional_constraints_promise_based_chttp2_client = "{}";
+const char* const description_promise_based_chttp2_server =
+    "Use promise based chttp2 implementation";
+const char* const additional_constraints_promise_based_chttp2_server = "{}";
 const char* const description_promise_based_client_call =
     "If set, use the new gRPC promise based call code when it's appropriate "
     "(ie when all filters in a stack are promise based)";
@@ -751,8 +768,12 @@ const ExperimentMetadata g_experiment_metadata[] = {
      additional_constraints_pending_queue_cap, nullptr, 0, true, true},
     {"pick_first_happy_eyeballs", description_pick_first_happy_eyeballs,
      additional_constraints_pick_first_happy_eyeballs, nullptr, 0, true, true},
-    {"promise_based_chttp2", description_promise_based_chttp2,
-     additional_constraints_promise_based_chttp2, nullptr, 0, true, true},
+    {"promise_based_chttp2_client", description_promise_based_chttp2_client,
+     additional_constraints_promise_based_chttp2_client, nullptr, 0, true,
+     true},
+    {"promise_based_chttp2_server", description_promise_based_chttp2_server,
+     additional_constraints_promise_based_chttp2_server, nullptr, 0, true,
+     true},
     {"promise_based_client_call", description_promise_based_client_call,
      additional_constraints_promise_based_client_call, nullptr, 0, false, true},
     {"promise_based_server_call", description_promise_based_server_call,

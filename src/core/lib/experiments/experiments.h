@@ -87,8 +87,10 @@ inline bool IsPeerStateBasedFramingEnabled() { return false; }
 inline bool IsPendingQueueCapEnabled() { return true; }
 #define GRPC_EXPERIMENT_IS_INCLUDED_PICK_FIRST_HAPPY_EYEBALLS
 inline bool IsPickFirstHappyEyeballsEnabled() { return true; }
-#define GRPC_EXPERIMENT_IS_INCLUDED_PROMISE_BASED_CHTTP2
-inline bool IsPromiseBasedChttp2Enabled() { return true; }
+#define GRPC_EXPERIMENT_IS_INCLUDED_PROMISE_BASED_CHTTP2_CLIENT
+inline bool IsPromiseBasedChttp2ClientEnabled() { return true; }
+#define GRPC_EXPERIMENT_IS_INCLUDED_PROMISE_BASED_CHTTP2_SERVER
+inline bool IsPromiseBasedChttp2ServerEnabled() { return true; }
 inline bool IsPromiseBasedClientCallEnabled() { return false; }
 inline bool IsPromiseBasedServerCallEnabled() { return false; }
 #define GRPC_EXPERIMENT_IS_INCLUDED_REGISTERED_METHOD_LOOKUP_IN_TRANSPORT
@@ -151,8 +153,10 @@ inline bool IsPeerStateBasedFramingEnabled() { return false; }
 inline bool IsPendingQueueCapEnabled() { return true; }
 #define GRPC_EXPERIMENT_IS_INCLUDED_PICK_FIRST_HAPPY_EYEBALLS
 inline bool IsPickFirstHappyEyeballsEnabled() { return true; }
-#define GRPC_EXPERIMENT_IS_INCLUDED_PROMISE_BASED_CHTTP2
-inline bool IsPromiseBasedChttp2Enabled() { return true; }
+#define GRPC_EXPERIMENT_IS_INCLUDED_PROMISE_BASED_CHTTP2_CLIENT
+inline bool IsPromiseBasedChttp2ClientEnabled() { return true; }
+#define GRPC_EXPERIMENT_IS_INCLUDED_PROMISE_BASED_CHTTP2_SERVER
+inline bool IsPromiseBasedChttp2ServerEnabled() { return true; }
 inline bool IsPromiseBasedClientCallEnabled() { return false; }
 inline bool IsPromiseBasedServerCallEnabled() { return false; }
 #define GRPC_EXPERIMENT_IS_INCLUDED_REGISTERED_METHOD_LOOKUP_IN_TRANSPORT
@@ -215,8 +219,10 @@ inline bool IsPeerStateBasedFramingEnabled() { return false; }
 inline bool IsPendingQueueCapEnabled() { return true; }
 #define GRPC_EXPERIMENT_IS_INCLUDED_PICK_FIRST_HAPPY_EYEBALLS
 inline bool IsPickFirstHappyEyeballsEnabled() { return true; }
-#define GRPC_EXPERIMENT_IS_INCLUDED_PROMISE_BASED_CHTTP2
-inline bool IsPromiseBasedChttp2Enabled() { return true; }
+#define GRPC_EXPERIMENT_IS_INCLUDED_PROMISE_BASED_CHTTP2_CLIENT
+inline bool IsPromiseBasedChttp2ClientEnabled() { return true; }
+#define GRPC_EXPERIMENT_IS_INCLUDED_PROMISE_BASED_CHTTP2_SERVER
+inline bool IsPromiseBasedChttp2ServerEnabled() { return true; }
 inline bool IsPromiseBasedClientCallEnabled() { return false; }
 inline bool IsPromiseBasedServerCallEnabled() { return false; }
 #define GRPC_EXPERIMENT_IS_INCLUDED_REGISTERED_METHOD_LOOKUP_IN_TRANSPORT
@@ -266,7 +272,8 @@ enum ExperimentIds {
   kExperimentIdPeerStateBasedFraming,
   kExperimentIdPendingQueueCap,
   kExperimentIdPickFirstHappyEyeballs,
-  kExperimentIdPromiseBasedChttp2,
+  kExperimentIdPromiseBasedChttp2Client,
+  kExperimentIdPromiseBasedChttp2Server,
   kExperimentIdPromiseBasedClientCall,
   kExperimentIdPromiseBasedServerCall,
   kExperimentIdRegisteredMethodLookupInTransport,
@@ -356,9 +363,13 @@ inline bool IsPendingQueueCapEnabled() {
 inline bool IsPickFirstHappyEyeballsEnabled() {
   return IsExperimentEnabled(kExperimentIdPickFirstHappyEyeballs);
 }
-#define GRPC_EXPERIMENT_IS_INCLUDED_PROMISE_BASED_CHTTP2
-inline bool IsPromiseBasedChttp2Enabled() {
-  return IsExperimentEnabled(kExperimentIdPromiseBasedChttp2);
+#define GRPC_EXPERIMENT_IS_INCLUDED_PROMISE_BASED_CHTTP2_CLIENT
+inline bool IsPromiseBasedChttp2ClientEnabled() {
+  return IsExperimentEnabled(kExperimentIdPromiseBasedChttp2Client);
+}
+#define GRPC_EXPERIMENT_IS_INCLUDED_PROMISE_BASED_CHTTP2_SERVER
+inline bool IsPromiseBasedChttp2ServerEnabled() {
+  return IsExperimentEnabled(kExperimentIdPromiseBasedChttp2Server);
 }
 #define GRPC_EXPERIMENT_IS_INCLUDED_PROMISE_BASED_CLIENT_CALL
 inline bool IsPromiseBasedClientCallEnabled() {

@@ -66,6 +66,9 @@ class StatusFlag {
 
   bool ok() const { return value_; }
 
+  template <typename T>
+  auto CaptureIfOk(T&& value);
+
   bool operator==(StatusFlag other) const { return value_ == other.value_; }
 
  private:
@@ -190,6 +193,12 @@ struct StatusCastImpl<ValueOrFailure<T>, StatusFlag> {
     return ValueOrFailure<T>(Failure{});
   }
 };
+
+template <typename T>
+auto StatusFlag::CaptureIfOk(T&& value) {
+  return ok() ? ValueOrFailure<T>(std::forward<T>(value))
+              : ValueOrFailure<T>(Failure{});
+}
 
 }  // namespace grpc_core
 
