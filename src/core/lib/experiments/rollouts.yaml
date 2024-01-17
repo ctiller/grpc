@@ -86,6 +86,8 @@
   default: true
 - name: pick_first_happy_eyeballs
   default: true
+- name: promise_based_chttp2
+  default: true
 - name: promise_based_client_call
   default: false
 - name: promise_based_server_call

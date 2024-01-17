@@ -194,8 +194,9 @@ void ReclaimerQueue::Handle::Sweep::MarkCancelled() {
   // When we cancel a reclaimer we rotate the elements of the queue once -
   // taking one non-cancelled node from the start, and placing it on the end.
   // This ensures that we don't suffer from head of line blocking whereby a
-  // non-cancelled reclaimer at the head of the queue, in the absence of memory
-  // pressure, prevents the remainder of the queue from being cleaned up.
+  // non-cancelled reclaimer at the head of the queue, in the absence of
+  // memory pressure, prevents the remainder of the queue from being cleaned
+  // up.
   MutexLock lock(&state_->reader_mu);
   while (true) {
     bool empty = false;
@@ -276,8 +277,8 @@ void GrpcMemoryAllocatorImpl::Shutdown() {
 }
 
 size_t GrpcMemoryAllocatorImpl::Reserve(MemoryRequest request) {
-  // Validate request - performed here so we don't bloat the generated code with
-  // inlined asserts.
+  // Validate request - performed here so we don't bloat the generated code
+  // with inlined asserts.
   GPR_ASSERT(request.min() <= request.max());
   GPR_ASSERT(request.max() <= MemoryRequest::max_allowed_size());
   size_t old_free = free_bytes_.load(std::memory_order_relaxed);
@@ -366,8 +367,8 @@ void GrpcMemoryAllocatorImpl::MaybeDonateBack() {
 }
 
 void GrpcMemoryAllocatorImpl::Replenish() {
-  // Attempt a fairly low rate exponential growth request size, bounded between
-  // some reasonable limits declared at top of file.
+  // Attempt a fairly low rate exponential growth request size, bounded
+  // between some reasonable limits declared at top of file.
   auto amount = Clamp(taken_bytes_.load(std::memory_order_relaxed) / 3,
                       kMinReplenishBytes, kMaxReplenishBytes);
   // Take the requested amount from the quota.
@@ -677,9 +678,9 @@ double PressureController::Update(double error) {
   double new_control;  // leave unset to compiler can note bad branches
   if (is_low && was_low) {
     // Memory pressure is too low this round, and was last round too.
-    // If we have reached the min reporting value last time, then we will report
-    // the same value again this time and can start to increase the ticks_same_
-    // counter.
+    // If we have reached the min reporting value last time, then we will
+    // report the same value again this time and can start to increase the
+    // ticks_same_ counter.
     if (last_control_ == min_) {
       ticks_same_++;
       if (ticks_same_ >= max_ticks_same_) {
@@ -728,7 +729,8 @@ double PressureController::Update(double error) {
   // If the control value is decreasing we do it slowly. This avoids rapid
   // oscillations.
   // (If we want a control value that's higher than the last one we snap
-  // immediately because it's likely that memory pressure is growing unchecked).
+  // immediately because it's likely that memory pressure is growing
+  // unchecked).
   if (new_control < last_control_) {
     new_control =
         std::max(new_control, last_control_ - max_reduction_per_tick_ / 1000.0);

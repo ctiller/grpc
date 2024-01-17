@@ -4007,7 +4007,7 @@ grpc_cc_library(
     name = "grpc_transport_chttp2",
     srcs = [
         "//src/core:ext/transport/chttp2/transport/bin_decoder.cc",
-        "//src/core:ext/transport/chttp2/transport/chttp2_transport.cc",
+        "//src/core:ext/transport/chttp2/transport/legacy_chttp2_transport.cc",
         "//src/core:ext/transport/chttp2/transport/frame_data.cc",
         "//src/core:ext/transport/chttp2/transport/frame_goaway.cc",
         "//src/core:ext/transport/chttp2/transport/frame_ping.cc",
@@ -4020,7 +4020,7 @@ grpc_cc_library(
     ],
     hdrs = [
         "//src/core:ext/transport/chttp2/transport/bin_decoder.h",
-        "//src/core:ext/transport/chttp2/transport/chttp2_transport.h",
+        "//src/core:ext/transport/chttp2/transport/legacy_chttp2_transport.h",
         "//src/core:ext/transport/chttp2/transport/frame_data.h",
         "//src/core:ext/transport/chttp2/transport/frame_goaway.h",
         "//src/core:ext/transport/chttp2/transport/frame_ping.h",

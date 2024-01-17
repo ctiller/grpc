@@ -87,6 +87,8 @@ inline bool IsPeerStateBasedFramingEnabled() { return false; }
 inline bool IsPendingQueueCapEnabled() { return true; }
 #define GRPC_EXPERIMENT_IS_INCLUDED_PICK_FIRST_HAPPY_EYEBALLS
 inline bool IsPickFirstHappyEyeballsEnabled() { return true; }
+#define GRPC_EXPERIMENT_IS_INCLUDED_PROMISE_BASED_CHTTP2
+inline bool IsPromiseBasedChttp2Enabled() { return true; }
 inline bool IsPromiseBasedClientCallEnabled() { return false; }
 inline bool IsPromiseBasedServerCallEnabled() { return false; }
 #define GRPC_EXPERIMENT_IS_INCLUDED_REGISTERED_METHOD_LOOKUP_IN_TRANSPORT
@@ -149,6 +151,8 @@ inline bool IsPeerStateBasedFramingEnabled() { return false; }
 inline bool IsPendingQueueCapEnabled() { return true; }
 #define GRPC_EXPERIMENT_IS_INCLUDED_PICK_FIRST_HAPPY_EYEBALLS
 inline bool IsPickFirstHappyEyeballsEnabled() { return true; }
+#define GRPC_EXPERIMENT_IS_INCLUDED_PROMISE_BASED_CHTTP2
+inline bool IsPromiseBasedChttp2Enabled() { return true; }
 inline bool IsPromiseBasedClientCallEnabled() { return false; }
 inline bool IsPromiseBasedServerCallEnabled() { return false; }
 #define GRPC_EXPERIMENT_IS_INCLUDED_REGISTERED_METHOD_LOOKUP_IN_TRANSPORT
@@ -211,6 +215,8 @@ inline bool IsPeerStateBasedFramingEnabled() { return false; }
 inline bool IsPendingQueueCapEnabled() { return true; }
 #define GRPC_EXPERIMENT_IS_INCLUDED_PICK_FIRST_HAPPY_EYEBALLS
 inline bool IsPickFirstHappyEyeballsEnabled() { return true; }
+#define GRPC_EXPERIMENT_IS_INCLUDED_PROMISE_BASED_CHTTP2
+inline bool IsPromiseBasedChttp2Enabled() { return true; }
 inline bool IsPromiseBasedClientCallEnabled() { return false; }
 inline bool IsPromiseBasedServerCallEnabled() { return false; }
 #define GRPC_EXPERIMENT_IS_INCLUDED_REGISTERED_METHOD_LOOKUP_IN_TRANSPORT
@@ -260,6 +266,7 @@ enum ExperimentIds {
   kExperimentIdPeerStateBasedFraming,
   kExperimentIdPendingQueueCap,
   kExperimentIdPickFirstHappyEyeballs,
+  kExperimentIdPromiseBasedChttp2,
   kExperimentIdPromiseBasedClientCall,
   kExperimentIdPromiseBasedServerCall,
   kExperimentIdRegisteredMethodLookupInTransport,
@@ -348,6 +355,10 @@ inline bool IsPendingQueueCapEnabled() {
 #define GRPC_EXPERIMENT_IS_INCLUDED_PICK_FIRST_HAPPY_EYEBALLS
 inline bool IsPickFirstHappyEyeballsEnabled() {
   return IsExperimentEnabled(kExperimentIdPickFirstHappyEyeballs);
+}
+#define GRPC_EXPERIMENT_IS_INCLUDED_PROMISE_BASED_CHTTP2
+inline bool IsPromiseBasedChttp2Enabled() {
+  return IsExperimentEnabled(kExperimentIdPromiseBasedChttp2);
 }
 #define GRPC_EXPERIMENT_IS_INCLUDED_PROMISE_BASED_CLIENT_CALL
 inline bool IsPromiseBasedClientCallEnabled() {
