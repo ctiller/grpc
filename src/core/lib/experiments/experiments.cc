@@ -32,6 +32,9 @@ const char* const additional_constraints_call_status_override_on_cancellation =
 const char* const description_canary_client_privacy =
     "If set, canary client privacy";
 const char* const additional_constraints_canary_client_privacy = "{}";
+const char* const description_chttp2_new_writes =
+    "If set, use the new chttp2 write path.";
+const char* const additional_constraints_chttp2_new_writes = "{}";
 const char* const description_client_idleness =
     "If enabled, client channel idleness is enabled by default.";
 const char* const additional_constraints_client_idleness = "{}";
@@ -196,6 +199,8 @@ const ExperimentMetadata g_experiment_metadata[] = {
      kDefaultForDebugOnly, true},
     {"canary_client_privacy", description_canary_client_privacy,
      additional_constraints_canary_client_privacy, nullptr, 0, false, false},
+    {"chttp2_new_writes", description_chttp2_new_writes,
+     additional_constraints_chttp2_new_writes, nullptr, 0, true, true},
     {"client_idleness", description_client_idleness,
      additional_constraints_client_idleness, nullptr, 0, true, true},
     {"client_privacy", description_client_privacy,
@@ -304,6 +309,9 @@ const char* const additional_constraints_call_status_override_on_cancellation =
 const char* const description_canary_client_privacy =
     "If set, canary client privacy";
 const char* const additional_constraints_canary_client_privacy = "{}";
+const char* const description_chttp2_new_writes =
+    "If set, use the new chttp2 write path.";
+const char* const additional_constraints_chttp2_new_writes = "{}";
 const char* const description_client_idleness =
     "If enabled, client channel idleness is enabled by default.";
 const char* const additional_constraints_client_idleness = "{}";
@@ -468,6 +476,8 @@ const ExperimentMetadata g_experiment_metadata[] = {
      kDefaultForDebugOnly, true},
     {"canary_client_privacy", description_canary_client_privacy,
      additional_constraints_canary_client_privacy, nullptr, 0, false, false},
+    {"chttp2_new_writes", description_chttp2_new_writes,
+     additional_constraints_chttp2_new_writes, nullptr, 0, true, true},
     {"client_idleness", description_client_idleness,
      additional_constraints_client_idleness, nullptr, 0, true, true},
     {"client_privacy", description_client_privacy,
@@ -576,6 +586,9 @@ const char* const additional_constraints_call_status_override_on_cancellation =
 const char* const description_canary_client_privacy =
     "If set, canary client privacy";
 const char* const additional_constraints_canary_client_privacy = "{}";
+const char* const description_chttp2_new_writes =
+    "If set, use the new chttp2 write path.";
+const char* const additional_constraints_chttp2_new_writes = "{}";
 const char* const description_client_idleness =
     "If enabled, client channel idleness is enabled by default.";
 const char* const additional_constraints_client_idleness = "{}";
@@ -740,6 +753,8 @@ const ExperimentMetadata g_experiment_metadata[] = {
      kDefaultForDebugOnly, true},
     {"canary_client_privacy", description_canary_client_privacy,
      additional_constraints_canary_client_privacy, nullptr, 0, false, false},
+    {"chttp2_new_writes", description_chttp2_new_writes,
+     additional_constraints_chttp2_new_writes, nullptr, 0, true, true},
     {"client_idleness", description_client_idleness,
      additional_constraints_client_idleness, nullptr, 0, true, true},
     {"client_privacy", description_client_privacy,
