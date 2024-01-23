@@ -535,9 +535,9 @@ class FixtureWithTracing final : public CoreTestFixture {
   std::unique_ptr<CoreTestFixture> fixture_;
 };
 
-class ChaoticGoodFixture final : public grpc_core::CoreTestFixture {
+class ChaoticGoodFixture final : public CoreTestFixture {
  public:
-  explicit ChaoticGoodFixture(std::string localaddr = grpc_core::JoinHostPort(
+  explicit ChaoticGoodFixture(std::string localaddr = JoinHostPort(
                                   "localhost", grpc_pick_unused_port_or_die()))
       : localaddr_(std::move(localaddr)) {}
 
@@ -546,7 +546,7 @@ class ChaoticGoodFixture final : public grpc_core::CoreTestFixture {
 
  private:
   grpc_server* MakeServer(
-      const grpc_core::ChannelArgs& args, grpc_completion_queue* cq,
+      const ChannelArgs& args, grpc_completion_queue* cq,
       absl::AnyInvocable<void(grpc_server*)>& pre_server_start) override {
     auto* server = grpc_server_create(args.ToC().get(), nullptr);
     grpc_server_register_completion_queue(server, cq, nullptr);
@@ -556,7 +556,7 @@ class ChaoticGoodFixture final : public grpc_core::CoreTestFixture {
     return server;
   }
 
-  grpc_channel* MakeClient(const grpc_core::ChannelArgs& args,
+  grpc_channel* MakeClient(const ChannelArgs& args,
                            grpc_completion_queue*) override {
     auto* client =
         grpc_channel_create(localaddr_.c_str(), creds, args.ToC().get());
