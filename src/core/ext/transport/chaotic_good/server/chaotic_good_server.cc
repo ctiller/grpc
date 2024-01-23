@@ -209,7 +209,7 @@ auto ChaoticGoodServerListener::ActiveConnection::HandshakingState::
               return TrySeq(
                   self->connection_->endpoint_->Read(
                       frame_header->GetFrameLength()),
-                  [frame_header = std::move(*frame_header),
+                  [frame_header = *frame_header,
                    self](SliceBuffer buffer) -> absl::StatusOr<bool> {
                     // Read Setting frame.
                     SettingsFrame frame;
