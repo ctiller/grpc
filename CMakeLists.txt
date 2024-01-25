@@ -7461,6 +7461,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(bad_ping_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -7937,6 +7938,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(binary_metadata_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -8376,6 +8378,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(call_creds_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -8578,6 +8581,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(call_host_override_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -8682,6 +8686,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(cancel_after_accept_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -8743,6 +8748,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(cancel_after_client_done_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -8804,6 +8810,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(cancel_after_invoke_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -8865,6 +8872,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(cancel_after_round_trip_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -8973,6 +8981,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(cancel_before_invoke_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -9076,6 +9085,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(cancel_in_a_vacuum_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -9137,6 +9147,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(cancel_with_status_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -10848,6 +10859,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(client_streaming_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -11187,6 +11199,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(compressed_payload_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -11471,6 +11484,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(connectivity_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -11898,6 +11912,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(default_host_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -12104,6 +12119,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(disappearing_server_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -12422,6 +12438,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(empty_batch_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -13802,6 +13819,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(filter_causes_close_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -13863,6 +13881,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(filter_context_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -13924,6 +13943,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(filter_init_fails_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -14035,6 +14055,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(filtered_metadata_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -14821,6 +14842,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(graceful_server_shutdown_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -15188,6 +15210,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(grpc_authz_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -16582,6 +16605,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(high_initial_seqno_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -16893,6 +16917,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(hpack_size_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -17047,6 +17072,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(http2_stats_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -17938,6 +17964,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(invoke_large_request_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -18327,6 +18354,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(keepalive_timeout_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -18431,6 +18459,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(large_metadata_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -19060,6 +19089,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(max_concurrent_streams_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -19121,6 +19151,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(max_connection_age_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -19182,6 +19213,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(max_connection_idle_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -19243,6 +19275,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(max_message_length_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -19882,6 +19915,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(negative_deadline_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -19975,6 +20009,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(no_logging_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -20036,6 +20071,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(no_op_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -20897,6 +20933,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(payload_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -21271,6 +21308,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(ping_pong_streaming_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -21384,6 +21422,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(ping_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -22376,6 +22415,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(proxy_auth_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -22951,6 +22991,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(registered_call_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -23056,6 +23097,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(request_with_flags_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -23117,6 +23159,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(request_with_payload_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -23453,6 +23496,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(resource_quota_server_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -23556,6 +23600,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_cancel_after_first_attempt_starts_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -23617,6 +23662,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_cancel_during_delay_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -23678,6 +23724,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_cancel_with_multiple_send_batches_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -23739,6 +23786,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_cancellation_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -23800,6 +23848,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_disabled_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -23861,6 +23910,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_exceeds_buffer_size_in_delay_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -23922,6 +23972,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_exceeds_buffer_size_in_initial_batch_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -23983,6 +24034,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_exceeds_buffer_size_in_subsequent_batch_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -24044,6 +24096,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_lb_drop_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -24105,6 +24158,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_lb_fail_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -24166,6 +24220,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_non_retriable_status_before_trailers_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -24227,6 +24282,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_non_retriable_status_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -24288,6 +24344,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_per_attempt_recv_timeout_on_last_attempt_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -24349,6 +24406,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_per_attempt_recv_timeout_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -24410,6 +24468,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_recv_initial_metadata_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -24471,6 +24530,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_recv_message_replay_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -24532,6 +24592,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_recv_message_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -24593,6 +24654,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_recv_trailing_metadata_error_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -24654,6 +24716,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_send_initial_metadata_refs_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -24715,6 +24778,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_send_op_fails_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -24776,6 +24840,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_send_recv_batch_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -24837,6 +24902,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_server_pushback_delay_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -24898,6 +24964,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_server_pushback_disabled_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -25001,6 +25068,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_streaming_after_commit_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -25062,6 +25130,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_streaming_succeeds_before_replay_finished_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -25123,6 +25192,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_streaming_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -25184,6 +25254,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -25287,6 +25358,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_throttled_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -25348,6 +25420,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_too_many_attempts_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -25409,6 +25482,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_transparent_goaway_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -25470,6 +25544,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_transparent_max_concurrent_streams_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -25531,6 +25606,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_transparent_not_sent_on_wire_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -25592,6 +25668,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_unref_before_finish_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -25653,6 +25730,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(retry_unref_before_recv_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -26638,6 +26716,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(server_finishes_request_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -27097,6 +27176,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(server_streaming_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -27358,6 +27438,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(shutdown_finishes_calls_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -27419,6 +27500,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(shutdown_finishes_tags_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -27543,6 +27625,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(simple_delayed_request_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -27604,6 +27687,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(simple_metadata_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -27709,6 +27793,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(simple_request_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -28634,6 +28719,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(streaming_error_response_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -29369,6 +29455,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(test_core_end2end_channelz_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -30606,6 +30693,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(timeout_before_request_call_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -31110,6 +31198,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(trailing_metadata_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -32343,6 +32432,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(write_buffering_at_end_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
@@ -32404,6 +32494,7 @@ if(gRPC_BUILD_TESTS)
 add_executable(write_buffering_test
   src/core/ext/transport/chaotic_good/chaotic_good_transport.cc
   src/core/ext/transport/chaotic_good/client/chaotic_good_connector.cc
+  src/core/ext/transport/chaotic_good/client_transport.cc
   src/core/ext/transport/chaotic_good/frame.cc
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
