@@ -2089,7 +2089,7 @@ class BasicPromiseBasedCall : public Call,
   // for that functionality be invented)
   grpc_call_stack* call_stack() final { return nullptr; }
 
-  virtual RefCountedPtr<CallSpineInterface> MakeCallSpine(CallArgs) {
+  virtual RefCountedPtr<CallTracerInterface> MakeCallSpine(CallArgs) {
     Crash("Not implemented");
   }
 
@@ -2702,7 +2702,7 @@ ServerCallContext* CallContext::server_call_context() {
   return call_->server_call_context();
 }
 
-RefCountedPtr<CallSpineInterface> CallContext::MakeCallSpine(
+RefCountedPtr<CallTracerInterface> CallContext::MakeCallSpine(
     CallArgs call_args) {
   return call_->MakeCallSpine(std::move(call_args));
 }
@@ -2829,8 +2829,8 @@ class ClientPromiseBasedCall final : public PromiseBasedCall {
     return absl::StrFormat("CLIENT_CALL[%p]: ", this);
   }
 
-  RefCountedPtr<CallSpineInterface> MakeCallSpine(CallArgs call_args) final {
-    class WrappingCallSpine final : public CallSpineInterface {
+  RefCountedPtr<CallTracerInterface> MakeCallSpine(CallArgs call_args) final {
+    class WrappingCallSpine final : public CallTracerInterface {
      public:
       WrappingCallSpine(ClientPromiseBasedCall* call,
                         ClientMetadataHandle metadata)
@@ -2855,34 +2855,32 @@ class ClientPromiseBasedCall final : public PromiseBasedCall {
 
       ~WrappingCallSpine() override { call_->InternalUnref("call-spine"); }
 
-      Pipe<ClientMetadataHandle>& client_initial_metadata() override {
+      Pipe<ClientMetadataHandle>& client_initial_metadata() {
         return client_initial_metadata_;
       }
 
-      Pipe<MessageHandle>& client_to_server_messages() override {
+      Pipe<MessageHandle>& client_to_server_messages() {
         return call_->client_to_server_messages_;
       }
 
-      Pipe<ServerMetadataHandle>& server_initial_metadata() override {
+      Pipe<ServerMetadataHandle>& server_initial_metadata() {
         return call_->server_initial_metadata_;
       }
 
-      Pipe<MessageHandle>& server_to_client_messages() override {
+      Pipe<MessageHandle>& server_to_client_messages() {
         return call_->server_to_client_messages_;
       }
 
-      Pipe<ServerMetadataHandle>& server_trailing_metadata() override {
+      Pipe<ServerMetadataHandle>& server_trailing_metadata() {
         return server_trailing_metadata_;
       }
 
-      Latch<ServerMetadataHandle>& cancel_latch() override {
-        return cancel_error_;
-      }
+      Latch<ServerMetadataHandle>& cancel_latch() { return cancel_error_; }
 
-      Party& party() override { return *call_; }
+      Party& party() { return *call_; }
 
-      void IncrementRefCount() override { refs_.Ref(); }
-      void Unref() override {
+      void IncrementRefCount() { refs_.Ref(); }
+      void Unref() {
         if (refs_.Unref()) delete this;
       }
 

@@ -17,8 +17,6 @@
 
 #include <grpc/support/port_platform.h>
 
-#include "call_filters.h"
-
 #include <grpc/support/log.h>
 
 #include "src/core/lib/promise/detail/status.h"
@@ -30,6 +28,7 @@
 #include "src/core/lib/promise/prioritized_race.h"
 #include "src/core/lib/promise/status_flag.h"
 #include "src/core/lib/promise/try_seq.h"
+#include "src/core/lib/transport/call_filters.h"
 #include "src/core/lib/transport/message.h"
 #include "src/core/lib/transport/metadata.h"
 
