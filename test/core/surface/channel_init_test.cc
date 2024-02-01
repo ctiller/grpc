@@ -233,8 +233,8 @@ class TestFilter1 {
 };
 
 const grpc_channel_filter TestFilter1::kFilter = {
-    nullptr, nullptr, nullptr, nullptr, 0,       nullptr, nullptr,
-    nullptr, 0,       nullptr, nullptr, nullptr, nullptr, "test_filter1"};
+    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, "test_filter1"};
 const NoInterceptor TestFilter1::Call::OnClientInitialMetadata;
 const NoInterceptor TestFilter1::Call::OnServerInitialMetadata;
 const NoInterceptor TestFilter1::Call::OnServerTrailingMetadata;
