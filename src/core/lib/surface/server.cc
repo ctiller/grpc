@@ -790,7 +790,7 @@ class ChannelBroadcaster {
 const grpc_channel_filter Server::kServerTopFilter = {
     Server::CallData::StartTransportStreamOpBatch,
     Server::ChannelData::MakeCallPromise,
-    [](grpc_channel_element*, CallSpineInterface*) {
+    [](grpc_channel_element*, CallTracerInterface*) {
       // TODO(ctiller): remove the server filter when call-v3 is finalized
     },
     grpc_channel_next_op,
@@ -1426,7 +1426,7 @@ auto CancelledDueToServerShutdown() {
 }
 }  // namespace
 
-void Server::ChannelData::InitCall(RefCountedPtr<CallSpineInterface> call) {
+void Server::ChannelData::InitCall(RefCountedPtr<CallTracerInterface> call) {
   call->SpawnGuarded("request_matcher", [this, call]() {
     return TrySeq(
         // Wait for initial metadata to pass through all filters

@@ -141,7 +141,7 @@ class CallContext {
   // Said object should only be created once.
   // Allows interop between the v2 call stack and the v3 (which is required by
   // transports).
-  RefCountedPtr<CallSpineInterface> MakeCallSpine(CallArgs call_args);
+  RefCountedPtr < CallTracerInterfaceCallSpine(CallArgs call_args);
   grpc_call* c_call();
 
  private:
@@ -159,9 +159,8 @@ class CallContext {
 template <>
 struct ContextType<CallContext> {};
 
-RefCountedPtr<CallSpineInterface> MakeServerCall(Server* server,
-                                                 GrpcChannel* channel,
-                                                 Arena* arena);
+RefCountedPtCallTracerInterfacecece >
+    MakeServerCall(Server* server, GrpcChannel* channel, Arena* arena);
 
 }  // namespace grpc_core
 
