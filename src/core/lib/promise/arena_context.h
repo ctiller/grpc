@@ -58,9 +58,21 @@ const int ArenaContextTraits<T>::index_ = ArenaContextTraitsCommon::Allocate(
 class ArenaContext {
  public:
   explicit ArenaContext(Arena* arena = GetContext<Arena>())
-      : contexts_(static_cast<void**>(arena->Alloc(
-            sizeof(void*) *
-            promise_detail::ArenaContextTraitsCommon::ContextCount()))) {}
+      : contexts_(MakeContexts(arena)) {}
+
+  explicit ArenaContext(ArenaContext* parent,
+                        Arena* arena = GetContext<Arena>())
+      : contexts_(MakeContexts(arena)) {
+    for (int i = 0;
+         i < promise_detail::ArenaContextTraitsCommon::ContextCount(); i++) {
+      contexts_[i] = parent->contexts_[i];
+    }
+  }
+
+  ArenaContext(const ArenaContext&) = delete;
+  ArenaContext& operator=(const ArenaContext&) = delete;
+  ArenaContext(ArenaContext&&) = delete;
+  ArenaContext& operator=(ArenaContext&&) = delete;
 
   template <typename T>
   T* NewContext() {
@@ -92,6 +104,12 @@ class ArenaContext {
   }
 
  private:
+  static void** MakeContexts(Arena* arena) {
+    return static_cast<void**>(
+        arena->Alloc(sizeof(void*) *
+                     promise_detail::ArenaContextTraitsCommon::ContextCount()));
+  }
+
   uint32_t owned_contexts_ = 0;
   void** contexts_;
 };

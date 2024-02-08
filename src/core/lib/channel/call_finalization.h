@@ -32,6 +32,7 @@ namespace grpc_core {
 // Filters can register a finalizer by calling Add().
 // The finalizer will be called before the call is destroyed but after
 // the top level promise is completed.
+// TODO(ctiller): remove post call-v3
 class CallFinalization {
  public:
   // Add a step to the finalization context.

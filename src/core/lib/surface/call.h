@@ -44,6 +44,7 @@
 #include "src/core/lib/iomgr/closure.h"
 #include "src/core/lib/iomgr/error.h"
 #include "src/core/lib/iomgr/iomgr_fwd.h"
+#include "src/core/lib/promise/arena_context.h"
 #include "src/core/lib/promise/arena_promise.h"
 #include "src/core/lib/promise/context.h"
 #include "src/core/lib/resource_quota/arena.h"
@@ -157,7 +158,7 @@ class CallContext {
 };
 
 template <>
-struct ContextType<CallContext> {};
+struct ArenaContextType<CallContext> {};
 
 RefCountedPtr<CallSpineInterface> MakeServerCall(Server* server,
                                                  Channel* channel,
