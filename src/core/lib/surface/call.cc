@@ -3892,9 +3892,9 @@ void ServerCallSpine::CommitBatch(const grpc_op* ops, size_t nops,
   }
 }
 
-RefCountedPtr<CallSpineInterface> MakeServerCall(Server* server,
-                                                 Channel* channel,
-                                                 Arena* arena) {
+RefCountedPtr<CallTracerInterface> MakeServerCall(Server* server,
+                                                  Channel* channel,
+                                                  Arena* arena) {
   return RefCountedPtr<ServerCallSpine>(
       arena->New<ServerCallSpine>(server, channel, arena));
 }
