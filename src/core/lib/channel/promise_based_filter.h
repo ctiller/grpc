@@ -1617,7 +1617,7 @@ MakePromiseBasedFilter(const char* name) {
       promise_filter_detail::BaseCallDataMethods::StartTransportStreamOpBatch,
       // make_call_promise
       promise_filter_detail::ChannelFilterMethods::MakeCallPromise,
-      [](grpc_channel_element* elem, CallSpineInterface*) {
+      [](grpc_channel_element* elem, CallTracerInterface*) {
         GRPC_LOG_EVERY_N_SEC(
             1, GPR_ERROR,
             "gRPC V3 call stack in use, with a filter ('%s') that is not V3.",
