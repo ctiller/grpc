@@ -218,4 +218,4 @@ class InterceptionChain final : public RefCounted<InterceptionChain>,
 
 }  // namespace grpc_core
 
-#endif
+#endif  // GRPC_SRC_CORE_LIB_TRANSPORT_INTERCEPTION_CHAIN_H

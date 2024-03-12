@@ -787,12 +787,12 @@ class ClientChannel::LoadBalancedCallDestination : public CallDestination {
       RefCountedPtr<ClientChannel> client_channel)
       : client_channel_(std::move(client_channel)) {}
 
-  void Orphan() override {}
+  void Orphan() {}
 
   void StartCall(UnstartedCallHandler unstarted_handler) override {
     // If there is a call tracer, create a call attempt tracer.
     bool* is_transparent_retry_metadata =
-        unstarted_handler.UnprocessedClientInitialMetadata()->get_pointer(
+        unstarted_handler.UnprocessedClientInitialMetadata().get_pointer(
             IsTransparentRetry());
     bool is_transparent_retry = is_transparent_retry_metadata != nullptr
                                     ? *is_transparent_retry_metadata
@@ -875,7 +875,7 @@ ClientChannelServiceConfigCallData* GetServiceConfigCallDataFromContext() {
 
 // A call destination that does not support retries.
 // To be used as an L2 filter.
-class NoRetryCallDestination : public DelegatingCallDestination {
+class NoRetryCallDestination : public NoRetryCallDestination {
  public:
   NoRetryCallDestination(OrphanablePtr<CallDestination> next,
                          RefCountedPtr<CallFilters::Stack> filter_stack,
@@ -887,9 +887,9 @@ class NoRetryCallDestination : public DelegatingCallDestination {
                        ->memory_quota()
                        ->CreateMemoryOwner()) {}
 
-  void Orphan() override {}
+  void Orphan() {}
 
-  void StartCall(UnstartedCallHandler unstarted_handler) override {
+  void StartCall(UnstartedCallHandler unstarted_handler) {
     // Start the parent call.  We take ownership of the handler.
     CallHandler handler = unstarted_handler.StartCall(filter_stack_);
     // Start a promise to drain the client initial metadata from the
@@ -1274,7 +1274,7 @@ CallInitiator ClientChannel::CreateCall(
        was_queued = false]() mutable {
         const bool wait_for_ready =
             unstarted_handler.UnprocessedClientInitialMetadata()
-                ->GetOrCreatePointer(WaitForReady())
+                .GetOrCreatePointer(WaitForReady())
                 ->value;
         return Map(
             // Wait for the resolver result.
@@ -1865,7 +1865,7 @@ ClientChannel::PickSubchannel(LoadBalancingPolicy::SubchannelPicker& picker,
   auto& client_initial_metadata =
       unstarted_handler.UnprocessedClientInitialMetadata();
   LoadBalancingPolicy::PickArgs pick_args;
-  Slice* path = client_initial_metadata->get_pointer(HttpPathMetadata());
+  Slice* path = client_initial_metadata.get_pointer(HttpPathMetadata());
   GPR_ASSERT(path != nullptr);
   pick_args.path = path->as_string_view();
   LbCallState lb_call_state;
