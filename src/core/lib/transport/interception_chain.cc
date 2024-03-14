@@ -30,9 +30,8 @@ CallInitiator Interceptor::HijackedCall::MakeCall() {
 
 CallInitiator Interceptor::HijackedCall::MakeCallWithMetadata(
     ClientMetadataHandle metadata) {
-  auto call =
-      grpc_core::MakeCallPair(std::move(metadata), call_handler_.event_engine(),
-                              call_handler_.arena(), false);
+  auto call = MakeCallPair(std::move(metadata), call_handler_.event_engine(),
+                           call_handler_.arena(), false);
   destination_->StartCall(std::move(call.unstarted_handler));
   return std::move(call.initiator);
 }
