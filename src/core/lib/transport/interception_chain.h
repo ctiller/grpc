@@ -295,7 +295,6 @@ class InterceptionChain final : public RefCounted<InterceptionChain>,
     chain_->first_destination->StartCall(std::move(unstarted_call_handler));
   }
 
- public:
   explicit InterceptionChain(
       RefCountedPtr<interception_chain_detail::Chain> chain)
       : chain_(std::move(chain)) {}

@@ -789,7 +789,7 @@ class ClientChannel::LoadBalancedCallDestination : public CallDestination {
 
   void Orphan() {}
 
-  void StartCall(UnstartedCallHandler unstarted_handler) override {
+  void StartCall(UnstartedCallHandler unstarted_handler) {
     // If there is a call tracer, create a call attempt tracer.
     bool* is_transparent_retry_metadata =
         unstarted_handler.UnprocessedClientInitialMetadata().get_pointer(
@@ -1865,7 +1865,7 @@ ClientChannel::PickSubchannel(LoadBalancingPolicy::SubchannelPicker& picker,
   auto& client_initial_metadata =
       unstarted_handler.UnprocessedClientInitialMetadata();
   LoadBalancingPolicy::PickArgs pick_args;
-  Slice* path = client_initial_metadata->get_pointer(HttpPathMetadata());
+  Slice* path = client_initial_metadata.get_pointer(HttpPathMetadata());
   GPR_ASSERT(path != nullptr);
   pick_args.path = path->as_string_view();
   LbCallState lb_call_state;
