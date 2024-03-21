@@ -1832,6 +1832,8 @@ let package = Package(
         "src/core/lib/transport/http2_errors.h",
         "src/core/lib/transport/http_connect_handshaker.cc",
         "src/core/lib/transport/http_connect_handshaker.h",
+        "src/core/lib/transport/interception_chain.cc",
+        "src/core/lib/transport/interception_chain.h",
         "src/core/lib/transport/message.cc",
         "src/core/lib/transport/message.h",
         "src/core/lib/transport/metadata.cc",
