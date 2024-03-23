@@ -1093,16 +1093,13 @@ LIBGRPC_SRC = \
     src/core/lib/channel/channel_args_preconditioning.cc \
     src/core/lib/channel/channel_stack.cc \
     src/core/lib/channel/channel_stack_builder.cc \
-    src/core/lib/channel/channel_stack_builder_impl.cc \
     src/core/lib/channel/channel_stack_trace.cc \
     src/core/lib/channel/channel_trace.cc \
     src/core/lib/channel/channelz.cc \
     src/core/lib/channel/channelz_registry.cc \
-    src/core/lib/channel/connected_channel.cc \
     src/core/lib/channel/metrics.cc \
     src/core/lib/channel/promise_based_filter.cc \
     src/core/lib/channel/server_call_tracer_filter.cc \
-    src/core/lib/channel/status_util.cc \
     src/core/lib/compression/compression.cc \
     src/core/lib/compression/compression_internal.cc \
     src/core/lib/compression/message_compress.cc \
@@ -1382,7 +1379,6 @@ LIBGRPC_SRC = \
     src/core/lib/security/transport/server_auth_filter.cc \
     src/core/lib/security/transport/tsi_error.cc \
     src/core/lib/security/util/json_util.cc \
-    src/core/lib/slice/b64.cc \
     src/core/lib/slice/percent_encoding.cc \
     src/core/lib/slice/slice.cc \
     src/core/lib/slice/slice_buffer.cc \
@@ -1392,7 +1388,6 @@ LIBGRPC_SRC = \
     src/core/lib/surface/byte_buffer.cc \
     src/core/lib/surface/byte_buffer_reader.cc \
     src/core/lib/surface/call.cc \
-    src/core/lib/surface/call_details.cc \
     src/core/lib/surface/call_log_batch.cc \
     src/core/lib/surface/channel.cc \
     src/core/lib/surface/channel_create.cc \
@@ -1408,7 +1403,6 @@ LIBGRPC_SRC = \
     src/core/lib/surface/metadata_array.cc \
     src/core/lib/surface/server.cc \
     src/core/lib/surface/validate_metadata.cc \
-    src/core/lib/surface/version.cc \
     src/core/lib/surface/wait_for_cq_end_op.cc \
     src/core/lib/transport/bdp_estimator.cc \
     src/core/lib/transport/call_filters.cc \
@@ -1781,6 +1775,7 @@ PUBLIC_HEADERS_C += \
     include/grpc/slice_buffer.h \
     include/grpc/status.h \
     include/grpc/support/alloc.h \
+    include/grpc/support/atm.h \
     include/grpc/support/atm_gcc_atomic.h \
     include/grpc/support/atm_gcc_sync.h \
     include/grpc/support/atm_windows.h \

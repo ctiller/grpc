@@ -1132,8 +1132,6 @@
     <file baseinstalldir="/" name="src/core/lib/channel/channel_stack.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/channel/channel_stack_builder.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/channel/channel_stack_builder.h" role="src" />
-    <file baseinstalldir="/" name="src/core/lib/channel/channel_stack_builder_impl.cc" role="src" />
-    <file baseinstalldir="/" name="src/core/lib/channel/channel_stack_builder_impl.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/channel/channel_stack_trace.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/channel/channel_stack_trace.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/channel/channel_trace.cc" role="src" />
@@ -1142,16 +1140,12 @@
     <file baseinstalldir="/" name="src/core/lib/channel/channelz.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/channel/channelz_registry.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/channel/channelz_registry.h" role="src" />
-    <file baseinstalldir="/" name="src/core/lib/channel/connected_channel.cc" role="src" />
-    <file baseinstalldir="/" name="src/core/lib/channel/connected_channel.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/channel/context.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/channel/metrics.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/channel/metrics.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/channel/promise_based_filter.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/channel/promise_based_filter.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/channel/server_call_tracer_filter.cc" role="src" />
-    <file baseinstalldir="/" name="src/core/lib/channel/status_util.cc" role="src" />
-    <file baseinstalldir="/" name="src/core/lib/channel/status_util.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/channel/tcp_tracer.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/compression/compression.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/compression/compression_internal.cc" role="src" />
@@ -1565,7 +1559,6 @@
     <file baseinstalldir="/" name="src/core/lib/matchers/matchers.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/promise/activity.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/promise/activity.h" role="src" />
-    <file baseinstalldir="/" name="src/core/lib/promise/all_ok.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/promise/arena_promise.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/promise/cancel_callback.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/promise/context.h" role="src" />
@@ -1738,8 +1731,6 @@
     <file baseinstalldir="/" name="src/core/lib/security/transport/tsi_error.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/security/util/json_util.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/security/util/json_util.h" role="src" />
-    <file baseinstalldir="/" name="src/core/lib/slice/b64.cc" role="src" />
-    <file baseinstalldir="/" name="src/core/lib/slice/b64.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/slice/percent_encoding.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/slice/percent_encoding.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/slice/slice.cc" role="src" />
@@ -1757,7 +1748,6 @@
     <file baseinstalldir="/" name="src/core/lib/surface/byte_buffer_reader.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/surface/call.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/surface/call.h" role="src" />
-    <file baseinstalldir="/" name="src/core/lib/surface/call_details.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/surface/call_log_batch.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/surface/call_test_only.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/surface/call_trace.h" role="src" />
@@ -1789,7 +1779,6 @@
     <file baseinstalldir="/" name="src/core/lib/surface/server_interface.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/surface/validate_metadata.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/surface/validate_metadata.h" role="src" />
-    <file baseinstalldir="/" name="src/core/lib/surface/version.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/surface/wait_for_cq_end_op.cc" role="src" />
     <file baseinstalldir="/" name="src/core/lib/surface/wait_for_cq_end_op.h" role="src" />
     <file baseinstalldir="/" name="src/core/lib/transport/bdp_estimator.cc" role="src" />

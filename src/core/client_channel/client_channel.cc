@@ -789,7 +789,7 @@ class ClientChannel::LoadBalancedCallDestination
       RefCountedPtr<ClientChannel> client_channel)
       : client_channel_(std::move(client_channel)) {}
 
-  void Orphan() {}
+  void Orphan() override {}
 
   void StartCall(UnstartedCallHandler unstarted_handler) override {
     // If there is a call tracer, create a call attempt tracer.
@@ -1799,7 +1799,7 @@ ClientChannel::PickSubchannel(LoadBalancingPolicy::SubchannelPicker& picker,
   auto& client_initial_metadata =
       unstarted_handler.UnprocessedClientInitialMetadata();
   LoadBalancingPolicy::PickArgs pick_args;
-  Slice* path = client_initial_metadata->get_pointer(HttpPathMetadata());
+  Slice* path = client_initial_metadata.get_pointer(HttpPathMetadata());
   GPR_ASSERT(path != nullptr);
   pick_args.path = path->as_string_view();
   LbCallState lb_call_state;
@@ -1869,7 +1869,7 @@ ClientChannel::PickSubchannel(LoadBalancingPolicy::SubchannelPicker& picker,
         // If wait_for_ready is false, then the error indicates the RPC
         // attempt's final status.
         if (!unstarted_handler.UnprocessedClientInitialMetadata()
-                 ->GetOrCreatePointer(WaitForReady())
+                 .GetOrCreatePointer(WaitForReady())
                  ->value) {
           return MaybeRewriteIllegalStatusCode(std::move(fail_pick->status),
                                                "LB pick");
