@@ -705,7 +705,7 @@ class LbCallTracingFilter : public ImplementChannelFilter<LbCallTracingFilter> {
       if (tracer != nullptr) {
         tracer->RecordReceivedTrailingMetadata(
             status, &metadata,
-            &GetContext<CallContext>()->call_stats()->transport_stream_stats);
+            &GetContext<HasContext>()->call_stats()->transport_stream_stats);
       }
       if (call_tracker != nullptr && *call_tracker != nullptr) {
         LbMetadata lb_metadata(&metadata);
@@ -788,7 +788,7 @@ class ClientChannel::LoadBalancedCallDestination
       RefCountedPtr<ClientChannel> client_channel)
       : client_channel_(std::move(client_channel)) {}
 
-  void Orphan() {}
+  void Orphan() override {}
 
   void StartCall(UnstartedCallHandler unstarted_handler) override {
     // If there is a call tracer, create a call attempt tracer.
@@ -1750,7 +1750,7 @@ absl::Status ClientChannel::ApplyServiceConfigToCall(
     // If the service config specifies a deadline, update the call's
     // deadline timer.
     if (method_params->timeout() != Duration::Zero()) {
-      CallContext* call_context = GetContext<CallContext>();
+      HasContext* call_context = GetContext<HasContext>();
       const Timestamp per_method_deadline =
           Timestamp::FromCycleCounterRoundUp(call_context->call_start_time()) +
           method_params->timeout();
@@ -1798,7 +1798,7 @@ ClientChannel::PickSubchannel(LoadBalancingPolicy::SubchannelPicker& picker,
   auto& client_initial_metadata =
       unstarted_handler.UnprocessedClientInitialMetadata();
   LoadBalancingPolicy::PickArgs pick_args;
-  Slice* path = client_initial_metadata->get_pointer(HttpPathMetadata());
+  Slice* path = client_initial_metadata.get_pointer(HttpPathMetadata());
   GPR_ASSERT(path != nullptr);
   pick_args.path = path->as_string_view();
   LbCallState lb_call_state;
@@ -1868,7 +1868,7 @@ ClientChannel::PickSubchannel(LoadBalancingPolicy::SubchannelPicker& picker,
         // If wait_for_ready is false, then the error indicates the RPC
         // attempt's final status.
         if (!unstarted_handler.UnprocessedClientInitialMetadata()
-                 ->GetOrCreatePointer(WaitForReady())
+                 .GetOrCreatePointer(WaitForReady())
                  ->value) {
           return MaybeRewriteIllegalStatusCode(std::move(fail_pick->status),
                                                "LB pick");

@@ -109,10 +109,10 @@ namespace {
 class NotReallyACallFactory final : public CallFactory {
  public:
   using CallFactory::CallFactory;
-  CallInitiator CreateCall(ClientMetadataHandle, Arena*) override {
+  CallInitiator CreateCall(ClientMetadataHandle, Arena*) {
     Crash("NotReallyACallFactory::CreateCall should never be called");
   }
-  void Orphan() override {}
+  void Orphan() {}
 };
 
 }  // namespace
