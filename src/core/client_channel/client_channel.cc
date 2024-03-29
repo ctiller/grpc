@@ -704,7 +704,7 @@ class LbCallTracingFilter : public ImplementChannelFilter<LbCallTracingFilter> {
       }
       if (tracer != nullptr) {
         tracer->RecordReceivedTrailingMetadata(status, &metadata,
-                                               &GetContext<grpc_core::Call>()
+                                               &GetContext<Call>()
                                                     ->call_stats()
                                                     ->transport_stream_stats);
       }

@@ -16,9 +16,8 @@
 
 #include "src/core/lib/transport/interception_chain.h"
 
-#include "call_destination.h"
-
 #include "src/core/lib/gprpp/match.h"
+#include "src/core/lib/transport/call_destination.h"
 #include "src/core/lib/transport/call_filters.h"
 #include "src/core/lib/transport/call_spine.h"
 #include "src/core/lib/transport/metadata.h"
@@ -38,9 +37,8 @@ CallInitiator HijackedCall::MakeCall() {
 
 CallInitiator HijackedCall::MakeCallWithMetadata(
     ClientMetadataHandle metadata) {
-  auto call =
-      grpc_core::MakeCallPair(std::move(metadata), call_handler_.event_engine(),
-                              call_handler_.arena(), nullptr);
+  auto call = MakeCallPair(std::move(metadata), call_handler_.event_engine(),
+                           call_handler_.arena(), nullptr);
   destination_->StartCall(std::move(call.unstarted_handler));
   return std::move(call.initiator);
 }
