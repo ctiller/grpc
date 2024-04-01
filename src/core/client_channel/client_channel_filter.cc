@@ -684,7 +684,7 @@ class ClientChannelFilter::SubchannelWrapper : public SubchannelInterface {
     GRPC_CHANNEL_STACK_UNREF(chand_->owning_stack_, "SubchannelWrapper");
   }
 
-  void Orphan() override {
+  void Orphaned() override {
     if (!IsWorkSerializerDispatchEnabled()) return;
     // Make sure we clean up the channel's subchannel maps inside the
     // WorkSerializer.
@@ -3535,7 +3535,7 @@ ClientChannelFilter::PromiseBasedLoadBalancedCall::MakeCallPromise(
         [this]() {
           // TODO(roth): Change CallTracer API to not pass metadata
           // batch to this method, since the batch is always empty.
-          grpc_metadata_batch metadata(GetContext<Arena>());
+          grpc_metadata_batch metadata;
           call_attempt_tracer()->RecordSendTrailingMetadata(&metadata);
         });
   }
