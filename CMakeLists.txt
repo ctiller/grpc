@@ -14607,7 +14607,6 @@ add_executable(fuzzing_event_engine_unittest
   ${_gRPC_PROTO_GENS_DIR}/test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.pb.h
   ${_gRPC_PROTO_GENS_DIR}/test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.grpc.pb.h
   src/core/ext/upb-gen/google/protobuf/any.upb_minitable.c
-  src/core/ext/upb-gen/google/protobuf/descriptor.upb_minitable.c
   src/core/ext/upb-gen/google/rpc/status.upb_minitable.c
   src/core/ext/upb-gen/src/proto/grpc/gcp/altscontext.upb_minitable.c
   src/core/ext/upb-gen/src/proto/grpc/gcp/handshaker.upb_minitable.c
@@ -14747,16 +14746,15 @@ add_executable(fuzzing_event_engine_unittest
   src/core/tsi/alts/handshaker/transport_security_common_api.cc
   test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.cc
   test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine_unittest.cc
-  third_party/upb/upb/message/accessors.c
   third_party/upb/upb/mini_descriptor/build_enum.c
   third_party/upb/upb/mini_descriptor/decode.c
   third_party/upb/upb/mini_descriptor/internal/base92.c
   third_party/upb/upb/mini_descriptor/internal/encode.c
   third_party/upb/upb/mini_descriptor/link.c
   third_party/upb/upb/wire/decode.c
-  third_party/upb/upb/wire/decode_fast.c
   third_party/upb/upb/wire/encode.c
   third_party/upb/upb/wire/eps_copy_input_stream.c
+  third_party/upb/upb/wire/internal/decode_fast.c
   third_party/upb/upb/wire/reader.c
 )
 if(WIN32 AND MSVC)
@@ -14790,8 +14788,8 @@ target_include_directories(fuzzing_event_engine_unittest
 target_link_libraries(fuzzing_event_engine_unittest
   ${_gRPC_ALLTARGETS_LIBRARIES}
   gtest
-  upb_message_lib
   utf8_range_lib
+  upb_message_lib
   absl::config
   absl::no_destructor
   absl::cleanup
@@ -17842,7 +17840,6 @@ if(gRPC_BUILD_TESTS)
 
 add_executable(interception_chain_test
   src/core/ext/upb-gen/google/protobuf/any.upb_minitable.c
-  src/core/ext/upb-gen/google/protobuf/descriptor.upb_minitable.c
   src/core/ext/upb-gen/google/rpc/status.upb_minitable.c
   src/core/lib/channel/channel_args.cc
   src/core/lib/compression/compression.cc
@@ -17889,16 +17886,15 @@ add_executable(interception_chain_test
   src/core/lib/transport/status_conversion.cc
   src/core/lib/transport/timeout_encoding.cc
   test/core/transport/interception_chain_test.cc
-  third_party/upb/upb/message/accessors.c
   third_party/upb/upb/mini_descriptor/build_enum.c
   third_party/upb/upb/mini_descriptor/decode.c
   third_party/upb/upb/mini_descriptor/internal/base92.c
   third_party/upb/upb/mini_descriptor/internal/encode.c
   third_party/upb/upb/mini_descriptor/link.c
   third_party/upb/upb/wire/decode.c
-  third_party/upb/upb/wire/decode_fast.c
   third_party/upb/upb/wire/encode.c
   third_party/upb/upb/wire/eps_copy_input_stream.c
+  third_party/upb/upb/wire/internal/decode_fast.c
   third_party/upb/upb/wire/reader.c
 )
 if(WIN32 AND MSVC)
@@ -17932,8 +17928,8 @@ target_include_directories(interception_chain_test
 target_link_libraries(interception_chain_test
   ${_gRPC_ALLTARGETS_LIBRARIES}
   gtest
-  upb_message_lib
   utf8_range_lib
+  upb_message_lib
   absl::config
   absl::no_destructor
   absl::inlined_vector

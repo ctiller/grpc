@@ -58,7 +58,7 @@ class SubchannelConnector : public InternallyRefCounted<SubchannelConnector> {
 
     void Reset() {
       if (transport != nullptr) {
-        transport->Orphan();
+        transport->Orphaned();
         transport = nullptr;
       }
       channel_args = ChannelArgs();

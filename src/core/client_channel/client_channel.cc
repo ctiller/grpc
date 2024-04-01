@@ -207,7 +207,7 @@ class ClientChannel::SubchannelWrapper : public SubchannelInterface {
     }
   }
 
-  void Orphan() override {
+  void Orphan() {
     // Make sure we clean up the channel's subchannel maps inside the
     // WorkSerializer.
     WeakRefAsSubclass<SubchannelWrapper>(DEBUG_LOCATION,
@@ -704,7 +704,7 @@ class LbCallTracingFilter : public ImplementChannelFilter<LbCallTracingFilter> {
       }
       if (tracer != nullptr) {
         tracer->RecordReceivedTrailingMetadata(status, &metadata,
-                                               &GetContext<grpc_core::Call>()
+                                               &GetContext<Call>()
                                                     ->call_stats()
                                                     ->transport_stream_stats);
       }
@@ -789,7 +789,7 @@ class ClientChannel::LoadBalancedCallDestination
       RefCountedPtr<ClientChannel> client_channel)
       : client_channel_(std::move(client_channel)) {}
 
-  void Orphan() override {}
+  void Orphan() {}
 
   void StartCall(UnstartedCallHandler unstarted_handler) override {
     // If there is a call tracer, create a call attempt tracer.

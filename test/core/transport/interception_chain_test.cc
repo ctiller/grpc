@@ -145,7 +145,7 @@ class TestConsumingInterceptor final : public Interceptor {
     Consume(std::move(unstarted_call_handler))
         .Cancel(ServerMetadataFromStatus(absl::InternalError("👊 consumed")));
   }
-  void Orphan() override {}
+  void Orphan() {}
   static absl::StatusOr<RefCountedPtr<TestConsumingInterceptor<I>>> Create(
       const ChannelArgs& args) {
     return MakeRefCounted<TestConsumingInterceptor<I>>();
@@ -161,7 +161,7 @@ class TestFailingInterceptor final : public Interceptor {
   void StartCall(UnstartedCallHandler unstarted_call_handler) override {
     Crash("unreachable");
   }
-  void Orphan() override {}
+  void Orphan() {}
   static absl::StatusOr<RefCountedPtr<TestFailingInterceptor<I>>> Create(
       const ChannelArgs& args) {
     return absl::InternalError(absl::StrCat("👊 failed to instantiate ", I));
@@ -186,7 +186,7 @@ class TestHijackingInterceptor final : public Interceptor {
                      });
         });
   }
-  void Orphan() override {}
+  void Orphan() {}
   static absl::StatusOr<RefCountedPtr<TestHijackingInterceptor<I>>> Create(
       const ChannelArgs& args) {
     return MakeRefCounted<TestHijackingInterceptor<I>>();
@@ -246,7 +246,7 @@ class InterceptionChainTest : public ::testing::Test {
           ServerMetadataFromStatus(absl::InternalError("👊 cancelled")));
     }
 
-    void Orphan() override {}
+    void Orphan() {}
 
     ClientMetadataHandle TakeMetadata() { return std::move(metadata_); }
 

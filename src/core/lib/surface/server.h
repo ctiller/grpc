@@ -387,7 +387,7 @@ class Server : public ServerInterface,
   class CallPublisher final : public CallDestination {
    public:
     void HandleCall(CallHandler handler) override { Crash("unimplemented"); }
-    void Orphan() override { Unref(); }
+    void Orphan() { Unref(); }
   };
 
   class ChannelBroadcaster;

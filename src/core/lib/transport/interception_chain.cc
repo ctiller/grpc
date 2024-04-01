@@ -16,9 +16,8 @@
 
 #include "src/core/lib/transport/interception_chain.h"
 
-#include "call_destination.h"
-
 #include "src/core/lib/gprpp/match.h"
+#include "src/core/lib/transport/call_destination.h"
 #include "src/core/lib/transport/call_filters.h"
 #include "src/core/lib/transport/call_spine.h"
 #include "src/core/lib/transport/metadata.h"
@@ -38,9 +37,8 @@ CallInitiator HijackedCall::MakeCall() {
 
 CallInitiator HijackedCall::MakeCallWithMetadata(
     ClientMetadataHandle metadata) {
-  auto call =
-      grpc_core::MakeCallPair(std::move(metadata), call_handler_.event_engine(),
-                              call_handler_.arena(), nullptr);
+  auto call = MakeCallPair(std::move(metadata), call_handler_.event_engine(),
+                           call_handler_.arena(), nullptr);
   destination_->StartCall(std::move(call.unstarted_handler));
   return std::move(call.initiator);
 }
@@ -53,7 +51,7 @@ class CallStarter final : public UnstartedCallDestination {
               RefCountedPtr<CallDestination> destination)
       : stack_(std::move(stack)), destination_(std::move(destination)) {}
 
-  void Orphan() override {
+  void Orphan() {
     stack_.reset();
     destination_.reset();
   }
@@ -74,7 +72,7 @@ class TerminalInterceptor final : public UnstartedCallDestination {
       RefCountedPtr<UnstartedCallDestination> destination)
       : stack_(std::move(stack)), destination_(std::move(destination)) {}
 
-  void Orphan() override {
+  void Orphan() {
     stack_.reset();
     destination_.reset();
   }
