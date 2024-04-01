@@ -270,8 +270,9 @@ class TransportTest : public ::testing::Test {
              MemoryAllocator* allocator)
         : event_engine_(event_engine), allocator_(allocator) {}
 
-    Arena* CreateArena() usOr<CallInitiator> CreateCall(
-        ClientMetadata& client_initial_metadata, Arena* arena);
+    Arena* CreateArena();
+    usOr<CallInitiator> CreateCall(ClientMetadata& client_initial_metadata,
+                                   Arena* arena);
     abonal<Cal> PopHandler();
 
    private:
