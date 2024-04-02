@@ -49,7 +49,7 @@ class InprocServerTransport final : public Transport, public ServerTransport {
     }
   }
 
-  void Orphan() override {}
+  void Orphan() {}
 
   FilterStackTransport* filter_stack_transport() override { return nullptr; }
   ClientTransport* client_transport() override { return nullptr; }
@@ -134,7 +134,7 @@ class InprocClientTransport final : public Transport, public ClientTransport {
                }));
   }
 
-  void Orphan() override {}
+  void Orphan() {}
 
   OrphanablePtr<Transport> GetServerTransport() {
     return OrphanablePtr<Transport>(server_transport_->Ref().release());
