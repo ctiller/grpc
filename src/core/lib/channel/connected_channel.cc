@@ -233,7 +233,7 @@ static grpc_error_handle connected_channel_init_channel_elem(
 static void connected_channel_destroy_channel_elem(grpc_channel_element* elem) {
   channel_data* cd = static_cast<channel_data*>(elem->channel_data);
   if (cd->transport) {
-    cd->transport->Orphan();
+    cd->transport->Orphaned();
   }
 }
 

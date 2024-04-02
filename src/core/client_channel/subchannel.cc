@@ -116,13 +116,13 @@ class LegacyConnectedSubchannel : public ConnectedSubchannel {
       : ConnectedSubchannel(args, std::move(channelz_subchannel)),
         channel_stack_(std::move(channel_stack)) {}
 
-  ~LegacyConnectedSubchannel() override {
+  ~LegacyConnectedSubchannel() {
     channel_stack_.reset(DEBUG_LOCATION, "ConnectedSubchannel");
   }
 
   void StartWatch(
       grpc_pollset_set* interested_parties,
-      OrphanablePtr<ConnectivityStateWatcherInterface> watcher) override {
+      OrphanablePtr<ConnectivityStateWatcherInterface> watcher) {
     grpc_transport_op* op = grpc_make_transport_op(nullptr);
     op->start_connectivity_watch = std::move(watcher);
     op->start_connectivity_watch_state = GRPC_CHANNEL_READY;
@@ -132,24 +132,24 @@ class LegacyConnectedSubchannel : public ConnectedSubchannel {
     elem->filter->start_transport_op(elem, op);
   }
 
-  void Ping(absl::AnyInvocable<void(absl::Status)> on_ack) override {
+  void Ping(absl::AnyInvocable<void(absl::Status)> on_ack) {
     Crash("call v3 ping method called in legacy impl");
   }
 
-  void StartCall(UnstartedCallHandler) override {
+  void StartCall(UnstartedCallHandler) {
     Crash("call v3 StartCall() method called in legacy impl");
   }
 
-  grpc_channel_stack* channel_stack() const override {
+  grpc_channel_stack* channel_stack() const {
     return channel_stack_.get();
   }
 
-  size_t GetInitialCallSizeEstimate() const override {
+  size_t GetInitialCallSizeEstimate() const {
     return GPR_ROUND_UP_TO_ALIGNMENT_SIZE(sizeof(SubchannelCall)) +
            channel_stack_->call_stack_size;
   }
 
-  void Ping(grpc_closure* on_initiate, grpc_closure* on_ack) override {
+  void Ping(grpc_closure* on_initiate, grpc_closure* on_ack) {
     grpc_transport_op* op = grpc_make_transport_op(nullptr);
     op->send_ping.on_initiate = on_initiate;
     op->send_ping.on_ack = on_ack;
@@ -178,24 +178,24 @@ class NewConnectedSubchannel : public ConnectedSubchannel {
 
   void StartWatch(
       grpc_pollset_set* interested_parties,
-      OrphanablePtr<ConnectivityStateWatcherInterface> watcher) override {
+      OrphanablePtr<ConnectivityStateWatcherInterface> watcher) {
     // FIXME: add new transport API for this in v3 stack
   }
 
-  void Ping(absl::AnyInvocable<void(absl::Status)> on_ack) override {
+  void Ping(absl::AnyInvocable<void(absl::Status)> on_ack) {
     // FIXME: add new transport API for this in v3 stack
   }
 
-  void StartCall(UnstartedCallHandler unstarted_handler) override {
+  void StartCall(UnstartedCallHandler unstarted_handler) {
     auto handler = unstarted_handler.StartCall(filter_stack_);
     transport_->client_transport()->StartCall(std::move(handler));
   }
 
-  grpc_channel_stack* channel_stack() const override { return nullptr; }
+  grpc_channel_stack* channel_stack() const { return nullptr; }
 
-  size_t GetInitialCallSizeEstimate() const override { return 0; }
+  size_t GetInitialCallSizeEstimate() const { return 0; }
 
-  void Ping(grpc_closure* on_initiate, grpc_closure* on_ack) override {
+  void Ping(grpc_closure* on_initiate, grpc_closure* on_ack) {
     Crash("legacy ping method called in call v3 impl");
   }
 

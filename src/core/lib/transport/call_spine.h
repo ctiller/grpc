@@ -17,8 +17,6 @@
 
 #include <grpc/support/port_platform.h>
 
-#include "call_size_estimator.h"
-
 #include <grpc/event_engine/event_engine.h>
 #include <grpc/support/log.h>
 
@@ -31,6 +29,7 @@
 #include "src/core/lib/promise/status_flag.h"
 #include "src/core/lib/promise/try_seq.h"
 #include "src/core/lib/transport/call_filters.h"
+#include "src/core/lib/transport/call_size_estimator.h"
 #include "src/core/lib/transport/message.h"
 #include "src/core/lib/transport/metadata.h"
 
