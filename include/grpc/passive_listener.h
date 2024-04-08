@@ -14,12 +14,11 @@
 #ifndef GRPC_PASSIVE_LISTENER_H
 #define GRPC_PASSIVE_LISTENER_H
 
-#include <grpc/support/port_platform.h>
-
 #include <memory>
 
 #include <grpc/event_engine/event_engine.h>
 #include <grpc/grpc.h>
+#include <grpc/support/port_platform.h>
 
 namespace grpc_core {
 class Server;
