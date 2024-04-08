@@ -47,4 +47,4 @@ class MergeBuffer {
 
 }  // namespace grpc_core
 
-#endif
+#endif  // GRPC_SRC_CORE_LIB_PROMISE_MERGE_BUFFER_H
