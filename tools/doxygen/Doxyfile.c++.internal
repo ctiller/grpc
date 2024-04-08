@@ -1286,8 +1286,6 @@ src/core/ext/transport/chttp2/transport/bin_decoder.cc \
 src/core/ext/transport/chttp2/transport/bin_decoder.h \
 src/core/ext/transport/chttp2/transport/bin_encoder.cc \
 src/core/ext/transport/chttp2/transport/bin_encoder.h \
-src/core/ext/transport/chttp2/transport/chttp2_transport.cc \
-src/core/ext/transport/chttp2/transport/legacy_chttp2_transport.h \
 src/core/ext/transport/chttp2/transport/context_list_entry.h \
 src/core/ext/transport/chttp2/transport/decode_huff.cc \
 src/core/ext/transport/chttp2/transport/decode_huff.h \
@@ -1325,6 +1323,8 @@ src/core/ext/transport/chttp2/transport/http_trace.h \
 src/core/ext/transport/chttp2/transport/huffsyms.cc \
 src/core/ext/transport/chttp2/transport/huffsyms.h \
 src/core/ext/transport/chttp2/transport/internal.h \
+src/core/ext/transport/chttp2/transport/legacy_chttp2_transport.cc \
+src/core/ext/transport/chttp2/transport/legacy_chttp2_transport.h \
 src/core/ext/transport/chttp2/transport/legacy_frame.h \
 src/core/ext/transport/chttp2/transport/max_concurrent_streams_policy.cc \
 src/core/ext/transport/chttp2/transport/max_concurrent_streams_policy.h \
@@ -2917,7 +2917,6 @@ src/core/lib/transport/metadata_compression_traits.h \
 src/core/lib/transport/parsed_metadata.cc \
 src/core/lib/transport/parsed_metadata.h \
 src/core/lib/transport/simple_slice_based_metadata.h \
-src/core/lib/transport/stats.h \
 src/core/lib/transport/status_conversion.cc \
 src/core/lib/transport/status_conversion.h \
 src/core/lib/transport/tcp_connect_handshaker.cc \
