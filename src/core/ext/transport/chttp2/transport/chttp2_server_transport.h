@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef CHTTP2_H
-#define CHTTP2_H
+#ifndef GRPC_SRC_CORE_EXT_TRANSPORT_CHTTP2_TRANSPORT_CHTTP2_SERVER_TRANSPORT_H
+#define GRPC_SRC_CORE_EXT_TRANSPORT_CHTTP2_TRANSPORT_CHTTP2_SERVER_TRANSPORT_H
+
+#include <grpc/support/port_platform.h>
 
 #include "src/core/lib/transport/transport.h"
 
@@ -28,4 +30,4 @@ class Chttp2ServerTransport : public Transport {
 
 }  // namespace grpc_core
 
-#endif
+#endif  // GRPC_SRC_CORE_EXT_TRANSPORT_CHTTP2_TRANSPORT_CHTTP2_SERVER_TRANSPORT_H

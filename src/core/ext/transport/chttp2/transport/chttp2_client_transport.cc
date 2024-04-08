@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <grpc/support/port_platform.h>
+
 #include "src/core/ext/transport/chttp2/transport/chttp2_client_transport.h"
 
-#include "frame.h"
-#include "hpack_encoder.h"
-
+#include "src/core/ext/transport/chttp2/transport/frame.h"
+#include "src/core/ext/transport/chttp2/transport/hpack_encoder.h"
 #include "src/core/lib/promise/for_each.h"
 #include "src/core/lib/promise/try_seq.h"
 
