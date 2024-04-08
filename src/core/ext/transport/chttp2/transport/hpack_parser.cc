@@ -29,7 +29,9 @@
 #include <utility>
 
 #include "absl/base/attributes.h"
+#include "absl/functional/function_ref.h"
 #include "absl/status/status.h"
+#include "absl/strings/escaping.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
@@ -37,13 +39,13 @@
 #include "absl/types/optional.h"
 #include "absl/types/span.h"
 #include "absl/types/variant.h"
-#include "hpack_parser_table.h"
 
 #include <grpc/slice.h>
 #include <grpc/support/log.h>
 
 #include "src/core/ext/transport/chttp2/transport/decode_huff.h"
 #include "src/core/ext/transport/chttp2/transport/hpack_constants.h"
+#include "src/core/ext/transport/chttp2/transport/hpack_parser_table.h"
 #include "src/core/lib/debug/stats.h"
 #include "src/core/lib/debug/stats_data.h"
 #include "src/core/lib/debug/trace.h"
@@ -92,8 +94,7 @@ absl::Status EnsureStreamError(absl::Status error) {
 
 bool IsStreamError(const absl::Status& status) {
   intptr_t stream_id;
-  return grpc_error_get_int(status, grpc_core::StatusIntProperty::kStreamId,
-                            &stream_id);
+  return grpc_error_get_int(status, StatusIntProperty::kStreamId, &stream_id);
 }
 
 class MetadataSizeLimitExceededEncoder {
