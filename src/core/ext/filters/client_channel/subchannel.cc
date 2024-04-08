@@ -112,7 +112,7 @@ ConnectedSubchannel::~ConnectedSubchannel() {
 void ConnectedSubchannel::StartWatch(
     grpc_pollset_set* interested_parties,
     OrphanablePtr<ConnectivityStateWatcherInterface> watcher) {
-  grpc_transport_op* op = grpc_make_transport_op(nullptr);
+  grpc_transport_op* op = grpc_make_transport_stream_op(nullptr);
   op->start_connectivity_watch = std::move(watcher);
   op->start_connectivity_watch_state = GRPC_CHANNEL_READY;
   op->bind_pollset_set = interested_parties;
@@ -122,7 +122,7 @@ void ConnectedSubchannel::StartWatch(
 
 void ConnectedSubchannel::Ping(grpc_closure* on_initiate,
                                grpc_closure* on_ack) {
-  grpc_transport_op* op = grpc_make_transport_op(nullptr);
+  grpc_transport_op* op = grpc_make_transport_stream_op(nullptr);
   grpc_channel_element* elem;
   op->send_ping.on_initiate = on_initiate;
   op->send_ping.on_ack = on_ack;

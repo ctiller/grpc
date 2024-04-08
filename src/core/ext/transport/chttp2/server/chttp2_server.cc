@@ -423,7 +423,7 @@ void Chttp2ServerListener::ActiveConnection::HandshakingState::OnTimeout() {
     }
   }
   if (transport != nullptr) {
-    grpc_transport_op* op = grpc_make_transport_op(nullptr);
+    grpc_transport_op* op = grpc_make_transport_stream_op(nullptr);
     op->disconnect_with_error = GRPC_ERROR_CREATE(
         "Did not receive HTTP/2 settings before handshake timeout");
     transport->PerformOp(op);
@@ -604,7 +604,7 @@ void Chttp2ServerListener::ActiveConnection::SendGoAway() {
     }
   }
   if (transport != nullptr) {
-    grpc_transport_op* op = grpc_make_transport_op(nullptr);
+    grpc_transport_op* op = grpc_make_transport_stream_op(nullptr);
     op->goaway_error =
         GRPC_ERROR_CREATE("Server is stopping to serve requests.");
     transport->PerformOp(op);
@@ -664,7 +664,7 @@ void Chttp2ServerListener::ActiveConnection::OnDrainGraceTimeExpiry() {
     }
   }
   if (transport != nullptr) {
-    grpc_transport_op* op = grpc_make_transport_op(nullptr);
+    grpc_transport_op* op = grpc_make_transport_stream_op(nullptr);
     op->disconnect_with_error = GRPC_ERROR_CREATE(
         "Drain grace time expired. Closing connection immediately.");
     transport->PerformOp(op);

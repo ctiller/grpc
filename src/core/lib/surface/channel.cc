@@ -272,7 +272,7 @@ void grpc_channel_reset_connect_backoff(grpc_channel* channel) {
   grpc_core::ExecCtx exec_ctx;
   GRPC_API_TRACE("grpc_channel_reset_connect_backoff(channel=%p)", 1,
                  (channel));
-  grpc_transport_op* op = grpc_make_transport_op(nullptr);
+  grpc_transport_op* op = grpc_make_transport_stream_op(nullptr);
   op->reset_connect_backoff = true;
   grpc_channel_element* elem = grpc_channel_stack_element(
       grpc_core::Channel::FromC(channel)->channel_stack(), 0);
@@ -425,7 +425,7 @@ grpc_call* grpc_channel_create_registered_call(
 void grpc_channel_destroy_internal(grpc_channel* c_channel) {
   grpc_core::RefCountedPtr<grpc_core::Channel> channel(
       grpc_core::Channel::FromC(c_channel));
-  grpc_transport_op* op = grpc_make_transport_op(nullptr);
+  grpc_transport_op* op = grpc_make_transport_stream_op(nullptr);
   grpc_channel_element* elem;
   GRPC_API_TRACE("grpc_channel_destroy(channel=%p)", 1, (c_channel));
   op->disconnect_with_error = GRPC_ERROR_CREATE("Channel Destroyed");

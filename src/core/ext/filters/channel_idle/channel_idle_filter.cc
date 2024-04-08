@@ -163,7 +163,7 @@ void MaxAgeFilter::PostInit() {
     // Trigger idle timer
     startup->filter->IncreaseCallCount();
     startup->filter->DecreaseCallCount();
-    grpc_transport_op* op = grpc_make_transport_op(nullptr);
+    grpc_transport_op* op = grpc_make_transport_stream_op(nullptr);
     op->start_connectivity_watch.reset(
         new ConnectivityWatcher(startup->filter));
     op->start_connectivity_watch_state = GRPC_CHANNEL_IDLE;
@@ -191,7 +191,7 @@ void MaxAgeFilter::PostInit() {
               // Jump out of the activity to send the goaway.
               auto fn = [](void* arg, grpc_error_handle) {
                 auto* channel_stack = static_cast<grpc_channel_stack*>(arg);
-                grpc_transport_op* op = grpc_make_transport_op(nullptr);
+                grpc_transport_op* op = grpc_make_transport_stream_op(nullptr);
                 op->goaway_error = grpc_error_set_int(
                     GRPC_ERROR_CREATE("max_age"),
                     StatusIntProperty::kHttp2Error, GRPC_HTTP2_NO_ERROR);
@@ -282,7 +282,7 @@ void ChannelIdleFilter::StartIdleTimer() {
 }
 
 void ChannelIdleFilter::CloseChannel() {
-  auto* op = grpc_make_transport_op(nullptr);
+  auto* op = grpc_make_transport_stream_op(nullptr);
   op->disconnect_with_error = grpc_error_set_int(
       GRPC_ERROR_CREATE("enter idle"),
       StatusIntProperty::ChannelConnectivityState, GRPC_CHANNEL_IDLE);

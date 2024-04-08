@@ -593,7 +593,7 @@ static void close_transport_locked(grpc_binder_transport* gbt) {
 
 static void perform_transport_op_locked(void* transport_op,
                                         grpc_error_handle /*error*/) {
-  grpc_transport_op* op = static_cast<grpc_transport_op*>(transport_op);
+  transport_op* op = static_cast<grpc_transport_op*>(transport_op);
   grpc_binder_transport* gbt =
       static_cast<grpc_binder_transport*>(op->handler_private.extra_arg);
   // TODO(waynetu): Should we lock here to avoid data race?

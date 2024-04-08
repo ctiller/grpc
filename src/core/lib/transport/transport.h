@@ -28,11 +28,13 @@
 #include <functional>
 #include <string>
 #include <utility>
+#include <variant>
 
 #include "absl/functional/any_invocable.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/optional.h"
+#include "absl/types/variant.h"
 
 #include <grpc/impl/connectivity_state.h>
 #include <grpc/slice.h>
@@ -511,13 +513,12 @@ namespace grpc_core {
 
 struct StartConnectivityWatch {
   /// connectivity monitoring - set connectivity_state to NULL to unsubscribe
-  grpc_core::OrphanablePtr<grpc_core::ConnectivityStateWatcherInterface>
-      watcher;
+  OrphanablePtr<ConnectivityStateWatcherInterface> watcher;
   grpc_connectivity_state from = GRPC_CHANNEL_IDLE;
 };
 
 struct StopConnectivityWatch {
-  grpc_core::ConnectivityStateWatcherInterface* watcher;
+  ConnectivityStateWatcherInterface* watcher;
 };
 
 struct DisconnectWithError {
@@ -529,10 +530,8 @@ struct Goaway {
 };
 
 struct SetReadCallbacks {
-  absl::AnyInvocable<void(grpc_core::Transport*, const void*) const>
-      accept_stream;
-  absl::AnyInvocable<void(grpc_core::ServerMetadata) const>
-      registered_method_matcher;
+  absl::AnyInvocable<void(Transport*, const void*) const> accept_stream;
+  absl::AnyInvocable<void(ServerMetadata) const> registered_method_matcher;
 };
 
 struct BindPollset {
