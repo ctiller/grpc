@@ -15,8 +15,6 @@
 // limitations under the License.
 //
 //
-#include <grpc/support/port_platform.h>
-
 #include <limits.h>
 #include <string.h>
 
@@ -30,6 +28,7 @@
 #include <grpc/impl/channel_arg_names.h>
 #include <grpc/impl/compression_types.h>
 #include <grpc/support/log.h>
+#include <grpc/support/port_platform.h>
 #include <grpc/support/sync.h>
 #include <grpc/support/workaround_list.h>
 #include <grpcpp/completion_queue.h>
