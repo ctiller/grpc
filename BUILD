@@ -4003,6 +4003,7 @@ grpc_cc_library(
         "absl/strings:cord",
         "absl/strings:str_format",
         "absl/types:optional",
+        "absl/types:variant",
     ],
     language = "c++",
     visibility = ["@grpc:grpclb"],
