@@ -2053,7 +2053,7 @@ static void perform_transport_op_locked(void* stream_op,
 
   if (op->set_accept_stream) {
     t->accept_stream_cb = op->set_accept_stream_fn;
-    t->accept_stream_cb_user_data = op->set_accept_stream_user_data;
+    t->accept_stream_cb_user_data = op->set_accept_stream_fn;
     t->registered_method_matcher_cb = op->set_registered_method_matcher_fn;
   }
 

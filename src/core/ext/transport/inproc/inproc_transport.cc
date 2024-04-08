@@ -141,11 +141,11 @@ class InprocServerTransport final
   Mutex state_set_mutex_;
   absl::Status disconnect_error_;
   absl::AnyInvocable<void(void* server_data) const> accept_stream_fn_;
-  absl::AnyInvocable<void(grpc_core::ServerMetadata* metadata) const>
+  absl::AnyInvocable<void(ServerMetadata* metadata) const>
       registered_method_matcher_fn_;
   /// connectivity tracking
-  grpc_core::ConnectivityStateTracker state_tracker_
-      ABSL_GUARDED_BY(state_set_mutex_){"inproc", GRPC_CHANNEL_READY};
+  ConnectivityStateTracker state_tracker_ ABSL_GUARDED_BY(state_set_mutex_){
+      "inproc", GRPC_CHANNEL_READY};
 };
 
 InprocClientTransport::InprocClientTransport(

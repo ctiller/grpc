@@ -29,6 +29,7 @@
 #include <utility>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/functional/any_invocable.h"
 #include "absl/random/random.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"

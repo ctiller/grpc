@@ -1606,7 +1606,6 @@ grpc_cc_library(
         "//src/core:strerror",
         "//src/core:thread_quota",
         "//src/core:time",
-        "//src/core:transport_fwd",
         "//src/core:try_seq",
         "//src/core:type_list",
         "//src/core:useful",
@@ -4017,6 +4016,7 @@ grpc_cc_library(
     external_deps = [
         "absl/base:core_headers",
         "absl/container:flat_hash_map",
+        "absl/functional:any_invocable",
         "absl/hash",
         "absl/meta:type_traits",
         "absl/random",
