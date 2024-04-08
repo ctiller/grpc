@@ -77,8 +77,8 @@ namespace {
 class FakeTransport final : public Transport {
  public:
   FilterStackTransport* filter_stack_transport() override { return nullptr; }
-  ClientTransport* client_transport() override { return nullptr; }
-  ServerTransport* server_transport() override { return nullptr; }
+  FakeTransport* client_transport() { return nullptr; }
+  FakeTransport* server_transport() { return nullptr; }
 
   absl::string_view GetTransportName() const override { return "fake"; }
   void SetPollset(grpc_stream*, grpc_pollset*) override {}

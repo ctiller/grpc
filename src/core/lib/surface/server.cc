@@ -34,6 +34,7 @@
 
 #include "absl/cleanup/cleanup.h"
 #include "absl/container/flat_hash_map.h"
+#include "absl/functional/any_invocable.h"
 #include "absl/status/status.h"
 #include "absl/types/optional.h"
 
@@ -1329,10 +1330,9 @@ void Server::ChannelData::InitTransport(RefCountedPtr<Server> server,
     AcceptStream(server_data);
   };
   if (IsRegisteredMethodLookupInTransportEnabled()) {
-    op->set_registered_method_matcher_fn =
-        [this](grpc_core::ServerMetadata* metadata) {
-          return SetRegisteredMethodOnMetadata(metadata);
-        };
+    op->set_registered_method_matcher_fn = [this](ServerMetadata* metadata) {
+      return SetRegisteredMethodOnMetadata(metadata);
+    };
   }
   op->start_connectivity_watch = MakeOrphanable<ConnectivityWatcher>(this);
   if (server_->ShutdownCalled()) {

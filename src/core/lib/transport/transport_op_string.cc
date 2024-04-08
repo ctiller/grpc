@@ -21,6 +21,7 @@
 #include <memory>
 #include <string>
 
+#include "absl/functional/any_invocable.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 
