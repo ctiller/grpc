@@ -20,8 +20,6 @@
 
 #include "src/core/lib/transport/transport.h"
 
-#include <string.h>
-
 #include <memory>
 #include <new>
 

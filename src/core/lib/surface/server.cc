@@ -627,7 +627,7 @@ class ChannelBroadcaster {
     ShutdownCleanupArgs* sc = new ShutdownCleanupArgs;
     GRPC_CLOSURE_INIT(&sc->closure, ShutdownCleanup, sc,
                       grpc_schedule_on_exec_ctx);
-    grpc_transport_op* op = grpc_make_transport_op(&sc->closure);
+    grpc_transport_op* op = grpc_make_transport_stream_op(&sc->closure);
     grpc_channel_element* elem;
     op->goaway_error =
         send_goaway
@@ -1213,7 +1213,7 @@ void Server::ChannelData::InitTransport(RefCountedPtr<Server> server,
     list_position_ = server_->channels_.begin();
   }
   // Start accept_stream transport op.
-  grpc_transport_op* op = grpc_make_transport_op(nullptr);
+  grpc_transport_op* op = grpc_make_transport_stream_op(nullptr);
   op->set_accept_stream = true;
   op->set_accept_stream_fn = AcceptStream;
   if (IsRegisteredMethodLookupInTransportEnabled()) {
@@ -1486,7 +1486,7 @@ void Server::ChannelData::Destroy() {
     gpr_log(GPR_INFO, "Disconnected client");
   }
   grpc_transport_op* op =
-      grpc_make_transport_op(&finish_destroy_channel_closure_);
+      grpc_make_transport_stream_op(&finish_destroy_channel_closure_);
   op->set_accept_stream = true;
   grpc_channel_next_op(grpc_channel_stack_element(channel_->channel_stack(), 0),
                        op);
