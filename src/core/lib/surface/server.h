@@ -268,7 +268,7 @@ class Server : public InternallyRefCounted<Server>,
     static void SetRegisteredMethodOnMetadata(void* arg,
                                               ServerMetadata* metadata);
 
-    void Destroy() ABSL_EXCLUSIVE_LOCKS_REQUIRED(server_ -> mu_global_);
+    void Destroy() ABSL_EXCLUSIVE_LOCKS_REQUIRED(server_->mu_global_);
 
     static void FinishDestroy(void* arg, grpc_error_handle error);
 

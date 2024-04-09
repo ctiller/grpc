@@ -26,6 +26,7 @@
 #include <utility>
 
 #include <grpc/support/cpu.h>
+#include <grpc/support/log.h>
 
 #include "src/core/lib/event_engine/posix_engine/timer_heap.h"
 #include "src/core/lib/gpr/useful.h"
