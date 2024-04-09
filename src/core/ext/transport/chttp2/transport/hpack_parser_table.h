@@ -23,15 +23,14 @@
 
 #include <stdint.h>
 
+#include <string>
 #include <vector>
 
-#include "absl/status/status.h"
-#include "hpack_parse_result.h"
+#include "absl/functional/function_ref.h"
 
 #include "src/core/ext/transport/chttp2/transport/hpack_constants.h"
 #include "src/core/ext/transport/chttp2/transport/hpack_parse_result.h"
 #include "src/core/lib/gprpp/no_destruct.h"
-#include "src/core/lib/iomgr/error.h"
 #include "src/core/lib/transport/metadata_batch.h"
 #include "src/core/lib/transport/parsed_metadata.h"
 

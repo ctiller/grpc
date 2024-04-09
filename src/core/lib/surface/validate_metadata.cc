@@ -21,21 +21,19 @@
 #include "src/core/lib/surface/validate_metadata.h"
 
 #include "absl/status/status.h"
-#include "absl/strings/escaping.h"
-#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "validate_metadata.h"
 
 #include <grpc/grpc.h>
 
 #include "src/core/lib/gprpp/bitset.h"
 #include "src/core/lib/iomgr/error.h"
 #include "src/core/lib/slice/slice_internal.h"
+#include "src/core/lib/surface/validate_metadata.h"
 
 namespace grpc_core {
 
 namespace {
-class LegalHeaderKeyBits : public grpc_core::BitSet<256> {
+class LegalHeaderKeyBits : public BitSet<256> {
  public:
   constexpr LegalHeaderKeyBits() {
     for (int i = 'a'; i <= 'z'; i++) set(i);
@@ -48,7 +46,7 @@ class LegalHeaderKeyBits : public grpc_core::BitSet<256> {
 constexpr LegalHeaderKeyBits g_legal_header_key_bits;
 
 ValidateMetadataResult ConformsTo(absl::string_view x,
-                                  const grpc_core::BitSet<256>& legal_bits,
+                                  const BitSet<256>& legal_bits,
                                   ValidateMetadataResult error) {
   for (uint8_t c : x) {
     if (!legal_bits.is_set(c)) {
