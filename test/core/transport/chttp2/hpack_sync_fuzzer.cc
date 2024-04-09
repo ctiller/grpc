@@ -12,12 +12,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <algorithm>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
+
+#include "absl/status/status.h"
+#include "absl/strings/escaping.h"
+#include "absl/strings/match.h"
+
 #include <grpc/support/log.h>
 
 #include "src/core/ext/transport/chttp2/transport/hpack_encoder.h"
+#include "src/core/ext/transport/chttp2/transport/hpack_encoder_table.h"
 #include "src/core/ext/transport/chttp2/transport/hpack_parser.h"
+#include "src/core/ext/transport/chttp2/transport/hpack_parser_table.h"
+#include "src/core/lib/gprpp/ref_counted_ptr.h"
+#include "src/core/lib/gprpp/status_helper.h"
+#include "src/core/lib/iomgr/error.h"
+#include "src/core/lib/iomgr/exec_ctx.h"
+#include "src/core/lib/resource_quota/arena.h"
 #include "src/core/lib/resource_quota/memory_quota.h"
 #include "src/core/lib/resource_quota/resource_quota.h"
+#include "src/core/lib/slice/slice.h"
+#include "src/core/lib/slice/slice_buffer.h"
+#include "src/core/lib/transport/metadata_batch.h"
 #include "src/libfuzzer/libfuzzer_macro.h"
 #include "test/core/transport/chttp2/hpack_sync_fuzzer.pb.h"
 
@@ -31,8 +56,7 @@ namespace {
 
 bool IsStreamError(const absl::Status& status) {
   intptr_t stream_id;
-  return grpc_error_get_int(status, grpc_core::StatusIntProperty::kStreamId,
-                            &stream_id);
+  return grpc_error_get_int(status, StatusIntProperty::kStreamId, &stream_id);
 }
 
 void FuzzOneInput(const hpack_sync_fuzzer::Msg& msg) {
@@ -88,17 +112,16 @@ void FuzzOneInput(const hpack_sync_fuzzer::Msg& msg) {
 
   // STAGE 2: Decode the buffer (encode_output) into a list of headers
   HPackParser parser;
-  auto memory_allocator = grpc_core::ResourceQuota::Default()
-                              ->memory_quota()
-                              ->CreateMemoryAllocator("test-allocator");
-  auto arena = grpc_core::MakeScopedArena(1024, &memory_allocator);
-  grpc_core::ExecCtx exec_ctx;
+  auto memory_allocator =
+      ResourceQuota::Default()->memory_quota()->CreateMemoryAllocator(
+          "test-allocator");
+  auto arena = MakeScopedArena(1024, &memory_allocator);
+  ExecCtx exec_ctx;
   grpc_metadata_batch read_metadata(arena.get());
-  parser.BeginFrame(&read_metadata, 1024, 1024,
-                    HPackParser::Boundary::EndOfHeaders,
-                    HPackParser::Priority::None,
-                    HPackParser::LogInfo{
-                        1, grpc_core::HPackParser::LogInfo::kHeaders, false});
+  parser.BeginFrame(
+      &read_metadata, 1024, 1024, HPackParser::Boundary::EndOfHeaders,
+      HPackParser::Priority::None,
+      HPackParser::LogInfo{1, HPackParser::LogInfo::kHeaders, false});
   std::vector<std::pair<size_t, absl::Status>> seen_errors;
   for (size_t i = 0; i < encode_output.Count(); i++) {
     auto err = parser.Parse(encode_output.c_slice_at(i),
