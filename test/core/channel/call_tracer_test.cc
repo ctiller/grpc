@@ -165,7 +165,7 @@ TEST_F(CallTracerTest, BasicClientCallTracer) {
 }
 
 TEST_F(CallTracerTest, MultipleClientCallTracers) {
-  promise_detail::Context<Arena> arena_ctx(arena_);
+  context_<Arena> arena_ctx(arena_);
   FakeClientCallTracer client_call_tracer1(&annotation_logger_);
   FakeClientCallTracer client_call_tracer2(&annotation_logger_);
   FakeClientCallTracer client_call_tracer3(&annotation_logger_);
@@ -180,7 +180,7 @@ TEST_F(CallTracerTest, MultipleClientCallTracers) {
 }
 
 TEST_F(CallTracerTest, MultipleClientCallAttemptTracers) {
-  promise_detail::Context<Arena> arena_ctx(arena_);
+  context_<Arena> arena_ctx(arena_);
   FakeClientCallTracer client_call_tracer1(&annotation_logger_);
   FakeClientCallTracer client_call_tracer2(&annotation_logger_);
   FakeClientCallTracer client_call_tracer3(&annotation_logger_);
