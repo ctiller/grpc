@@ -34,7 +34,7 @@
 namespace grpc_core {
 
 namespace {
-class LegalHeaderKeyBits : public grpc_core::BitSet<256> {
+class LegalHeaderKeyBits : public BitSet<256> {
  public:
   constexpr LegalHeaderKeyBits() {
     for (int i = 'a'; i <= 'z'; i++) set(i);
@@ -52,8 +52,7 @@ absl::Status DoesNotConformTo(absl::string_view x, const char* err_desc) {
                                           absl::BytesToHexString(x), ")"));
 }
 
-absl::Status ConformsTo(absl::string_view x,
-                        const grpc_core::BitSet<256>& legal_bits,
+absl::Status ConformsTo(absl::string_view x, const BitSet<256>& legal_bits,
                         const char* err_desc) {
   for (uint8_t c : x) {
     if (!legal_bits.is_set(c)) {
