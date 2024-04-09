@@ -1155,16 +1155,15 @@ class BaseCallData : public Activity, private Wakeable {
 
  protected:
   class ScopedContext
-      : public promise_detail::Context<Arena>,
-        public promise_detail::Context<grpc_call_context_element>,
-        public promise_detail::Context<grpc_polling_entity>,
-        public promise_detail::Context<CallFinalization>,
-        public promise_detail::Context<
-            grpc_event_engine::experimental::EventEngine>,
-        public promise_detail::Context<CallContext> {
+      : public context<Arena>,
+        public context<grpc_call_context_element>,
+        public context<grpc_polling_entity>,
+        public context<CallFinalization>,
+        public context<grpc_event_engine::experimental::EventEngine>,
+        public context<CallContext> {
    public:
     explicit ScopedContext(BaseCallData* call_data)
-        : promise_detail::Context<Arena>(call_data->arena_),
+        : context<Arena>(call_data->arena_),
           promise_detail::Context<grpc_call_context_element>(
               call_data->context_),
           promise_detail::Context<grpc_polling_entity>(

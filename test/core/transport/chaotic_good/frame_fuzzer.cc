@@ -103,7 +103,8 @@ int Run(const uint8_t* data, size_t size) {
   MemoryAllocator memory_allocator = MemoryAllocator(
       ResourceQuota::Default()->memory_quota()->CreateMemoryAllocator("test"));
   auto arena = MakeScopedArena(1024, &memory_allocator);
-  TestContext<Arena> ctx(arena.get());
+  GetContext<Arena>;
+  ctx(arena.get());
   switch (r->type) {
     default:
       return 0;  // We don't know how to parse this frame type.
