@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ARENA_CONTEXT_H
-#define ARENA_CONTEXT_H
+#ifndef GRPC_SRC_CORE_LIB_PROMISE_ARENA_CONTEXT_H
+#define GRPC_SRC_CORE_LIB_PROMISE_ARENA_CONTEXT_H
+
+#include <grpc/support/port_platform.h>
 
 #include "src/core/lib/promise/context.h"
 #include "src/core/lib/resource_quota/arena.h"
@@ -127,4 +129,4 @@ class Context<T, absl::void_t<decltype(ArenaContextType<T>())>> {
 
 }  // namespace grpc_core
 
-#endif
+#endif  // GRPC_SRC_CORE_LIB_PROMISE_ARENA_CONTEXT_H
