@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdint>
 #include <string>
 #include <utility>
 #include <vector>
@@ -506,13 +507,17 @@ Duration ScheduleConnection(
             Duration::NanosecondsRoundUp(
                 (q.slices.Length() * event_engine->max_delay_write()).count()));
   }
-  delay += Duration::Milliseconds(network_input.connect_delay_ms() +
-                                  network_input.connect_timeout_ms());
+  const auto connect_delay =
+      Clamp(Duration::Milliseconds(network_input.connect_delay_ms()),
+            Duration::Zero(), Duration::Hours(10));
+  const auto connect_timeout =
+      Clamp(Duration::Milliseconds(network_input.connect_timeout_ms()),
+            Duration::Zero(), Duration::Hours(10));
+  delay += connect_delay + connect_timeout;
   event_engine->RunAfterExactly(
-      Duration::Milliseconds(network_input.connect_delay_ms()),
-      [event_engine, channel_args,
-       connect_timeout_ms = network_input.connect_timeout_ms(),
-       schedule = std::move(schedule), port]() mutable {
+      connect_delay, [event_engine, channel_args,
+                      connect_timeout_ms = network_input.connect_timeout_ms(),
+                      schedule = std::move(schedule), port]() mutable {
         ExecCtx exec_ctx;
         event_engine->Connect(
             [event_engine, schedule = std::move(schedule)](
