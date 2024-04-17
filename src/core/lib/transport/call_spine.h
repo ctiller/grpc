@@ -16,15 +16,14 @@
 #define GRPC_SRC_CORE_LIB_TRANSPORT_CALL_SPINE_H
 
 <<<<<<< HEAD
-#include "call_size_estimator.h"
-
 #include <grpc/event_engine/event_engine.h>
 #include <grpc/support/port_platform.h>
+
+#include "src/core/lib/transport/call_size_estimator.h"
     == == ==
     =
 >>>>>>> 0eb35d2baf44a28626aec014420dad228d208fe4
 #include <grpc/support/log.h>
-#include <grpc/support/port_platform.h>
 
 #include "src/core/lib/channel/context.h"
 #include "src/core/lib/gprpp/dual_ref_counted.h"

@@ -227,9 +227,7 @@ struct grpc_chttp2_transport final : public grpc_core::Transport,
                         grpc_endpoint* ep, bool is_client);
   ~grpc_chttp2_transport() override;
 
-  void Orphan() override;
-
-  size_t SizeOfStream() const override;
+  void Orphan() e_t SizeOfStream() const override;
   bool HackyDisableStreamOpBatchCoalescingInConnectedChannel() const override;
   void PerformStreamOp(grpc_stream* gs,
                        grpc_transport_stream_op_batch* op) override;
