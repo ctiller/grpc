@@ -145,7 +145,7 @@ class TestConsumingInterceptor final : public Interceptor {
     Consume(std::move(unstarted_call_handler))
         .Cancel(ServerMetadataFromStatus(absl::InternalError("👊 consumed")));
   }
-  void Orphan() override {}
+  void Orphan() {}
   static absl::StatusOr<RefCountedPtr<TestConsumingInterceptor<I>>> Create(
       const ChannelArgs& args) {
     return MakeRefCounted<TestConsumingInterceptor<I>>();

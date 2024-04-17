@@ -17,9 +17,8 @@
 #ifndef GRPC_SRC_CORE_LIB_SURFACE_SERVER_INTERFACE_H
 #define GRPC_SRC_CORE_LIB_SURFACE_SERVER_INTERFACE_H
 
-#include <grpc/support/port_platform.h>
-
 #include <grpc/compression.h>
+#include <grpc/support/port_platform.h>
 
 #include "src/core/lib/channel/channel_args.h"
 #include "src/core/lib/channel/channelz.h"
