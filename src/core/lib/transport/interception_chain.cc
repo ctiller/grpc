@@ -16,11 +16,10 @@
 
 #include <cstddef>
 
-#include "call_destination.h"
-
 #include <grpc/support/port_platform.h>
 
 #include "src/core/lib/gprpp/match.h"
+#include "src/core/lib/transport/call_destination.h"
 #include "src/core/lib/transport/call_filters.h"
 #include "src/core/lib/transport/call_spine.h"
 #include "src/core/lib/transport/metadata.h"
@@ -36,15 +35,15 @@ namespace interception_chain_detail {
 
 CallInitiator HijackedCall::MakeCall() {
   auto metadata = Arena::MakePooled<ClientMetadata>();
-  *metadata = metadata_->Copy();
+  *metadata = metadata->Copy();
   return MakeCallWithMetadata(std::move(metadata));
 }
 
 CallInitiator HijackedCall::MakeCallWithMetadata(
     ClientMetadataHandle metadata) {
-  auto call = grpc_core::MakeCallPair(
-      std::move(metadata), call_handler_.event_engine(), call_handler_.arena(),
-      nullptr, call_handler_.legacy_context());
+  auto call = MakeCallPair(std::move(metadata), call_handler_.event_engine(),
+                           call_handler_.arena(), nullptr,
+                           call_handler_.legacy_context());
   destination_->StartCall(std::move(call.handler));
   return std::move(call.initiator);
 }
