@@ -46,7 +46,7 @@ class InprocClientTransport final : public ClientTransport {
                [server_transport = server_transport_,
                 call_handler](ClientMetadataHandle md) {
                  auto call_initiator =
-                     server_transport->AcceptCall(std::move(md));
+                     server_transport()->AcceptCall(std::move(md));
                  if (!call_initiator.ok()) return call_initiator.status();
                  ForwardCall(call_handler, std::move(*call_initiator));
                  return absl::OkStatus();
@@ -200,9 +200,8 @@ OrphanablePtr<Channel> MakeInprocChannel(Server* server,
 std::pair<OrphanablePtr<Transport>, OrphanablePtr<Transport>>
 MakeInProcessTransportPair() {
   auto client_transport = MakeOrphanable<InprocClientTransport>();
-  auto server_transport = client_transport->GetServerTransport();
-  return std::make_pair(std::move(client_transport),
-                        std::move(server_transport));
+  auto server_transport = client_transport->server_transport();
+  return std::make_pair(std::move(client_transport), server_transport);
 }
 
 }  // namespace grpc_core
