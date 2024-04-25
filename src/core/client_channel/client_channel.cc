@@ -703,10 +703,9 @@ class LbCallTracingFilter : public ImplementChannelFilter<LbCallTracingFilter> {
         }
       }
       if (tracer != nullptr) {
-        tracer->RecordReceivedTrailingMetadata(status, &metadata,
-                                               &GetContext<grpc_core::Call>()
-                                                    ->call_stats()
-                                                    ->transport_stream_stats);
+        tracer->RecordReceivedTrailingMetadata(
+            status, &metadata,
+            &GetContext<Call>()->call_stats()->transport_stream_stats);
       }
       if (call_tracker != nullptr && *call_tracker != nullptr) {
         LbMetadata lb_metadata(&metadata);
