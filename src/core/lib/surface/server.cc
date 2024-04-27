@@ -826,7 +826,7 @@ RefCountedPtr<channelz::ServerNode> CreateChannelzNode(
   return channelz_node;
 }
 
-static absl::StatusOr<ClientMetadataHandle> CheckClientMetadata(
+absl::StatusOr<ClientMetadataHandle> CheckClientMetadata(
     ValueOrFailure<ClientMetadataHandle> md) {
   if (!md.ok()) {
     return absl::InternalError("Missing metadata");
@@ -946,7 +946,7 @@ void Server::AddListener(OrphanablePtr<ListenerInterface> listener) {
 void Server::Start() {
   auto make_real_request_matcher =
       [this]() -> std::unique_ptr<RequestMatcherInterface> {
-    if (IsPromiseBasedServerCallEnabled()) {
+    if (IsPromiseBasedClientCallEnabled()) {
       return std::make_unique<RealRequestMatcherPromises>(this);
     } else {
       return std::make_unique<RealRequestMatcherFilterStack>(this);
