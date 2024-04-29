@@ -1139,6 +1139,7 @@ libs:
   - src/core/lib/transport/batch_builder.h
   - src/core/lib/transport/bdp_estimator.h
   - src/core/lib/transport/call_arena_allocator.h
+  - src/core/lib/transport/call_destination.h
   - src/core/lib/transport/call_filters.h
   - src/core/lib/transport/call_final_info.h
   - src/core/lib/transport/call_spine.h
@@ -1151,6 +1152,7 @@ libs:
   - src/core/lib/transport/handshaker_registry.h
   - src/core/lib/transport/http2_errors.h
   - src/core/lib/transport/http_connect_handshaker.h
+  - src/core/lib/transport/interception_chain.h
   - src/core/lib/transport/message.h
   - src/core/lib/transport/metadata.h
   - src/core/lib/transport/metadata_batch.h
@@ -1949,6 +1951,7 @@ libs:
   - src/core/lib/transport/handshaker.cc
   - src/core/lib/transport/handshaker_registry.cc
   - src/core/lib/transport/http_connect_handshaker.cc
+  - src/core/lib/transport/interception_chain.cc
   - src/core/lib/transport/message.cc
   - src/core/lib/transport/metadata.cc
   - src/core/lib/transport/metadata_batch.cc
@@ -2608,6 +2611,7 @@ libs:
   - src/core/lib/transport/batch_builder.h
   - src/core/lib/transport/bdp_estimator.h
   - src/core/lib/transport/call_arena_allocator.h
+  - src/core/lib/transport/call_destination.h
   - src/core/lib/transport/call_filters.h
   - src/core/lib/transport/call_final_info.h
   - src/core/lib/transport/call_spine.h
@@ -2620,6 +2624,7 @@ libs:
   - src/core/lib/transport/handshaker_registry.h
   - src/core/lib/transport/http2_errors.h
   - src/core/lib/transport/http_connect_handshaker.h
+  - src/core/lib/transport/interception_chain.h
   - src/core/lib/transport/message.h
   - src/core/lib/transport/metadata.h
   - src/core/lib/transport/metadata_batch.h
@@ -3036,6 +3041,7 @@ libs:
   - src/core/lib/transport/handshaker.cc
   - src/core/lib/transport/handshaker_registry.cc
   - src/core/lib/transport/http_connect_handshaker.cc
+  - src/core/lib/transport/interception_chain.cc
   - src/core/lib/transport/message.cc
   - src/core/lib/transport/metadata.cc
   - src/core/lib/transport/metadata_batch.cc
@@ -4687,6 +4693,7 @@ libs:
   - src/core/lib/surface/wait_for_cq_end_op.h
   - src/core/lib/transport/batch_builder.h
   - src/core/lib/transport/call_arena_allocator.h
+  - src/core/lib/transport/call_destination.h
   - src/core/lib/transport/call_filters.h
   - src/core/lib/transport/call_final_info.h
   - src/core/lib/transport/call_spine.h
@@ -4698,6 +4705,7 @@ libs:
   - src/core/lib/transport/handshaker_factory.h
   - src/core/lib/transport/handshaker_registry.h
   - src/core/lib/transport/http2_errors.h
+  - src/core/lib/transport/interception_chain.h
   - src/core/lib/transport/message.h
   - src/core/lib/transport/metadata.h
   - src/core/lib/transport/metadata_batch.h
@@ -4993,6 +5001,7 @@ libs:
   - src/core/lib/transport/error_utils.cc
   - src/core/lib/transport/handshaker.cc
   - src/core/lib/transport/handshaker_registry.cc
+  - src/core/lib/transport/interception_chain.cc
   - src/core/lib/transport/message.cc
   - src/core/lib/transport/metadata.cc
   - src/core/lib/transport/metadata_batch.cc
