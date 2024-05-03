@@ -90,7 +90,7 @@ void WaitForSingleOwner(std::shared_ptr<EventEngine> engine) {
   int n = 0;
   while (engine.use_count() > 1) {
     ++n;
-    if (n == 500) GRPC_FORCE_LEAK_CHECK();
+    if (n == 500) GRPC_FORCE_LEAK_CHECK()
     GRPC_LOG_EVERY_N_SEC(2, GPR_INFO, "engine.use_count() = %ld",
                          engine.use_count());
     absl::SleepFor(absl::Milliseconds(100));
