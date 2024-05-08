@@ -46,9 +46,9 @@
 #include <grpc/status.h>
 #include <grpc/support/json.h>
 #include <grpc/support/log.h>
+#include <grpc/support/metrics.h>
 #include <grpc/support/string_util.h>
 #include <grpc/support/time.h>
-#include <grpc/support/metrics.h>
 
 #include "src/core/client_channel/backup_poller.h"
 #include "src/core/client_channel/client_channel_internal.h"
@@ -60,6 +60,7 @@
 #include "src/core/client_channel/retry_filter.h"
 #include "src/core/client_channel/subchannel.h"
 #include "src/core/client_channel/subchannel_interface_internal.h"
+#include "src/core/ext/filters/channel_idle/legacy_channel_idle_filter.h"
 #include "src/core/lib/channel/channel_args.h"
 #include "src/core/lib/channel/channel_stack.h"
 #include "src/core/lib/channel/metrics.h"
@@ -110,7 +111,6 @@
 #include "src/core/resolver/resolver_registry.h"
 #include "src/core/service_config/service_config_call_data.h"
 #include "src/core/service_config/service_config_impl.h"
-#include "src/core/ext/filters/channel_idle/legacy_channel_idle_filter.h"
 
 namespace grpc_core {
 
@@ -778,7 +778,8 @@ const NoInterceptor LbCallTracingFilter::Call::OnServerToClientMessage;
 
 }  // namespace
 
-class ClientChannel::LoadBalancedCallDestination : public UnstartedCallDestination {
+class ClientChannel::LoadBalancedCallDestination
+    : public UnstartedCallDestination {
  public:
   explicit LoadBalancedCallDestination(
       RefCountedPtr<ClientChannel> client_channel)
@@ -848,8 +849,7 @@ class ClientChannel::LoadBalancedCallDestination : public UnstartedCallDestinati
                 // Delegate to connected subchannel.
                 // FIXME: need to insert LbCallTracingFilter at the top of the
                 // stack
-                (*connected_subchannel)
-                    ->StartCall(std::move(unstarted_handler));
+                (*connected_subchannel)->StartCall(unstarted_handler);
                 return absl::OkStatus();
               });
         });
@@ -976,7 +976,8 @@ ClientChannel::ClientChannel(
     default_authority_ = std::move(*default_authority);
   }
   // Get stats plugins for channel.
-experimental::  StatsPluginChannelScope scope(this->target(), default_authority_);
+  experimental::StatsPluginChannelScope scope(this->target(),
+                                              default_authority_);
   stats_plugin_group_ =
       GlobalStatsPluginRegistry::GetStatsPluginsForChannel(scope);
 }
@@ -1196,14 +1197,14 @@ CallInitiator ClientChannel::CreateCall(
   CheckConnectivityState(/*try_to_connect=*/true);
   // Create an initiator/unstarted-handler pair.
   auto call = MakeCallPair(std::move(client_initial_metadata),
-                       GetContext<EventEngine>(), arena, nullptr, GetContext<grpc_call_context_element>());
+                           GetContext<EventEngine>(), arena, nullptr,
+                           GetContext<grpc_call_context_element>());
   // Spawn a promise to wait for the resolver result.
   // This will eventually start the call.
   call.initiator.SpawnGuarded(
-      "wait-for-name-resolution",
-      [self = RefAsSubclass<ClientChannel>(),
-       unstarted_handler = std::move(call.handler),
-       was_queued = false]() mutable {
+      "wait-for-name-resolution", [self = RefAsSubclass<ClientChannel>(),
+                                   unstarted_handler = std::move(call.handler),
+                                   was_queued = false]() mutable {
         const bool wait_for_ready =
             unstarted_handler.UnprocessedClientInitialMetadata()
                 .GetOrCreatePointer(WaitForReady())
@@ -1629,7 +1630,8 @@ void ClientChannel::UpdateServiceConfigInDataPlaneLocked() {
       if (idle_state_.DecreaseCallCount()) StartIdleTimer();
     });
   }
-  CoreConfiguration::Get().channel_init().AddToInterceptionChainBuilder(GRPC_CLIENT_CHANNEL, builder);
+  CoreConfiguration::Get().channel_init().AddToInterceptionChainBuilder(
+      GRPC_CLIENT_CHANNEL, builder);
 // FIXME: add filters returned by config selector
 #if 0
   std::vector<const grpc_channel_filter*> filters =
@@ -1648,9 +1650,8 @@ void ClientChannel::UpdateServiceConfigInDataPlaneLocked() {
   if (enable_retries) {
     Crash("call v3 stack does not yet support retries");
   } else {
-    call_destination = 
-        MakeRefCounted<LoadBalancedCallDestination>(
-            RefAsSubclass<ClientChannel>());
+    call_destination = MakeRefCounted<LoadBalancedCallDestination>(
+        RefAsSubclass<ClientChannel>());
   }
   auto filter_stack = builder.Build(call_destination);
   // Send result to data plane.
