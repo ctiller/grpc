@@ -37,7 +37,6 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/optional.h"
 #include "absl/types/variant.h"
-#include "subchannel.h"
 
 #include <grpc/event_engine/event_engine.h>
 #include <grpc/impl/channel_arg_names.h>
@@ -275,8 +274,7 @@ ClientChannel::SubchannelWrapper::SubchannelWrapper(
         "client_channel=%p: creating subchannel wrapper %p for subchannel %p",
         client_channel_.get(), this, subchannel_.get());
   }
-  DCHECK(
-      client_channel_->work_serializer_->RunningInWorkSerializer());
+  DCHECK(client_channel_->work_serializer_->RunningInWorkSerializer());
   if (client_channel_->channelz_node_ != nullptr) {
     auto* subchannel_node = subchannel_->channelz_node();
     if (subchannel_node != nullptr) {
@@ -535,7 +533,8 @@ absl::StatusOr<OrphanablePtr<Channel>> ClientChannel::Create(
     return absl::InternalError(
         "Missing client channel factory in args for client channel");
   }
-  auto* call_destination_factory = channel_args.GetObject<CallDestinationFactory>();
+  auto* call_destination_factory =
+      channel_args.GetObject<CallDestinationFactory>();
   if (call_destination_factory == nullptr) {
     return absl::InternalError(
         "Missing call destination factory in args for client channel");
@@ -564,7 +563,8 @@ std::string GetDefaultAuthorityFromChannelArgs(const ChannelArgs& channel_args,
 ClientChannel::ClientChannel(
     std::string target, ChannelArgs channel_args, std::string uri_to_resolve,
     RefCountedPtr<ServiceConfig> default_service_config,
-    ClientChannelFactory* client_channel_factory, CallDestinationFactory* call_destination_factory)
+    ClientChannelFactory* client_channel_factory,
+    CallDestinationFactory* call_destination_factory)
     : Channel(std::move(target), channel_args),
       channel_args_(std::move(channel_args)),
       event_engine_(channel_args.GetObjectRef<EventEngine>()),
@@ -579,7 +579,8 @@ ClientChannel::ClientChannel(
       idle_timeout_(GetClientIdleTimeout(channel_args_)),
       resolver_data_for_calls_(ResolverDataForCalls{}),
       picker_(nullptr),
-      call_destination_(call_destination_factory->CreateCallDestination(picker_)),
+      call_destination_(
+          call_destination_factory->CreateCallDestination(picker_)),
       work_serializer_(std::make_shared<WorkSerializer>(event_engine_)),
       state_tracker_("client_channel", GRPC_CHANNEL_IDLE),
       subchannel_pool_(GetSubchannelPool(channel_args_)) {
@@ -784,7 +785,8 @@ CallInitiator ClientChannel::CreateCall(
               if (!status.ok()) return status;
               // If the call was queued, add trace annotation.
               if (was_queued) {
-                auto* call_tracer = MaybeGetContext<CallTracerAnnotationInterface>();
+                auto* call_tracer =
+                    MaybeGetContext<CallTracerAnnotationInterface>();
                 if (call_tracer != nullptr) {
                   call_tracer->RecordAnnotation(
                       "Delayed name resolution complete.");
