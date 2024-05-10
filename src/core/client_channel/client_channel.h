@@ -22,7 +22,6 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
-#include "subchannel.h"
 
 #include "src/core/client_channel/client_channel_factory.h"
 #include "src/core/client_channel/config_selector.h"
@@ -30,13 +29,13 @@
 #include "src/core/ext/filters/channel_idle/idle_filter_state.h"
 #include "src/core/lib/gprpp/single_set_ptr.h"
 #include "src/core/lib/promise/loop.h"
+#include "src/core/lib/promise/observable.h"
 #include "src/core/lib/surface/channel.h"
 #include "src/core/lib/transport/call_filters.h"
 #include "src/core/lib/transport/metadata.h"
 #include "src/core/load_balancing/lb_policy.h"
 #include "src/core/resolver/resolver.h"
 #include "src/core/service_config/service_config.h"
-#include "src/core/lib/promise/observable.h"
 
 namespace grpc_core {
 
@@ -119,7 +118,9 @@ class ClientChannel : public Channel {
    public:
     struct RawPointerChannelArgTag {};
 
-    static absl::string_view ChannelArgName() { return "grpc.internal.client_channel_call_destination"; }
+    static absl::string_view ChannelArgName() {
+      return "grpc.internal.client_channel_call_destination";
+    }
 
     virtual RefCountedPtr<UnstartedCallDestination> CreateCallDestination(
         PickerObservable) = 0;
