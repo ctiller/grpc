@@ -234,6 +234,7 @@ libs:
   - src/core/client_channel/client_channel_service_config.h
   - src/core/client_channel/config_selector.h
   - src/core/client_channel/connector.h
+  - src/core/client_channel/direct_channel.h
   - src/core/client_channel/dynamic_filters.h
   - src/core/client_channel/global_subchannel_pool.h
   - src/core/client_channel/load_balanced_call_destination.h
@@ -1259,6 +1260,7 @@ libs:
   - src/core/client_channel/client_channel_plugin.cc
   - src/core/client_channel/client_channel_service_config.cc
   - src/core/client_channel/config_selector.cc
+  - src/core/client_channel/direct_channel.cc
   - src/core/client_channel/dynamic_filters.cc
   - src/core/client_channel/global_subchannel_pool.cc
   - src/core/client_channel/load_balanced_call_destination.cc
@@ -2225,6 +2227,7 @@ libs:
   - src/core/client_channel/client_channel_service_config.h
   - src/core/client_channel/config_selector.h
   - src/core/client_channel/connector.h
+  - src/core/client_channel/direct_channel.h
   - src/core/client_channel/dynamic_filters.h
   - src/core/client_channel/global_subchannel_pool.h
   - src/core/client_channel/load_balanced_call_destination.h
@@ -2719,6 +2722,7 @@ libs:
   - src/core/client_channel/client_channel_plugin.cc
   - src/core/client_channel/client_channel_service_config.cc
   - src/core/client_channel/config_selector.cc
+  - src/core/client_channel/direct_channel.cc
   - src/core/client_channel/dynamic_filters.cc
   - src/core/client_channel/global_subchannel_pool.cc
   - src/core/client_channel/load_balanced_call_destination.cc
@@ -4634,6 +4638,7 @@ libs:
   - src/core/lib/promise/party.h
   - src/core/lib/promise/pipe.h
   - src/core/lib/promise/poll.h
+  - src/core/lib/promise/prioritized_race.h
   - src/core/lib/promise/promise.h
   - src/core/lib/promise/race.h
   - src/core/lib/promise/seq.h
@@ -11827,6 +11832,7 @@ targets:
   - src/core/lib/promise/party.h
   - src/core/lib/promise/pipe.h
   - src/core/lib/promise/poll.h
+  - src/core/lib/promise/prioritized_race.h
   - src/core/lib/promise/promise.h
   - src/core/lib/promise/race.h
   - src/core/lib/promise/seq.h
