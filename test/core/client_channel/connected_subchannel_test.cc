@@ -105,7 +105,7 @@ class ConnectedSubchannelTest : public YodelTest {
                                   std::move(op->start_connectivity_watch));
       }
     }
-    grpc_endpoint* GetEndpoint() override { return nullptr; }
+    grpc_endpoint* GetEndpoint() { return nullptr; }
 
     void StartCall(CallHandler call_handler) override {
       test_->handlers_.push(std::move(call_handler));
