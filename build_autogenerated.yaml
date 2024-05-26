@@ -234,6 +234,7 @@ libs:
   - src/core/client_channel/client_channel_service_config.h
   - src/core/client_channel/config_selector.h
   - src/core/client_channel/connector.h
+  - src/core/client_channel/direct_channel.h
   - src/core/client_channel/dynamic_filters.h
   - src/core/client_channel/global_subchannel_pool.h
   - src/core/client_channel/load_balanced_call_destination.h
@@ -1259,6 +1260,7 @@ libs:
   - src/core/client_channel/client_channel_plugin.cc
   - src/core/client_channel/client_channel_service_config.cc
   - src/core/client_channel/config_selector.cc
+  - src/core/client_channel/direct_channel.cc
   - src/core/client_channel/dynamic_filters.cc
   - src/core/client_channel/global_subchannel_pool.cc
   - src/core/client_channel/load_balanced_call_destination.cc
@@ -2225,6 +2227,7 @@ libs:
   - src/core/client_channel/client_channel_service_config.h
   - src/core/client_channel/config_selector.h
   - src/core/client_channel/connector.h
+  - src/core/client_channel/direct_channel.h
   - src/core/client_channel/dynamic_filters.h
   - src/core/client_channel/global_subchannel_pool.h
   - src/core/client_channel/load_balanced_call_destination.h
@@ -2719,6 +2722,7 @@ libs:
   - src/core/client_channel/client_channel_plugin.cc
   - src/core/client_channel/client_channel_service_config.cc
   - src/core/client_channel/config_selector.cc
+  - src/core/client_channel/direct_channel.cc
   - src/core/client_channel/dynamic_filters.cc
   - src/core/client_channel/global_subchannel_pool.cc
   - src/core/client_channel/load_balanced_call_destination.cc
@@ -7883,12 +7887,14 @@ targets:
   language: c++
   headers:
   - test/core/call/yodel/yodel_test.h
+  - test/core/event_engine/event_engine_test_utils.h
   - test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.h
   src:
   - test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.proto
   - test/core/call/yodel/test_main.cc
   - test/core/call/yodel/yodel_test.cc
   - test/core/client_channel/client_channel_test.cc
+  - test/core/event_engine/event_engine_test_utils.cc
   - test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.cc
   deps:
   - gtest
@@ -8253,12 +8259,14 @@ targets:
   language: c++
   headers:
   - test/core/call/yodel/yodel_test.h
+  - test/core/event_engine/event_engine_test_utils.h
   - test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.h
   src:
   - test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.proto
   - test/core/call/yodel/test_main.cc
   - test/core/call/yodel/yodel_test.cc
   - test/core/client_channel/connected_subchannel_test.cc
+  - test/core/event_engine/event_engine_test_utils.cc
   - test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.cc
   deps:
   - gtest
@@ -11497,12 +11505,14 @@ targets:
   language: c++
   headers:
   - test/core/call/yodel/yodel_test.h
+  - test/core/event_engine/event_engine_test_utils.h
   - test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.h
   - test/core/transport/test_suite/transport_test.h
   src:
   - test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.proto
   - test/core/call/yodel/test_main.cc
   - test/core/call/yodel/yodel_test.cc
+  - test/core/event_engine/event_engine_test_utils.cc
   - test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.cc
   - test/core/transport/test_suite/call_content.cc
   - test/core/transport/test_suite/call_shapes.cc
@@ -12781,12 +12791,14 @@ targets:
   language: c++
   headers:
   - test/core/call/yodel/yodel_test.h
+  - test/core/event_engine/event_engine_test_utils.h
   - test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.h
   src:
   - test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.proto
   - test/core/call/yodel/test_main.cc
   - test/core/call/yodel/yodel_test.cc
   - test/core/client_channel/load_balanced_call_destination_test.cc
+  - test/core/event_engine/event_engine_test_utils.cc
   - test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.cc
   deps:
   - gtest
@@ -19563,6 +19575,7 @@ targets:
   - src/core/lib/promise/wait_set.h
   - src/core/lib/transport/promise_endpoint.h
   - test/core/call/yodel/yodel_test.h
+  - test/core/event_engine/event_engine_test_utils.h
   - test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.h
   - test/core/transport/test_suite/transport_test.h
   src:
@@ -19575,6 +19588,7 @@ targets:
   - src/core/lib/transport/promise_endpoint.cc
   - test/core/call/yodel/test_main.cc
   - test/core/call/yodel/yodel_test.cc
+  - test/core/event_engine/event_engine_test_utils.cc
   - test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.cc
   - test/core/transport/test_suite/call_content.cc
   - test/core/transport/test_suite/call_shapes.cc
