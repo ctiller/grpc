@@ -88,7 +88,7 @@ TEST_F(CallTracerTest, BasicServerCallTracerTest) {
   FakeServerCallTracer server_call_tracer(&annotation_logger_);
   AddServerCallTracerToContext(context_, &server_call_tracer);
   static_cast<CallTracerAnnotationInterface*>(
-      context_[GRPC_CONTEXT_CALL_TRACER].value)
+      context_[GRPC_CONTEXT_TRACING].value)
       ->RecordAnnotation("Test");
   static_cast<CallTracerAnnotationInterface*>(
       context_[GRPC_CONTEXT_CALL_TRACER_ANNOTATION_INTERFACE].value)
