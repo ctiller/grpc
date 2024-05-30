@@ -26,7 +26,7 @@ grpc_yodel_simple_test(
     language = "C++",
     deps = [
         "//:grpc_base",
-        "//test/core/call/yodel:yodel_test"
+        "//test/core/call/yodel:yodel_test",
     ],
 )
 
@@ -39,7 +39,7 @@ grpc_yodel_simple_test(
     language = "C++",
     deps = [
         "//:grpc_base",
-        "//test/core/call/yodel:yodel_test"
+        "//test/core/call/yodel:yodel_test",
     ],
 )
 
