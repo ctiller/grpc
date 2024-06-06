@@ -314,7 +314,7 @@ struct AddOpImpl<FilterType, T, const NoInterceptor*, which> {
 
 // void $INTERCEPTOR_NAME($VALUE_TYPE&)
 template <typename FilterType, typename T,
-          void (FilterType::Call::* impl)(typename T::element_type&)>
+          void (FilterType::Call::*impl)(typename T::element_type&)>
 struct AddOpImpl<FilterType, T,
                  void (FilterType::Call::*)(typename T::element_type&), impl> {
   static void Add(FilterType* channel_data, size_t call_offset,
@@ -351,8 +351,8 @@ struct AddOpImpl<FilterType, T,
 
 // void $INTERCEPTOR_NAME($VALUE_TYPE&, FilterType*)
 template <typename FilterType, typename T,
-          void (FilterType::Call::* impl)(typename T::element_type&,
-                                          FilterType*)>
+          void (FilterType::Call::*impl)(typename T::element_type&,
+                                         FilterType*)>
 struct AddOpImpl<
     FilterType, T,
     void (FilterType::Call::*)(typename T::element_type&, FilterType*), impl> {
@@ -392,7 +392,7 @@ struct AddOpImpl<
 
 // $VALUE_HANDLE $INTERCEPTOR_NAME($VALUE_HANDLE, FilterType*)
 template <typename FilterType, typename T,
-          T (FilterType::Call::* impl)(T, FilterType*)>
+          T (FilterType::Call::*impl)(T, FilterType*)>
 struct AddOpImpl<FilterType, T, T (FilterType::Call::*)(T, FilterType*), impl> {
   static void Add(FilterType* channel_data, size_t call_offset,
                   Layout<FallibleOperator<T>>& to) {
@@ -434,7 +434,7 @@ struct AddOpImpl<FilterType, T, T (FilterType::Call::*)(T, FilterType*), impl> {
 
 // absl::Status $INTERCEPTOR_NAME($VALUE_TYPE&)
 template <typename FilterType, typename T,
-          absl::Status (FilterType::Call::* impl)(typename T::element_type&)>
+          absl::Status (FilterType::Call::*impl)(typename T::element_type&)>
 struct AddOpImpl<FilterType, T,
                  absl::Status (FilterType::Call::*)(typename T::element_type&),
                  impl> {
@@ -479,7 +479,7 @@ struct AddOpImpl<FilterType, T,
 
 // absl::Status $INTERCEPTOR_NAME(const $VALUE_TYPE&)
 template <typename FilterType, typename T,
-          absl::Status (FilterType::Call::* impl)(
+          absl::Status (FilterType::Call::*impl)(
               const typename T::element_type&)>
 struct AddOpImpl<
     FilterType, T,
@@ -507,8 +507,8 @@ struct AddOpImpl<
 
 // absl::Status $INTERCEPTOR_NAME($VALUE_TYPE&, FilterType*)
 template <typename FilterType, typename T,
-          absl::Status (FilterType::Call::* impl)(typename T::element_type&,
-                                                  FilterType*)>
+          absl::Status (FilterType::Call::*impl)(typename T::element_type&,
+                                                 FilterType*)>
 struct AddOpImpl<FilterType, T,
                  absl::Status (FilterType::Call::*)(typename T::element_type&,
                                                     FilterType*),
@@ -537,7 +537,7 @@ struct AddOpImpl<FilterType, T,
 
 // absl::Status $INTERCEPTOR_NAME(const $VALUE_TYPE&, FilterType*)
 template <typename FilterType, typename T,
-          absl::Status (FilterType::Call::* impl)(
+          absl::Status (FilterType::Call::*impl)(
               const typename T::element_type&, FilterType*)>
 struct AddOpImpl<FilterType, T,
                  absl::Status (FilterType::Call::*)(
@@ -567,7 +567,7 @@ struct AddOpImpl<FilterType, T,
 
 // absl::StatusOr<$VALUE_HANDLE> $INTERCEPTOR_NAME($VALUE_HANDLE, FilterType*)
 template <typename FilterType, typename T,
-          absl::StatusOr<T> (FilterType::Call::* impl)(T, FilterType*)>
+          absl::StatusOr<T> (FilterType::Call::*impl)(T, FilterType*)>
 struct AddOpImpl<FilterType, T,
                  absl::StatusOr<T> (FilterType::Call::*)(T, FilterType*),
                  impl> {
@@ -595,7 +595,7 @@ struct AddOpImpl<FilterType, T,
 
 // ServerMetadataHandle $INTERCEPTOR_NAME($VALUE_TYPE&)
 template <typename FilterType, typename T,
-          ServerMetadataHandle (FilterType::Call::* impl)(
+          ServerMetadataHandle (FilterType::Call::*impl)(
               typename T::element_type&)>
 struct AddOpImpl<FilterType, T,
                  ServerMetadataHandle (FilterType::Call::*)(
@@ -624,7 +624,7 @@ struct AddOpImpl<FilterType, T,
 
 // ServerMetadataHandle $INTERCEPTOR_NAME(const $VALUE_TYPE&)
 template <typename FilterType, typename T,
-          ServerMetadataHandle (FilterType::Call::* impl)(
+          ServerMetadataHandle (FilterType::Call::*impl)(
               const typename T::element_type&)>
 struct AddOpImpl<FilterType, T,
                  ServerMetadataHandle (FilterType::Call::*)(
@@ -653,7 +653,7 @@ struct AddOpImpl<FilterType, T,
 
 // ServerMetadataHandle $INTERCEPTOR_NAME($VALUE_TYPE&, FilterType*)
 template <typename FilterType, typename T,
-          ServerMetadataHandle (FilterType::Call::* impl)(
+          ServerMetadataHandle (FilterType::Call::*impl)(
               typename T::element_type&, FilterType*)>
 struct AddOpImpl<FilterType, T,
                  ServerMetadataHandle (FilterType::Call::*)(
@@ -683,7 +683,7 @@ struct AddOpImpl<FilterType, T,
 
 // ServerMetadataHandle $INTERCEPTOR_NAME(const $VALUE_TYPE&, FilterType*)
 template <typename FilterType, typename T,
-          ServerMetadataHandle (FilterType::Call::* impl)(
+          ServerMetadataHandle (FilterType::Call::*impl)(
               const typename T::element_type&, FilterType*)>
 struct AddOpImpl<FilterType, T,
                  ServerMetadataHandle (FilterType::Call::*)(
@@ -713,7 +713,7 @@ struct AddOpImpl<FilterType, T,
 
 // PROMISE_RETURNING(absl::Status) $INTERCEPTOR_NAME($VALUE_TYPE&)
 template <typename FilterType, typename T, typename R,
-          R (FilterType::Call::* impl)(typename T::element_type&)>
+          R (FilterType::Call::*impl)(typename T::element_type&)>
 struct AddOpImpl<
     FilterType, T, R (FilterType::Call::*)(typename T::element_type&), impl,
     absl::enable_if_t<std::is_same<absl::Status, PromiseResult<R>>::value>> {
@@ -764,7 +764,7 @@ struct AddOpImpl<
 
 // PROMISE_RETURNING(absl::Status) $INTERCEPTOR_NAME($VALUE_TYPE&, FilterType*)
 template <typename FilterType, typename T, typename R,
-          R (FilterType::Call::* impl)(typename T::element_type&, FilterType*)>
+          R (FilterType::Call::*impl)(typename T::element_type&, FilterType*)>
 struct AddOpImpl<
     FilterType, T,
     R (FilterType::Call::*)(typename T::element_type&, FilterType*), impl,
@@ -820,7 +820,7 @@ struct AddOpImpl<
 // PROMISE_RETURNING(absl::StatusOr<$VALUE_HANDLE>)
 // $INTERCEPTOR_NAME($VALUE_HANDLE, FilterType*)
 template <typename FilterType, typename T, typename R,
-          R (FilterType::Call::* impl)(T, FilterType*)>
+          R (FilterType::Call::*impl)(T, FilterType*)>
 struct AddOpImpl<FilterType, T, R (FilterType::Call::*)(T, FilterType*), impl,
                  absl::enable_if_t<std::is_same<absl::StatusOr<T>,
                                                 PromiseResult<R>>::value>> {
@@ -1044,7 +1044,7 @@ struct StackData {
 
   template <typename FilterType>
   void AddFinalizer(FilterType* channel_data, size_t call_offset,
-                    void (FilterType::Call::* p)(const grpc_call_final_info*)) {
+                    void (FilterType::Call::*p)(const grpc_call_final_info*)) {
     DCHECK(p == &FilterType::Call::OnFinalize);
     finalizers.push_back(Finalizer{
         channel_data,
@@ -1058,8 +1058,8 @@ struct StackData {
 
   template <typename FilterType>
   void AddFinalizer(FilterType* channel_data, size_t call_offset,
-                    void (FilterType::Call::* p)(const grpc_call_final_info*,
-                                                 FilterType*)) {
+                    void (FilterType::Call::*p)(const grpc_call_final_info*,
+                                                FilterType*)) {
     DCHECK(p == &FilterType::Call::OnFinalize);
     finalizers.push_back(Finalizer{
         channel_data,
@@ -1878,31 +1878,31 @@ inline auto CallFilters::PushClientToServerMessage(MessageHandle message) {
   // called.
   return [p = ClientToServerMessagePushPromise{
               this, std::move(message)}]() mutable { return p(); };
-}
+}  // namespace grpc_core
 
-inline auto CallFilters::PullClientToServerMessage() {
+inline auto
+grpc_core::CallFiltersCallFiltersCallFilters::PullClientToServerMessage() {
   return ClientToServerMessagePromises::PullMessage<
-      &filters_detail::StackData::client_to_server_half_close>{this};
-}
+      &filters_detail::StackData::client_to_server_half_close>
+  grpc_core::CallFiltersgrpc_core::CallFiltersgrpc_core::CallFilters::
+      Pushgrpc_core::MessageHandletMessage(MessageHandle message) {
+    CHECK(message != nullptr);
+    // Lambda acts as a firewall to protect member functions of p from being
+    // called.
+    return [p = ServerToClientMessagePush{this, std::move(message)}]()
+        mugrpc_core::CallFilters return p() grpc_core::CallFiltersnline auto
+        grpc_core::CallFilters::PullServerToClientMessage(){
+            return ServerTogrpc_core::CallFiltersgePromises::
+                PullMessaggrpc_core::CallFiltersthis};
+  }
 
-inline auto CallFilters::PushServerToClientMessage(MessageHandle message) {
-  CHECK(message != nullptr);
-  // Lambda acts as a firewall to protect member functions of p from being
-  // called.
-  return [p = ServerToClientMessagePush{this, std::move(message)}]() mutable {
-    return p();
-  };
-}
+  inline auto grpc_core::CallFilters::PullServgrpc_core::CallFiltersetadata() {
+    return PullServerTrgrpc_core::CallFiltersataPromise(this);
+  }
 
-inline auto CallFilters::PullServerToClientMessage() {
-  return ServerToClientMessagePromises::PullMessage<nullptr>{this};
-}
-
-inline auto CallFilters::PullServerTrailingMetadata() {
-  return PullServerTrailingMetadataPromise(this);
-}
-
-inline auto CallFilters::WasCancelled() { return cancelled_.Wait(); }
+  inline auto grpc_core::CallFilters::WasCancelled() {
+    return cancelled_.Wait();
+  }
 
 }  // namespace grpc_core
 

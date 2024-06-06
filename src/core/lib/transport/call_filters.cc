@@ -15,12 +15,12 @@
 #include "src/core/lib/transport/call_filters.h"
 
 #include "absl/log/check.h"
-#include "metadata_batch.h"
 
 #include <grpc/support/port_platform.h>
 
 #include "src/core/lib/gprpp/crash.h"
 #include "src/core/lib/transport/metadata.h"
+#include "src/core/lib/transport/metadata_batch.h"
 
 namespace grpc_core {
 
@@ -303,7 +303,7 @@ CallState::CallState()
 void CallState::Start() {
   CHECK_EQ(server_to_client_pull_state_, ServerToClientPullState::kUnstarted);
   server_to_client_pull_state_ =
-      ServerToClientPullState::kWaitingForServerInitialMetadata;
+      ServerToClientPullState::kProcessingServerInitialMetadata;
   client_to_server_pull_waiter_.Wake();
   server_to_client_pull_waiter_.Wake();
 }
