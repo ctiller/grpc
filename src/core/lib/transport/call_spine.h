@@ -114,7 +114,7 @@ class CallSpine final : public Party {
           return call_filters().PushServerInitialMetadata(std::move(*md));
         },
         [this]() {
-          call_filters().NoServerInitialMetadata();
+          call_filters().PullServerInitialMetadata;
           return Immediate<StatusFlag>(Success{});
         });
   }
