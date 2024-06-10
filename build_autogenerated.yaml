@@ -6446,6 +6446,7 @@ targets:
   - src/core/lib/promise/detail/seq_state.h
   - src/core/lib/promise/detail/status.h
   - src/core/lib/promise/exec_ctx_wakeup_scheduler.h
+  - src/core/lib/promise/if.h
   - src/core/lib/promise/latch.h
   - src/core/lib/promise/loop.h
   - src/core/lib/promise/map.h
@@ -6455,6 +6456,7 @@ targets:
   - src/core/lib/promise/seq.h
   - src/core/lib/promise/status_flag.h
   - src/core/lib/promise/trace.h
+  - src/core/lib/promise/try_seq.h
   - src/core/lib/resource_quota/arena.h
   - src/core/lib/resource_quota/connection_quota.h
   - src/core/lib/resource_quota/memory_quota.h
