@@ -41,6 +41,7 @@
 #include "src/core/lib/promise/context.h"
 #include "src/core/lib/promise/detail/promise_factory.h"
 #include "src/core/lib/promise/poll.h"
+#include "src/core/util/useful.h"
 
 // Two implementations of party synchronization are provided: one using a single
 // atomic, the other using a mutex and a set of state variables.
@@ -114,7 +115,7 @@ class PartySyncUsingAtomics {
                                     std::memory_order_acquire);
       LogStateChange("Run", prev_state,
                      prev_state & (kRefMask | kLocked | kAllocatedMask));
-      CHECK(prev_state & kLocked);
+      DCHECK(prev_state & kLocked);
       if (prev_state & kDestroying) return true;
       // From the previous state, extract which participants we're to wakeup.
       uint64_t wakeups = prev_state & kWakeupMask;
@@ -205,6 +206,40 @@ class PartySyncUsingAtomics {
                    (state | (allocated << kAllocatedShift)) + kOneRef);
 
     store(slots);
+
+    // Now we need to wake up the party.
+    state = state_.fetch_or(wakeup_mask | kLocked, std::memory_order_release);
+    LogStateChange("AddParticipantsAndRef:Wakeup", state,
+                   state | wakeup_mask | kLocked);
+
+    // If the party was already locked, we're done.
+    return ((state & kLocked) == 0);
+  }
+
+  template <typename F>
+  GRPC_MUST_USE_RESULT bool AddParticipantAndRef(F store) {
+    uint64_t state = state_.load(std::memory_order_acquire);
+    uint64_t allocated;
+
+    // Find slots for each new participant, ordering them from lowest available
+    // slot upwards to ensure the same poll ordering as presentation ordering to
+    // this function.
+    WakeupMask wakeup_mask;
+    do {
+      allocated = (state & kAllocatedMask) >> kAllocatedShift;
+      const auto new_allocated = allocated | (allocated + 1);
+      wakeup_mask = new_allocated ^ allocated;
+      allocated = new_allocated;
+      // Try to allocate this slot and take a ref (atomically).
+      // Ref needs to be taken because once we store the participant it could be
+      // spuriously woken up and unref the party.
+    } while (!state_.compare_exchange_weak(
+        state, (state | (allocated << kAllocatedShift)) + kOneRef,
+        std::memory_order_acq_rel, std::memory_order_acquire));
+    LogStateChange("AddParticipantsAndRef", state,
+                   (state | (allocated << kAllocatedShift)) + kOneRef);
+
+    store(TrailingZeros16(wakeup_mask));
 
     // Now we need to wake up the party.
     state = state_.fetch_or(wakeup_mask | kLocked, std::memory_order_release);
@@ -346,7 +381,11 @@ class Party : public Activity, private Wakeable {
   // One participant in the party.
   class Participant {
    public:
+#ifndef NDEBUG
     explicit Participant(absl::string_view name) : name_(name) {}
+#else
+    explicit Participant(absl::string_view name) {}
+#endif
     // Poll the participant. Return true if complete.
     // Participant should take care of its own deallocation in this case.
     virtual bool PollParticipantPromise() = 0;
@@ -357,14 +396,18 @@ class Party : public Activity, private Wakeable {
     // Return a Handle instance for this participant.
     Wakeable* MakeNonOwningWakeable(Party* party);
 
+#ifndef NDEBUG
     absl::string_view name() const { return name_; }
+#endif
 
    protected:
     ~Participant();
 
    private:
     Handle* handle_ = nullptr;
+#ifndef NDEBUG
     absl::string_view name_;
+#endif
   };
 
  public:
@@ -613,6 +656,7 @@ class Party : public Activity, private Wakeable {
 
   // Add a participant (backs Spawn, after type erasure to ParticipantFactory).
   void AddParticipants(Participant** participant, size_t count);
+  void AddParticipant(Participant* participant);
   bool RunOneParticipant(int i);
 
   virtual grpc_event_engine::experimental::EventEngine* event_engine()
@@ -654,8 +698,8 @@ void Party::BulkSpawner::Spawn(absl::string_view name, Factory promise_factory,
 template <typename Factory, typename OnComplete>
 void Party::Spawn(absl::string_view name, Factory promise_factory,
                   OnComplete on_complete) {
-  BulkSpawner(this).Spawn(name, std::move(promise_factory),
-                          std::move(on_complete));
+  AddParticipant(new ParticipantImpl<Factory, OnComplete>(
+      name, std::move(promise_factory), std::move(on_complete)));
 }
 
 template <typename Factory>

@@ -107,7 +107,7 @@ class Party::Handle final : public Wakeable {
   }
 
   void WakeupGeneric(WakeupMask wakeup_mask,
-                     void (Party::*wakeup_method)(WakeupMask))
+                     void (Party::* wakeup_method)(WakeupMask))
       ABSL_LOCKS_EXCLUDED(mu_) {
     mu_.Lock();
     // Note that activity refcount can drop to zero, but we could win the lock
@@ -211,13 +211,14 @@ void Party::ForceImmediateRepoll(WakeupMask mask) {
 }
 
 void Party::RunLocked() {
+  auto& current_party_run_next = g_current_party_run_next;
   // If there is a party running, then we don't run it immediately
   // but instead add it to the end of the list of parties to run.
   // This enables a fairly straightforward batching of work from a
   // call to a transport (or back again).
-  if (g_current_party_run_next != nullptr) {
-    if (*g_current_party_run_next == nullptr) {
-      *g_current_party_run_next = this;
+  if (current_party_run_next != nullptr) {
+    if (*current_party_run_next == nullptr) {
+      *current_party_run_next = this;
     } else {
       // But if there's already a party queued, we're better off asking event
       // engine to run it so we can spread load.
@@ -229,13 +230,13 @@ void Party::RunLocked() {
     }
     return;
   }
-  auto body = [this]() {
-    DCHECK_EQ(g_current_party_run_next, nullptr);
+  auto body = [this, &current_party_run_next]() {
+    DCHECK_EQ(current_party_run_next, nullptr);
     Party* run_next = nullptr;
-    g_current_party_run_next = &run_next;
+    current_party_run_next = &run_next;
     const bool done = RunParty();
-    DCHECK(g_current_party_run_next == &run_next);
-    g_current_party_run_next = nullptr;
+    DCHECK(current_party_run_next == &run_next);
+    current_party_run_next = nullptr;
     if (done) {
       ScopedActivity activity(this);
       PartyOver();
@@ -276,25 +277,31 @@ bool Party::RunOneParticipant(int i) {
     }
     return false;
   }
+#ifndef NDEBUG
   absl::string_view name;
   if (GRPC_TRACE_FLAG_ENABLED(promise_primitives)) {
     name = participant->name();
     gpr_log(GPR_INFO, "%s[%s] begin job %d", DebugTag().c_str(),
             std::string(name).c_str(), i);
   }
+#endif
   // Poll the participant.
   currently_polling_ = i;
   bool done = participant->PollParticipantPromise();
   currently_polling_ = kNotPolling;
   if (done) {
+#ifndef NDEBUG
     if (!name.empty()) {
       gpr_log(GPR_INFO, "%s[%s] end poll and finish job %d", DebugTag().c_str(),
               std::string(name).c_str(), i);
     }
+#endif
     participants_[i].store(nullptr, std::memory_order_relaxed);
+#ifndef NDEBUG
   } else if (!name.empty()) {
     gpr_log(GPR_INFO, "%s[%s] end poll", DebugTag().c_str(),
             std::string(name).c_str());
+#endif
   }
   return done;
 }
@@ -303,6 +310,7 @@ void Party::AddParticipants(Participant** participants, size_t count) {
   bool run_party = sync_.AddParticipantsAndRef(count, [this, participants,
                                                        count](size_t* slots) {
     for (size_t i = 0; i < count; i++) {
+#ifndef NDEBUG
       if (GRPC_TRACE_FLAG_ENABLED(party_state)) {
         gpr_log(GPR_INFO,
                 "Party %p                 AddParticipant: %s @ %" PRIdPTR
@@ -310,8 +318,17 @@ void Party::AddParticipants(Participant** participants, size_t count) {
                 &sync_, std::string(participants[i]->name()).c_str(), slots[i],
                 participants[i]);
       }
+#endif
       participants_[slots[i]].store(participants[i], std::memory_order_release);
     }
+  });
+  if (run_party) RunLocked();
+  Unref();
+}
+
+void Party::AddParticipant(Participant* participant) {
+  bool run_party = sync_.AddParticipantAndRef([this, participant](size_t slot) {
+    participants_[slot].store(participant, std::memory_order_release);
   });
   if (run_party) RunLocked();
   Unref();

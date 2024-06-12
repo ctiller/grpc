@@ -65,6 +65,21 @@ bool GetBit(T i, size_t n) {
   return (i & (T(1) << n)) != 0;
 }
 
+inline constexpr uint16_t TrailingZeros16(uint16_t x) {
+#ifdef GRPC_BUILTIN_CTZ
+  return x == 0 ? 16 : GRPC_BUILTIN_CTZ(x);
+#else
+  uint16_t c = 16;  // c will be the number of zero bits on the right
+  v &= -int16_t(v);
+  if (v) c--;
+  if (v & 0x00FF) c -= 8;
+  if (v & 0x0F0F) c -= 4;
+  if (v & 0x3333) c -= 2;
+  if (v & 0x5555) c -= 1;
+  return c;
+#endif
+}
+
 namespace useful_detail {
 inline constexpr uint32_t HexdigitBitcount(uint32_t x) {
   return (x - ((x >> 1) & 0x77777777) - ((x >> 2) & 0x33333333) -

@@ -861,4 +861,10 @@ extern void gpr_unreachable_code(const char* reason, const char* file,
 #endif
 #endif
 
+#if defined __has_builtin
+#if __has_builtin(__builtin_ctz)
+#define GRPC_BUILTIN_CTZ(x) __builtin_ctz(x)
+#endif
+#endif
+
 #endif /* GRPC_SUPPORT_PORT_PLATFORM_H */
