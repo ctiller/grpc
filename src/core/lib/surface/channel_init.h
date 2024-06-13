@@ -80,6 +80,33 @@ class ChannelInit {
     kCount
   };
 
+  // Ordering constraints for filters.
+  // Filters can be designated as `High` in the stack or `Low` in the stack.
+  // We try to place high filters as high in the stack as possible, and low
+  // filters as low in the stack as possible. If there are two filters that are
+  // both marked high (or two marked low) then there must be an additional
+  // ordering constraint between them.
+  enum class Ordering : uint8_t {
+    kHigh,
+    kNormal,
+    kLow,
+  };
+
+  template <typename Sink>
+  friend void AbslStringify(Sink& out, Ordering ordering) {
+    switch (ordering) {
+      case Ordering::kHigh:
+        out.Append("High");
+        break;
+      case Ordering::kNormal:
+        out.Append("Normal");
+        break;
+      case Ordering::kLow:
+        out.Append("Low");
+        break;
+    }
+  }
+
   class FilterRegistration {
    public:
     // TODO(ctiller): Remove grpc_channel_filter* arg when that can be
@@ -159,6 +186,16 @@ class ChannelInit {
       skip_v3_ = true;
       return *this;
     }
+    FilterRegistration& HighOrdering() {
+      CHECK_EQ(ordering_, Ordering::kNormal);
+      ordering_ = Ordering::kHigh;
+      return *this;
+    }
+    FilterRegistration& LowOrdering() {
+      CHECK_EQ(ordering_, Ordering::kNormal);
+      ordering_ = Ordering::kLow;
+      return *this;
+    }
 
    private:
     friend class ChannelInit;
@@ -170,6 +207,7 @@ class ChannelInit {
     bool terminal_ = false;
     bool before_all_ = false;
     bool skip_v3_ = false;
+    Ordering ordering_ = Ordering::kNormal;
     SourceLocation registration_source_;
   };
 

@@ -120,10 +120,15 @@ ChannelInit::StackConfig ChannelInit::BuildStackConfig(
   // ensure algorithm ordering stability is deterministic for a given build.
   // We should not require this, but at the time of writing it's expected that
   // this will help overall stability.
-  using F = const grpc_channel_filter*;
-  std::map<F, FilterRegistration*> filter_to_registration;
-  using DependencyMap = std::map<F, std::set<F, CompareChannelFiltersByName>,
-                                 CompareChannelFiltersByName>;
+  using FilterKey = FilterAdder;
+  auto filter_key_from_registration =
+      [](const FilterRegistration* registration) {
+        return FilterKey{registration->filter_, registration->filter_adder_};
+      };
+  std::map<FilterKey, FilterRegistration*> filter_to_registration;
+  using DependencyMap =
+      std::map<FilterKey, std::set<FilterKey, CompareChannelFiltersByName>,
+               CompareChannelFiltersByName>;
   DependencyMap dependencies;
   std::vector<Filter> terminal_filters;
   for (const auto& registration : registrations) {
@@ -151,7 +156,7 @@ ChannelInit::StackConfig ChannelInit::BuildStackConfig(
   for (const auto& registration : registrations) {
     if (registration->terminal_) continue;
     CHECK_GT(filter_to_registration.count(registration->filter_), 0u);
-    for (F after : registration->after_) {
+    for (FilterKey after : registration->after_) {
       if (filter_to_registration.count(after) == 0) {
         gpr_log(
             GPR_DEBUG, "%s",
@@ -166,7 +171,7 @@ ChannelInit::StackConfig ChannelInit::BuildStackConfig(
       }
       dependencies[registration->filter_].insert(after);
     }
-    for (F before : registration->before_) {
+    for (FilterKey before : registration->before_) {
       if (filter_to_registration.count(before) == 0) {
         gpr_log(
             GPR_DEBUG, "%s",
