@@ -747,21 +747,15 @@ extern gpr_should_log_type gpr_should_log_import;
 typedef void(*gpr_log_message_type)(const char* file, int line, gpr_log_severity severity, const char* message);
 extern gpr_log_message_type gpr_log_message_import;
 #define gpr_log_message gpr_log_message_import
-typedef void(*gpr_set_log_verbosity_type)(gpr_log_severity min_severity_to_print);
+typedef void(*gpr_set_log_verbosity_type)(gpr_log_severity deprecated_setting);
 extern gpr_set_log_verbosity_type gpr_set_log_verbosity_import;
 #define gpr_set_log_verbosity gpr_set_log_verbosity_import
 typedef void(*gpr_log_verbosity_init_type)(void);
 extern gpr_log_verbosity_init_type gpr_log_verbosity_init_import;
 #define gpr_log_verbosity_init gpr_log_verbosity_init_import
-typedef void(*gpr_disable_all_logs_type)(void);
-extern gpr_disable_all_logs_type gpr_disable_all_logs_import;
-#define gpr_disable_all_logs gpr_disable_all_logs_import
-typedef void(*gpr_set_log_function_type)(gpr_log_func func);
+typedef void(*gpr_set_log_function_type)(gpr_log_func deprecated_setting);
 extern gpr_set_log_function_type gpr_set_log_function_import;
 #define gpr_set_log_function gpr_set_log_function_import
-typedef void(*gpr_assertion_failed_type)(const char* filename, int line, const char* message);
-extern gpr_assertion_failed_type gpr_assertion_failed_import;
-#define gpr_assertion_failed gpr_assertion_failed_import
 typedef char*(*gpr_format_message_type)(int messageid);
 extern gpr_format_message_type gpr_format_message_import;
 #define gpr_format_message gpr_format_message_import

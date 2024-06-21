@@ -28,15 +28,10 @@
 extern "C" {
 #endif
 
-/** GPR log API.
-
-   Usage (within grpc):
-
-   int argument1 = 3;
-   char* argument2 = "hello";
-   gpr_log(GPR_DEBUG, "format string %d", argument1);
-   gpr_log(GPR_INFO, "hello world");
-   gpr_log(GPR_ERROR, "%d %s!!", argument1, argument2); */
+/**
+ * Logging functions in this file are deprecated.
+ * Please use absl ABSL_LOG instead.
+ */
 
 /** The severity of a log message - use the #defines below when calling into
    gpr_log to additionally supply file and line data */
@@ -65,11 +60,9 @@ GPRAPI void gpr_log_message(const char* file, int line,
                             gpr_log_severity severity, const char* message);
 
 /** Set global log verbosity */
-GPRAPI void gpr_set_log_verbosity(gpr_log_severity min_severity_to_print);
+GPRAPI void gpr_set_log_verbosity(gpr_log_severity deprecated_setting);
 
 GPRAPI void gpr_log_verbosity_init(void);
-
-GPRAPI void gpr_disable_all_logs(void);
 
 /** Log overrides: applications can use this API to intercept logging calls
    and use their own implementations */
@@ -85,22 +78,7 @@ typedef struct gpr_log_func_args gpr_log_func_args;
 
 typedef void (*gpr_log_func)(gpr_log_func_args* args);
 
-GPRAPI void gpr_set_log_function(gpr_log_func func);
-
-GPRAPI void gpr_assertion_failed(const char* filename, int line,
-                                 const char* message) GPR_ATTRIBUTE_NORETURN;
-
-/** abort() the process if x is zero, having written a line to the log.
-
-   Intended for internal invariants.  If the error can be recovered from,
-   without the possibility of corruption, or might best be reflected via
-   an exception in a higher-level language, consider returning error code.  */
-#define GPR_ASSERT(x)                               \
-  do {                                              \
-    if (GPR_UNLIKELY(!(x))) {                       \
-      gpr_assertion_failed(__FILE__, __LINE__, #x); \
-    }                                               \
-  } while (0)
+GPRAPI void gpr_set_log_function(gpr_log_func deprecated_setting);
 
 #ifdef __cplusplus
 }

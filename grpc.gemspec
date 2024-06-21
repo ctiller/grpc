@@ -30,7 +30,7 @@ Gem::Specification.new do |s|
   s.require_paths = %w( src/ruby/lib src/ruby/bin src/ruby/pb )
   s.platform      = Gem::Platform::RUBY
 
-  s.add_dependency 'google-protobuf', '~> 3.25'
+  s.add_dependency 'google-protobuf', '>= 3.25', '< 5.0'
   s.add_dependency 'googleapis-common-protos-types', '~> 1.0'
 
   s.add_development_dependency 'bundler',            '>= 1.9'
@@ -142,9 +142,10 @@ Gem::Specification.new do |s|
   s.files += %w( src/core/client_channel/client_channel_plugin.cc )
   s.files += %w( src/core/client_channel/client_channel_service_config.cc )
   s.files += %w( src/core/client_channel/client_channel_service_config.h )
-  s.files += %w( src/core/client_channel/config_selector.cc )
   s.files += %w( src/core/client_channel/config_selector.h )
   s.files += %w( src/core/client_channel/connector.h )
+  s.files += %w( src/core/client_channel/direct_channel.cc )
+  s.files += %w( src/core/client_channel/direct_channel.h )
   s.files += %w( src/core/client_channel/dynamic_filters.cc )
   s.files += %w( src/core/client_channel/dynamic_filters.h )
   s.files += %w( src/core/client_channel/global_subchannel_pool.cc )
@@ -1223,7 +1224,6 @@ Gem::Specification.new do |s|
   s.files += %w( src/core/lib/event_engine/thready_event_engine/thready_event_engine.h )
   s.files += %w( src/core/lib/event_engine/time_util.cc )
   s.files += %w( src/core/lib/event_engine/time_util.h )
-  s.files += %w( src/core/lib/event_engine/trace.h )
   s.files += %w( src/core/lib/event_engine/utils.cc )
   s.files += %w( src/core/lib/event_engine/utils.h )
   s.files += %w( src/core/lib/event_engine/windows/grpc_polled_fd_windows.cc )

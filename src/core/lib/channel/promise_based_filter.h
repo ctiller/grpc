@@ -32,6 +32,7 @@
 #include "absl/container/inlined_vector.h"
 #include "absl/functional/function_ref.h"
 #include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/meta/type_traits.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
@@ -39,7 +40,6 @@
 
 #include <grpc/event_engine/event_engine.h>
 #include <grpc/grpc.h>
-#include <grpc/support/log.h>
 #include <grpc/support/port_platform.h>
 
 #include "src/core/lib/channel/call_finalization.h"
@@ -1659,7 +1659,7 @@ template <typename F, FilterEndpoint kEndpoint, uint8_t kFlags = 0>
 absl::enable_if_t<std::is_base_of<ChannelFilter, F>::value &&
                       !std::is_base_of<ImplementChannelFilterTag, F>::value,
                   grpc_channel_filter>
-MakePromiseBasedFilter(const char* name) {
+MakePromiseBasedFilter() {
   using CallData = promise_filter_detail::CallData<kEndpoint>;
 
   return grpc_channel_filter{
@@ -1690,14 +1690,14 @@ MakePromiseBasedFilter(const char* name) {
       // get_channel_info
       promise_filter_detail::ChannelFilterMethods::GetChannelInfo,
       // name
-      name,
+      UniqueTypeNameFor<F>(),
   };
 }
 
 template <typename F, FilterEndpoint kEndpoint, uint8_t kFlags = 0>
 absl::enable_if_t<std::is_base_of<ImplementChannelFilterTag, F>::value,
                   grpc_channel_filter>
-MakePromiseBasedFilter(const char* name) {
+MakePromiseBasedFilter() {
   using CallData = promise_filter_detail::CallData<kEndpoint>;
 
   return grpc_channel_filter{
@@ -1728,7 +1728,7 @@ MakePromiseBasedFilter(const char* name) {
       // get_channel_info
       promise_filter_detail::ChannelFilterMethods::GetChannelInfo,
       // name
-      name,
+      UniqueTypeNameFor<F>(),
   };
 }
 
