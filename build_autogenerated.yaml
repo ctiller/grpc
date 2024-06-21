@@ -1098,6 +1098,7 @@ libs:
   - src/core/lib/transport/call_filters.h
   - src/core/lib/transport/call_final_info.h
   - src/core/lib/transport/call_spine.h
+  - src/core/lib/transport/call_state.h
   - src/core/lib/transport/connectivity_state.h
   - src/core/lib/transport/custom_metadata.h
   - src/core/lib/transport/error_utils.h
@@ -1906,6 +1907,7 @@ libs:
   - src/core/lib/transport/call_filters.cc
   - src/core/lib/transport/call_final_info.cc
   - src/core/lib/transport/call_spine.cc
+  - src/core/lib/transport/call_state.cc
   - src/core/lib/transport/connectivity_state.cc
   - src/core/lib/transport/error_utils.cc
   - src/core/lib/transport/interception_chain.cc
@@ -2601,6 +2603,7 @@ libs:
   - src/core/lib/transport/call_filters.h
   - src/core/lib/transport/call_final_info.h
   - src/core/lib/transport/call_spine.h
+  - src/core/lib/transport/call_state.h
   - src/core/lib/transport/connectivity_state.h
   - src/core/lib/transport/custom_metadata.h
   - src/core/lib/transport/error_utils.h
@@ -3022,6 +3025,7 @@ libs:
   - src/core/lib/transport/call_filters.cc
   - src/core/lib/transport/call_final_info.cc
   - src/core/lib/transport/call_spine.cc
+  - src/core/lib/transport/call_state.cc
   - src/core/lib/transport/connectivity_state.cc
   - src/core/lib/transport/error_utils.cc
   - src/core/lib/transport/interception_chain.cc
@@ -4696,6 +4700,7 @@ libs:
   - src/core/lib/transport/call_filters.h
   - src/core/lib/transport/call_final_info.h
   - src/core/lib/transport/call_spine.h
+  - src/core/lib/transport/call_state.h
   - src/core/lib/transport/connectivity_state.h
   - src/core/lib/transport/custom_metadata.h
   - src/core/lib/transport/error_utils.h
@@ -4996,6 +5001,7 @@ libs:
   - src/core/lib/transport/call_filters.cc
   - src/core/lib/transport/call_final_info.cc
   - src/core/lib/transport/call_spine.cc
+  - src/core/lib/transport/call_state.cc
   - src/core/lib/transport/connectivity_state.cc
   - src/core/lib/transport/error_utils.cc
   - src/core/lib/transport/interception_chain.cc
@@ -6570,6 +6576,7 @@ targets:
   - src/core/lib/surface/channel_stack_type.h
   - src/core/lib/transport/call_filters.h
   - src/core/lib/transport/call_final_info.h
+  - src/core/lib/transport/call_state.h
   - src/core/lib/transport/custom_metadata.h
   - src/core/lib/transport/error_utils.h
   - src/core/lib/transport/http2_errors.h
@@ -6637,6 +6644,7 @@ targets:
   - src/core/lib/surface/channel_stack_type.cc
   - src/core/lib/transport/call_filters.cc
   - src/core/lib/transport/call_final_info.cc
+  - src/core/lib/transport/call_state.cc
   - src/core/lib/transport/error_utils.cc
   - src/core/lib/transport/message.cc
   - src/core/lib/transport/metadata.cc
@@ -6767,6 +6775,48 @@ targets:
   platforms:
   - linux
   - posix
+  uses_polling: false
+- name: call_state_test
+  gtest: true
+  build: test
+  language: c++
+  headers:
+  - src/core/lib/debug/trace.h
+  - src/core/lib/debug/trace_flags.h
+  - src/core/lib/debug/trace_impl.h
+  - src/core/lib/event_engine/event_engine_context.h
+  - src/core/lib/gprpp/atomic_utils.h
+  - src/core/lib/gprpp/down_cast.h
+  - src/core/lib/gprpp/dump_args.h
+  - src/core/lib/gprpp/glob.h
+  - src/core/lib/gprpp/orphanable.h
+  - src/core/lib/gprpp/ref_counted.h
+  - src/core/lib/gprpp/ref_counted_ptr.h
+  - src/core/lib/promise/activity.h
+  - src/core/lib/promise/context.h
+  - src/core/lib/promise/detail/promise_factory.h
+  - src/core/lib/promise/detail/promise_like.h
+  - src/core/lib/promise/detail/status.h
+  - src/core/lib/promise/poll.h
+  - src/core/lib/promise/status_flag.h
+  - src/core/lib/transport/call_state.h
+  - test/core/promise/poll_matcher.h
+  src:
+  - src/core/lib/debug/trace.cc
+  - src/core/lib/debug/trace_flags.cc
+  - src/core/lib/gprpp/dump_args.cc
+  - src/core/lib/gprpp/glob.cc
+  - src/core/lib/promise/activity.cc
+  - src/core/lib/transport/call_state.cc
+  - test/core/transport/call_state_test.cc
+  deps:
+  - gtest
+  - absl/base:config
+  - absl/container:flat_hash_map
+  - absl/hash:hash
+  - absl/meta:type_traits
+  - absl/status:statusor
+  - gpr
   uses_polling: false
 - name: call_tracer_test
   gtest: true
@@ -7051,6 +7101,7 @@ targets:
   - src/core/lib/transport/call_filters.h
   - src/core/lib/transport/call_final_info.h
   - src/core/lib/transport/call_spine.h
+  - src/core/lib/transport/call_state.h
   - src/core/lib/transport/connectivity_state.h
   - src/core/lib/transport/custom_metadata.h
   - src/core/lib/transport/error_utils.h
@@ -7319,6 +7370,7 @@ targets:
   - src/core/lib/transport/call_filters.cc
   - src/core/lib/transport/call_final_info.cc
   - src/core/lib/transport/call_spine.cc
+  - src/core/lib/transport/call_state.cc
   - src/core/lib/transport/connectivity_state.cc
   - src/core/lib/transport/error_utils.cc
   - src/core/lib/transport/interception_chain.cc
@@ -12774,6 +12826,7 @@ targets:
   - src/core/lib/transport/call_filters.h
   - src/core/lib/transport/call_final_info.h
   - src/core/lib/transport/call_spine.h
+  - src/core/lib/transport/call_state.h
   - src/core/lib/transport/connectivity_state.h
   - src/core/lib/transport/custom_metadata.h
   - src/core/lib/transport/error_utils.h
@@ -13043,6 +13096,7 @@ targets:
   - src/core/lib/transport/call_filters.cc
   - src/core/lib/transport/call_final_info.cc
   - src/core/lib/transport/call_spine.cc
+  - src/core/lib/transport/call_state.cc
   - src/core/lib/transport/connectivity_state.cc
   - src/core/lib/transport/error_utils.cc
   - src/core/lib/transport/interception_chain.cc
