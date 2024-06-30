@@ -1451,7 +1451,8 @@ class CallFilters {
  public:
   // Client: Fetch client initial metadata
   // Returns a promise that resolves to ValueOrFailure<ClientMetadataHandle>
-  GRPC_MUST_USE_RESULT auto PullClientInitialMetadata() {
+  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION GRPC_MUST_USE_RESULT auto
+  PullClientInitialMetadata() {
     call_state_.BeginPullClientInitialMetadata();
     return Executor<ClientMetadataHandle, ClientMetadataHandle,
                     &CallFilters::push_client_initial_metadata_,
@@ -1468,7 +1469,8 @@ class CallFilters {
   }
   // Client: Fetch server initial metadata
   // Returns a promise that resolves to ValueOrFailure<ServerMetadataHandle>
-  GRPC_MUST_USE_RESULT auto PullServerInitialMetadata() {
+  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION GRPC_MUST_USE_RESULT auto
+  PullServerInitialMetadata() {
     return Seq(
         [this]() {
           return call_state_.PollPullServerInitialMetadataAvailable();
@@ -1498,7 +1500,8 @@ class CallFilters {
   }
   // Client: Push client to server message
   // Returns a promise that resolves to a StatusFlag indicating success
-  GRPC_MUST_USE_RESULT auto PushClientToServerMessage(MessageHandle message) {
+  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION GRPC_MUST_USE_RESULT auto
+  PushClientToServerMessage(MessageHandle message) {
     call_state_.BeginPushClientToServerMessage();
     DCHECK_NE(message.get(), nullptr);
     DCHECK_EQ(push_client_to_server_message_.get(), nullptr);
@@ -1506,10 +1509,13 @@ class CallFilters {
     return [this]() { return call_state_.PollPushClientToServerMessage(); };
   }
   // Client: Indicate that no more messages will be sent
-  void FinishClientToServerSends() { call_state_.ClientToServerHalfClose(); }
+  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION void FinishClientToServerSends() {
+    call_state_.ClientToServerHalfClose();
+  }
   // Server: Fetch client to server message
   // Returns a promise that resolves to ValueOrFailure<MessageHandle>
-  GRPC_MUST_USE_RESULT auto PullClientToServerMessage() {
+  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION GRPC_MUST_USE_RESULT auto
+  PullClientToServerMessage() {
     return TrySeq(
         [this]() {
           return call_state_.PollPullClientToServerMessageAvailable();
@@ -1533,14 +1539,16 @@ class CallFilters {
   }
   // Server: Push server to client message
   // Returns a promise that resolves to a StatusFlag indicating success
-  GRPC_MUST_USE_RESULT auto PushServerToClientMessage(MessageHandle message) {
+  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION GRPC_MUST_USE_RESULT auto
+  PushServerToClientMessage(MessageHandle message) {
     call_state_.BeginPushServerToClientMessage();
     push_server_to_client_message_ = std::move(message);
     return [this]() { return call_state_.PollPushServerToClientMessage(); };
   }
   // Server: Fetch server to client message
   // Returns a promise that resolves to ValueOrFailure<MessageHandle>
-  GRPC_MUST_USE_RESULT auto PullServerToClientMessage() {
+  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION GRPC_MUST_USE_RESULT auto
+  PullServerToClientMessage() {
     return TrySeq(
         [this]() {
           return call_state_.PollPullServerToClientMessageAvailable();
@@ -1569,7 +1577,8 @@ class CallFilters {
   void PushServerTrailingMetadata(ServerMetadataHandle md);
   // Client: Fetch server trailing metadata
   // Returns a promise that resolves to ServerMetadataHandle
-  GRPC_MUST_USE_RESULT auto PullServerTrailingMetadata() {
+  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION GRPC_MUST_USE_RESULT auto
+  PullServerTrailingMetadata() {
     return Map(
         [this]() { return call_state_.PollServerTrailingMetadataAvailable(); },
         [this](Empty) {
@@ -1591,7 +1600,8 @@ class CallFilters {
   // request was cancelled or not -- failure to send trailing metadata is
   // considered a cancellation, as is actual cancellation -- but not application
   // errors.
-  GRPC_MUST_USE_RESULT auto WasCancelled() {
+  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION GRPC_MUST_USE_RESULT auto
+  WasCancelled() {
     return [this]() { return call_state_.PollWasCancelled(); };
   }
   // Client & server: fill in final_info with the final status of the call.
