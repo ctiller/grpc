@@ -378,7 +378,6 @@ class Party : public Activity, private Wakeable {
   // One participant in the party.
   class Participant {
    public:
-    explicit Participant(absl::string_view name) : name_(name) {}
     // Poll the participant. Return true if complete.
     // Participant should take care of its own deallocation in this case.
     virtual bool PollParticipantPromise() = 0;
@@ -389,14 +388,13 @@ class Party : public Activity, private Wakeable {
     // Return a Handle instance for this participant.
     Wakeable* MakeNonOwningWakeable(Party* party);
 
-    absl::string_view name() const { return name_; }
+    virtual size_t Size() = 0;
 
    protected:
     ~Participant();
 
    private:
     Handle* handle_ = nullptr;
-    absl::string_view name_;
   };
 
  public:
@@ -483,6 +481,14 @@ class Party : public Activity, private Wakeable {
   bool RefIfNonZero() { return sync_.RefIfNonZero(); }
 
  private:
+  template <typename T>
+  static int ReportSize() {
+    LOG(INFO) << __PRETTY_FUNCTION__ << " size: " << sizeof(T);
+    max_participant_size_ = std::max(max_participant_size_, sizeof(T));
+    return sizeof(T);
+  }
+  static size_t max_participant_size_;
+
   // Concrete implementation of a participant for some promise & oncomplete
   // type.
   template <typename SuppliedFactory, typename OnComplete>
@@ -493,7 +499,7 @@ class Party : public Activity, private Wakeable {
    public:
     ParticipantImpl(absl::string_view name, SuppliedFactory promise_factory,
                     OnComplete on_complete)
-        : Participant(name), on_complete_(std::move(on_complete)) {
+        : on_complete_(std::move(on_complete)) {
       Construct(&factory_, std::move(promise_factory));
     }
     ~ParticipantImpl() {
@@ -522,6 +528,8 @@ class Party : public Activity, private Wakeable {
 
     void Destroy() override { delete this; }
 
+    size_t Size() override { return x_; }
+
    private:
     union {
       GPR_NO_UNIQUE_ADDRESS Factory factory_;
@@ -529,6 +537,7 @@ class Party : public Activity, private Wakeable {
     };
     GPR_NO_UNIQUE_ADDRESS OnComplete on_complete_;
     bool started_ = false;
+    static const int x_;
   };
 
   template <typename SuppliedFactory>
@@ -542,8 +551,7 @@ class Party : public Activity, private Wakeable {
 
    public:
     PromiseParticipantImpl(absl::string_view name,
-                           SuppliedFactory promise_factory)
-        : Participant(name) {
+                           SuppliedFactory promise_factory) {
       Construct(&factory_, std::move(promise_factory));
     }
 
@@ -601,6 +609,8 @@ class Party : public Activity, private Wakeable {
       }
     }
 
+    size_t Size() override { return x_; }
+
     void Destroy() override { this->Unref(); }
 
    private:
@@ -612,6 +622,7 @@ class Party : public Activity, private Wakeable {
     };
     Waker waiter_{GetContext<Activity>()->MakeOwningWaker()};
     std::atomic<State> state_{State::kFactory};
+    static const int x_;
   };
 
   // Destroy any remaining participants.
@@ -638,10 +649,9 @@ class Party : public Activity, private Wakeable {
         sync_.AddParticipantAndRef([this, participant](size_t slot) {
           if (GRPC_TRACE_FLAG_ENABLED(party_state)) {
             gpr_log(GPR_INFO,
-                    "Party %p                 AddParticipant: %s @ %" PRIdPTR
+                    "Party %p                 AddParticipant: %" PRIdPTR
                     " [participant=%p]",
-                    &sync_, std::string(participant->name()).c_str(), slot,
-                    participant);
+                    &sync_, slot, participant);
           }
           participants_[slot].store(participant, std::memory_order_release);
         });
@@ -668,6 +678,13 @@ class Party : public Activity, private Wakeable {
   std::atomic<Participant*> participants_[party_detail::kMaxParticipants] = {};
   RefCountedPtr<Arena> arena_;
 };
+
+template <typename SuppliedFactory, typename OnComplete>
+const int Party::ParticipantImpl<SuppliedFactory, OnComplete>::x_ =
+    ReportSize<ParticipantImpl<SuppliedFactory, OnComplete>>();
+template <typename SuppliedFactory>
+const int Party::PromiseParticipantImpl<SuppliedFactory>::x_ =
+    ReportSize<PromiseParticipantImpl<SuppliedFactory>>();
 
 template <>
 struct ContextSubclass<Party> {

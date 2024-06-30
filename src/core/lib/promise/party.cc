@@ -41,6 +41,8 @@ namespace {
 thread_local Party** g_current_party_run_next = nullptr;
 }  // namespace
 
+size_t Party::max_participant_size_ = 0;
+
 ///////////////////////////////////////////////////////////////////////////////
 // PartySyncUsingAtomics
 
@@ -109,7 +111,7 @@ class Party::Handle final : public Wakeable {
   }
 
   void WakeupGeneric(WakeupMask wakeup_mask,
-                     void (Party::*wakeup_method)(WakeupMask))
+                     void (Party::* wakeup_method)(WakeupMask))
       ABSL_LOCKS_EXCLUDED(mu_) {
     mu_.Lock();
     // Note that activity refcount can drop to zero, but we could win the lock
@@ -283,25 +285,15 @@ bool Party::RunOneParticipant(int i) {
     }
     return false;
   }
-  absl::string_view name;
   if (GRPC_TRACE_FLAG_ENABLED(promise_primitives)) {
-    name = participant->name();
-    gpr_log(GPR_INFO, "%s[%s] begin job %d", DebugTag().c_str(),
-            std::string(name).c_str(), i);
+    gpr_log(GPR_INFO, "%s begin job %d", DebugTag().c_str(), i);
   }
   // Poll the participant.
   currently_polling_ = i;
   bool done = participant->PollParticipantPromise();
   currently_polling_ = kNotPolling;
   if (done) {
-    if (!name.empty()) {
-      gpr_log(GPR_INFO, "%s[%s] end poll and finish job %d", DebugTag().c_str(),
-              std::string(name).c_str(), i);
-    }
     participants_[i].store(nullptr, std::memory_order_relaxed);
-  } else if (!name.empty()) {
-    gpr_log(GPR_INFO, "%s[%s] end poll", DebugTag().c_str(),
-            std::string(name).c_str());
   }
   return done;
 }
@@ -312,10 +304,9 @@ void Party::AddParticipants(Participant** participants, size_t count) {
     for (size_t i = 0; i < count; i++) {
       if (GRPC_TRACE_FLAG_ENABLED(party_state)) {
         gpr_log(GPR_INFO,
-                "Party %p                 AddParticipant: %s @ %" PRIdPTR
+                "Party %p                 AddParticipant: %" PRIdPTR
                 " [participant=%p]",
-                &sync_, std::string(participants[i]->name()).c_str(), slots[i],
-                participants[i]);
+                &sync_, slots[i], participants[i]);
       }
       participants_[slots[i]].store(participants[i], std::memory_order_release);
     }
