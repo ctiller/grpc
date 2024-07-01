@@ -395,37 +395,7 @@ class Party : public Activity, private Wakeable {
 
   // Add a participant (backs Spawn, after type erasure to ParticipantFactory).
   void AddParticipants(Participant** participant, size_t count);
-  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION void AddParticipant(
-      Participant* participant) {
-    uint64_t state = state_.load(std::memory_order_acquire);
-    uint64_t allocated;
-    size_t slot;
-
-    // Find slots for each new participant, ordering them from lowest available
-    // slot upwards to ensure the same poll ordering as presentation ordering to
-    // this function.
-    uint64_t wakeup_mask;
-    uint64_t new_state;
-    do {
-      allocated = (state & kAllocatedMask) >> kAllocatedShift;
-      wakeup_mask = LowestOneBit(~allocated);
-      allocated |= wakeup_mask;
-      slot = CountTrailingZeros(wakeup_mask);
-      // Try to allocate this slot and take a ref (atomically).
-      // Ref needs to be taken because once we store the participant it could be
-      // spuriously woken up and unref the party.
-      new_state = (state | (allocated << kAllocatedShift)) + kOneRef;
-    } while (!state_.compare_exchange_weak(state, new_state,
-                                           std::memory_order_acq_rel,
-                                           std::memory_order_acquire));
-    LogStateChange("AddParticipantsAndRef", state, new_state);
-    GRPC_TRACE_LOG(party_state, INFO)
-        << "Party " << this << "                 AddParticipant: " << slot
-        << " [participant=" << participant << "]";
-    participants_[slot].store(participant, std::memory_order_release);
-    // Now we need to wake up the party.
-    WakeupFromState(new_state, wakeup_mask);
-  }
+  void AddParticipant(Participant* participant);
 
   GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION void LogStateChange(
       const char* op, uint64_t prev_state, uint64_t new_state,
