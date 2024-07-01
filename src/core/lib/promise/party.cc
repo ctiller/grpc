@@ -185,7 +185,7 @@ void Party::ForceImmediateRepoll(WakeupMask mask) {
   LogStateChange("ForceImmediateRepoll", prev_state, prev_state | mask);
 }
 
-void Party::RunLocked(Party* party) {
+void Party::RunLockedAndUnref(Party* party) {
   GRPC_LATENT_SEE_PARENT_SCOPE("Party::RunLocked");
 #ifdef GRPC_MAXIMIZE_THREADYNESS
   Thread thd(
@@ -208,9 +208,7 @@ void Party::RunLocked(Party* party) {
       g_run_state = this;
       do {
         GRPC_LATENT_SEE_INNER_SCOPE("run_one_party");
-        if (running->RunParty()) {
-          running->PartyIsOver();
-        }
+        running->RunPartyAndUnref();
         running = std::exchange(next, nullptr);
       } while (running != nullptr);
       DCHECK(g_run_state == this);
@@ -224,6 +222,7 @@ void Party::RunLocked(Party* party) {
   if (g_run_state != nullptr) {
     if (g_run_state->running == party || g_run_state->next == party) {
       // Already running or already queued.
+      party->Unref();
       return;
     }
     if (g_run_state->next != nullptr) {
@@ -249,7 +248,7 @@ void Party::RunLocked(Party* party) {
 #endif
 }
 
-bool Party::RunParty() {
+void Party::RunPartyAndUnref() {
   ScopedActivity activity(this);
   promise_detail::Context<Arena> arena_ctx(arena_.get());
   // Grab the current state, and clear the wakeup bits & add flag.
@@ -257,8 +256,9 @@ bool Party::RunParty() {
                                          std::memory_order_acquire);
   LogStateChange("Run", prev_state,
                  prev_state & (kRefMask | kLocked | kAllocatedMask));
-  CHECK(prev_state & kLocked);
-  if (prev_state & kDestroying) return true;
+  DCHECK(prev_state & kLocked)
+      << "Party should be locked; prev_state=" << prev_state;
+  DCHECK_GE(prev_state & kRefMask, kOneRef);
   // From the previous state, extract which participants we're to wakeup.
   uint64_t wakeups = prev_state & kWakeupMask;
   // Now update prev_state to be what we want the CAS to see below.
@@ -288,11 +288,16 @@ bool Party::RunParty() {
     // waker creation case -- I currently expect this will be more expensive
     // than this quick loop.
     if (state_.compare_exchange_weak(
-            prev_state, (prev_state & (kRefMask | keep_allocated_mask)),
+            prev_state,
+            (prev_state & (kRefMask | keep_allocated_mask)) - kOneRef,
             std::memory_order_acq_rel, std::memory_order_acquire)) {
       LogStateChange("Run:End", prev_state,
-                     prev_state & (kRefMask | kAllocatedMask));
-      return false;
+                     prev_state & (kRefMask | kAllocatedMask) - kOneRef);
+      if ((prev_state & kRefMask) == kOneRef) {
+        // We're done with the party.
+        PartyIsOver();
+      }
+      return;
     }
     while (!state_.compare_exchange_weak(
         prev_state, prev_state & (kRefMask | kLocked | keep_allocated_mask))) {
@@ -300,15 +305,15 @@ bool Party::RunParty() {
     }
     LogStateChange("Run:Continue", prev_state,
                    prev_state & (kRefMask | kLocked | keep_allocated_mask));
-    CHECK(prev_state & kLocked);
-    if (prev_state & kDestroying) return true;
+    DCHECK(prev_state & kLocked)
+        << "Party should be locked; prev_state=" << prev_state;
+    DCHECK_GE(prev_state & kRefMask, kOneRef);
     // From the previous state, extract which participants we're to wakeup.
     wakeups = prev_state & kWakeupMask;
     // Now update prev_state to be what we want the CAS to see once wakeups
     // complete next iteration.
     prev_state &= kRefMask | kLocked | keep_allocated_mask;
   }
-  return false;
 }
 
 bool Party::RunOneParticipant(int i) {
@@ -378,8 +383,11 @@ void Party::AddParticipants(Participant** participants, size_t count) {
                  state | wakeup_mask | kLocked);
 
   // If the party was already locked, we're done; otherwise run the party.
-  if ((state & kLocked) == 0) RunLocked(this);
-  Unref();
+  if ((state & kLocked) == 0) {
+    RunLockedAndUnref(this);
+  } else {
+    Unref();
+  }
 }
 
 void Party::Wakeup(WakeupMask wakeup_mask) {
@@ -389,8 +397,11 @@ void Party::Wakeup(WakeupMask wakeup_mask) {
   LogStateChange("ScheduleWakeup", prev_state,
                  prev_state | (wakeup_mask & kWakeupMask) | kLocked);
   // If the lock was not held now we hold it, so we need to run.
-  if ((prev_state & kLocked) == 0) RunLocked(this);
-  Unref();
+  if ((prev_state & kLocked) == 0) {
+    RunLockedAndUnref(this);
+  } else {
+    Unref();
+  }
 }
 
 void Party::WakeupAsync(WakeupMask wakeup_mask) {
@@ -404,8 +415,7 @@ void Party::WakeupAsync(WakeupMask wakeup_mask) {
         [this]() {
           ApplicationCallbackExecCtx app_exec_ctx;
           ExecCtx exec_ctx;
-          RunLocked(this);
-          Unref();
+          RunLockedAndUnref(this);
         });
   } else {
     Unref();

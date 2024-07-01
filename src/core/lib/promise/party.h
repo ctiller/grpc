@@ -129,7 +129,7 @@ class Party : public Activity, private Wakeable {
     while (true) {
       uint64_t new_state = prev_state - kOneRef;
       if ((new_state & kRefMask) == 0) {
-        new_state |= kDestroying | kLocked;
+        new_state |= kLocked;
         if (state_.compare_exchange_weak(prev_state, new_state,
                                          std::memory_order_acq_rel)) {
           LogStateChange("Unref", prev_state, new_state);
@@ -180,8 +180,7 @@ class Party : public Activity, private Wakeable {
   // Main run loop. Must be locked.
   // Polls participants and drains the add queue until there is no work left to
   // be done.
-  // Returns true if the party is over.
-  GRPC_MUST_USE_RESULT bool RunParty();
+  void RunPartyAndUnref();
 
   bool RefIfNonZero();
 
@@ -336,8 +335,6 @@ class Party : public Activity, private Wakeable {
   static constexpr uint64_t kWakeupMask    = 0x0000'0000'0000'ffff;
   // Bits used to store 16 bits of allocated participant slots.
   static constexpr uint64_t kAllocatedMask = 0x0000'0000'ffff'0000;
-  // Bit indicating destruction has begun (refs went to zero)
-  static constexpr uint64_t kDestroying    = 0x0000'0001'0000'0000;
   // Bit indicating locked or not
   static constexpr uint64_t kLocked        = 0x0000'0008'0000'0000;
   // Bits used to store 24 bits of ref counts
@@ -356,7 +353,7 @@ class Party : public Activity, private Wakeable {
   void CancelRemainingParticipants();
 
   // Run the locked part of the party until it is unlocked.
-  static void RunLocked(Party* party);
+  static void RunLockedAndUnref(Party* party);
   // Called in response to Unref() hitting zero - ultimately calls PartyOver,
   // but needs to set some stuff up.
   // Here so it gets compiled out of line.
@@ -407,8 +404,11 @@ class Party : public Activity, private Wakeable {
 
     // If the party was already locked, we're done; otherwise enter the run
     // loop.
-    if ((state & kLocked) == 0) RunLocked(this);
-    Unref();
+    if ((state & kLocked) == 0) {
+      RunLockedAndUnref(this);
+    } else {
+      Unref();
+    }
   }
   bool RunOneParticipant(int i);
 
