@@ -278,15 +278,30 @@ GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION void Party::RunPartyAndUnref(
     uint64_t keep_allocated_mask = kAllocatedMask;
     // For each wakeup bit...
     while (wakeup_mask != 0) {
-      uint64_t t = LowestOneBit(wakeup_mask);
+      const uint64_t t = LowestOneBit(wakeup_mask);
       const int i = CountTrailingZeros(t);
       wakeup_mask ^= t;
-      // If the bit is not set, skip.
-      if (RunOneParticipant(i)) {
+      // If the participant is null, skip.
+      // This allows participants to complete whilst wakers still exist
+      // somewhere.
+      auto* participant = participants_[i].load(std::memory_order_acquire);
+      if (GPR_UNLIKELY(participant == nullptr)) {
+        GRPC_TRACE_LOG(promise_primitives, INFO)
+            << "Party " << this << "                 Run:Wakeup " << i
+            << " already complete";
+        continue;
+      }
+      GRPC_TRACE_LOG(promise_primitives, INFO)
+          << "Party " << this << "                 Run:Wakeup " << i;
+      // Poll the participant.
+      currently_polling_ = i;
+      if (participant->PollParticipantPromise()) {
+        participants_[i].store(nullptr, std::memory_order_relaxed);
         const uint64_t allocated_bit = (1u << i << kAllocatedShift);
         keep_allocated_mask &= ~allocated_bit;
       }
     }
+    currently_polling_ = kNotPolling;
     // Try to CAS the state we expected to have (with no wakeups or adds)
     // back to unlocked (by masking in only the ref mask - sans locked bit).
     // If this succeeds then no wakeups were added, no adds were added, and we
@@ -325,32 +340,6 @@ GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION void Party::RunPartyAndUnref(
     // complete next iteration.
     prev_state &= kRefMask | kLocked | keep_allocated_mask;
   }
-}
-
-bool Party::RunOneParticipant(int i) {
-  GRPC_LATENT_SEE_INNER_SCOPE("Party::RunOneParticipant");
-  // If the participant is null, skip.
-  // This allows participants to complete whilst wakers still exist
-  // somewhere.
-  auto* participant = participants_[i].load(std::memory_order_acquire);
-  if (participant == nullptr) {
-    if (GRPC_TRACE_FLAG_ENABLED(promise_primitives)) {
-      gpr_log(GPR_INFO, "%s[party] wakeup %d already complete",
-              DebugTag().c_str(), i);
-    }
-    return false;
-  }
-  if (GRPC_TRACE_FLAG_ENABLED(promise_primitives)) {
-    gpr_log(GPR_INFO, "%s begin job %d", DebugTag().c_str(), i);
-  }
-  // Poll the participant.
-  currently_polling_ = i;
-  bool done = participant->PollParticipantPromise();
-  currently_polling_ = kNotPolling;
-  if (done) {
-    participants_[i].store(nullptr, std::memory_order_relaxed);
-  }
-  return done;
 }
 
 void Party::AddParticipants(Participant** participants, size_t count) {

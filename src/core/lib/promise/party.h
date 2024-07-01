@@ -364,7 +364,7 @@ class Party : public Activity, private Wakeable {
   GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION void Wakeup(
       WakeupMask wakeup_mask) final {
     uint64_t cur_state = state_.load(std::memory_order_relaxed);
-    DCHECK(wakeup_mask & kWakeupMask);
+    DCHECK_NE(wakeup_mask & kWakeupMask, 0);
     while (true) {
       if (cur_state & kLocked) {
         // If the party is locked, we need to set the wakeup bits.
@@ -400,14 +400,12 @@ class Party : public Activity, private Wakeable {
     // Find slots for each new participant, ordering them from lowest available
     // slot upwards to ensure the same poll ordering as presentation ordering to
     // this function.
-    WakeupMask wakeup_mask;
+    uint64_t wakeup_mask;
     do {
-      wakeup_mask = 0;
       allocated = (state & kAllocatedMask) >> kAllocatedShift;
-      auto new_mask = LowestOneBit(~allocated);
-      wakeup_mask |= new_mask;
-      allocated |= new_mask;
-      slot = CountTrailingZeros(new_mask);
+      wakeup_mask = LowestOneBit(~allocated);
+      allocated |= wakeup_mask;
+      slot = CountTrailingZeros(wakeup_mask);
       // Try to allocate this slot and take a ref (atomically).
       // Ref needs to be taken because once we store the participant it could be
       // spuriously woken up and unref the party.
@@ -423,7 +421,6 @@ class Party : public Activity, private Wakeable {
     // Now we need to wake up the party.
     Wakeup(wakeup_mask);
   }
-  bool RunOneParticipant(int i);
 
   GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION void LogStateChange(
       const char* op, uint64_t prev_state, uint64_t new_state,
