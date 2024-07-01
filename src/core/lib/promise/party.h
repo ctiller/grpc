@@ -125,25 +125,8 @@ class Party : public Activity, private Wakeable {
     LogStateChange("IncrementRefCount", prev_state, prev_state + kOneRef);
   }
   void Unref() {
-    uint64_t prev_state = state_.load(std::memory_order_relaxed);
-    while (true) {
-      uint64_t new_state = prev_state - kOneRef;
-      if ((new_state & kRefMask) == 0) {
-        new_state |= kLocked;
-        if (state_.compare_exchange_weak(prev_state, new_state,
-                                         std::memory_order_acq_rel)) {
-          LogStateChange("Unref", prev_state, new_state);
-          if ((prev_state & kLocked) == 0) PartyIsOver();
-          return;
-        }
-      } else {
-        if (state_.compare_exchange_weak(prev_state, new_state,
-                                         std::memory_order_acq_rel)) {
-          LogStateChange("Unref", prev_state, new_state);
-          return;
-        }
-      }
-    }
+    uint64_t prev_state = state_.fetch_sub(kOneRef, std::memory_order_acq_rel);
+    if ((prev_state & kRefMask) == kOneRef) PartyIsOver();
   }
 
   RefCountedPtr<Party> Ref() {
