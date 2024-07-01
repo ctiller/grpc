@@ -360,7 +360,21 @@ class Party : public Activity, private Wakeable {
   void PartyIsOver();
 
   // Wakeable implementation
-  void Wakeup(WakeupMask wakeup_mask) final;
+  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION void Wakeup(
+      WakeupMask wakeup_mask) final {
+    // Or in the wakeup bit for the participant, AND the locked bit.
+    uint64_t prev_state = state_.fetch_or((wakeup_mask & kWakeupMask) | kLocked,
+                                          std::memory_order_release);
+    LogStateChange("ScheduleWakeup", prev_state,
+                   prev_state | (wakeup_mask & kWakeupMask) | kLocked);
+    // If the lock was not held now we hold it, so we need to run.
+    if ((prev_state & kLocked) == 0) {
+      RunLockedAndUnref(this);
+    } else {
+      Unref();
+    }
+  }
+
   void WakeupAsync(WakeupMask wakeup_mask) final;
   void Drop(WakeupMask wakeup_mask) final;
 
@@ -398,17 +412,7 @@ class Party : public Activity, private Wakeable {
     participants_[slot].store(participant, std::memory_order_release);
 
     // Now we need to wake up the party.
-    state = state_.fetch_or(wakeup_mask | kLocked, std::memory_order_release);
-    LogStateChange("AddParticipantsAndRef:Wakeup", state,
-                   state | wakeup_mask | kLocked);
-
-    // If the party was already locked, we're done; otherwise enter the run
-    // loop.
-    if ((state & kLocked) == 0) {
-      RunLockedAndUnref(this);
-    } else {
-      Unref();
-    }
+    Wakeup(wakeup_mask);
   }
   bool RunOneParticipant(int i);
 

@@ -378,30 +378,7 @@ void Party::AddParticipants(Participant** participants, size_t count) {
   }
 
   // Now we need to wake up the party.
-  state = state_.fetch_or(wakeup_mask | kLocked, std::memory_order_release);
-  LogStateChange("AddParticipantsAndRef:Wakeup", state,
-                 state | wakeup_mask | kLocked);
-
-  // If the party was already locked, we're done; otherwise run the party.
-  if ((state & kLocked) == 0) {
-    RunLockedAndUnref(this);
-  } else {
-    Unref();
-  }
-}
-
-void Party::Wakeup(WakeupMask wakeup_mask) {
-  // Or in the wakeup bit for the participant, AND the locked bit.
-  uint64_t prev_state = state_.fetch_or((wakeup_mask & kWakeupMask) | kLocked,
-                                        std::memory_order_release);
-  LogStateChange("ScheduleWakeup", prev_state,
-                 prev_state | (wakeup_mask & kWakeupMask) | kLocked);
-  // If the lock was not held now we hold it, so we need to run.
-  if ((prev_state & kLocked) == 0) {
-    RunLockedAndUnref(this);
-  } else {
-    Unref();
-  }
+  Wakeup(wakeup_mask);
 }
 
 void Party::WakeupAsync(WakeupMask wakeup_mask) {
