@@ -28,7 +28,6 @@
 #include "src/core/lib/gprpp/crash.h"
 #include "src/core/lib/iomgr/combiner.h"
 #include "src/core/lib/iomgr/error.h"
-#include "src/core/lib/iomgr/exec_ctx.h"
 
 static void exec_ctx_run(grpc_closure* closure) {
 #ifndef NDEBUG
