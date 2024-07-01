@@ -271,7 +271,8 @@ GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION void Party::RunPartyAndUnref(
       << "Party should be unlocked prior to first wakeup";
   DCHECK_GE(prev_state & kRefMask, kOneRef);
   // Now update prev_state to be what we want the CAS to see below.
-  prev_state &= kRefMask | kLocked | kAllocatedMask;
+  DCHECK_EQ(prev_state & ~(kRefMask | kAllocatedMask), 0)
+      << "Party should have contained no wakeups on lock";
   prev_state |= kLocked;
   for (;;) {
     uint64_t keep_allocated_mask = kAllocatedMask;
