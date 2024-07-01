@@ -393,7 +393,7 @@ void Party::AddParticipants(Participant** participants, size_t count) {
 void Party::Wakeup(WakeupMask wakeup_mask) {
   // Or in the wakeup bit for the participant, AND the locked bit.
   uint64_t prev_state = state_.fetch_or((wakeup_mask & kWakeupMask) | kLocked,
-                                        std::memory_order_acq_rel);
+                                        std::memory_order_release);
   LogStateChange("ScheduleWakeup", prev_state,
                  prev_state | (wakeup_mask & kWakeupMask) | kLocked);
   // If the lock was not held now we hold it, so we need to run.
