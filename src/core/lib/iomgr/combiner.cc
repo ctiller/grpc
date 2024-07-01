@@ -23,7 +23,6 @@
 #include <string.h>
 
 #include "absl/log/check.h"
-#include "combiner.h"
 
 #include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
@@ -32,6 +31,7 @@
 #include "src/core/lib/experiments/experiments.h"
 #include "src/core/lib/gprpp/crash.h"
 #include "src/core/lib/gprpp/mpscq.h"
+#include "src/core/lib/iomgr/combiner.h"
 #include "src/core/lib/iomgr/executor.h"
 #include "src/core/lib/iomgr/iomgr_internal.h"
 
