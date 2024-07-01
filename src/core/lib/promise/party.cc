@@ -36,12 +36,10 @@
 
 namespace grpc_core {
 
-size_t Party::max_participant_size_ = 0;
-
 ///////////////////////////////////////////////////////////////////////////////
 // PartySyncUsingAtomics
 
-GRPC_MUST_USE_RESULT bool PartySyncUsingAtomics::RefIfNonZero() {
+GRPC_MUST_USE_RESULT bool Party::RefIfNonZero() {
   auto count = state_.load(std::memory_order_relaxed);
   do {
     // If zero, we are done (without an increment). If not, we must do a CAS
@@ -55,25 +53,6 @@ GRPC_MUST_USE_RESULT bool PartySyncUsingAtomics::RefIfNonZero() {
                                          std::memory_order_relaxed));
   LogStateChange("RefIfNonZero", count, count + kOneRef);
   return true;
-}
-
-bool PartySyncUsingAtomics::ScheduleWakeup(WakeupMask mask) {
-  // Or in the wakeup bit for the participant, AND the locked bit.
-  uint64_t prev_state = state_.fetch_or((mask & kWakeupMask) | kLocked,
-                                        std::memory_order_acq_rel);
-  LogStateChange("ScheduleWakeup", prev_state,
-                 prev_state | (mask & kWakeupMask) | kLocked);
-  // If the lock was not held now we hold it, so we need to run.
-  return ((prev_state & kLocked) == 0);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// PartySyncUsingMutex
-
-bool PartySyncUsingMutex::ScheduleWakeup(WakeupMask mask) {
-  MutexLock lock(&mu_);
-  wakeups_ |= mask;
-  return !std::exchange(locked_, true);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -169,7 +148,7 @@ Party::Participant::~Participant() {
 Party::~Party() {}
 
 void Party::CancelRemainingParticipants() {
-  if (!sync_.has_participants()) return;
+  if ((state_.load(std::memory_order_relaxed) & kAllocatedMask) == 0) return;
   ScopedActivity activity(this);
   promise_detail::Context<Arena> arena_ctx(arena_.get());
   for (size_t i = 0; i < party_detail::kMaxParticipants; i++) {
@@ -200,7 +179,10 @@ Waker Party::MakeNonOwningWaker() {
 
 void Party::ForceImmediateRepoll(WakeupMask mask) {
   DCHECK(is_current());
-  sync_.ForceImmediateRepoll(mask);
+  // Or in the bit for the currently polling participant.
+  // Will be grabbed next round to force a repoll of this promise.
+  const uint64_t prev_state = state_.fetch_or(mask, std::memory_order_relaxed);
+  LogStateChange("ForceImmediateRepoll", prev_state, prev_state | mask);
 }
 
 void Party::RunLocked(Party* party) {
@@ -270,7 +252,63 @@ void Party::RunLocked(Party* party) {
 bool Party::RunParty() {
   ScopedActivity activity(this);
   promise_detail::Context<Arena> arena_ctx(arena_.get());
-  return sync_.RunParty([this](int i) { return RunOneParticipant(i); });
+  // Grab the current state, and clear the wakeup bits & add flag.
+  uint64_t prev_state = state_.fetch_and(kRefMask | kLocked | kAllocatedMask,
+                                         std::memory_order_acquire);
+  LogStateChange("Run", prev_state,
+                 prev_state & (kRefMask | kLocked | kAllocatedMask));
+  CHECK(prev_state & kLocked);
+  if (prev_state & kDestroying) return true;
+  // From the previous state, extract which participants we're to wakeup.
+  uint64_t wakeups = prev_state & kWakeupMask;
+  // Now update prev_state to be what we want the CAS to see below.
+  prev_state &= kRefMask | kLocked | kAllocatedMask;
+  for (;;) {
+    uint64_t keep_allocated_mask = kAllocatedMask;
+    // For each wakeup bit...
+    while (wakeups != 0) {
+      uint64_t t = LowestOneBit(wakeups);
+      const int i = CountTrailingZeros(t);
+      wakeups ^= t;
+      // If the bit is not set, skip.
+      if (RunOneParticipant(i)) {
+        const uint64_t allocated_bit = (1u << i << kAllocatedShift);
+        keep_allocated_mask &= ~allocated_bit;
+      }
+    }
+    // Try to CAS the state we expected to have (with no wakeups or adds)
+    // back to unlocked (by masking in only the ref mask - sans locked bit).
+    // If this succeeds then no wakeups were added, no adds were added, and we
+    // have successfully unlocked.
+    // Otherwise, we need to loop again.
+    // Note that if an owning waker is created or the weak cas spuriously
+    // fails we will also loop again, but in that case see no wakeups or adds
+    // and so will get back here fairly quickly.
+    // TODO(ctiller): consider mitigations for the accidental wakeup on owning
+    // waker creation case -- I currently expect this will be more expensive
+    // than this quick loop.
+    if (state_.compare_exchange_weak(
+            prev_state, (prev_state & (kRefMask | keep_allocated_mask)),
+            std::memory_order_acq_rel, std::memory_order_acquire)) {
+      LogStateChange("Run:End", prev_state,
+                     prev_state & (kRefMask | kAllocatedMask));
+      return false;
+    }
+    while (!state_.compare_exchange_weak(
+        prev_state, prev_state & (kRefMask | kLocked | keep_allocated_mask))) {
+      // Nothing to do here.
+    }
+    LogStateChange("Run:Continue", prev_state,
+                   prev_state & (kRefMask | kLocked | keep_allocated_mask));
+    CHECK(prev_state & kLocked);
+    if (prev_state & kDestroying) return true;
+    // From the previous state, extract which participants we're to wakeup.
+    wakeups = prev_state & kWakeupMask;
+    // Now update prev_state to be what we want the CAS to see once wakeups
+    // complete next iteration.
+    prev_state &= kRefMask | kLocked | keep_allocated_mask;
+  }
+  return false;
 }
 
 bool Party::RunOneParticipant(int i) {
@@ -300,29 +338,68 @@ bool Party::RunOneParticipant(int i) {
 }
 
 void Party::AddParticipants(Participant** participants, size_t count) {
-  bool run_party = sync_.AddParticipantsAndRef(count, [this, participants,
-                                                       count](size_t* slots) {
+  uint64_t state = state_.load(std::memory_order_acquire);
+  uint64_t allocated;
+
+  size_t slots[party_detail::kMaxParticipants];
+
+  // Find slots for each new participant, ordering them from lowest available
+  // slot upwards to ensure the same poll ordering as presentation ordering to
+  // this function.
+  WakeupMask wakeup_mask;
+  do {
+    wakeup_mask = 0;
+    allocated = (state & kAllocatedMask) >> kAllocatedShift;
     for (size_t i = 0; i < count; i++) {
-      if (GRPC_TRACE_FLAG_ENABLED(party_state)) {
-        gpr_log(GPR_INFO,
-                "Party %p                 AddParticipant: %" PRIdPTR
-                " [participant=%p]",
-                &sync_, slots[i], participants[i]);
-      }
-      participants_[slots[i]].store(participants[i], std::memory_order_release);
+      auto new_mask = LowestOneBit(~allocated);
+      wakeup_mask |= new_mask;
+      allocated |= new_mask;
+      slots[i] = CountTrailingZeros(new_mask);
     }
-  });
-  if (run_party) RunLocked(this);
+    // Try to allocate this slot and take a ref (atomically).
+    // Ref needs to be taken because once we store the participant it could be
+    // spuriously woken up and unref the party.
+  } while (!state_.compare_exchange_weak(
+      state, (state | (allocated << kAllocatedShift)) + kOneRef,
+      std::memory_order_acq_rel, std::memory_order_acquire));
+  LogStateChange("AddParticipantsAndRef", state,
+                 (state | (allocated << kAllocatedShift)) + kOneRef);
+
+  for (size_t i = 0; i < count; i++) {
+    GRPC_TRACE_LOG(party_state, INFO)
+        << "Party " << this << "                 AddParticipant: " << slots[i]
+        << " " << participants[i];
+    participants_[slots[i]].store(participants[i], std::memory_order_release);
+  }
+
+  // Now we need to wake up the party.
+  state = state_.fetch_or(wakeup_mask | kLocked, std::memory_order_release);
+  LogStateChange("AddParticipantsAndRef:Wakeup", state,
+                 state | wakeup_mask | kLocked);
+
+  // If the party was already locked, we're done; otherwise run the party.
+  if ((state & kLocked) == 0) RunLocked(this);
   Unref();
 }
 
 void Party::Wakeup(WakeupMask wakeup_mask) {
-  if (sync_.ScheduleWakeup(wakeup_mask)) RunLocked(this);
+  // Or in the wakeup bit for the participant, AND the locked bit.
+  uint64_t prev_state = state_.fetch_or((wakeup_mask & kWakeupMask) | kLocked,
+                                        std::memory_order_acq_rel);
+  LogStateChange("ScheduleWakeup", prev_state,
+                 prev_state | (wakeup_mask & kWakeupMask) | kLocked);
+  // If the lock was not held now we hold it, so we need to run.
+  if ((prev_state & kLocked) == 0) RunLocked(this);
   Unref();
 }
 
 void Party::WakeupAsync(WakeupMask wakeup_mask) {
-  if (sync_.ScheduleWakeup(wakeup_mask)) {
+  // Or in the wakeup bit for the participant, AND the locked bit.
+  uint64_t prev_state = state_.fetch_or((wakeup_mask & kWakeupMask) | kLocked,
+                                        std::memory_order_acq_rel);
+  LogStateChange("ScheduleWakeup", prev_state,
+                 prev_state | (wakeup_mask & kWakeupMask) | kLocked);
+  if ((prev_state & kLocked) == 0) {
     arena_->GetContext<grpc_event_engine::experimental::EventEngine>()->Run(
         [this]() {
           ApplicationCallbackExecCtx app_exec_ctx;

@@ -44,25 +44,6 @@
 #include "src/core/lib/resource_quota/arena.h"
 #include "src/core/util/useful.h"
 
-// Two implementations of party synchronization are provided: one using a single
-// atomic, the other using a mutex and a set of state variables.
-// Originally the atomic implementation was implemented, but we found some race
-// conditions on Arm that were not reported by our default TSAN implementation.
-// The mutex implementation was added to see if it would fix the problem, and
-// it did. Later we found the race condition, so there's no known reason to use
-// the mutex version - however we keep it around as a just in case measure.
-// There's a thought of fuzzing the two implementations against each other as
-// a correctness check of both, but that's not implemented yet.
-
-#define GRPC_PARTY_SYNC_USING_ATOMICS
-// #define GRPC_PARTY_SYNC_USING_MUTEX
-
-#if defined(GRPC_PARTY_SYNC_USING_ATOMICS) +    \
-        defined(GRPC_PARTY_SYNC_USING_MUTEX) != \
-    1
-#error Must define a party sync mechanism
-#endif
-
 namespace grpc_core {
 
 namespace party_detail {
@@ -72,309 +53,6 @@ namespace party_detail {
 static constexpr size_t kMaxParticipants = 16;
 
 }  // namespace party_detail
-
-class PartySyncUsingAtomics {
- public:
-  explicit PartySyncUsingAtomics(size_t initial_refs)
-      : state_(kOneRef * initial_refs) {}
-
-  void IncrementRefCount() {
-    const uint64_t prev_state =
-        state_.fetch_add(kOneRef, std::memory_order_relaxed);
-    LogStateChange("IncrementRefCount", prev_state, prev_state + kOneRef);
-  }
-  GRPC_MUST_USE_RESULT bool RefIfNonZero();
-  // Returns true if the ref count is now zero and the caller should call
-  // PartyIsOver
-  GRPC_MUST_USE_RESULT bool Unref() {
-    const uint64_t prev_state =
-        state_.fetch_sub(kOneRef, std::memory_order_acq_rel);
-    LogStateChange("Unref", prev_state, prev_state - kOneRef);
-    if ((prev_state & kRefMask) == kOneRef) {
-      return UnreffedLast();
-    }
-    return false;
-  }
-  void ForceImmediateRepoll(WakeupMask mask) {
-    // Or in the bit for the currently polling participant.
-    // Will be grabbed next round to force a repoll of this promise.
-    const uint64_t prev_state =
-        state_.fetch_or(mask, std::memory_order_relaxed);
-    LogStateChange("ForceImmediateRepoll", prev_state, prev_state | mask);
-  }
-
-  // Run the update loop: poll_one_participant is called with an integral index
-  // for the participant that should be polled. It should return true if the
-  // participant completed and should be removed from the allocated set.
-  template <typename F>
-  GRPC_MUST_USE_RESULT bool RunParty(F poll_one_participant) {
-    // Grab the current state, and clear the wakeup bits & add flag.
-    uint64_t prev_state = state_.fetch_and(kRefMask | kLocked | kAllocatedMask,
-                                           std::memory_order_acquire);
-    LogStateChange("Run", prev_state,
-                   prev_state & (kRefMask | kLocked | kAllocatedMask));
-    CHECK(prev_state & kLocked);
-    if (prev_state & kDestroying) return true;
-    // From the previous state, extract which participants we're to wakeup.
-    uint64_t wakeups = prev_state & kWakeupMask;
-    // Now update prev_state to be what we want the CAS to see below.
-    prev_state &= kRefMask | kLocked | kAllocatedMask;
-    for (;;) {
-      uint64_t keep_allocated_mask = kAllocatedMask;
-      // For each wakeup bit...
-      while (wakeups != 0) {
-        uint64_t t = LowestOneBit(wakeups);
-        const int i = CountTrailingZeros(t);
-        wakeups ^= t;
-        // If the bit is not set, skip.
-        if (poll_one_participant(i)) {
-          const uint64_t allocated_bit = (1u << i << kAllocatedShift);
-          keep_allocated_mask &= ~allocated_bit;
-        }
-      }
-      // Try to CAS the state we expected to have (with no wakeups or adds)
-      // back to unlocked (by masking in only the ref mask - sans locked bit).
-      // If this succeeds then no wakeups were added, no adds were added, and we
-      // have successfully unlocked.
-      // Otherwise, we need to loop again.
-      // Note that if an owning waker is created or the weak cas spuriously
-      // fails we will also loop again, but in that case see no wakeups or adds
-      // and so will get back here fairly quickly.
-      // TODO(ctiller): consider mitigations for the accidental wakeup on owning
-      // waker creation case -- I currently expect this will be more expensive
-      // than this quick loop.
-      if (state_.compare_exchange_weak(
-              prev_state, (prev_state & (kRefMask | keep_allocated_mask)),
-              std::memory_order_acq_rel, std::memory_order_acquire)) {
-        LogStateChange("Run:End", prev_state,
-                       prev_state & (kRefMask | kAllocatedMask));
-        return false;
-      }
-      while (!state_.compare_exchange_weak(
-          prev_state,
-          prev_state & (kRefMask | kLocked | keep_allocated_mask))) {
-        // Nothing to do here.
-      }
-      LogStateChange("Run:Continue", prev_state,
-                     prev_state & (kRefMask | kLocked | keep_allocated_mask));
-      CHECK(prev_state & kLocked);
-      if (prev_state & kDestroying) return true;
-      // From the previous state, extract which participants we're to wakeup.
-      wakeups = prev_state & kWakeupMask;
-      // Now update prev_state to be what we want the CAS to see once wakeups
-      // complete next iteration.
-      prev_state &= kRefMask | kLocked | keep_allocated_mask;
-    }
-    return false;
-  }
-
-  // Add new participants to the party. Returns true if the caller should run
-  // the party. store is called with an array of indices of the new
-  // participants. Adds a ref that should be dropped by the caller after
-  // RunParty has been called (if that was required).
-  template <typename F>
-  GRPC_MUST_USE_RESULT bool AddParticipantsAndRef(size_t count, F store) {
-    uint64_t state = state_.load(std::memory_order_acquire);
-    uint64_t allocated;
-
-    size_t slots[party_detail::kMaxParticipants];
-
-    // Find slots for each new participant, ordering them from lowest available
-    // slot upwards to ensure the same poll ordering as presentation ordering to
-    // this function.
-    WakeupMask wakeup_mask;
-    do {
-      wakeup_mask = 0;
-      allocated = (state & kAllocatedMask) >> kAllocatedShift;
-      for (size_t i = 0; i < count; i++) {
-        auto new_mask = LowestOneBit(~allocated);
-        wakeup_mask |= new_mask;
-        allocated |= new_mask;
-        slots[i] = CountTrailingZeros(new_mask);
-      }
-      // Try to allocate this slot and take a ref (atomically).
-      // Ref needs to be taken because once we store the participant it could be
-      // spuriously woken up and unref the party.
-    } while (!state_.compare_exchange_weak(
-        state, (state | (allocated << kAllocatedShift)) + kOneRef,
-        std::memory_order_acq_rel, std::memory_order_acquire));
-    LogStateChange("AddParticipantsAndRef", state,
-                   (state | (allocated << kAllocatedShift)) + kOneRef);
-
-    store(slots);
-
-    // Now we need to wake up the party.
-    state = state_.fetch_or(wakeup_mask | kLocked, std::memory_order_release);
-    LogStateChange("AddParticipantsAndRef:Wakeup", state,
-                   state | wakeup_mask | kLocked);
-
-    // If the party was already locked, we're done.
-    return ((state & kLocked) == 0);
-  }
-
-  template <typename F>
-  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION GRPC_MUST_USE_RESULT bool
-  AddParticipantAndRef(F store) {
-    uint64_t state = state_.load(std::memory_order_acquire);
-    uint64_t allocated;
-    size_t slot;
-
-    // Find slots for each new participant, ordering them from lowest available
-    // slot upwards to ensure the same poll ordering as presentation ordering to
-    // this function.
-    WakeupMask wakeup_mask;
-    do {
-      wakeup_mask = 0;
-      allocated = (state & kAllocatedMask) >> kAllocatedShift;
-      auto new_mask = LowestOneBit(~allocated);
-      wakeup_mask |= new_mask;
-      allocated |= new_mask;
-      slot = CountTrailingZeros(new_mask);
-      // Try to allocate this slot and take a ref (atomically).
-      // Ref needs to be taken because once we store the participant it could be
-      // spuriously woken up and unref the party.
-    } while (!state_.compare_exchange_weak(
-        state, (state | (allocated << kAllocatedShift)) + kOneRef,
-        std::memory_order_acq_rel, std::memory_order_acquire));
-    LogStateChange("AddParticipantsAndRef", state,
-                   (state | (allocated << kAllocatedShift)) + kOneRef);
-
-    store(slot);
-
-    // Now we need to wake up the party.
-    state = state_.fetch_or(wakeup_mask | kLocked, std::memory_order_release);
-    LogStateChange("AddParticipantsAndRef:Wakeup", state,
-                   state | wakeup_mask | kLocked);
-
-    // If the party was already locked, we're done.
-    return ((state & kLocked) == 0);
-  }
-
-  // Schedule a wakeup for the given participant.
-  // Returns true if the caller should run the party.
-  GRPC_MUST_USE_RESULT bool ScheduleWakeup(WakeupMask mask);
-
-  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION bool has_participants() const {
-    return (state_.load(std::memory_order_relaxed) & kAllocatedMask) != 0;
-  }
-
- private:
-  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION bool UnreffedLast() {
-    uint64_t prev_state =
-        state_.fetch_or(kDestroying | kLocked, std::memory_order_acq_rel);
-    LogStateChange("UnreffedLast", prev_state,
-                   prev_state | kDestroying | kLocked);
-    return (prev_state & kLocked) == 0;
-  }
-
-  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION void LogStateChange(
-      const char* op, uint64_t prev_state, uint64_t new_state,
-      DebugLocation loc = {}) {
-    if (GRPC_TRACE_FLAG_ENABLED(party_state)) {
-      gpr_log(loc.file(), loc.line(), GPR_LOG_SEVERITY_INFO,
-              "Party %p %30s: %016" PRIx64 " -> %016" PRIx64, this, op,
-              prev_state, new_state);
-    }
-  }
-
-  // State bits:
-  // The atomic state_ field is composed of the following:
-  //   - 24 bits for ref counts
-  //     1 is owned by the party prior to Orphan()
-  //     All others are owned by owning wakers
-  //   - 1 bit to indicate whether the party is locked
-  //     The first thread to set this owns the party until it is unlocked
-  //     That thread will run the main loop until no further work needs to
-  //     be done.
-  //   - 1 bit to indicate whether there are participants waiting to be
-  //   added
-  //   - 16 bits, one per participant, indicating which participants have
-  //   been
-  //     woken up and should be polled next time the main loop runs.
-
-  // clang-format off
-  // Bits used to store 16 bits of wakeups
-  static constexpr uint64_t kWakeupMask    = 0x0000'0000'0000'ffff;
-  // Bits used to store 16 bits of allocated participant slots.
-  static constexpr uint64_t kAllocatedMask = 0x0000'0000'ffff'0000;
-  // Bit indicating destruction has begun (refs went to zero)
-  static constexpr uint64_t kDestroying    = 0x0000'0001'0000'0000;
-  // Bit indicating locked or not
-  static constexpr uint64_t kLocked        = 0x0000'0008'0000'0000;
-  // Bits used to store 24 bits of ref counts
-  static constexpr uint64_t kRefMask       = 0xffff'ff00'0000'0000;
-  // clang-format on
-
-  // Shift to get from a participant mask to an allocated mask.
-  static constexpr size_t kAllocatedShift = 16;
-  // How far to shift to get the refcount
-  static constexpr size_t kRefShift = 40;
-  // One ref count
-  static constexpr uint64_t kOneRef = 1ull << kRefShift;
-
-  std::atomic<uint64_t> state_;
-};
-
-class PartySyncUsingMutex {
- public:
-  explicit PartySyncUsingMutex(size_t initial_refs) : refs_(initial_refs) {}
-
-  void IncrementRefCount() { refs_.Ref(); }
-  GRPC_MUST_USE_RESULT bool RefIfNonZero() { return refs_.RefIfNonZero(); }
-  GRPC_MUST_USE_RESULT bool Unref() { return refs_.Unref(); }
-  void ForceImmediateRepoll(WakeupMask mask) {
-    MutexLock lock(&mu_);
-    wakeups_ |= mask;
-  }
-  template <typename F>
-  GRPC_MUST_USE_RESULT bool RunParty(F poll_one_participant) {
-    WakeupMask freed = 0;
-    while (true) {
-      ReleasableMutexLock lock(&mu_);
-      CHECK(locked_);
-      allocated_ &= ~std::exchange(freed, 0);
-      auto wakeup = std::exchange(wakeups_, 0);
-      if (wakeup == 0) {
-        locked_ = false;
-        return false;
-      }
-      lock.Release();
-      for (size_t i = 0; wakeup != 0; i++, wakeup >>= 1) {
-        if ((wakeup & 1) == 0) continue;
-        if (poll_one_participant(i)) freed |= 1 << i;
-      }
-    }
-  }
-
-  template <typename F>
-  GRPC_MUST_USE_RESULT bool AddParticipantsAndRef(size_t count, F store) {
-    IncrementRefCount();
-    MutexLock lock(&mu_);
-    size_t slots[party_detail::kMaxParticipants];
-    WakeupMask wakeup_mask = 0;
-    size_t n = 0;
-    for (size_t bit = 0; n < count && bit < party_detail::kMaxParticipants;
-         bit++) {
-      if (allocated_ & (1 << bit)) continue;
-      slots[n++] = bit;
-      wakeup_mask |= 1 << bit;
-      allocated_ |= 1 << bit;
-    }
-    CHECK(n == count);
-    store(slots);
-    wakeups_ |= wakeup_mask;
-    return !std::exchange(locked_, true);
-  }
-
-  GRPC_MUST_USE_RESULT bool ScheduleWakeup(WakeupMask mask);
-
- private:
-  RefCount refs_;
-  Mutex mu_;
-  WakeupMask allocated_ ABSL_GUARDED_BY(mu_) = 0;
-  WakeupMask wakeups_ ABSL_GUARDED_BY(mu_) = 0;
-  bool locked_ ABSL_GUARDED_BY(mu_) = false;
-};
 
 // A Party is an Activity with multiple participant promises.
 class Party : public Activity, private Wakeable {
@@ -394,8 +72,6 @@ class Party : public Activity, private Wakeable {
 
     // Return a Handle instance for this participant.
     Wakeable* MakeNonOwningWakeable(Party* party);
-
-    virtual size_t Size() = 0;
 
    protected:
     ~Participant();
@@ -443,10 +119,33 @@ class Party : public Activity, private Wakeable {
   Waker MakeNonOwningWaker() final;
   std::string ActivityDebugTag(WakeupMask wakeup_mask) const final;
 
-  void IncrementRefCount() { sync_.IncrementRefCount(); }
-  void Unref() {
-    if (sync_.Unref()) PartyIsOver();
+  void IncrementRefCount() {
+    const uint64_t prev_state =
+        state_.fetch_add(kOneRef, std::memory_order_relaxed);
+    LogStateChange("IncrementRefCount", prev_state, prev_state + kOneRef);
   }
+  void Unref() {
+    uint64_t prev_state = state_.load(std::memory_order_relaxed);
+    while (true) {
+      uint64_t new_state = prev_state - kOneRef;
+      if ((new_state & kRefMask) == 0) {
+        new_state |= kDestroying | kLocked;
+        if (state_.compare_exchange_weak(prev_state, new_state,
+                                         std::memory_order_acq_rel)) {
+          LogStateChange("Unref", prev_state, new_state);
+          if ((prev_state & kLocked) == 0) PartyIsOver();
+          return;
+        }
+      } else {
+        if (state_.compare_exchange_weak(prev_state, new_state,
+                                         std::memory_order_acq_rel)) {
+          LogStateChange("Unref", prev_state, new_state);
+          return;
+        }
+      }
+    }
+  }
+
   RefCountedPtr<Party> Ref() {
     IncrementRefCount();
     return RefCountedPtr<Party>(this);
@@ -475,8 +174,7 @@ class Party : public Activity, private Wakeable {
   friend class Arena;
 
   // Derived types should be constructed upon `arena`.
-  explicit Party(RefCountedPtr<Arena> arena)
-      : sync_(1), arena_(std::move(arena)) {}
+  explicit Party(RefCountedPtr<Arena> arena) : arena_(std::move(arena)) {}
   ~Party() override;
 
   // Main run loop. Must be locked.
@@ -485,17 +183,9 @@ class Party : public Activity, private Wakeable {
   // Returns true if the party is over.
   GRPC_MUST_USE_RESULT bool RunParty();
 
-  bool RefIfNonZero() { return sync_.RefIfNonZero(); }
+  bool RefIfNonZero();
 
  private:
-  template <typename T>
-  static int ReportSize() {
-    LOG(INFO) << __PRETTY_FUNCTION__ << " size: " << sizeof(T);
-    max_participant_size_ = std::max(max_participant_size_, sizeof(T));
-    return sizeof(T);
-  }
-  static size_t max_participant_size_;
-
   // Concrete implementation of a participant for some promise & oncomplete
   // type.
   template <typename SuppliedFactory, typename OnComplete>
@@ -535,8 +225,6 @@ class Party : public Activity, private Wakeable {
 
     void Destroy() override { delete this; }
 
-    size_t Size() override { return x_; }
-
    private:
     union {
       GPR_NO_UNIQUE_ADDRESS Factory factory_;
@@ -544,7 +232,6 @@ class Party : public Activity, private Wakeable {
     };
     GPR_NO_UNIQUE_ADDRESS OnComplete on_complete_;
     bool started_ = false;
-    static const int x_;
   };
 
   template <typename SuppliedFactory>
@@ -616,8 +303,6 @@ class Party : public Activity, private Wakeable {
       }
     }
 
-    size_t Size() override { return x_; }
-
     void Destroy() override { this->Unref(); }
 
    private:
@@ -629,8 +314,42 @@ class Party : public Activity, private Wakeable {
     };
     Waker waiter_{GetContext<Activity>()->MakeOwningWaker()};
     std::atomic<State> state_{State::kFactory};
-    static const int x_;
   };
+
+  // State bits:
+  // The atomic state_ field is composed of the following:
+  //   - 24 bits for ref counts
+  //     1 is owned by the party prior to Orphan()
+  //     All others are owned by owning wakers
+  //   - 1 bit to indicate whether the party is locked
+  //     The first thread to set this owns the party until it is unlocked
+  //     That thread will run the main loop until no further work needs to
+  //     be done.
+  //   - 1 bit to indicate whether there are participants waiting to be
+  //   added
+  //   - 16 bits, one per participant, indicating which participants have
+  //   been
+  //     woken up and should be polled next time the main loop runs.
+
+  // clang-format off
+  // Bits used to store 16 bits of wakeups
+  static constexpr uint64_t kWakeupMask    = 0x0000'0000'0000'ffff;
+  // Bits used to store 16 bits of allocated participant slots.
+  static constexpr uint64_t kAllocatedMask = 0x0000'0000'ffff'0000;
+  // Bit indicating destruction has begun (refs went to zero)
+  static constexpr uint64_t kDestroying    = 0x0000'0001'0000'0000;
+  // Bit indicating locked or not
+  static constexpr uint64_t kLocked        = 0x0000'0008'0000'0000;
+  // Bits used to store 24 bits of ref counts
+  static constexpr uint64_t kRefMask       = 0xffff'ff00'0000'0000;
+  // clang-format on
+
+  // Shift to get from a participant mask to an allocated mask.
+  static constexpr size_t kAllocatedShift = 16;
+  // How far to shift to get the refcount
+  static constexpr size_t kRefShift = 40;
+  // One ref count
+  static constexpr uint64_t kOneRef = 1ull << kRefShift;
 
   // Destroy any remaining participants.
   // Needs to have normal context setup before calling.
@@ -652,32 +371,61 @@ class Party : public Activity, private Wakeable {
   void AddParticipants(Participant** participant, size_t count);
   GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION void AddParticipant(
       Participant* participant) {
-    bool run_party =
-        sync_.AddParticipantAndRef([this, participant](size_t slot) {
-          if (GRPC_TRACE_FLAG_ENABLED(party_state)) {
-            gpr_log(GPR_INFO,
-                    "Party %p                 AddParticipant: %" PRIdPTR
-                    " [participant=%p]",
-                    &sync_, slot, participant);
-          }
-          participants_[slot].store(participant, std::memory_order_release);
-        });
-    if (run_party) RunLocked(this);
+    uint64_t state = state_.load(std::memory_order_acquire);
+    uint64_t allocated;
+    size_t slot;
+
+    // Find slots for each new participant, ordering them from lowest available
+    // slot upwards to ensure the same poll ordering as presentation ordering to
+    // this function.
+    WakeupMask wakeup_mask;
+    do {
+      wakeup_mask = 0;
+      allocated = (state & kAllocatedMask) >> kAllocatedShift;
+      auto new_mask = LowestOneBit(~allocated);
+      wakeup_mask |= new_mask;
+      allocated |= new_mask;
+      slot = CountTrailingZeros(new_mask);
+      // Try to allocate this slot and take a ref (atomically).
+      // Ref needs to be taken because once we store the participant it could be
+      // spuriously woken up and unref the party.
+    } while (!state_.compare_exchange_weak(
+        state, (state | (allocated << kAllocatedShift)) + kOneRef,
+        std::memory_order_acq_rel, std::memory_order_acquire));
+    LogStateChange("AddParticipantsAndRef", state,
+                   (state | (allocated << kAllocatedShift)) + kOneRef);
+
+    GRPC_TRACE_LOG(party_state, INFO)
+        << "Party " << this << "                 AddParticipant: " << slot
+        << " [participant=" << participant << "]";
+    participants_[slot].store(participant, std::memory_order_release);
+
+    // Now we need to wake up the party.
+    state = state_.fetch_or(wakeup_mask | kLocked, std::memory_order_release);
+    LogStateChange("AddParticipantsAndRef:Wakeup", state,
+                   state | wakeup_mask | kLocked);
+
+    // If the party was already locked, we're done; otherwise enter the run
+    // loop.
+    if ((state & kLocked) == 0) RunLocked(this);
     Unref();
   }
   bool RunOneParticipant(int i);
 
+  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION void LogStateChange(
+      const char* op, uint64_t prev_state, uint64_t new_state,
+      DebugLocation loc = {}) {
+    if (GRPC_TRACE_FLAG_ENABLED(party_state)) {
+      gpr_log(loc.file(), loc.line(), GPR_LOG_SEVERITY_INFO,
+              "Party %p %30s: %016" PRIx64 " -> %016" PRIx64, this, op,
+              prev_state, new_state);
+    }
+  }
+
   // Sentinal value for currently_polling_ when no participant is being polled.
   static constexpr uint8_t kNotPolling = 255;
 
-#ifdef GRPC_PARTY_SYNC_USING_ATOMICS
-  PartySyncUsingAtomics sync_;
-#elif defined(GRPC_PARTY_SYNC_USING_MUTEX)
-  PartySyncUsingMutex sync_;
-#else
-#error No synchronization method defined
-#endif
-
+  std::atomic<uint64_t> state_{kOneRef};
   uint8_t currently_polling_ = kNotPolling;
   // All current participants, using a tagged format.
   // If the lower bit is unset, then this is a Participant*.
@@ -685,13 +433,6 @@ class Party : public Activity, private Wakeable {
   std::atomic<Participant*> participants_[party_detail::kMaxParticipants] = {};
   RefCountedPtr<Arena> arena_;
 };
-
-template <typename SuppliedFactory, typename OnComplete>
-const int Party::ParticipantImpl<SuppliedFactory, OnComplete>::x_ =
-    ReportSize<ParticipantImpl<SuppliedFactory, OnComplete>>();
-template <typename SuppliedFactory>
-const int Party::PromiseParticipantImpl<SuppliedFactory>::x_ =
-    ReportSize<PromiseParticipantImpl<SuppliedFactory>>();
 
 template <>
 struct ContextSubclass<Party> {
