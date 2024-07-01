@@ -211,7 +211,7 @@ void Party::RunLockedAndUnref(Party* party, uint64_t prev_state,
     explicit RunState(PartyWakeup first) : first{first}, next{nullptr} {}
     PartyWakeup first;
     PartyWakeup next;
-    void Run() {
+    GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION void Run() {
       g_run_state = this;
       do {
         GRPC_LATENT_SEE_INNER_SCOPE("run_one_party");
@@ -226,7 +226,7 @@ void Party::RunLockedAndUnref(Party* party, uint64_t prev_state,
   // but instead add it to the end of the list of parties to run.
   // This enables a fairly straightforward batching of work from a
   // call to a transport (or back again).
-  if (g_run_state != nullptr) {
+  if (GPR_UNLIKELY(g_run_state != nullptr)) {
     if (g_run_state->first.party == party) {
       g_run_state->first.mask |= wakeup_mask;
       g_run_state->first.prev_state = prev_state;
@@ -263,7 +263,8 @@ void Party::RunLockedAndUnref(Party* party, uint64_t prev_state,
 #endif
 }
 
-void Party::RunPartyAndUnref(uint64_t prev_state, WakeupMask wakeup_mask) {
+GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION void Party::RunPartyAndUnref(
+    uint64_t prev_state, WakeupMask wakeup_mask) {
   ScopedActivity activity(this);
   promise_detail::Context<Arena> arena_ctx(arena_.get());
   DCHECK_EQ(prev_state & kLocked, 0)
