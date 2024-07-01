@@ -119,13 +119,14 @@ class Party : public Activity, private Wakeable {
   Waker MakeNonOwningWaker() final;
   std::string ActivityDebugTag(WakeupMask wakeup_mask) const final;
 
-  void IncrementRefCount() {
+  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION void IncrementRefCount() {
     const uint64_t prev_state =
         state_.fetch_add(kOneRef, std::memory_order_relaxed);
     LogStateChange("IncrementRefCount", prev_state, prev_state + kOneRef);
   }
-  void Unref() {
+  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION void Unref() {
     uint64_t prev_state = state_.fetch_sub(kOneRef, std::memory_order_acq_rel);
+    LogStateChange("Unref", prev_state, prev_state - kOneRef);
     if ((prev_state & kRefMask) == kOneRef) PartyIsOver();
   }
 
