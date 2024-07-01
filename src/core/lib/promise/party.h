@@ -416,12 +416,10 @@ class Party : public Activity, private Wakeable {
         std::memory_order_acq_rel, std::memory_order_acquire));
     LogStateChange("AddParticipantsAndRef", state,
                    (state | (allocated << kAllocatedShift)) + kOneRef);
-
     GRPC_TRACE_LOG(party_state, INFO)
         << "Party " << this << "                 AddParticipant: " << slot
         << " [participant=" << participant << "]";
     participants_[slot].store(participant, std::memory_order_release);
-
     // Now we need to wake up the party.
     Wakeup(wakeup_mask);
   }
