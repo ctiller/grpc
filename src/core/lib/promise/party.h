@@ -363,7 +363,11 @@ class Party : public Activity, private Wakeable {
   // Wakeable implementation
   GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION void Wakeup(
       WakeupMask wakeup_mask) final {
-    uint64_t cur_state = state_.load(std::memory_order_relaxed);
+    WakeupFromState(state_.load(std::memory_order_relaxed), wakeup_mask);
+  }
+
+  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION void WakeupFromState(
+      uint64_t cur_state, WakeupMask wakeup_mask) {
     DCHECK_NE(wakeup_mask & kWakeupMask, 0);
     while (true) {
       if (cur_state & kLocked) {
@@ -401,6 +405,7 @@ class Party : public Activity, private Wakeable {
     // slot upwards to ensure the same poll ordering as presentation ordering to
     // this function.
     uint64_t wakeup_mask;
+    uint64_t new_state;
     do {
       allocated = (state & kAllocatedMask) >> kAllocatedShift;
       wakeup_mask = LowestOneBit(~allocated);
@@ -409,17 +414,17 @@ class Party : public Activity, private Wakeable {
       // Try to allocate this slot and take a ref (atomically).
       // Ref needs to be taken because once we store the participant it could be
       // spuriously woken up and unref the party.
-    } while (!state_.compare_exchange_weak(
-        state, (state | (allocated << kAllocatedShift)) + kOneRef,
-        std::memory_order_acq_rel, std::memory_order_acquire));
-    LogStateChange("AddParticipantsAndRef", state,
-                   (state | (allocated << kAllocatedShift)) + kOneRef);
+      new_state = (state | (allocated << kAllocatedShift)) + kOneRef;
+    } while (!state_.compare_exchange_weak(state, new_state,
+                                           std::memory_order_acq_rel,
+                                           std::memory_order_acquire));
+    LogStateChange("AddParticipantsAndRef", state, new_state);
     GRPC_TRACE_LOG(party_state, INFO)
         << "Party " << this << "                 AddParticipant: " << slot
         << " [participant=" << participant << "]";
     participants_[slot].store(participant, std::memory_order_release);
     // Now we need to wake up the party.
-    Wakeup(wakeup_mask);
+    WakeupFromState(new_state, wakeup_mask);
   }
 
   GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION void LogStateChange(

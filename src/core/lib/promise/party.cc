@@ -352,6 +352,7 @@ void Party::AddParticipants(Participant** participants, size_t count) {
   // slot upwards to ensure the same poll ordering as presentation ordering to
   // this function.
   WakeupMask wakeup_mask;
+  uint64_t new_state;
   do {
     wakeup_mask = 0;
     allocated = (state & kAllocatedMask) >> kAllocatedShift;
@@ -364,11 +365,10 @@ void Party::AddParticipants(Participant** participants, size_t count) {
     // Try to allocate this slot and take a ref (atomically).
     // Ref needs to be taken because once we store the participant it could be
     // spuriously woken up and unref the party.
+    new_state = (state | (allocated << kAllocatedShift)) + kOneRef;
   } while (!state_.compare_exchange_weak(
-      state, (state | (allocated << kAllocatedShift)) + kOneRef,
-      std::memory_order_acq_rel, std::memory_order_acquire));
-  LogStateChange("AddParticipantsAndRef", state,
-                 (state | (allocated << kAllocatedShift)) + kOneRef);
+      state, new_state, std::memory_order_acq_rel, std::memory_order_acquire));
+  LogStateChange("AddParticipantsAndRef", state, new_state);
 
   for (size_t i = 0; i < count; i++) {
     GRPC_TRACE_LOG(party_state, INFO)
@@ -378,7 +378,7 @@ void Party::AddParticipants(Participant** participants, size_t count) {
   }
 
   // Now we need to wake up the party.
-  Wakeup(wakeup_mask);
+  WakeupFromState(new_state, wakeup_mask);
 }
 
 void Party::WakeupAsync(WakeupMask wakeup_mask) {
