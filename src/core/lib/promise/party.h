@@ -180,7 +180,7 @@ class Party : public Activity, private Wakeable {
   // Main run loop. Must be locked.
   // Polls participants and drains the add queue until there is no work left to
   // be done.
-  void RunPartyAndUnref();
+  void RunPartyAndUnref(uint64_t prev_state, WakeupMask wakeup_mask);
 
   bool RefIfNonZero();
 
@@ -353,7 +353,8 @@ class Party : public Activity, private Wakeable {
   void CancelRemainingParticipants();
 
   // Run the locked part of the party until it is unlocked.
-  static void RunLockedAndUnref(Party* party);
+  static void RunLockedAndUnref(Party* party, uint64_t prev_state,
+                                WakeupMask wakeup_mask);
   // Called in response to Unref() hitting zero - ultimately calls PartyOver,
   // but needs to set some stuff up.
   // Here so it gets compiled out of line.
@@ -362,16 +363,26 @@ class Party : public Activity, private Wakeable {
   // Wakeable implementation
   GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION void Wakeup(
       WakeupMask wakeup_mask) final {
-    // Or in the wakeup bit for the participant, AND the locked bit.
-    uint64_t prev_state = state_.fetch_or((wakeup_mask & kWakeupMask) | kLocked,
-                                          std::memory_order_release);
-    LogStateChange("ScheduleWakeup", prev_state,
-                   prev_state | (wakeup_mask & kWakeupMask) | kLocked);
-    // If the lock was not held now we hold it, so we need to run.
-    if ((prev_state & kLocked) == 0) {
-      RunLockedAndUnref(this);
-    } else {
-      Unref();
+    uint64_t cur_state = state_.load(std::memory_order_relaxed);
+    DCHECK(wakeup_mask & kWakeupMask);
+    while (true) {
+      if (cur_state & kLocked) {
+        // If the party is locked, we need to set the wakeup bits.
+        if (state_.compare_exchange_weak(cur_state, cur_state | wakeup_mask,
+                                         std::memory_order_release)) {
+          LogStateChange("Wakeup", cur_state, cur_state | wakeup_mask);
+          return;
+        }
+      } else {
+        // If the party is not locked, we need to lock it and run.
+        DCHECK_EQ(cur_state & kWakeupMask, 0u);
+        if (state_.compare_exchange_weak(cur_state, cur_state | kLocked,
+                                         std::memory_order_acq_rel)) {
+          LogStateChange("WakeupAndRun", cur_state, cur_state | kLocked);
+          RunLockedAndUnref(this, cur_state, wakeup_mask);
+          return;
+        }
+      }
     }
   }
 
