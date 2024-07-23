@@ -244,10 +244,10 @@ struct Flow {
   GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION void Begin(Metadata*) {}
 };
 struct ParentScope {
-  ParentScope(Metadata*) {}
+  explicit ParentScope(Metadata*) {}
 };
 struct InnerScope {
-  InnerScope(Metadata*) {}
+  explicit InnerScope(Metadata*) {}
 };
 }  // namespace latent_see
 }  // namespace grpc_core
