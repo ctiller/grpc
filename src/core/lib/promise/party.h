@@ -695,7 +695,7 @@ class Party : public Activity, private Wakeable {
             gpr_log(GPR_INFO,
                     "Party %p                 AddParticipant: %s @ %" PRIdPTR
                     " [participant=%p]",
-                    &sync_, std::string(participant->name()).c_str(), slot,
+                    &synctd::string(participant->name()).c_str(), slot,
                     participant);
           }
           participants_[slot].store(participant, std::memory_order_release);
