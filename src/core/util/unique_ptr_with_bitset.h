@@ -30,10 +30,10 @@ class UniquePtrWithBitset {
  public:
   UniquePtrWithBitset() : p_(0) {}
   // NOLINTNEXTLINE(runtime/explicit)
-  UniquePtrWithBitset(std::nullptr_t) : p_(0) {}
+  explicit UniquePtrWithBitset(std::nullptr_t) : p_(0) {}
   explicit UniquePtrWithBitset(T* p) : p_(reinterpret_cast<uintptr_t>(p)) {}
   // NOLINTNEXTLINE(runtime/explicit)
-  UniquePtrWithBitset(std::unique_ptr<T>&& p)
+  explicit UniquePtrWithBitset(std::unique_ptr<T>&& p)
       : UniquePtrWithBitset(p.release()) {}
   ~UniquePtrWithBitset() { delete get(); }
   UniquePtrWithBitset(const UniquePtrWithBitset&) = delete;
@@ -81,4 +81,4 @@ class UniquePtrWithBitset {
 
 }  // namespace grpc_core
 
-#endif
+#endif  // GRPC_SRC_CORE_UTIL_UNIQUE_PTR_WITH_BITSET_H
