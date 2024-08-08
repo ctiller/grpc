@@ -24,17 +24,17 @@ grpc_cc_binary(
         "absl/types:variant",
         "libcrypto",
     ],
-    deps = [
-        "//src/core:huffsyms",
-        "//src/core:match",
-        "//src/core:env",
-    ],
-    visibility = [
-        "//test/cpp/microbenchmarks/huffman_geometries:__pkg__",
-    ],
     tags = [
         "nomsan",
         "notsan",
         "noubsan",
+    ],
+    visibility = [
+        "//test/cpp/microbenchmarks/huffman_geometries:__pkg__",
+    ],
+    deps = [
+        "//src/core:env",
+        "//src/core:huffsyms",
+        "//src/core:match",
     ],
 )
