@@ -376,7 +376,7 @@ absl::Status CancelFrame::Deserialize(HPackParser*, const FrameHeader& header,
 
 BufferPair CancelFrame::Serialize(HPackCompressor*, bool&) const {
   CHECK_NE(stream_id, 0u);
-  FrameSerializer serializer(FrameType::kCancel, stream_id);
+  FrameDeserializer serializer(FrameType::kCancel, stream_id);
   return serializer.Finish();
 }
 
