@@ -8822,6 +8822,6 @@ genrule(
     name = "gen_version_cc",
     srcs = ["lib/surface/version.cc.template"],
     outs = ["lib/surface/version.cc"],
-    tools = ["//tools/codegen/core:gen_artifacts"],
     cmd = "$(location //tools/codegen/core:gen_artifacts) $(location lib/surface/version.cc.template) > $@",
+    tools = ["//tools/codegen/core:gen_artifacts"],
 )
