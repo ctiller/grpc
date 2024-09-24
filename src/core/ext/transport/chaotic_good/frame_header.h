@@ -73,10 +73,12 @@ struct FrameHeader {
   std::string ToString() const;
   // Required padding to maintain alignment.
   uint32_t Padding(uint32_t alignment) const {
-    if (payload_connection_id == 0) 
+    if (payload_connection_id == 0) {
       return 0;
-    if (payload_length % alignment == 0) 
+    }
+    if (payload_length % alignment == 0) {
       return 0;
+    }
     return alignment - (payload_length % alignment);
   }
 
@@ -86,7 +88,7 @@ struct FrameHeader {
            payload_length == h.payload_length;
   }
   // Frame header size is fixed to 12 bytes.
-  enum { kFrameHeaderSize = 12};
+  enum { kFrameHeaderSize = 12 };
 };
 
 inline std::ostream& operator<<(std::ostream& out, const FrameHeader& h) {
