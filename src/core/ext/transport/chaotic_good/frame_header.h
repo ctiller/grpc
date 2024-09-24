@@ -30,6 +30,7 @@ namespace chaotic_good {
 
 enum class FrameType : uint8_t {
   kSettings = 0x00,
+  kPadding = 0x01,
   kFragment = 0x80,
   kCancel = 0x81,
 };

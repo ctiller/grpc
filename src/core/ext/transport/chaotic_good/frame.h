@@ -173,20 +173,40 @@ struct CancelFrame final : public FrameInterface {
   }
 };
 
-using ClientFrame = absl::variant<ClientFragmentFrame, CancelFrame>;
-using ServerFrame = absl::variant<ServerFragmentFrame>;
+struct PaddingFrame final : public FrameInterface {
+  PaddingFrame() = default;
+  explicit PaddingFrame(uint32_t length) :length(length) {}
+
+  absl::Status Deserialize(HPackParser* parser, const FrameHeader& header,
+                           absl::BitGenRef bitsrc, Arena* arena,
+                           BufferPair buffers, FrameLimits limits) override;
+  BufferPair Serialize(HPackCompressor* encoder,
+                       bool& saw_encoding_errors) const override;
+  std::string ToString() const override;
+
+  uint32_t length = 1024;
+
+  bool operator==(const PaddingFrame& other) const {
+    return length == other.length;
+  }
+};
+
+using ClientFrame = absl::variant<PaddingFrame, ClientFragmentFrame, CancelFrame>;
+using ServerFrame = absl::variant<PaddingFrame, ServerFragmentFrame>;
 
 inline FrameInterface& GetFrameInterface(ClientFrame& frame) {
   return MatchMutable(
       &frame,
       [](ClientFragmentFrame* frame) -> FrameInterface& { return *frame; },
-      [](CancelFrame* frame) -> FrameInterface& { return *frame; });
+      [](CancelFrame* frame) -> FrameInterface& { return *frame; },
+      [](PaddingFrame* frame) -> FrameInterface& { return *frame; });
 }
 
 inline FrameInterface& GetFrameInterface(ServerFrame& frame) {
   return MatchMutable(
       &frame,
-      [](ServerFragmentFrame* frame) -> FrameInterface& { return *frame; });
+      [](ServerFragmentFrame* frame) -> FrameInterface& { return *frame; },
+      [](PaddingFrame* frame) -> FrameInterface& { return *frame; });
 }
 
 }  // namespace chaotic_good

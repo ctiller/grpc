@@ -415,5 +415,25 @@ std::string CancelFrame::ToString() const {
   return absl::StrCat("CancelFrame{stream_id=", stream_id, "}");
 }
 
+absl::Status PaddingFrame::Deserialize(HPackParser*, const FrameHeader& header,
+                                       absl::BitGenRef, Arena*, BufferPair buffers,
+                                       FrameLimits) {
+  if (header.type != FrameType::kPadding) {
+    return absl::InvalidArgumentError("Expected padding frame");
+  }
+  if (header.flags.any()) {
+    return absl::InvalidArgumentError("Unexpected flags");
+  }
+  if (header.stream_id != 0) {
+    return absl::InvalidArgumentError("Expected zero stream id");
+  }
+  if (buffers.data.Length() != 0) {
+    return absl::InvalidArgumentError("Unexpected data");
+  }
+  FrameDeserializer deserializer(header, buffers);
+  length = header.message_length;
+  return deserializer.Finish();
+}
+
 }  // namespace chaotic_good
 }  // namespace grpc_core
