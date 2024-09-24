@@ -175,8 +175,10 @@ struct CancelFrame final : public FrameInterface {
 
 struct PaddingFrame final : public FrameInterface {
   PaddingFrame() = default;
-  explicit PaddingFrame(uint32_t length) :control_length(length), data_length(length) {}
-  PaddingFrame(uint32_t control_length, uint32_t data_length) :control_length(control_length), data_length(data_length) {}
+  explicit PaddingFrame(uint32_t length)
+      : control_length(length), data_length(length) {}
+  PaddingFrame(uint32_t control_length, uint32_t data_length)
+      : control_length(control_length), data_length(data_length) {}
 
   absl::Status Deserialize(HPackParser* parser, const FrameHeader& header,
                            absl::BitGenRef bitsrc, Arena* arena,
@@ -189,11 +191,13 @@ struct PaddingFrame final : public FrameInterface {
   uint32_t data_length = 1024;
 
   bool operator==(const PaddingFrame& other) const {
-    return control_length == other.control_length && data_length == other.data_length;
+    return control_length == other.control_length &&
+           data_length == other.data_length;
   }
 };
 
-using ClientFrame = absl::variant<PaddingFrame, ClientFragmentFrame, CancelFrame>;
+using ClientFrame =
+    absl::variant<PaddingFrame, ClientFragmentFrame, CancelFrame>;
 using ServerFrame = absl::variant<PaddingFrame, ServerFragmentFrame>;
 
 inline FrameInterface& GetFrameInterface(ClientFrame& frame) {
