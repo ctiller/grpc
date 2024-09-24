@@ -416,24 +416,65 @@ std::string CancelFrame::ToString() const {
 }
 
 absl::Status PaddingFrame::Deserialize(HPackParser*, const FrameHeader& header,
-                                       absl::BitGenRef, Arena*, BufferPair buffers,
-                                       FrameLimits) {
+                                       absl::BitGenRef, Arena*,
+                                       BufferPair buffers, FrameLimits) {
+  // Ensure the frame type is Padding
   if (header.type != FrameType::kPadding) {
     return absl::InvalidArgumentError("Expected padding frame");
   }
-  if (header.flags.any()) {
-    return absl::InvalidArgumentError("Unexpected flags");
+
+  // Ensure the connection_id is non-zero
+  if (header.stream_id == 0) {
+    return absl::InvalidArgumentError("Expected non-zero stream id");
   }
-  if (header.stream_id != 0) {
-    return absl::InvalidArgumentError("Expected zero stream id");
+
+  // Set the connection_id and lengths
+  control_length = buffers.control.Length();
+  data_length = buffers.data.Length();
+
+  // Ensure the payload consists of zero bytes
+  #ifndef NDEBUG
+  auto control = buffers.control.JoinIntoSlice();
+  auto data = buffers.data.JoinIntoSlice();
+  for (size_t i = 0; i < control.size(); i++) {
+    if (control[i] != 0) {
+      return absl::InvalidArgumentError("Control payload is not zero");
+    }
   }
-  if (buffers.data.Length() != 0) {
-    return absl::InvalidArgumentError("Unexpected data");
+  for (size_t i = 0; i < data.size(); i++) {
+    if (data[i] != 0) {
+      return absl::InvalidArgumentError("Data payload is not zero");
+    }
   }
-  FrameDeserializer deserializer(header, buffers);
-  length = header.message_length;
-  return deserializer.Finish();
+  #endif
+
+  return absl::OkStatus();
 }
 
+BufferPair PaddingFrame::Serialize(HPackCompressor*, bool&) const {
+  // Create a FrameHeader for the Padding frame
+  FrameHeader header;
+  header.type = FrameType::kPadding;
+  header.stream_id = 0;  // Padding frames do not have a stream_id
+
+  // Create the output buffers
+  BufferPair output;
+
+  // Write zero bytes of the specified lengths
+  auto zero_control_slice = MutableSlice::CreateUninitialized(control_length);
+  memset(zero_control_slice.data(), 0, control_length);
+  output.control.Append(Slice(std::move(zero_control_slice)));
+
+  auto zero_data_slice = MutableSlice::CreateUninitialized(data_length);
+  memset(zero_data_slice.data(), 0, data_length);
+  output.data.Append(Slice(std::move(zero_data_slice)));
+
+  return output;
+}
+
+std::string PaddingFrame::ToString() const {
+  return absl::StrCat("PaddingFrame{control_length=", control_length,
+                      ", data_length=", data_length, "}");
+}
 }  // namespace chaotic_good
 }  // namespace grpc_core

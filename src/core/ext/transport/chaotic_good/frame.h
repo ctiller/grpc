@@ -175,7 +175,8 @@ struct CancelFrame final : public FrameInterface {
 
 struct PaddingFrame final : public FrameInterface {
   PaddingFrame() = default;
-  explicit PaddingFrame(uint32_t length) :length(length) {}
+  explicit PaddingFrame(uint32_t length) :control_length(length), data_length(length) {}
+  PaddingFrame(uint32_t control_length, uint32_t data_length) :control_length(control_length), data_length(data_length) {}
 
   absl::Status Deserialize(HPackParser* parser, const FrameHeader& header,
                            absl::BitGenRef bitsrc, Arena* arena,
@@ -184,10 +185,11 @@ struct PaddingFrame final : public FrameInterface {
                        bool& saw_encoding_errors) const override;
   std::string ToString() const override;
 
-  uint32_t length = 1024;
+  uint32_t control_length = 1024;
+  uint32_t data_length = 1024;
 
   bool operator==(const PaddingFrame& other) const {
-    return length == other.length;
+    return control_length == other.control_length && data_length == other.data_length;
   }
 };
 
