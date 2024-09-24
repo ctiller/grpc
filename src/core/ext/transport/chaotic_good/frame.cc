@@ -432,8 +432,8 @@ absl::Status PaddingFrame::Deserialize(HPackParser*, const FrameHeader& header,
   control_length = buffers.control.Length();
   data_length = buffers.data.Length();
 
-  // Ensure the payload consists of zero bytes
-  #ifndef NDEBUG
+// Ensure the payload consists of zero bytes
+#ifndef NDEBUG
   auto control = buffers.control.JoinIntoSlice();
   auto data = buffers.data.JoinIntoSlice();
   for (size_t i = 0; i < control.size(); i++) {
@@ -446,7 +446,7 @@ absl::Status PaddingFrame::Deserialize(HPackParser*, const FrameHeader& header,
       return absl::InvalidArgumentError("Data payload is not zero");
     }
   }
-  #endif
+#endif
 
   return absl::OkStatus();
 }
