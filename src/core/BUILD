@@ -3310,6 +3310,29 @@ grpc_cc_library(
 )
 
 grpc_cc_library(
+    name = "blackboard",
+    srcs = [
+        "filter/blackboard.cc",
+    ],
+    hdrs = [
+        "filter/blackboard.h",
+    ],
+    external_deps = [
+        "absl/container:flat_hash_map",
+        "absl/strings",
+    ],
+    language = "c++",
+    deps = [
+        "ref_counted",
+        "unique_type_name",
+        "useful",
+        "//:debug_location",
+        "//:endpoint_addresses",
+        "//:ref_counted_ptr",
+    ],
+)
+
+grpc_cc_library(
     name = "subchannel_connector",
     hdrs = [
         "client_channel/connector.h",
@@ -5034,6 +5057,7 @@ grpc_cc_library(
     language = "c++",
     deps = [
         "arena",
+        "blackboard",
         "channel_args",
         "channel_fwd",
         "context",
@@ -7946,7 +7970,7 @@ grpc_cc_library(
         "absl/base:core_headers",
         "absl/container:flat_hash_map",
         "absl/log:check",
-        "absl/log:log",
+        "absl/log",
         "absl/random",
         "absl/random:bit_gen_ref",
         "absl/status",
@@ -7957,20 +7981,18 @@ grpc_cc_library(
     language = "c++",
     deps = [
         "activity",
-        "all_ok",
         "arena",
         "chaotic_good_frame",
         "chaotic_good_frame_header",
         "chaotic_good_transport",
         "context",
-        "event_engine_wakeup_scheduler",
+        "event_engine_context",
         "for_each",
         "grpc_promise_endpoint",
         "if",
         "inter_activity_pipe",
         "loop",
         "map",
-        "match",
         "memory_quota",
         "metadata_batch",
         "mpsc",
@@ -7987,7 +8009,6 @@ grpc_cc_library(
         "//:grpc_base",
         "//:hpack_encoder",
         "//:hpack_parser",
-        "//:promise",
         "//:ref_counted_ptr",
     ],
 )
