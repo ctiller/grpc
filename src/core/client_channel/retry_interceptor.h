@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef RETRY_INTERCEPTOR_H
-#define RETRY_INTERCEPTOR_H
+#ifndef GRPC_SRC_CORE_CLIENT_CHANNEL_RETRY_INTERCEPTOR_H
+#define GRPC_SRC_CORE_CLIENT_CHANNEL_RETRY_INTERCEPTOR_H
 
 #include "src/core/call/request_buffer.h"
 #include "src/core/lib/transport/interception_chain.h"
@@ -72,4 +72,4 @@ class RetryInterceptor : public Interceptor {
 
 }  // namespace grpc_core
 
-#endif
+#endif  // GRPC_SRC_CORE_CLIENT_CHANNEL_RETRY_INTERCEPTOR_H
