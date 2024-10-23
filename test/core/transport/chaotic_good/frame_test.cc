@@ -29,16 +29,17 @@ namespace chaotic_good {
 namespace {
 
 template <typename T>
-void AssertRoundTrips(const T& input, FrameType expected_frame_type, uint32_t alignment) {
+void AssertRoundTrips(const T& input, FrameType expected_frame_type,
+                      uint32_t alignment) {
   HPackCompressor hpack_compressor;
   bool saw_encoding_errors = false;
   SerializeContext ser_ctx{alignment, &hpack_compressor, saw_encoding_errors};
   BufferPair output_buffer;
   input.Serialize(ser_ctx, &output_buffer);
-  EXPECT_GE(output_buffer.control.Length(),
-           FrameHeader::kFrameHeaderSize);
+  EXPECT_GE(output_buffer.control.Length(), FrameHeader::kFrameHeaderSize);
   uint8_t header_bytes[FrameHeader::kFrameHeaderSize];
-  output_buffer.control.MoveFirstNBytesIntoBuffer(FrameHeader::kFrameHeaderSize, header_bytes);
+  output_buffer.control.MoveFirstNBytesIntoBuffer(FrameHeader::kFrameHeaderSize,
+                                                  header_bytes);
   auto header = FrameHeader::Parse(header_bytes);
   if (!header.ok()) {
     LOG(FATAL) << "Failed to parse header: " << header.status();
@@ -52,17 +53,18 @@ void AssertRoundTrips(const T& input, FrameType expected_frame_type, uint32_t al
     payload = std::move(output_buffer.control);
     EXPECT_EQ(output_buffer.data.Length(), 0);
   } else {
-    output_buffer.data.MoveFirstNBytesIntoSliceBuffer(header->payload_length, payload);
+    output_buffer.data.MoveFirstNBytesIntoSliceBuffer(header->payload_length,
+                                                      payload);
     EXPECT_EQ(output_buffer.control.Length(), 0);
     EXPECT_EQ(output_buffer.data.Length(), header->Padding(alignment));
   }
   T output;
   HPackParser hpack_parser;
   absl::BitGen bitgen;
-  DeserializeContext deser_ctx{alignment, &hpack_parser, absl::BitGenRef(bitgen)};
+  DeserializeContext deser_ctx{alignment, &hpack_parser,
+                               absl::BitGenRef(bitgen)};
   auto deser =
-      output.Deserialize(deser_ctx, header.value(),
-                      std::move(payload));
+      output.Deserialize(deser_ctx, header.value(), std::move(payload));
   CHECK_OK(deser);
   if (!saw_encoding_errors) CHECK_EQ(output, input);
 }
