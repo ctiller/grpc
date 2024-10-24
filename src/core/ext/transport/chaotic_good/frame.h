@@ -86,10 +86,9 @@ inline std::ostream& operator<<(std::ostream& os, const FrameInterface& frame) {
 
 struct SettingsFrame final : public FrameInterface {
   absl::Status Deserialize(const DeserializeContext& ctx,
-                                   const FrameHeader& header,
-                                   SliceBuffer payload) override;
-  void Serialize(const SerializeContext& ctx,
-                         BufferPair* out) const override;
+                           const FrameHeader& header,
+                           SliceBuffer payload) override;
+  void Serialize(const SerializeContext& ctx, BufferPair* out) const override;
   ClientMetadataHandle headers;
   std::string ToString() const override;
 
@@ -98,10 +97,9 @@ struct SettingsFrame final : public FrameInterface {
 
 struct ClientInitialMetadataFrame final : public FrameInterface {
   absl::Status Deserialize(const DeserializeContext& ctx,
-                                   const FrameHeader& header,
-                                   SliceBuffer payload) override;
-  void Serialize(const SerializeContext& ctx,
-                         BufferPair* out) const override;
+                           const FrameHeader& header,
+                           SliceBuffer payload) override;
+  void Serialize(const SerializeContext& ctx, BufferPair* out) const override;
   std::string ToString() const override;
 
   uint32_t stream_id;
@@ -110,10 +108,9 @@ struct ClientInitialMetadataFrame final : public FrameInterface {
 
 struct MessageFrame final : public FrameInterface {
   absl::Status Deserialize(const DeserializeContext& ctx,
-                                   const FrameHeader& header,
-                                   SliceBuffer payload) override;
-  void Serialize(const SerializeContext& ctx,
-                         BufferPair* out) const override;
+                           const FrameHeader& header,
+                           SliceBuffer payload) override;
+  void Serialize(const SerializeContext& ctx, BufferPair* out) const override;
   std::string ToString() const override;
 
   uint32_t stream_id;
@@ -122,10 +119,9 @@ struct MessageFrame final : public FrameInterface {
 
 struct ClientEndOfStream final : public FrameInterface {
   absl::Status Deserialize(const DeserializeContext& ctx,
-                                   const FrameHeader& header,
-                                   SliceBuffer payload) override;
-  void Serialize(const SerializeContext& ctx,
-                         BufferPair* out) const override;
+                           const FrameHeader& header,
+                           SliceBuffer payload) override;
+  void Serialize(const SerializeContext& ctx, BufferPair* out) const override;
   std::string ToString() const override;
 
   uint32_t stream_id;
@@ -133,10 +129,9 @@ struct ClientEndOfStream final : public FrameInterface {
 
 struct ServerInitialMetadataFrame final : public FrameInterface {
   absl::Status Deserialize(const DeserializeContext& ctx,
-                                   const FrameHeader& header,
-                                   SliceBuffer payload) override;
-  void Serialize(const SerializeContext& ctx,
-                         BufferPair* out) const override;
+                           const FrameHeader& header,
+                           SliceBuffer payload) override;
+  void Serialize(const SerializeContext& ctx, BufferPair* out) const override;
   std::string ToString() const override;
 
   uint32_t stream_id;
@@ -145,10 +140,9 @@ struct ServerInitialMetadataFrame final : public FrameInterface {
 
 struct ServerTrailingMetadataFrame final : public FrameInterface {
   absl::Status Deserialize(const DeserializeContext& ctx,
-                                   const FrameHeader& header,
-                                   SliceBuffer payload) override;
-  void Serialize(const SerializeContext& ctx,
-                         BufferPair* out) const override;
+                           const FrameHeader& header,
+                           SliceBuffer payload) override;
+  void Serialize(const SerializeContext& ctx, BufferPair* out) const override;
   std::string ToString() const override;
 
   uint32_t stream_id;
@@ -160,10 +154,9 @@ struct CancelFrame final : public FrameInterface {
   explicit CancelFrame(uint32_t stream_id) : stream_id(stream_id) {}
 
   absl::Status Deserialize(const DeserializeContext& ctx,
-                                   const FrameHeader& header,
-                                   SliceBuffer payload) override;
-  void Serialize(const SerializeContext& ctx,
-                         BufferPair* out) const override;
+                           const FrameHeader& header,
+                           SliceBuffer payload) override;
+  void Serialize(const SerializeContext& ctx, BufferPair* out) const override;
   std::string ToString() const override;
 
   uint32_t stream_id;
