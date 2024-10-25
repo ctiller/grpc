@@ -826,8 +826,8 @@ grpc_cc_library(
     public_hdrs = ["lib/promise/switch.h"],
     deps = [
         "if",
-        "promise_variant",
         "promise_factory",
+        "promise_variant",
         "//:gpr_platform",
     ],
 )
