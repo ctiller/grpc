@@ -390,11 +390,14 @@ class Config {
             .value_or(inline_payload_size_threshold_);
     tracing_enabled_ =
         channel_args.GetBool(GRPC_ARG_TCP_TRACING_ENABLED).value_or(false);
+    flow_control_enabled_ =
+        channel_args.GetBool("grpc.chaotic_good.flow_control").value_or(true);
   }
 
   void PrepareOutgoingSettings(chaotic_good_frame::Settings& settings) const {
     settings.set_alignment(decode_alignment_);
     settings.set_max_chunk_size(max_recv_chunk_size_);
+    settings.set_flow_control(flow_control_enabled_);
   }
 
   absl::Status ReceiveIncomingSettings(
@@ -405,6 +408,7 @@ class Config {
     if (settings.max_chunk_size() == 0) {
       max_recv_chunk_size_ = 0;
     }
+    flow_control_enabled_ = flow_control_enabled_ && settings.flow_control();
     return absl::OkStatus();
   }
 
@@ -429,6 +433,7 @@ class Config {
 
  private:
   bool tracing_enabled_ = false;
+  bool flow_control_enabled_ = true;
   uint32_t encode_alignment_ = 64;
   uint32_t decode_alignment_ = 64;
   uint32_t max_send_chunk_size_ = 1024 * 1024;

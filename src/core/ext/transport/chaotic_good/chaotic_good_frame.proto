@@ -27,10 +27,19 @@ message Settings {
     bool data_channel = 2;
     // Requested alignment for the data channel
     // Client and server each send this with their preferences
+    // Sent on data channel
+    // Client sends with servers preferred alignment, and server sends
+    // with the clients preferred alignment
     uint32 alignment = 3;
     // Max chunk size allowed to be sent to a peer (0 or omitted: no limit)
     // Sent on the control channel, applies to all messages.
+    // If client sends zero, server must send zero or close the connection.
     uint32 max_chunk_size = 4;
+    // Flow control support.
+    // Sent on the control channel, if false server must send false or
+    // close the connection.
+    // If true, flow control is supported.
+    bool flow_control = 5;
 }
 
 message UnknownMetadata {
@@ -55,4 +64,26 @@ message ServerMetadata {
 
 message BeginMessage {
     uint64 length = 1;
+}
+
+message GoAway {
+    uint32 last_stream_id = 1;
+    uint32 status = 2;
+    string message = 3;
+}
+
+message SolicitRequests {
+    uint32 count = 1;
+}
+
+message StreamWindowUpdate {
+    uint32 additional_bytes = 1;
+}
+
+message StreamInitialWindowUpdate {
+    uint32 bytes = 1;
+}
+
+message TransportWindowUpdate {
+    uint32 additional_bytes = 1;
 }

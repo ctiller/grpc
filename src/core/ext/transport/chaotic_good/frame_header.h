@@ -29,6 +29,7 @@ namespace chaotic_good {
 // Remember to add new frame types to frame_fuzzer.cc
 enum class FrameType : uint8_t {
   kSettings = 0x00,
+  kGoAway = 0x01,
   kClientInitialMetadata = 0x80,
   kClientEndOfStream = 0x81,
   kServerInitialMetadata = 0x91,
@@ -36,6 +37,10 @@ enum class FrameType : uint8_t {
   kMessage = 0xa0,
   kBeginMessage = 0xa1,
   kMessageChunk = 0xa2,
+  kSolicitRequests = 0xb0,
+  kStreamWindowUpdate = 0xb1,
+  kStreamInitialWindowUpdate = 0xb2,
+  kTransportWindowUpdate = 0xb3,
   kCancel = 0xff,
 };
 
