@@ -30,6 +30,10 @@ namespace chaotic_good {
 enum class FrameType : uint8_t {
   kSettings = 0x00,
   kGoAway = 0x01,
+  kTransportWindowUpdate = 0x10,
+  kStreamInitialWindowUpdate = 0x11,
+  kStreamInitialWindowUpdateAck = 0x12,
+  kSolicitRequests = 0x20,
   kClientInitialMetadata = 0x80,
   kClientEndOfStream = 0x81,
   kServerInitialMetadata = 0x91,
@@ -37,10 +41,7 @@ enum class FrameType : uint8_t {
   kMessage = 0xa0,
   kBeginMessage = 0xa1,
   kMessageChunk = 0xa2,
-  kSolicitRequests = 0xb0,
-  kStreamWindowUpdate = 0xb1,
-  kStreamInitialWindowUpdate = 0xb2,
-  kTransportWindowUpdate = 0xb3,
+  kStreamWindowUpdate = 0xb0,
   kCancel = 0xff,
 };
 
