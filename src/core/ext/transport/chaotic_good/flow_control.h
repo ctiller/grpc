@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FC_H
-#define FC_H
+#ifndef GRPC_SRC_CORE_EXT_TRANSPORT_CHAOTIC_GOOD_FLOW_CONTROL_H
+#define GRPC_SRC_CORE_EXT_TRANSPORT_CHAOTIC_GOOD_FLOW_CONTROL_H
 
 #include <limits>
 
@@ -134,4 +134,4 @@ class PromiseBasedFlowController {
 
 }  // namespace grpc_core
 
-#endif
+#endif  // GRPC_SRC_CORE_EXT_TRANSPORT_CHAOTIC_GOOD_FLOW_CONTROL_H
