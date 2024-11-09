@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef CHAOTIC_GOOD_FIXTURE_H
-#define CHAOTIC_GOOD_FIXTURE_H
+#ifndef GRPC_TEST_CORE_TRANSPORT_TEST_SUITE_CHAOTIC_GOOD_FIXTURE_HELPERS_H
+#define GRPC_TEST_CORE_TRANSPORT_TEST_SUITE_CHAOTIC_GOOD_FIXTURE_HELPERS_H
 
 #include <memory>
 
@@ -96,4 +96,4 @@ inline EndpointPair CreateEndpointPair(
 
 }  // namespace grpc_core
 
-#endif
+#endif  // GRPC_TEST_CORE_TRANSPORT_TEST_SUITE_CHAOTIC_GOOD_FIXTURE_HELPERS_H
