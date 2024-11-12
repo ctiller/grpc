@@ -257,7 +257,7 @@ auto ChaoticGoodServerTransport::ReadOneFrame(
                 incoming_frame.header().type,
                 Case<FrameType, FrameType::kClientInitialMetadata>([&, this]() {
                   return TrySeq(incoming_frame.Payload(),
-                                [this, transport = std::move(transport),
+                                [this, transport = transport,
                                  header = incoming_frame.header()](
                                     SliceBuffer payload) mutable {
                                   return NewStream(*transport, header,
@@ -265,21 +265,21 @@ auto ChaoticGoodServerTransport::ReadOneFrame(
                                 });
                 }),
                 Case<FrameType, FrameType::kMessage>([&, this]() mutable {
-                  return DispatchFrame<MessageFrame>(std::move(transport),
+                  return DispatchFrame<MessageFrame>(transport,
                                                      std::move(incoming_frame));
                 }),
                 Case<FrameType, FrameType::kBeginMessage>([&, this]() mutable {
                   return DispatchFrame<BeginMessageFrame>(
-                      std::move(transport), std::move(incoming_frame));
+                      transport, std::move(incoming_frame));
                 }),
                 Case<FrameType, FrameType::kMessageChunk>([&, this]() mutable {
                   return DispatchFrame<MessageChunkFrame>(
-                      std::move(transport), std::move(incoming_frame));
+                      transport, std::move(incoming_frame));
                 }),
                 Case<FrameType, FrameType::kClientEndOfStream>(
                     [&, this]() mutable {
                       return DispatchFrame<ClientEndOfStream>(
-                          std::move(transport), std::move(incoming_frame));
+                          transport, std::move(incoming_frame));
                     }),
                 Case<FrameType, FrameType::kCancel>([&, this]() {
                   auto stream =
@@ -390,7 +390,7 @@ void ChaoticGoodServerTransport::AbortWithError() {
                           "transport closed");
   lock.Release();
   for (const auto& pair : stream_map) {
-    auto stream = std::move(pair.second);
+    auto stream = pair.second;
     auto& call = stream->call;
     call.SpawnInfallible("cancel", [stream = std::move(stream)]() mutable {
       stream->call.Cancel();
