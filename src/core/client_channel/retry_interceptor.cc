@@ -115,25 +115,25 @@ auto RetryInterceptor::Attempt::ServerToClientGotInitialMetadata(
 }
 
 auto RetryInterceptor::Attempt::ServerToClientGotTrailersOnlyResponse() {
-  return Seq(initiator_.PullServerTrailingMetadata(),
-             [self = Ref()](ServerMetadataHandle md) {
-               auto pushback = self->call_->ShouldRetry(*md);
-               return If(
-                   pushback.has_value(),
-                   [self, pushback]() {
-                     return Map(Sleep(*pushback),
-                                [call = self->call_](absl::Status) {
-                                  call->StartAttempt();
-                                  return absl::OkStatus();
-                                });
-                   },
-                   [self, md = std::move(md)]() mutable {
-                     self->Commit();
-                     self->call_->call_handler()
-                         ->SpawnPushServerTrailingMetadata(std::move(md));
-                     return absl::OkStatus();
-                   });
-             });
+  return Seq(
+      initiator_.PullServerTrailingMetadata(),
+      [self = Ref()](ServerMetadataHandle md) {
+        auto pushback = self->call_->ShouldRetry(*md);
+        return If(
+            pushback.has_value(),
+            [self, pushback]() {
+              return Map(Sleep(*pushback), [call = self->call_](absl::Status) {
+                call->StartAttempt();
+                return absl::OkStatus();
+              });
+            },
+            [self, md = std::move(md)]() mutable {
+              self->Commit();
+              self->call_->call_handler()->SpawnPushServerTrailingMetadata(
+                  std::move(md));
+              return absl::OkStatus();
+            });
+      });
 }
 
 auto RetryInterceptor::Attempt::ServerToClient() {
