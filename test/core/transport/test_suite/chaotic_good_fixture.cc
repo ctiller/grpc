@@ -25,7 +25,9 @@ TRANSPORT_FIXTURE(ChaoticGood) {
   auto channel_args =
       ChannelArgs()
           .SetObject(resource_quota)
-          .SetObject(std::static_pointer_cast<EventEngine>(event_engine));
+          .SetObject(
+              std::static_pointer_cast<
+                  grpc_event_engine::experimental::EventEngine>(event_engine));
   auto client_transport =
       MakeOrphanable<chaotic_good::ChaoticGoodClientTransport>(
           std::move(control_endpoints.client),
