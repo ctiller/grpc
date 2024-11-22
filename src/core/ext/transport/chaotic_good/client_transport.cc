@@ -261,7 +261,7 @@ void ChaoticGoodClientTransport::AbortWithError() {
                           "transport closed");
   lock.Release();
   for (const auto& pair : stream_map) {
-    auto stream = std::move(pair.second);
+    auto stream = pair.second;
     auto& call = stream->call;
     call.SpawnInfallible("cancel", [stream = std::move(stream)]() mutable {
       stream->call.PushServerTrailingMetadata(ServerMetadataFromStatus(
