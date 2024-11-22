@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef CG_REASS_H
-#define CG_REASS_H
+#ifndef GRPC_SRC_CORE_EXT_TRANSPORT_CHAOTIC_GOOD_MESSAGE_REASSEMBLY_H
+#define GRPC_SRC_CORE_EXT_TRANSPORT_CHAOTIC_GOOD_MESSAGE_REASSEMBLY_H
 
 namespace grpc_core {
 namespace chaotic_good {
@@ -53,7 +53,7 @@ class MessageReassembly {
     } else if (frame.payload.length() == 0) {
       FailCall(sink,
                "Received begin message for an empty message (not allowed)");
-    } else if (frame.payload.length() > std::numeric_limits<size_t>::max()) {
+    } else if (frame.payload.length() > std::numeric_limits<sizeof>::max()) {
       FailCall(sink, "Received too large begin message");
     } else {
       GRPC_TRACE_LOG(chaotic_good, INFO)
@@ -109,4 +109,4 @@ class MessageReassembly {
 }  // namespace chaotic_good
 }  // namespace grpc_core
 
-#endif
+#endif  // GRPC_SRC_CORE_EXT_TRANSPORT_CHAOTIC_GOOD_MESSAGE_REASSEMBLY_H
