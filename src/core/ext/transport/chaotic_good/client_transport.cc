@@ -166,23 +166,23 @@ auto ChaoticGoodClientTransport::TransportReadLoop(
               incoming_frame.header().type,
               Case<FrameType, FrameType::kServerInitialMetadata>([&, this]() {
                 return DispatchFrame<ServerInitialMetadataFrame>(
-                    std::move(transport), std::move(incoming_frame));
+                    transport, std::move(incoming_frame));
               }),
               Case<FrameType, FrameType::kServerTrailingMetadata>([&, this]() {
                 return DispatchFrame<ServerTrailingMetadataFrame>(
-                    std::move(transport), std::move(incoming_frame));
+                    transport, std::move(incoming_frame));
               }),
               Case<FrameType, FrameType::kMessage>([&, this]() {
-                return DispatchFrame<MessageFrame>(std::move(transport),
+                return DispatchFrame<MessageFrame>(transport,
                                                    std::move(incoming_frame));
               }),
               Case<FrameType, FrameType::kBeginMessage>([&, this]() {
                 return DispatchFrame<BeginMessageFrame>(
-                    std::move(transport), std::move(incoming_frame));
+                    transport, std::move(incoming_frame));
               }),
               Case<FrameType, FrameType::kMessageChunk>([&, this]() {
                 return DispatchFrame<MessageChunkFrame>(
-                    std::move(transport), std::move(incoming_frame));
+                    transport, std::move(incoming_frame));
               }),
               Default([&]() {
                 LOG_EVERY_N_SEC(INFO, 10)
@@ -261,7 +261,7 @@ void ChaoticGoodClientTransport::AbortWithError() {
                           "transport closed");
   lock.Release();
   for (const auto& pair : stream_map) {
-    auto stream = std::move(pair.second);
+    auto stream = pair.second;
     auto& call = stream->call;
     call.SpawnInfallible("cancel", [stream = std::move(stream)]() mutable {
       stream->call.PushServerTrailingMetadata(ServerMetadataFromStatus(

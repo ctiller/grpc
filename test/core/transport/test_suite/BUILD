@@ -34,7 +34,7 @@ grpc_cc_library(
 
 grpc_cc_library(
     name = "chaotic_good_fixture_helpers",
-    testonly=1,
+    testonly = 1,
     srcs = ["chaotic_good_fixture_helpers.h"],
     external_deps = [
         "absl/log:check",
@@ -157,7 +157,6 @@ grpc_transport_test(
         ":stress",
     ],
 )
-
 
 grpc_transport_test(
     name = "chaotic_good_one_byte_chunk",
