@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef CG_CHUNKER_H
-#define CG_CHUNKER_H
+#ifndef GRPC_SRC_CORE_EXT_TRANSPORT_CHAOTIC_GOOD_MESSAGE_CHUNKER_H
+#define GRPC_SRC_CORE_EXT_TRANSPORT_CHAOTIC_GOOD_MESSAGE_CHUNKER_H
 
 #include <cstdint>
 
-#include "frame.h"
+#include "src/core/ext/transport/chaotic_good/frame.h"
 namespace grpc_core {
 namespace chaotic_good {
 
@@ -88,7 +88,6 @@ class MessageChunker {
                                     return x;
                                   });
                      }));
-
         },
         [&]() {
           MessageFrame frame;
@@ -111,4 +110,4 @@ class MessageChunker {
 }  // namespace chaotic_good
 }  // namespace grpc_core
 
-#endif
+#endif  // GRPC_SRC_CORE_EXT_TRANSPORT_CHAOTIC_GOOD_MESSAGE_CHUNKER_H
