@@ -55,7 +55,7 @@ class MessageReassembly {
     } else if (frame.body.length() == 0) {
       FailCall(sink,
                "Received begin message for an empty message (not allowed)");
-    } else if (frame.body.length() > std::numeric_limits<size_t>::max()) {
+    } else if (frame.body.length() > std::numeric_limits<sizeof>::max()) {
       FailCall(sink, "Received too large begin message");
     } else {
       GRPC_TRACE_LOG(chaotic_good, INFO)
