@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef GRPC_SRC_CORE_EXT_TRANSPORT_CHAOTIC_GOOD_LISTENER_H
-#define GRPC_SRC_CORE_EXT_TRANSPORT_CHAOTIC_GOOD_LISTENER_H
+#ifndef GRPC_SRC_CORE_EXT_TRANSPORT_CHAOTIC_GOOD_PENDING_CONNECTION_H
+#define GRPC_SRC_CORE_EXT_TRANSPORT_CHAOTIC_GOOD_PENDING_CONNECTION_H
 
 #include <string>
 
@@ -56,4 +56,4 @@ class ClientConnectionFactory : public RefCounted<ClientConnectionFactory> {
 }  // namespace chaotic_good
 }  // namespace grpc_core
 
-#endif
+#endif  // GRPC_SRC_CORE_EXT_TRANSPORT_CHAOTIC_GOOD_PENDING_CONNECTION_H
