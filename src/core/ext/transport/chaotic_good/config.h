@@ -15,10 +15,10 @@
 #ifndef GRPC_SRC_CORE_EXT_TRANSPORT_CHAOTIC_GOOD_CONFIG_H
 #define GRPC_SRC_CORE_EXT_TRANSPORT_CHAOTIC_GOOD_CONFIG_H
 
-#include "pending_connection.h"
 #include "src/core/ext/transport/chaotic_good/chaotic_good_frame.pb.h"
 #include "src/core/ext/transport/chaotic_good/chaotic_good_transport.h"
 #include "src/core/ext/transport/chaotic_good/message_chunker.h"
+#include "src/core/ext/transport/chaotic_good/pending_connection.h"
 #include "src/core/lib/channel/channel_args.h"
 #include "src/core/lib/event_engine/extensions/tcp_trace.h"
 
