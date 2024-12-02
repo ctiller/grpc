@@ -13,12 +13,10 @@
 // limitations under the License.
 
 #include <benchmark/benchmark.h>
+#include <grpc/grpc.h>
 
 #include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
-
-#include <grpc/grpc.h>
-
 #include "src/core/client_channel/client_channel.h"
 #include "src/core/lib/address_utils/parse_address.h"
 #include "test/core/transport/call_spine_benchmarks.h"
@@ -50,19 +48,19 @@ class ClientChannelTraits {
   }
 
   ClientMetadataHandle MakeClientInitialMetadata() {
-    auto md = Arena::MakePooled<ClientMetadata>();
+    auto md = Arena::MakePooledForOverwrite<ClientMetadata>();
     md->Set(HttpPathMetadata(), kTestPath.Copy());
     return md;
   }
 
   ServerMetadataHandle MakeServerInitialMetadata() {
-    return Arena::MakePooled<ServerMetadata>();
+    return Arena::MakePooledForOverwrite<ServerMetadata>();
   }
 
   MessageHandle MakePayload() { return Arena::MakePooled<Message>(); }
 
   ServerMetadataHandle MakeServerTrailingMetadata() {
-    auto md = Arena::MakePooled<ServerMetadata>();
+    auto md = Arena::MakePooledForOverwrite<ServerMetadata>();
     return md;
   }
 

@@ -13,10 +13,10 @@
 // limitations under the License.
 
 #include <benchmark/benchmark.h>
-
 #include <grpc/grpc.h>
 
 #include "src/core/lib/event_engine/default_event_engine.h"
+#include "src/core/lib/event_engine/event_engine_context.h"
 #include "src/core/lib/promise/all_ok.h"
 #include "src/core/lib/promise/map.h"
 #include "src/core/lib/resource_quota/arena.h"
@@ -58,11 +58,13 @@ class Helper {
   }
 
   auto MakeCall() {
+    auto arena = arena_allocator_->MakeArena();
+    arena->SetContext<grpc_event_engine::experimental::EventEngine>(
+        event_engine_.get());
     return std::unique_ptr<grpc_call, void (*)(grpc_call*)>(
         MakeClientCall(nullptr, 0, cq_, path_.Copy(), absl::nullopt, true,
                        Timestamp::InfFuture(), compression_options_,
-                       event_engine_.get(), arena_allocator_->MakeArena(),
-                       destination_),
+                       std::move(arena), destination_),
         grpc_call_unref);
   }
 
@@ -136,8 +138,9 @@ void BM_Unary(benchmark::State& state) {
     // back a response.
     auto unstarted_handler = helper.TakeHandler();
     unstarted_handler.SpawnInfallible("run_handler", [&]() mutable {
-      auto handler = unstarted_handler.StartWithEmptyFilterStack();
-      handler.PushServerInitialMetadata(Arena::MakePooled<ServerMetadata>());
+      auto handler = unstarted_handler.StartCall();
+      handler.PushServerInitialMetadata(
+          Arena::MakePooledForOverwrite<ServerMetadata>());
       auto response =
           Arena::MakePooled<Message>(SliceBuffer(response_payload.Copy()), 0);
       return Map(
@@ -147,13 +150,14 @@ void BM_Unary(benchmark::State& state) {
                     return status.status();
                   }),
               Map(handler.PullMessage(),
-                  [](ValueOrFailure<absl::optional<MessageHandle>> message) {
+                  [](ClientToServerNextMessage message) {
                     return message.status();
                   }),
               handler.PushMessage(std::move(response))),
           [handler](StatusFlag status) mutable {
             CHECK(status.ok());
-            auto trailing_metadata = Arena::MakePooled<ServerMetadata>();
+            auto trailing_metadata =
+                Arena::MakePooledForOverwrite<ServerMetadata>();
             trailing_metadata->Set(GrpcStatusMetadata(), GRPC_STATUS_OK);
             handler.PushServerTrailingMetadata(std::move(trailing_metadata));
             return Empty{};

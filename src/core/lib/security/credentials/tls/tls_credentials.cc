@@ -18,18 +18,17 @@
 
 #include "src/core/lib/security/credentials/tls/tls_credentials.h"
 
+#include <grpc/grpc.h>
+#include <grpc/grpc_security_constants.h>
+#include <grpc/impl/channel_arg_names.h>
+#include <grpc/support/port_platform.h>
+
 #include <memory>
 #include <string>
 #include <utility>
 
 #include "absl/log/log.h"
 #include "absl/types/optional.h"
-
-#include <grpc/grpc.h>
-#include <grpc/grpc_security_constants.h>
-#include <grpc/impl/channel_arg_names.h>
-#include <grpc/support/port_platform.h>
-
 #include "src/core/lib/channel/channel_args.h"
 #include "src/core/lib/security/credentials/tls/grpc_tls_certificate_verifier.h"
 #include "src/core/lib/security/credentials/tls/grpc_tls_credentials_options.h"
@@ -84,8 +83,8 @@ bool CredentialOptionSanityCheck(grpc_tls_credentials_options* options,
     // If no verifier is specified on the client side, use the hostname verifier
     // as default. Users who want to bypass all the verifier check should
     // implement an external verifier instead.
-    LOG(INFO) << "No verifier specified on the client side. Using default "
-                 "hostname verifier";
+    VLOG(2) << "No verifier specified on the client side. Using default "
+               "hostname verifier";
     options->set_certificate_verifier(
         grpc_core::MakeRefCounted<grpc_core::HostNameCertificateVerifier>());
   }
@@ -145,7 +144,7 @@ TlsServerCredentials::create_security_connector(
       CreateTlsServerSecurityConnector(this->Ref(), options_);
 }
 
-grpc_core::UniqueTypeName TlsServerCredentials::type() const {
+grpc_core::UniqueTypeName TlsServerCredentials::Type() {
   static grpc_core::UniqueTypeName::Factory kFactory("Tls");
   return kFactory.Create();
 }

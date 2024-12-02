@@ -399,12 +399,13 @@ for dirname in [
     "src/cpp/ext/gcp",
     "src/cpp/ext/csm",
     "src/cpp/ext/otel",
-    "test/core/backoff",
+    "test/core/util",
     "test/core/call",
     "test/core/call/yodel",
     "test/core/client_channel",
     "test/core/experiments",
-    "test/core/uri",
+    "test/core/load_balancing",
+    "test/core/util",
     "test/core/test_util",
     "test/core/end2end",
     "test/core/event_engine",
@@ -430,9 +431,11 @@ for dirname in [
             "config_setting": lambda **kwargs: None,
             "selects": FakeSelects(),
             "python_config_settings": lambda **kwargs: None,
+            "grpc_cc_benchmark": grpc_cc_library,
             "grpc_cc_binary": grpc_cc_library,
             "grpc_cc_library": grpc_cc_library,
             "grpc_cc_test": grpc_cc_library,
+            "grpc_cc_benchmark": grpc_cc_library,
             "grpc_core_end2end_test": lambda **kwargs: None,
             "grpc_filegroup": lambda **kwargs: None,
             "grpc_transport_test": lambda **kwargs: None,
@@ -442,6 +445,8 @@ for dirname in [
             "grpc_fuzz_test": grpc_cc_library,
             "grpc_proto_fuzzer": grpc_cc_library,
             "grpc_proto_library": grpc_proto_library,
+            "grpc_internal_proto_library": grpc_proto_library,
+            "grpc_cc_proto_library": grpc_cc_library,
             "select": lambda d: d["//conditions:default"],
             "glob": lambda files, **kwargs: None,
             "grpc_end2end_tests": lambda: None,
@@ -455,6 +460,8 @@ for dirname in [
             "platform": lambda name, **kwargs: None,
             "grpc_clang_cl_settings": lambda **kwargs: None,
             "grpc_benchmark_args": lambda **kwargs: [],
+            "LARGE_MACHINE": 1,
+            "HISTORY": 1,
         },
         {},
     )
@@ -485,7 +492,7 @@ if args.whats_left:
     )
 
 
-# Keeps track of all possible sets of dependencies that could satify the
+# Keeps track of all possible sets of dependencies that could satisfy the
 # problem. (models the list monad in Haskell!)
 class Choices:
     def __init__(self, library, substitutions):

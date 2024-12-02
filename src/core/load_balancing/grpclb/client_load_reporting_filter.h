@@ -19,15 +19,15 @@
 #ifndef GRPC_SRC_CORE_LOAD_BALANCING_GRPCLB_CLIENT_LOAD_REPORTING_FILTER_H
 #define GRPC_SRC_CORE_LOAD_BALANCING_GRPCLB_CLIENT_LOAD_REPORTING_FILTER_H
 
-#include "absl/status/statusor.h"
-
 #include <grpc/support/port_platform.h>
 
+#include "absl/status/statusor.h"
 #include "src/core/lib/channel/channel_args.h"
 #include "src/core/lib/channel/channel_fwd.h"
 #include "src/core/lib/channel/promise_based_filter.h"
 #include "src/core/lib/promise/arena_promise.h"
 #include "src/core/lib/transport/transport.h"
+#include "src/core/load_balancing/grpclb/grpclb_client_stats.h"
 
 namespace grpc_core {
 

@@ -16,18 +16,16 @@
 
 #include "src/core/lib/surface/channel_create.h"
 
-#include "absl/log/check.h"
-
 #include <grpc/grpc.h>
 #include <grpc/impl/channel_arg_names.h>
-#include <grpc/support/log.h>
 #include <grpc/support/port_platform.h>
 
+#include "absl/log/check.h"
 #include "src/core/channelz/channelz.h"
 #include "src/core/client_channel/client_channel.h"
 #include "src/core/client_channel/direct_channel.h"
+#include "src/core/config/core_configuration.h"
 #include "src/core/lib/channel/channel_args.h"
-#include "src/core/lib/config/core_configuration.h"
 #include "src/core/lib/experiments/experiments.h"
 #include "src/core/lib/surface/channel.h"
 #include "src/core/lib/surface/channel_stack_type.h"
@@ -105,10 +103,10 @@ grpc_channel* grpc_lame_client_channel_create(const char* target,
                                               grpc_status_code error_code,
                                               const char* error_message) {
   grpc_core::ExecCtx exec_ctx;
-  GRPC_API_TRACE(
-      "grpc_lame_client_channel_create(target=%s, error_code=%d, "
-      "error_message=%s)",
-      3, (target, (int)error_code, error_message));
+  GRPC_TRACE_LOG(api, INFO)
+      << "grpc_lame_client_channel_create(target=" << target
+      << ", error_code=" << (int)error_code
+      << ", error_message=" << error_message << ")";
   if (error_code == GRPC_STATUS_OK) error_code = GRPC_STATUS_UNKNOWN;
   grpc_core::ChannelArgs args =
       grpc_core::CoreConfiguration::Get()

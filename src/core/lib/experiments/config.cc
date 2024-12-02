@@ -14,6 +14,7 @@
 
 #include "src/core/lib/experiments/config.h"
 
+#include <grpc/support/port_platform.h>
 #include <string.h>
 
 #include <algorithm>
@@ -21,6 +22,7 @@
 #include <map>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "absl/functional/any_invocable.h"
 #include "absl/log/check.h"
@@ -29,13 +31,10 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
-
-#include <grpc/support/port_platform.h>
-
-#include "src/core/lib/config/config_vars.h"
+#include "src/core/config/config_vars.h"
 #include "src/core/lib/experiments/experiments.h"
-#include "src/core/lib/gprpp/crash.h"  // IWYU pragma: keep
-#include "src/core/lib/gprpp/no_destruct.h"
+#include "src/core/util/crash.h"  // IWYU pragma: keep
+#include "src/core/util/no_destruct.h"
 
 #ifndef GRPC_EXPERIMENTS_ARE_FINAL
 namespace grpc_core {
@@ -66,8 +65,8 @@ absl::AnyInvocable<bool(struct ExperimentMetadata)>* g_check_constraints_cb =
 class TestExperiments {
  public:
   TestExperiments(const ExperimentMetadata* experiment_metadata,
-                  size_t num_experiments) {
-    enabled_ = new bool[num_experiments];
+                  size_t num_experiments)
+      : enabled_(num_experiments) {
     for (size_t i = 0; i < num_experiments; i++) {
       if (g_check_constraints_cb != nullptr) {
         enabled_[i] = (*g_check_constraints_cb)(experiment_metadata[i]);
@@ -91,12 +90,10 @@ class TestExperiments {
   }
 
   // Overloading [] operator to access elements in array style
-  bool operator[](int index) { return enabled_[index]; }
-
-  ~TestExperiments() { delete enabled_; }
+  bool operator[](int index) const { return enabled_[index]; }
 
  private:
-  bool* enabled_;
+  std::vector<bool> enabled_;
 };
 
 TestExperiments* g_test_experiments = nullptr;
@@ -170,6 +167,7 @@ Experiments& ExperimentsSingleton() {
 }  // namespace
 
 void TestOnlyReloadExperimentsFromConfigVariables() {
+  ExperimentFlags::TestOnlyClear();
   ExperimentsSingleton() = LoadExperimentsFromConfigVariable();
   PrintExperimentsList();
 }
@@ -180,8 +178,35 @@ void LoadTestOnlyExperimentsFromMetadata(
       new TestExperiments(experiment_metadata, num_experiments);
 }
 
-bool IsExperimentEnabled(size_t experiment_id) {
-  return ExperimentsSingleton().enabled[experiment_id];
+std::atomic<uint64_t>
+    ExperimentFlags::experiment_flags_[kNumExperimentFlagsWords];
+
+bool ExperimentFlags::LoadFlagsAndCheck(size_t experiment_id) {
+  static_assert(kNumExperiments < kNumExperimentFlagsWords * kFlagsPerWord,
+                "kNumExperiments must be less than "
+                "kNumExperimentFlagsWords*kFlagsPerWord; if this fails then "
+                "make kNumExperimentFlagsWords bigger.");
+  const auto& experiments = ExperimentsSingleton();
+  uint64_t building[kNumExperimentFlagsWords];
+  for (size_t i = 0; i < kNumExperimentFlagsWords; i++) {
+    building[i] = kLoadedFlag;
+  }
+  for (size_t i = 0; i < kNumExperiments; i++) {
+    if (!experiments.enabled[i]) continue;
+    auto bit = i % kFlagsPerWord;
+    auto word = i / kFlagsPerWord;
+    building[word] |= 1ull << bit;
+  }
+  for (size_t i = 0; i < kNumExperimentFlagsWords; i++) {
+    experiment_flags_[i].store(building[i], std::memory_order_relaxed);
+  }
+  return experiments.enabled[experiment_id];
+}
+
+void ExperimentFlags::TestOnlyClear() {
+  for (size_t i = 0; i < kNumExperimentFlagsWords; i++) {
+    experiment_flags_[i].store(0, std::memory_order_relaxed);
+  }
 }
 
 bool IsExperimentEnabledInConfiguration(size_t experiment_id) {
@@ -191,6 +216,8 @@ bool IsExperimentEnabledInConfiguration(size_t experiment_id) {
 bool IsTestExperimentEnabled(size_t experiment_id) {
   return (*g_test_experiments)[experiment_id];
 }
+
+#define GRPC_EXPERIMENT_LOG VLOG(2)
 
 void PrintExperimentsList() {
   std::map<std::string, std::string> experiment_status;
@@ -226,20 +253,20 @@ void PrintExperimentsList() {
   }
   if (experiment_status.empty()) {
     if (!defaulted_on_experiments.empty()) {
-      LOG(INFO) << "gRPC experiments enabled: "
-                << absl::StrJoin(defaulted_on_experiments, ", ");
+      GRPC_EXPERIMENT_LOG << "gRPC experiments enabled: "
+                          << absl::StrJoin(defaulted_on_experiments, ", ");
     }
   } else {
     if (defaulted_on_experiments.empty()) {
-      LOG(INFO) << "gRPC experiments: "
-                << absl::StrJoin(experiment_status, ", ",
-                                 absl::PairFormatter(":"));
+      GRPC_EXPERIMENT_LOG << "gRPC experiments: "
+                          << absl::StrJoin(experiment_status, ", ",
+                                           absl::PairFormatter(":"));
     } else {
-      LOG(INFO) << "gRPC experiments: "
-                << absl::StrJoin(experiment_status, ", ",
-                                 absl::PairFormatter(":"))
-                << "; default-enabled: "
-                << absl::StrJoin(defaulted_on_experiments, ", ");
+      GRPC_EXPERIMENT_LOG << "gRPC experiments: "
+                          << absl::StrJoin(experiment_status, ", ",
+                                           absl::PairFormatter(":"))
+                          << "; default-enabled: "
+                          << absl::StrJoin(defaulted_on_experiments, ", ");
     }
   }
 }

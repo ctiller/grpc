@@ -15,6 +15,8 @@
 #ifndef GRPC_SRC_CORE_LIB_PROMISE_STATUS_FLAG_H
 #define GRPC_SRC_CORE_LIB_PROMISE_STATUS_FLAG_H
 
+#include <grpc/support/port_platform.h>
+
 #include <ostream>
 
 #include "absl/log/check.h"
@@ -22,10 +24,6 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/types/optional.h"
-
-#include <grpc/support/log.h>
-#include <grpc/support/port_platform.h>
-
 #include "src/core/lib/promise/detail/status.h"
 
 namespace grpc_core {
@@ -52,6 +50,13 @@ GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION inline bool IsStatusOk(Success) {
 
 template <>
 struct StatusCastImpl<absl::Status, Success> {
+  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION static absl::Status Cast(Success) {
+    return absl::OkStatus();
+  }
+};
+
+template <>
+struct StatusCastImpl<absl::Status, Success&> {
   GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION static absl::Status Cast(Success) {
     return absl::OkStatus();
   }
@@ -263,7 +268,7 @@ class ValueOrFailure {
   friend void AbslStringify(Sink& sink, const ValueOrFailure& value) {
     if (value.ok()) {
       sink.Append("Success(");
-      sink.Append(absl::StrCat(value));
+      sink.Append(absl::StrCat(*value));
       sink.Append(")");
     } else {
       sink.Append("Failure");

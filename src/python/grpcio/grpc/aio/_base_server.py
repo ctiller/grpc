@@ -18,6 +18,7 @@ from typing import Generic, Iterable, Mapping, NoReturn, Optional, Sequence
 
 import grpc
 
+from ._metadata import Metadata  # pylint: disable=unused-import
 from ._typing import DoneCallbackType
 from ._typing import MetadataType
 from ._typing import RequestType
@@ -196,7 +197,7 @@ class ServicerContext(Generic[RequestType, ResponseType], abc.ABC):
     ) -> NoReturn:
         """Raises an exception to terminate the RPC with a non-OK status.
 
-        The code and details passed as arguments will supercede any existing
+        The code and details passed as arguments will supersede any existing
         ones.
 
         Args:

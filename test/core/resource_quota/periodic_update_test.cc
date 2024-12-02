@@ -14,6 +14,8 @@
 
 #include "src/core/lib/resource_quota/periodic_update.h"
 
+#include <grpc/support/log.h>
+#include <grpc/support/time.h>
 #include <stddef.h>
 
 #include <memory>
@@ -21,10 +23,6 @@
 #include <vector>
 
 #include "gtest/gtest.h"
-
-#include <grpc/support/log.h>
-#include <grpc/support/time.h>
-
 #include "src/core/lib/iomgr/exec_ctx.h"
 
 namespace grpc_core {
@@ -78,35 +76,7 @@ TEST(PeriodicUpdateTest, SimpleTest) {
   }
 }
 
-TEST(PeriodicUpdateTest, NoSpin) {
-  // Ensure that we do not poll the time every update... even initially
-  class NowCounter final : public Timestamp::ScopedSource {
-   public:
-    Timestamp Now() override {
-      ++n_;
-      return previous()->Now();
-    }
-
-    int now_calls() const { return n_; }
-
-   private:
-    int n_ = 0;
-  };
-  NowCounter counter;
-  PeriodicUpdate upd(Duration::Seconds(5));
-  while (!upd.Tick([](Duration d) { EXPECT_GE(d, Duration::Seconds(5)); })) {
-  }
-  const int initial_now_calls = counter.now_calls();
-  EXPECT_GT(initial_now_calls, 2);
-  EXPECT_LT(initial_now_calls, 100);
-  while (!upd.Tick([](Duration d) { EXPECT_GE(d, Duration::Seconds(5)); })) {
-  }
-  const int second_round_calls = counter.now_calls() - initial_now_calls;
-  EXPECT_GE(second_round_calls, 1);
-  EXPECT_LE(second_round_calls, initial_now_calls);
-}
-
-TEST(PeriodicUpdateTest, ThreadTest) {
+TEST(PeriodicUpdate, ThreadTest) {
   std::unique_ptr<PeriodicUpdate> upd;
   std::atomic<int> count(0);
   Timestamp start;

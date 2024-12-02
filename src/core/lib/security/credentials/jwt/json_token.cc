@@ -18,23 +18,6 @@
 
 #include "src/core/lib/security/credentials/jwt/json_token.h"
 
-#include <stdint.h>
-#include <string.h>
-
-#include <string>
-#include <utility>
-
-#include <openssl/bio.h>
-#include <openssl/evp.h>
-#include <openssl/pem.h>
-#include <openssl/rsa.h>
-
-#include "absl/log/check.h"
-#include "absl/log/log.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/escaping.h"
-
 #include <grpc/credentials.h>
 #include <grpc/grpc_security.h>
 #include <grpc/support/alloc.h>
@@ -42,7 +25,21 @@
 #include <grpc/support/port_platform.h>
 #include <grpc/support/string_util.h>
 #include <grpc/support/time.h>
+#include <openssl/bio.h>
+#include <openssl/evp.h>
+#include <openssl/pem.h>
+#include <openssl/rsa.h>
+#include <stdint.h>
+#include <string.h>
 
+#include <string>
+#include <utility>
+
+#include "absl/log/check.h"
+#include "absl/log/log.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/escaping.h"
 #include "src/core/lib/iomgr/error.h"
 #include "src/core/lib/security/util/json_util.h"
 #include "src/core/util/json/json_reader.h"
@@ -190,7 +187,7 @@ static char* encoded_jwt_claim(const grpc_auth_json_key* json_key,
   gpr_timespec now = gpr_now(GPR_CLOCK_REALTIME);
   gpr_timespec expiration = gpr_time_add(now, token_lifetime);
   if (gpr_time_cmp(token_lifetime, grpc_max_auth_token_lifetime()) > 0) {
-    LOG(INFO) << "Cropping token lifetime to maximum allowed value.";
+    VLOG(2) << "Cropping token lifetime to maximum allowed value.";
     expiration = gpr_time_add(now, grpc_max_auth_token_lifetime());
   }
 

@@ -18,14 +18,15 @@
 #include <memory>
 
 #include "benchmark/benchmark.h"
-
 #include "src/core/lib/event_engine/default_event_engine.h"
-#include "src/core/lib/gprpp/notification.h"
+#include "src/core/lib/event_engine/event_engine_context.h"
 #include "src/core/lib/iomgr/exec_ctx.h"
 #include "src/core/lib/promise/all_ok.h"
 #include "src/core/lib/promise/map.h"
 #include "src/core/lib/resource_quota/resource_quota.h"
 #include "src/core/lib/transport/call_spine.h"
+#include "src/core/lib/transport/transport.h"
+#include "src/core/util/notification.h"
 
 namespace grpc_core {
 
@@ -54,9 +55,7 @@ void BM_UnaryWithSpawnPerEnd(benchmark::State& state) {
                       return md.status();
                     }),
                 Map(handler.PullMessage(),
-                    [](ValueOrFailure<absl::optional<MessageHandle>> msg) {
-                      return msg.status();
-                    }),
+                    [](ClientToServerNextMessage msg) { return msg.status(); }),
                 handler.PushMessage(fixture.MakePayload())),
             [&handler_done, &fixture, handler](StatusFlag status) mutable {
               CHECK(status.ok());
@@ -66,29 +65,27 @@ void BM_UnaryWithSpawnPerEnd(benchmark::State& state) {
               return Empty{};
             });
       });
-      call.initiator.SpawnInfallible(
-          "initiator",
-          [initiator = call.initiator, &fixture, &initiator_done]() mutable {
-            return Map(
-                AllOk<StatusFlag>(
-                    Map(initiator.PushMessage(fixture.MakePayload()),
-                        [](StatusFlag) { return Success{}; }),
-                    Map(initiator.PullServerInitialMetadata(),
-                        [](absl::optional<ServerMetadataHandle> md) {
-                          return Success{};
-                        }),
-                    Map(initiator.PullMessage(),
-                        [](ValueOrFailure<absl::optional<MessageHandle>> msg) {
-                          return msg.status();
-                        }),
-                    Map(initiator.PullServerTrailingMetadata(),
-                        [](ServerMetadataHandle) { return Success(); })),
-                [&initiator_done](StatusFlag result) {
-                  CHECK(result.ok());
-                  initiator_done.Notify();
-                  return Empty{};
-                });
-          });
+      call.initiator.SpawnInfallible("initiator", [initiator = call.initiator,
+                                                   &fixture,
+                                                   &initiator_done]() mutable {
+        return Map(
+            AllOk<StatusFlag>(
+                Map(initiator.PushMessage(fixture.MakePayload()),
+                    [](StatusFlag) { return Success{}; }),
+                Map(initiator.PullServerInitialMetadata(),
+                    [](absl::optional<ServerMetadataHandle> md) {
+                      return Success{};
+                    }),
+                Map(initiator.PullMessage(),
+                    [](ServerToClientNextMessage msg) { return msg.status(); }),
+                Map(initiator.PullServerTrailingMetadata(),
+                    [](ServerMetadataHandle) { return Success(); })),
+            [&initiator_done](StatusFlag result) {
+              CHECK(result.ok());
+              initiator_done.Notify();
+              return Empty{};
+            });
+      });
     }
     handler_done.WaitForNotification();
     initiator_done.WaitForNotification();
@@ -126,7 +123,7 @@ void BM_UnaryWithSpawnPerOp(benchmark::State& state) {
           [](ValueOrFailure<ClientMetadataHandle> md) { CHECK(md.ok()); });
       handler_spawner.Spawn(
           "HANDLER:PullMessage", [&]() { return call.handler.PullMessage(); },
-          [&](ValueOrFailure<absl::optional<MessageHandle>> msg) {
+          [&](ClientToServerNextMessage msg) {
             CHECK(msg.ok());
             call.handler.SpawnInfallible(
                 "HANDLER:PushServerTrailingMetadata", [&]() {
@@ -154,9 +151,7 @@ void BM_UnaryWithSpawnPerOp(benchmark::State& state) {
       initiator_spawner.Spawn(
           "INITIATOR:PullMessage",
           [&]() { return call.initiator.PullMessage(); },
-          [](ValueOrFailure<absl::optional<MessageHandle>> msg) {
-            CHECK(msg.ok());
-          });
+          [](ServerToClientNextMessage msg) { CHECK(msg.ok()); });
       initiator_spawner.Spawn(
           "INITIATOR:PullServerTrailingMetadata",
           [&]() { return call.initiator.PullServerTrailingMetadata(); },
@@ -201,7 +196,7 @@ void BM_ClientToServerStreaming(benchmark::State& state) {
     Notification initiator_done;
     call.handler.SpawnInfallible("handler", [&]() {
       return Map(call.handler.PullMessage(),
-                 [&](ValueOrFailure<absl::optional<MessageHandle>> msg) {
+                 [&](ClientToServerNextMessage msg) {
                    CHECK(msg.ok());
                    handler_done.Notify();
                    return Empty{};
@@ -218,13 +213,14 @@ void BM_ClientToServerStreaming(benchmark::State& state) {
     handler_done.WaitForNotification();
     initiator_done.WaitForNotification();
   }
-  call.initiator.SpawnInfallible("done", [&]() {
-    call.initiator.Cancel();
-    return Empty{};
-  });
-  call.handler.SpawnInfallible("done", [&]() {
-    call.handler.PushServerTrailingMetadata(
-        CancelledServerMetadataFromStatus(absl::CancelledError()));
+  call.initiator.SpawnInfallible("done",
+                                 [initiator = call.initiator]() mutable {
+                                   initiator.Cancel();
+                                   return Empty{};
+                                 });
+  call.handler.SpawnInfallible("done", [handler = call.handler]() mutable {
+    handler.PushServerTrailingMetadata(
+        CancelledServerMetadataFromStatus(GRPC_STATUS_CANCELLED));
     return Empty{};
   });
 }
@@ -237,9 +233,12 @@ template <class Traits>
 class FilterFixture {
  public:
   BenchmarkCall MakeCall() {
-    auto p = MakeCallPair(traits_.MakeClientInitialMetadata(),
-                          event_engine_.get(), arena_allocator_->MakeArena());
-    return {std::move(p.initiator), p.handler.StartCall(stack_)};
+    auto arena = arena_allocator_->MakeArena();
+    arena->SetContext<grpc_event_engine::experimental::EventEngine>(
+        event_engine_.get());
+    auto p =
+        MakeCallPair(traits_.MakeClientInitialMetadata(), std::move(arena));
+    return {std::move(p.initiator), p.handler.StartCall()};
   }
 
   ServerMetadataHandle MakeServerInitialMetadata() {
@@ -277,14 +276,20 @@ template <class Traits>
 class UnstartedCallDestinationFixture {
  public:
   BenchmarkCall MakeCall() {
-    auto p = MakeCallPair(traits_->MakeClientInitialMetadata(),
-                          event_engine_.get(), arena_allocator_->MakeArena());
-    top_destination_->StartCall(std::move(p.handler));
+    auto arena = arena_allocator_->MakeArena();
+    arena->SetContext<grpc_event_engine::experimental::EventEngine>(
+        event_engine_.get());
+    auto p =
+        MakeCallPair(traits_->MakeClientInitialMetadata(), std::move(arena));
+    p.handler.SpawnInfallible("initiator_setup", [&]() {
+      top_destination_->StartCall(std::move(p.handler));
+      return Empty{};
+    });
     auto handler = bottom_destination_->TakeHandler();
     absl::optional<CallHandler> started_handler;
     Notification started;
     handler.SpawnInfallible("handler_setup", [&]() {
-      started_handler = handler.StartCall(stack_);
+      started_handler = handler.StartCall();
       started.Notify();
       return Empty{};
     });
@@ -296,7 +301,6 @@ class UnstartedCallDestinationFixture {
   ~UnstartedCallDestinationFixture() {
     // TODO(ctiller): entire destructor can be deleted once ExecCtx is gone.
     ExecCtx exec_ctx;
-    stack_.reset();
     top_destination_.reset();
     bottom_destination_.reset();
     arena_allocator_.reset();
@@ -353,15 +357,97 @@ class UnstartedCallDestinationFixture {
       MakeRefCounted<SinkDestination>();
   RefCountedPtr<UnstartedCallDestination> top_destination_ =
       traits_->CreateCallDestination(bottom_destination_);
-  RefCountedPtr<CallFilters::Stack> stack_ =
-      CallFilters::StackBuilder().Build();
+};
+
+// Base class for transports
+// Traits should have MakeClientInitialMetadata, MakeServerInitialMetadata,
+// MakePayload, MakeServerTrailingMetadata.
+// They should also have a MakeTransport returning a BenchmarkTransport.
+
+struct BenchmarkTransport {
+  OrphanablePtr<ClientTransport> client;
+  OrphanablePtr<ServerTransport> server;
+};
+
+template <class Traits>
+class TransportFixture {
+ public:
+  TransportFixture() { transport_.server->SetCallDestination(acceptor_); };
+
+  BenchmarkCall MakeCall() {
+    auto arena = arena_allocator_->MakeArena();
+    arena->SetContext<grpc_event_engine::experimental::EventEngine>(
+        event_engine_.get());
+    auto p =
+        MakeCallPair(traits_.MakeClientInitialMetadata(), std::move(arena));
+    transport_.client->StartCall(p.handler.StartCall());
+    auto handler = acceptor_->TakeHandler();
+    absl::optional<CallHandler> started_handler;
+    Notification started;
+    handler.SpawnInfallible("handler_setup", [&]() {
+      started_handler = handler.StartCall();
+      started.Notify();
+      return Empty{};
+    });
+    started.WaitForNotification();
+    CHECK(started_handler.has_value());
+    return {std::move(p.initiator), std::move(*started_handler)};
+  }
+
+  ServerMetadataHandle MakeServerInitialMetadata() {
+    return traits_.MakeServerInitialMetadata();
+  }
+
+  MessageHandle MakePayload() { return traits_.MakePayload(); }
+
+  ServerMetadataHandle MakeServerTrailingMetadata() {
+    return traits_.MakeServerTrailingMetadata();
+  }
+
+ private:
+  class Acceptor : public UnstartedCallDestination {
+   public:
+    void StartCall(UnstartedCallHandler handler) override {
+      MutexLock lock(&mu_);
+      handler_ = std::move(handler);
+    }
+    void Orphaned() override {}
+
+    UnstartedCallHandler TakeHandler() {
+      mu_.LockWhen(absl::Condition(
+          +[](Acceptor* dest) ABSL_EXCLUSIVE_LOCKS_REQUIRED(dest->mu_) {
+            return dest->handler_.has_value();
+          },
+          this));
+      auto h = std::move(*handler_);
+      handler_.reset();
+      mu_.Unlock();
+      return h;
+    }
+
+    absl::Mutex mu_;
+    absl::optional<UnstartedCallHandler> handler_ ABSL_GUARDED_BY(mu_);
+  };
+
+  Traits traits_;
+  std::shared_ptr<grpc_event_engine::experimental::EventEngine> event_engine_ =
+      grpc_event_engine::experimental::GetDefaultEventEngine();
+  RefCountedPtr<CallArenaAllocator> arena_allocator_ =
+      MakeRefCounted<CallArenaAllocator>(
+          ResourceQuota::Default()->memory_quota()->CreateMemoryAllocator(
+              "test-allocator"),
+          1024);
+  RefCountedPtr<Acceptor> acceptor_ = MakeRefCounted<Acceptor>();
+  BenchmarkTransport transport_ = traits_.MakeTransport();
 };
 
 }  // namespace grpc_core
 
-#define GRPC_CALL_SPINE_BENCHMARK(Fixture)                \
-  BENCHMARK(grpc_core::BM_UnaryWithSpawnPerEnd<Fixture>); \
-  BENCHMARK(grpc_core::BM_UnaryWithSpawnPerOp<Fixture>);  \
-  BENCHMARK(grpc_core::BM_ClientToServerStreaming<Fixture>)
+// Declare all relevant benchmarks for a given fixture
+// Must be called within the grpc_core namespace
+#define GRPC_CALL_SPINE_BENCHMARK(Fixture)     \
+  BENCHMARK(BM_UnaryWithSpawnPerEnd<Fixture>); \
+  BENCHMARK(BM_UnaryWithSpawnPerOp<Fixture>);  \
+  BENCHMARK(BM_ClientToServerStreaming<Fixture>)
 
 #endif  // GRPC_TEST_CORE_TRANSPORT_CALL_SPINE_BENCHMARKS_H

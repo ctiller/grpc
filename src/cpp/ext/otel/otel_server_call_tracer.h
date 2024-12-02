@@ -19,10 +19,9 @@
 #ifndef GRPC_SRC_CPP_EXT_OTEL_OTEL_SERVER_CALL_TRACER_H
 #define GRPC_SRC_CPP_EXT_OTEL_OTEL_SERVER_CALL_TRACER_H
 
-#include "absl/strings/strip.h"
-
 #include <grpc/support/port_platform.h>
 
+#include "absl/strings/strip.h"
 #include "src/core/lib/channel/channel_args.h"
 #include "src/core/telemetry/call_tracer.h"
 #include "src/cpp/ext/otel/otel_plugin.h"
@@ -100,6 +99,11 @@ class OpenTelemetryPluginImpl::ServerCallTracer
 
   void RecordEnd(const grpc_call_final_info* final_info) override;
 
+  void RecordIncomingBytes(
+      const TransportByteSize& transport_byte_size) override;
+  void RecordOutgoingBytes(
+      const TransportByteSize& transport_byte_size) override;
+
   void RecordAnnotation(absl::string_view /*annotation*/) override {
     // Not implemented
   }
@@ -131,6 +135,12 @@ class OpenTelemetryPluginImpl::ServerCallTracer
       injected_labels_from_plugin_options_;
   OpenTelemetryPluginImpl* otel_plugin_;
   std::shared_ptr<OpenTelemetryPluginImpl::ServerScopeConfig> scope_config_;
+  // TODO(roth, ctiller): Won't need atomic here once chttp2 is migrated
+  // to promises, after which we can ensure that the transport invokes
+  // the RecordIncomingBytes() and RecordOutgoingBytes() methods inside
+  // the call's party.
+  std::atomic<uint64_t> incoming_bytes_{0};
+  std::atomic<uint64_t> outgoing_bytes_{0};
 };
 
 }  // namespace internal

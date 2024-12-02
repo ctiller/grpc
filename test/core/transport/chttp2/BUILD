@@ -347,16 +347,6 @@ grpc_cc_test(
 )
 
 grpc_cc_test(
-    name = "max_concurrent_streams_policy_test",
-    srcs = ["max_concurrent_streams_policy_test.cc"],
-    external_deps = ["gtest"],
-    language = "C++",
-    deps = [
-        "//src/core:max_concurrent_streams_policy",
-    ],
-)
-
-grpc_cc_test(
     name = "streams_not_seen_test",
     srcs = ["streams_not_seen_test.cc"],
     external_deps = [
@@ -495,5 +485,37 @@ grpc_cc_test(
         "//:grpc",
         "//src/core:http2_settings",
         "//test/core/test_util:grpc_test_util",
+    ],
+)
+
+grpc_cc_test(
+    name = "http2_client_transport_test",
+    srcs = ["http2_client_transport_test.cc"],
+    external_deps = ["gtest"],
+    language = "C++",
+    uses_polling = False,
+    deps = [
+        "//:gpr",
+        "//:grpc",
+        "//:grpc_http2_client_transport",
+        "//test/core/test_util:grpc_test_util",
+        "//test/core/test_util:grpc_test_util_base",
+        "//test/core/transport/util:mock_promise_endpoint",
+    ],
+)
+
+grpc_cc_test(
+    name = "http2_server_transport_test",
+    srcs = ["http2_server_transport_test.cc"],
+    external_deps = ["gtest"],
+    language = "C++",
+    uses_polling = False,
+    deps = [
+        "//:gpr",
+        "//:grpc",
+        "//:grpc_http2_server_transport",
+        "//test/core/test_util:grpc_test_util",
+        "//test/core/test_util:grpc_test_util_base",
+        "//test/core/transport/util:mock_promise_endpoint",
     ],
 )

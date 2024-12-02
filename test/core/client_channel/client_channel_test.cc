@@ -14,18 +14,17 @@
 
 #include "src/core/client_channel/client_channel.h"
 
+#include <grpc/grpc.h>
+
 #include <atomic>
 #include <memory>
 
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
-
-#include <grpc/grpc.h>
-
+#include "src/core/config/core_configuration.h"
 #include "src/core/lib/address_utils/parse_address.h"
 #include "src/core/lib/channel/promise_based_filter.h"
-#include "src/core/lib/config/core_configuration.h"
 #include "src/core/service_config/service_config_impl.h"
 #include "test/core/call/yodel/yodel_test.h"
 
@@ -57,7 +56,8 @@ class ClientChannelTest : public YodelTest {
   ClientChannel& channel() { return *channel_; }
 
   ClientMetadataHandle MakeClientInitialMetadata() {
-    auto client_initial_metadata = Arena::MakePooled<ClientMetadata>();
+    auto client_initial_metadata =
+        Arena::MakePooledForOverwrite<ClientMetadata>();
     client_initial_metadata->Set(HttpPathMetadata(),
                                  Slice::FromCopiedString(kTestPath));
     return client_initial_metadata;
@@ -127,7 +127,7 @@ class ClientChannelTest : public YodelTest {
   class TestCallDestination final : public UnstartedCallDestination {
    public:
     void StartCall(UnstartedCallHandler unstarted_call_handler) override {
-      handlers_.push(unstarted_call_handler.StartWithEmptyFilterStack());
+      handlers_.push(unstarted_call_handler.StartCall());
     }
 
     absl::optional<CallHandler> PopHandler() {
@@ -267,8 +267,9 @@ CLIENT_CHANNEL_TEST(NoOp) { InitChannel(ChannelArgs()); }
 
 CLIENT_CHANNEL_TEST(StartCall) {
   auto& channel = InitChannel(ChannelArgs());
-  auto call = MakeCallPair(MakeClientInitialMetadata(), channel.event_engine(),
-                           channel.call_arena_allocator()->MakeArena());
+  auto arena = channel.call_arena_allocator()->MakeArena();
+  arena->SetContext<EventEngine>(channel.event_engine());
+  auto call = MakeCallPair(MakeClientInitialMetadata(), std::move(arena));
   channel.StartCall(std::move(call.handler));
   QueueNameResolutionResult(
       MakeSuccessfulResolutionResult("ipv4:127.0.0.1:1234"));
@@ -337,8 +338,9 @@ class TestConfigSelector : public ConfigSelector {
 
 CLIENT_CHANNEL_TEST(ConfigSelectorWithDynamicFilters) {
   auto& channel = InitChannel(ChannelArgs());
-  auto call = MakeCallPair(MakeClientInitialMetadata(), channel.event_engine(),
-                           channel.call_arena_allocator()->MakeArena());
+  auto arena = channel.call_arena_allocator()->MakeArena();
+  arena->SetContext<EventEngine>(channel.event_engine());
+  auto call = MakeCallPair(MakeClientInitialMetadata(), std::move(arena));
   channel.StartCall(std::move(call.handler));
   auto service_config = ServiceConfigImpl::Create(ChannelArgs(), "{}");
   ASSERT_TRUE(service_config.ok());

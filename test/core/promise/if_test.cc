@@ -29,14 +29,14 @@ TEST(IfTest, ChooseFalse) {
       Poll<int>(2));
 }
 
-TEST(IfTest, ChooseSuccesfulTrue) {
+TEST(IfTest, ChooseSuccessfulTrue) {
   EXPECT_EQ(If([]() { return absl::StatusOr<bool>(true); },
                []() { return absl::StatusOr<int>(1); },
                []() { return absl::StatusOr<int>(2); })(),
             Poll<absl::StatusOr<int>>(absl::StatusOr<int>(1)));
 }
 
-TEST(IfTest, ChooseSuccesfulFalse) {
+TEST(IfTest, ChooseSuccessfulFalse) {
   EXPECT_EQ(If([]() { return absl::StatusOr<bool>(false); },
                []() { return absl::StatusOr<int>(1); },
                []() { return absl::StatusOr<int>(2); })(),
@@ -51,15 +51,11 @@ TEST(IfTest, ChooseFailure) {
 }
 
 TEST(IfTest, ImmediateChooseTrue) {
-  EXPECT_EQ(If(
-                true, []() { return 1; }, []() { return 2; })(),
-            Poll<int>(1));
+  EXPECT_EQ(If(true, []() { return 1; }, []() { return 2; })(), Poll<int>(1));
 }
 
 TEST(IfTest, ImmediateChooseFalse) {
-  EXPECT_EQ(If(
-                false, []() { return 1; }, []() { return 2; })(),
-            Poll<int>(2));
+  EXPECT_EQ(If(false, []() { return 1; }, []() { return 2; })(), Poll<int>(2));
 }
 
 }  // namespace grpc_core

@@ -14,6 +14,9 @@
 
 #include "src/core/lib/resource_quota/memory_quota.h"
 
+#include <grpc/slice.h>
+#include <grpc/support/log.h>
+
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -23,9 +26,6 @@
 #include <vector>
 
 #include "gtest/gtest.h"
-
-#include <grpc/slice.h>
-
 #include "src/core/lib/iomgr/exec_ctx.h"
 #include "test/core/resource_quota/call_checker.h"
 #include "test/core/test_util/test_config.h"
@@ -130,7 +130,7 @@ TEST(MemoryQuotaTest, MakeSlice) {
   for (int i = 1; i < 1000; i++) {
     ExecCtx exec_ctx;
     int min = i;
-    int max = 10 * i - 9;
+    int max = (10 * i) - 9;
     slices.push_back(memory_allocator.MakeSlice(MemoryRequest(min, max)));
   }
   ExecCtx exec_ctx;

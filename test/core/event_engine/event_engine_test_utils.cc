@@ -14,6 +14,11 @@
 
 #include "test/core/event_engine/event_engine_test_utils.h"
 
+#include <grpc/event_engine/event_engine.h>
+#include <grpc/event_engine/memory_allocator.h>
+#include <grpc/event_engine/slice.h>
+#include <grpc/event_engine/slice_buffer.h>
+#include <grpc/slice_buffer.h>
 #include <stdlib.h>
 
 #include <algorithm>
@@ -30,19 +35,12 @@
 #include "absl/strings/str_cat.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
-
-#include <grpc/event_engine/event_engine.h>
-#include <grpc/event_engine/memory_allocator.h>
-#include <grpc/event_engine/slice.h>
-#include <grpc/event_engine/slice_buffer.h>
-#include <grpc/slice_buffer.h>
-
 #include "src/core/lib/event_engine/channel_args_endpoint_config.h"
 #include "src/core/lib/event_engine/tcp_socket_utils.h"
-#include "src/core/lib/gprpp/crash.h"
-#include "src/core/lib/gprpp/notification.h"
-#include "src/core/lib/gprpp/time.h"
 #include "src/core/lib/resource_quota/memory_quota.h"
+#include "src/core/util/crash.h"
+#include "src/core/util/notification.h"
+#include "src/core/util/time.h"
 #include "test/core/test_util/build.h"
 
 // IWYU pragma: no_include <sys/socket.h>
@@ -97,10 +95,10 @@ void WaitForSingleOwnerWithTimeout(std::shared_ptr<EventEngine> engine,
     if (remaining < std::chrono::seconds{0}) {
       grpc_core::Crash("Timed out waiting for a single EventEngine owner");
     }
-    GRPC_LOG_EVERY_N_SEC(
-        2, GPR_INFO, "engine.use_count() = %ld timeout_remaining = %s",
-        engine.use_count(),
-        absl::FormatDuration(absl::Nanoseconds(remaining.count())).c_str());
+    LOG_EVERY_N_SEC(INFO, 2)
+        << "engine.use_count() = " << engine.use_count()
+        << " timeout_remaining = "
+        << absl::FormatDuration(absl::Nanoseconds(remaining.count()));
     absl::SleepFor(absl::Milliseconds(100));
   }
 }

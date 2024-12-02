@@ -17,6 +17,10 @@
 #ifndef GRPC_TEST_CORE_LOAD_BALANCING_LB_POLICY_TEST_LIB_H
 #define GRPC_TEST_CORE_LOAD_BALANCING_LB_POLICY_TEST_LIB_H
 
+#include <grpc/event_engine/event_engine.h>
+#include <grpc/grpc.h>
+#include <grpc/support/alloc.h>
+#include <grpc/support/port_platform.h>
 #include <inttypes.h>
 #include <stddef.h>
 
@@ -48,33 +52,19 @@
 #include "absl/types/variant.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-
-#include <grpc/event_engine/event_engine.h>
-#include <grpc/grpc.h>
-#include <grpc/support/alloc.h>
-#include <grpc/support/port_platform.h>
-
 #include "src/core/client_channel/client_channel_internal.h"
 #include "src/core/client_channel/subchannel_interface_internal.h"
 #include "src/core/client_channel/subchannel_pool_interface.h"
+#include "src/core/config/core_configuration.h"
 #include "src/core/lib/address_utils/parse_address.h"
 #include "src/core/lib/address_utils/sockaddr_utils.h"
 #include "src/core/lib/channel/channel_args.h"
-#include "src/core/lib/config/core_configuration.h"
 #include "src/core/lib/event_engine/default_event_engine.h"
-#include "src/core/lib/gprpp/debug_location.h"
-#include "src/core/lib/gprpp/match.h"
-#include "src/core/lib/gprpp/orphanable.h"
-#include "src/core/lib/gprpp/ref_counted_ptr.h"
-#include "src/core/lib/gprpp/sync.h"
-#include "src/core/lib/gprpp/time.h"
-#include "src/core/lib/gprpp/unique_type_name.h"
-#include "src/core/lib/gprpp/work_serializer.h"
+#include "src/core/lib/experiments/experiments.h"
 #include "src/core/lib/iomgr/exec_ctx.h"
 #include "src/core/lib/iomgr/resolved_address.h"
 #include "src/core/lib/security/credentials/credentials.h"
 #include "src/core/lib/transport/connectivity_state.h"
-#include "src/core/lib/uri/uri_parser.h"
 #include "src/core/load_balancing/backend_metric_data.h"
 #include "src/core/load_balancing/health_check_client_internal.h"
 #include "src/core/load_balancing/lb_policy.h"
@@ -84,7 +74,16 @@
 #include "src/core/load_balancing/subchannel_interface.h"
 #include "src/core/resolver/endpoint_addresses.h"
 #include "src/core/service_config/service_config_call_data.h"
+#include "src/core/util/debug_location.h"
 #include "src/core/util/json/json.h"
+#include "src/core/util/match.h"
+#include "src/core/util/orphanable.h"
+#include "src/core/util/ref_counted_ptr.h"
+#include "src/core/util/sync.h"
+#include "src/core/util/time.h"
+#include "src/core/util/unique_type_name.h"
+#include "src/core/util/uri.h"
+#include "src/core/util/work_serializer.h"
 #include "test/core/event_engine/event_engine_test_utils.h"
 #include "test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.h"
 #include "test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.pb.h"
@@ -94,6 +93,9 @@ namespace testing {
 
 class LoadBalancingPolicyTest : public ::testing::Test {
  protected:
+  using FuzzingEventEngine =
+      grpc_event_engine::experimental::FuzzingEventEngine;
+
   using CallAttributes =
       std::vector<ServiceConfigCallData::CallAttributeInterface*>;
 
@@ -120,6 +122,8 @@ class LoadBalancingPolicyTest : public ::testing::Test {
       }
 
       SubchannelState* state() const { return state_; }
+
+      std::string address() const override { return state_->address_; }
 
      private:
       // Converts between
@@ -573,7 +577,9 @@ class LoadBalancingPolicyTest : public ::testing::Test {
       MutexLock lock(&mu_);
       StateUpdate update{
           state, status,
-          MakeRefCounted<PickerWrapper>(test_, std::move(picker))};
+          IsWorkSerializerDispatchEnabled()
+              ? std::move(picker)
+              : MakeRefCounted<PickerWrapper>(test_, std::move(picker))};
       LOG(INFO) << "enqueuing state update from LB policy: "
                 << update.ToString();
       queue_.push_back(std::move(update));
@@ -620,20 +626,7 @@ class LoadBalancingPolicyTest : public ::testing::Test {
     explicit FakeMetadata(std::map<std::string, std::string> metadata)
         : metadata_(std::move(metadata)) {}
 
-    const std::map<std::string, std::string>& metadata() const {
-      return metadata_;
-    }
-
    private:
-    void Add(absl::string_view key, absl::string_view value) override {
-      metadata_[std::string(key)] = std::string(value);
-    }
-
-    std::vector<std::pair<std::string, std::string>> TestOnlyCopyToVector()
-        override {
-      return {};  // Not used.
-    }
-
     absl::optional<absl::string_view> Lookup(
         absl::string_view key, std::string* /*buffer*/) const override {
       auto it = metadata_.find(std::string(key));
@@ -711,10 +704,7 @@ class LoadBalancingPolicyTest : public ::testing::Test {
     // Order is important here: Fuzzing EE needs to be created before
     // grpc_init(), and the POSIX EE (which is used by the WorkSerializer)
     // needs to be created after grpc_init().
-    fuzzing_ee_ =
-        std::make_shared<grpc_event_engine::experimental::FuzzingEventEngine>(
-            grpc_event_engine::experimental::FuzzingEventEngine::Options(),
-            fuzzing_event_engine::Actions());
+    fuzzing_ee_ = MakeFuzzingEventEngine();
     grpc_init();
     event_engine_ = grpc_event_engine::experimental::GetDefaultEventEngine();
     work_serializer_ = std::make_shared<WorkSerializer>(event_engine_);
@@ -736,20 +726,28 @@ class LoadBalancingPolicyTest : public ::testing::Test {
     WaitForWorkSerializerToFlush();
     work_serializer_.reset();
     exec_ctx.Flush();
-    // Note: Can't safely trigger this from inside the FakeHelper dtor,
-    // because if there is a picker in the queue that is holding a ref
-    // to the LB policy, that will prevent the LB policy from being
-    // destroyed, and therefore the FakeHelper will not be destroyed.
-    // (This will cause an ASAN failure, but it will not display the
-    // queued events, so the failure will be harder to diagnose.)
-    helper_->ExpectQueueEmpty();
-    lb_policy_.reset();
+    if (lb_policy_ != nullptr) {
+      // Note: Can't safely trigger this from inside the FakeHelper dtor,
+      // because if there is a picker in the queue that is holding a ref
+      // to the LB policy, that will prevent the LB policy from being
+      // destroyed, and therefore the FakeHelper will not be destroyed.
+      // (This will cause an ASAN failure, but it will not display the
+      // queued events, so the failure will be harder to diagnose.)
+      helper_->ExpectQueueEmpty();
+      lb_policy_.reset();
+    }
     fuzzing_ee_->TickUntilIdle();
     grpc_event_engine::experimental::WaitForSingleOwner(
         std::move(event_engine_));
     event_engine_.reset();
     grpc_shutdown_blocking();
     fuzzing_ee_.reset();
+  }
+
+  virtual std::shared_ptr<FuzzingEventEngine> MakeFuzzingEventEngine() {
+    return std::make_shared<FuzzingEventEngine>(
+        grpc_event_engine::experimental::FuzzingEventEngine::Options(),
+        fuzzing_event_engine::Actions());
   }
 
   LoadBalancingPolicy* lb_policy() const {
@@ -1478,8 +1476,7 @@ class LoadBalancingPolicyTest : public ::testing::Test {
     }
   }
 
-  std::shared_ptr<grpc_event_engine::experimental::FuzzingEventEngine>
-      fuzzing_ee_;
+  std::shared_ptr<FuzzingEventEngine> fuzzing_ee_;
   // TODO(ctiller): this is a normal event engine, yet it gets its time measure
   // from fuzzing_ee_ -- results are likely to be a little funky, but seem to do
   // well enough for the tests we have today.

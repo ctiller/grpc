@@ -13,11 +13,9 @@
 // limitations under the License.
 
 #include <benchmark/benchmark.h>
-
-#include "absl/strings/string_view.h"
-
 #include <grpc/grpc.h>
 
+#include "absl/strings/string_view.h"
 #include "src/core/ext/filters/http/client/http_client_filter.h"
 #include "src/core/lib/event_engine/default_event_engine.h"
 #include "src/core/lib/transport/connectivity_state.h"
@@ -34,17 +32,17 @@ class HttpClientFilterTraits {
   ChannelArgs MakeChannelArgs() { return ChannelArgs().SetObject(&transport_); }
 
   ClientMetadataHandle MakeClientInitialMetadata() {
-    return Arena::MakePooled<ClientMetadata>();
+    return Arena::MakePooledForOverwrite<ClientMetadata>();
   }
 
   ServerMetadataHandle MakeServerInitialMetadata() {
-    return Arena::MakePooled<ServerMetadata>();
+    return Arena::MakePooledForOverwrite<ServerMetadata>();
   }
 
   MessageHandle MakePayload() { return Arena::MakePooled<Message>(); }
 
   ServerMetadataHandle MakeServerTrailingMetadata() {
-    auto md = Arena::MakePooled<ServerMetadata>();
+    auto md = Arena::MakePooledForOverwrite<ServerMetadata>();
     md->Set(HttpStatusMetadata(), 200);
     return md;
   }
