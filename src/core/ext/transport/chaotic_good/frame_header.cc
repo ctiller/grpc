@@ -73,6 +73,10 @@ std::string FrameTypeString(FrameType type) {
   switch (type) {
     case FrameType::kSettings:
       return "Settings";
+    case FrameType::kCommandRequest:
+      return "CommandRequest";
+    case FrameType::kCommandResponse:
+      return "CommandResponse";
     case FrameType::kClientInitialMetadata:
       return "ClientInitialMetadata";
     case FrameType::kClientEndOfStream:

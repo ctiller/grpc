@@ -156,6 +156,12 @@ using ServerTrailingMetadataFrame =
     ProtoStreamFrame<FrameType::kServerTrailingMetadata,
                      chaotic_good_frame::ServerMetadata>;
 using CancelFrame = EmptyStreamFrame<FrameType::kCancel>;
+using CommandRequestFrame =
+    ProtoTransportFrame<FrameType::kCommandRequest,
+                        chaotic_good_frame::CommandRequest>;
+using CommandResponseFrame =
+    ProtoTransportFrame<FrameType::kCommandResponse,
+                        chaotic_good_frame::CommandResponse>;
 
 struct MessageFrame final : public FrameInterface {
   absl::Status Deserialize(const FrameHeader& header,

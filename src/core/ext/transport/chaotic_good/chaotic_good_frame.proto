@@ -56,3 +56,55 @@ message ServerMetadata {
 message BeginMessage {
     uint64 length = 1;
 }
+
+message CommandRequest {
+    string command = 1;
+    uint64 request_id = 2;
+    bytes payload = 3;
+}
+
+message CommandResponse {
+    uint64 request_id = 1;
+    bytes payload = 2;
+}
+
+message TDigest {
+    // TODO(ctiller): t-digest here
+    repeated uint64 latencies = 1;
+}
+
+message MeasureLatencyRequest {
+}
+
+message MeasureLatencyResponse {
+    map<uint32, TDigest> latencies = 1;
+}
+
+message OpenConnectionRequest {
+    uint32 connection_index = 1;
+    bytes connection_id = 2;
+}
+
+message OpenConnectionResponse {
+}
+
+message ParkConnectionRequest {
+    uint32 connection_index = 1;
+}
+
+message ParkConnectionResponse {
+}
+
+message UnparkConnectionRequest {
+    uint32 connection_index = 1;
+}
+
+message UnparkConnectionResponse {
+}
+
+message CloseConnectionRequest {
+    uint32 connection_index = 1;
+}
+
+message CloseConnectionResponse {
+}
