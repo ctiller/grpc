@@ -130,6 +130,7 @@ let package = Package(
         "src/core/client_channel/backup_poller.h",
         "src/core/client_channel/client_channel.cc",
         "src/core/client_channel/client_channel.h",
+        "src/core/client_channel/client_channel_args.h",
         "src/core/client_channel/client_channel_factory.cc",
         "src/core/client_channel/client_channel_factory.h",
         "src/core/client_channel/client_channel_filter.cc",
