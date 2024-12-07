@@ -136,6 +136,7 @@ Gem::Specification.new do |s|
   s.files += %w( src/core/client_channel/backup_poller.h )
   s.files += %w( src/core/client_channel/client_channel.cc )
   s.files += %w( src/core/client_channel/client_channel.h )
+  s.files += %w( src/core/client_channel/client_channel_args.h )
   s.files += %w( src/core/client_channel/client_channel_factory.cc )
   s.files += %w( src/core/client_channel/client_channel_factory.h )
   s.files += %w( src/core/client_channel/client_channel_filter.cc )
