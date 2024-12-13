@@ -100,15 +100,14 @@ auto ChaoticGoodServerTransport::DispatchFrame(IncomingFrame frame) {
         // asynchronously to other calls regardless of frame ordering.
         return stream->call.SpawnWaitable(
             "push-frame", [this, stream, frame = std::move(frame)]() mutable {
-              return TrySeq(
-                  frame.Payload(),
-                  [stream = std::move(stream), this](Frame frame) mutable {
-                    auto& call = stream->call;
-                    return Map(
-                        call.CancelIfFails(PushFrameIntoCall(
-                            std::move(stream), std::move(absl::get<T>(frame)))),
-                        [](auto) { return absl::OkStatus(); });
-                  });
+              return TrySeq(frame.Payload(), [stream = std::move(stream),
+                                              this](Frame frame) mutable {
+                auto& call = stream->call;
+                return Map(
+                    call.CancelIfFails(PushFrameIntoCall(
+                        std::move(stream), std::move(absl::get<T>(frame)))),
+                    [](auto) { return absl::OkStatus(); });
+              });
             });
       },
       []() { return absl::OkStatus(); });
