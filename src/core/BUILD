@@ -7916,8 +7916,8 @@ grpc_cc_library(
     deps = [
         "arena",
         "bitset",
-        "chaotic_good_frame_header",
         "chaotic_good_frame_cc_proto",
+        "chaotic_good_frame_header",
         "context",
         "match",
         "message",

@@ -5978,7 +5978,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -5986,11 +5985,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -6037,6 +6038,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -6231,7 +6233,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -6239,11 +6240,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -6290,6 +6293,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -6450,7 +6454,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -6458,11 +6461,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -6509,6 +6514,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -6707,7 +6713,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -6715,11 +6720,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -6766,6 +6773,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -7452,7 +7460,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -7460,11 +7467,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -7511,6 +7520,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -7542,7 +7552,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -7550,11 +7559,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -7601,6 +7612,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -7633,7 +7645,6 @@ targets:
   run: false
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -7641,11 +7652,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -7692,6 +7705,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -7723,7 +7737,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -7731,11 +7744,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -7782,6 +7797,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -7830,7 +7846,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -7838,11 +7853,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -7889,6 +7906,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -8024,7 +8042,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -8032,11 +8049,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -8083,6 +8102,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -8115,7 +8135,6 @@ targets:
   run: false
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -8123,11 +8142,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -8174,6 +8195,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -8719,17 +8741,18 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
   - src/core/ext/transport/chaotic_good/control_endpoint.h
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/lib/promise/detail/promise_variant.h
   - src/core/lib/promise/event_engine_wakeup_scheduler.h
   - src/core/lib/promise/inter_activity_latch.h
@@ -8753,6 +8776,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame.cc
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/lib/transport/promise_endpoint.cc
   - test/core/call/yodel/test_main.cc
   - test/core/call/yodel/yodel_test.cc
@@ -8777,17 +8801,18 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
   - src/core/ext/transport/chaotic_good/control_endpoint.h
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/lib/promise/detail/promise_variant.h
   - src/core/lib/promise/event_engine_wakeup_scheduler.h
   - src/core/lib/promise/inter_activity_latch.h
@@ -8811,6 +8836,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame.cc
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/lib/transport/promise_endpoint.cc
   - test/core/call/yodel/test_main.cc
   - test/core/call/yodel/yodel_test.cc
@@ -9254,7 +9280,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -9262,11 +9287,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -9313,6 +9340,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -9455,7 +9483,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -9463,11 +9490,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -9514,6 +9543,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -9674,7 +9704,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -9682,11 +9711,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -9733,6 +9764,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -9878,7 +9910,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -9886,11 +9917,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -9937,6 +9970,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -10009,7 +10043,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -10017,11 +10050,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -10068,6 +10103,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -10187,7 +10223,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -10195,11 +10230,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -10246,6 +10283,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -10750,7 +10788,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -10758,11 +10795,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -10809,6 +10848,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -10840,7 +10880,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -10848,11 +10887,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -10899,6 +10940,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -10948,7 +10990,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -10956,11 +10997,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -11007,6 +11050,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -11524,7 +11568,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -11532,11 +11575,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -11583,6 +11628,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -11750,7 +11796,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -11758,11 +11803,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -11809,6 +11856,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -12348,7 +12396,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -12356,11 +12403,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -12407,6 +12456,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -12569,7 +12619,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -12577,11 +12626,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -12628,6 +12679,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -12755,7 +12807,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -12763,11 +12814,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -12814,6 +12867,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -12979,17 +13033,19 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/config.h
   - src/core/ext/transport/chaotic_good/control_endpoint.h
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/lib/promise/detail/promise_variant.h
   - src/core/lib/promise/match_promise.h
   - src/core/lib/promise/mpsc.h
+  - src/core/lib/promise/switch.h
   - src/core/lib/promise/wait_set.h
   - src/core/lib/transport/promise_endpoint.h
   - test/core/call/yodel/yodel_test.h
@@ -13003,6 +13059,7 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.cc
   - src/core/ext/transport/chaotic_good/frame.cc
   - src/core/ext/transport/chaotic_good/frame_header.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/lib/transport/promise_endpoint.cc
   - test/core/call/yodel/test_main.cc
   - test/core/call/yodel/yodel_test.cc
@@ -13286,7 +13343,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -13294,11 +13350,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -13345,6 +13403,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -13519,7 +13578,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -13527,11 +13585,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -13578,6 +13638,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -13621,7 +13682,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -13629,11 +13689,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -13680,6 +13742,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -14109,7 +14172,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -14117,11 +14179,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -14168,6 +14232,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -14199,7 +14264,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -14207,11 +14271,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -14258,6 +14324,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -14289,7 +14356,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -14297,11 +14363,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -14348,6 +14416,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -14379,7 +14448,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -14387,11 +14455,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -14438,6 +14508,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -14718,7 +14789,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -14726,11 +14796,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -14777,6 +14849,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -14820,7 +14893,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -14828,11 +14900,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -14879,6 +14953,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -14910,7 +14985,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -14918,11 +14992,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -14969,6 +15045,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -15347,7 +15424,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -15355,11 +15431,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -15406,6 +15484,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -15611,7 +15690,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -15619,11 +15697,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -15670,6 +15750,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -15731,7 +15812,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -15739,11 +15819,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -15790,6 +15872,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -16323,7 +16406,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -16331,11 +16413,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -16382,6 +16466,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -16611,7 +16696,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -16619,11 +16703,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -16670,6 +16756,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -16884,7 +16971,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -16892,11 +16978,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -16943,6 +17031,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -16974,7 +17063,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -16982,11 +17070,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -17033,6 +17123,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -17216,7 +17307,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -17224,11 +17314,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -17275,6 +17367,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -17317,7 +17410,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -17325,11 +17417,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -17376,6 +17470,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -17407,7 +17502,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -17415,11 +17509,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -17466,6 +17562,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -17497,7 +17594,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -17505,11 +17601,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -17556,6 +17654,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -17587,7 +17686,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -17595,11 +17693,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -17646,6 +17746,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -17677,7 +17778,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -17685,11 +17785,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -17736,6 +17838,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -17767,7 +17870,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -17775,11 +17877,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -17826,6 +17930,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -17857,7 +17962,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -17865,11 +17969,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -17916,6 +18022,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -17947,7 +18054,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -17955,11 +18061,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -18006,6 +18114,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -18060,7 +18169,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -18068,11 +18176,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -18119,6 +18229,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -18150,7 +18261,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -18158,11 +18268,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -18209,6 +18321,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -18240,7 +18353,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -18248,11 +18360,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -18299,6 +18413,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -18330,7 +18445,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -18338,11 +18452,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -18389,6 +18505,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -18420,7 +18537,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -18428,11 +18544,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -18479,6 +18597,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -18510,7 +18629,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -18518,11 +18636,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -18569,6 +18689,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -18600,7 +18721,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -18608,11 +18728,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -18659,6 +18781,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -18690,7 +18813,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -18698,11 +18820,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -18749,6 +18873,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -18780,7 +18905,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -18788,11 +18912,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -18839,6 +18965,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -18870,7 +18997,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -18878,11 +19004,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -18929,6 +19057,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -18960,7 +19089,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -18968,11 +19096,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -19019,6 +19149,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -19050,7 +19181,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -19058,11 +19188,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -19109,6 +19241,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -19140,7 +19273,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -19148,11 +19280,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -19199,6 +19333,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -19230,7 +19365,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -19238,11 +19372,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -19289,6 +19425,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -19320,7 +19457,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -19328,11 +19464,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -19379,6 +19517,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -19421,7 +19560,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -19429,11 +19567,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -19480,6 +19620,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -19511,7 +19652,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -19519,11 +19659,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -19570,6 +19712,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -19601,7 +19744,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -19609,11 +19751,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -19660,6 +19804,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -19691,7 +19836,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -19699,11 +19843,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -19750,6 +19896,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -19792,7 +19939,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -19800,11 +19946,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -19851,6 +19999,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -19882,7 +20031,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -19890,11 +20038,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -19941,6 +20091,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -19972,7 +20123,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -19980,11 +20130,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -20031,6 +20183,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -20062,7 +20215,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -20070,11 +20222,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -20121,6 +20275,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -20152,7 +20307,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -20160,11 +20314,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -20211,6 +20367,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -20242,7 +20399,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -20250,11 +20406,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -20301,6 +20459,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -20332,7 +20491,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -20340,11 +20498,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -20391,6 +20551,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -20825,7 +20986,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -20833,11 +20993,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -20884,6 +21046,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -21009,7 +21172,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -21017,11 +21179,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -21068,6 +21232,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -21169,7 +21334,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -21177,11 +21341,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -21228,6 +21394,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -21259,7 +21426,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -21267,11 +21433,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -21318,6 +21486,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -21368,7 +21537,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -21376,11 +21544,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -21427,6 +21597,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -21458,7 +21629,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -21466,11 +21636,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -21517,6 +21689,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -21562,7 +21735,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -21570,11 +21742,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -21621,6 +21795,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -21949,7 +22124,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -21957,11 +22131,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -22008,6 +22184,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -22365,7 +22542,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -22373,11 +22549,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -22424,6 +22602,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -22652,17 +22831,18 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
   - src/core/ext/transport/chaotic_good/control_endpoint.h
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/lib/promise/detail/promise_variant.h
   - src/core/lib/promise/event_engine_wakeup_scheduler.h
   - src/core/lib/promise/inter_activity_latch.h
@@ -22686,6 +22866,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame.cc
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/lib/transport/promise_endpoint.cc
   - test/core/call/yodel/test_main.cc
   - test/core/call/yodel/yodel_test.cc
@@ -22758,7 +22939,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -22766,11 +22946,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -22801,6 +22983,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -22983,7 +23166,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -22991,11 +23173,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -23042,6 +23226,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -23246,7 +23431,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -23254,11 +23438,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -23305,6 +23491,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -23684,7 +23871,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -23692,11 +23878,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -23743,6 +23931,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
@@ -23774,7 +23963,6 @@ targets:
   build: test
   language: c++
   headers:
-  - src/core/ext/transport/chaotic_good/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good/client_transport.h
   - src/core/ext/transport/chaotic_good/config.h
@@ -23782,11 +23970,13 @@ targets:
   - src/core/ext/transport/chaotic_good/data_endpoints.h
   - src/core/ext/transport/chaotic_good/frame.h
   - src/core/ext/transport/chaotic_good/frame_header.h
+  - src/core/ext/transport/chaotic_good/frame_transport.h
   - src/core/ext/transport/chaotic_good/message_chunker.h
   - src/core/ext/transport/chaotic_good/message_reassembly.h
   - src/core/ext/transport/chaotic_good/pending_connection.h
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.h
   - src/core/ext/transport/chaotic_good/server_transport.h
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.h
   - src/core/ext/transport/chaotic_good_legacy/chaotic_good_transport.h
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.h
   - src/core/ext/transport/chaotic_good_legacy/client_transport.h
@@ -23833,6 +24023,7 @@ targets:
   - src/core/ext/transport/chaotic_good/frame_header.cc
   - src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   - src/core/ext/transport/chaotic_good/server_transport.cc
+  - src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   - src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   - src/core/ext/transport/chaotic_good_legacy/frame.cc
