@@ -17,9 +17,9 @@
 
 #include <vector>
 
-#include "frame_header.h"
 #include "src/core/ext/transport/chaotic_good/control_endpoint.h"
 #include "src/core/ext/transport/chaotic_good/data_endpoints.h"
+#include "src/core/ext/transport/chaotic_good/frame_header.h"
 #include "src/core/ext/transport/chaotic_good/frame_transport.h"
 #include "src/core/ext/transport/chaotic_good/pending_connection.h"
 
@@ -90,4 +90,4 @@ class TcpFrameTransport final : public FrameTransport {
 }  // namespace chaotic_good
 }  // namespace grpc_core
 
-#endif
+#endif  // GRPC_SRC_CORE_EXT_TRANSPORT_CHAOTIC_GOOD_TCP_FRAME_TRANSPORT_H
