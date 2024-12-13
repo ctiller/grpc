@@ -286,7 +286,7 @@ ChaoticGoodServerTransport::ChaoticGoodServerTransport(
           args.GetObjectRef<grpc_event_engine::experimental::EventEngine>()),
       outgoing_frames_(4),
       message_chunker_(config.MakeMessageChunker()) {
-  auto transport = MakeRefCounted<ChaoticGoodTransport>(
+  auto transport = MakeRefCounted<ChaoticGoodServerTransport>(
       std::move(control_endpoint), config.TakePendingDataEndpoints(),
       event_engine_, config.MakeTransportOptions(), false);
   auto party_arena = SimpleArenaAllocator(0)->MakeArena();
