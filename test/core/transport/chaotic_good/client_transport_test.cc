@@ -96,7 +96,7 @@ ChannelArgs MakeChannelArgs(
 }
 
 TEST_F(TransportTest, AddOneStream) {
-  MockFrameTransport frame_transport;
+  TcpFrameTransport frame_transport;
   static const std::string many_as(1024 * 1024, 'a');
   const auto server_initial_metadata =
       EncodeProto<chaotic_good_frame::ServerMetadata>("message: 'hello'");
@@ -175,7 +175,7 @@ TEST_F(TransportTest, AddOneStreamMultipleMessages) {
   MockPromiseEndpoint control_endpoint(1000);
   MockPromiseEndpoint data_endpoint(1001);
   auto client_connection_factory =
-      MakeRefCounted<StrictMock<MockClientConnectionFactory>>();
+      MakeRefCounted<StrictMock<client_connection_factory>>();
   const auto server_initial_metadata =
       EncodeProto<chaotic_good_frame::ServerMetadata>("");
   const auto server_trailing_metadata =
