@@ -200,8 +200,9 @@ auto ChaoticGoodClientTransport::OnTransportActivityDone(
 ChaoticGoodClientTransport::ChaoticGoodClientTransport(
     const ChannelArgs& args, FrameTransport& frame_transport,
     MessageChunker message_chunker)
-    : event_engine_( args.GetObjectRef<grpc_event_engine::experimental::EventEngine>()),
-    allocator_(args.GetObject<ResourceQuota>()
+    : event_engine_(
+          args.GetObjectRef<grpc_event_engine::experimental::EventEngine>()),
+      allocator_(args.GetObject<ResourceQuota>()
                      ->memory_quota()
                      ->CreateMemoryAllocator("chaotic-good")),
       incoming_frames_(8),

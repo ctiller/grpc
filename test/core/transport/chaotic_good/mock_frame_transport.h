@@ -51,7 +51,7 @@ class MockFrameTransport final : public FrameTransport {
   std::queue<ExpectedWrite> expected_writes_;
   std::shared_ptr<InterActivityLatch<absl::Status>> end_writes_ =
       std::make_shared<InterActivityLatch<absl::Status>>();
-ReadFramePipe::Sender reader_;
+  ReadFramePipe::Sender reader_;
   absl::AnyInvocable<void(absl::Status)> on_read_done_;
 };
 
@@ -82,4 +82,4 @@ inline Frame MakeMessageFrame(uint32_t stream_id, absl::string_view payload) {
 }  // namespace chaotic_good
 }  // namespace grpc_core
 
-#endif
+#endif  // GRPC_TEST_CORE_TRANSPORT_CHAOTIC_GOOD_MOCK_FRAME_TRANSPORT_H
