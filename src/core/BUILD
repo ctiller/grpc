@@ -8270,11 +8270,11 @@ grpc_cc_library(
     deps = [
         "1999",
         "chaotic_good_frame",
+        "inter_activity_pipe",
         "map",
         "match_promise",
         "mpsc",
         "pipe",
-        "inter_activity_pipe",
         "//:promise",
     ],
 )
