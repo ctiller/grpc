@@ -153,46 +153,56 @@ class FoldAccumulator(object):
             self.fold = [i]
 
     def _finish_fold(self):
-      #print(f"// fold={self.fold}", file=f)
-      if len(self.fold) == 1:
-          if self.fold[0] != -1:
-              self.type_args.append(f"F{self.fold[0]}")
-              self.instantiate_args.append(f"std::forward<F{self.fold[0]}>(f{self.fold[0]})")
-          else:
-              self.type_args.append("P")
-              self.instantiate_args.append("std::forward<P>(p)")
-      else:
-          if self.fold[0] != -1:
-              fs = ", ".join(f"F{i}" for i in self.fold)
-              fwd_fs = ", ".join(f"std::forward<F{i}>(f{i})" for i in self.fold)
-              arg = f"typename Types::PromiseResultTraits{self.fold[0]}::UnwrappedType"
-              self.uses_types_alias = True
-              self.type_args.append(f"SeqFactoryMapType<Traits, {arg}, {fs}>")
-              self.instantiate_args.append(f"SeqFactoryMap<Traits, {arg}>({fwd_fs})")
-          else:
-              fs = ", ".join(f"F{i}" for i in self.fold[1:])
-              fwd_fs = ", ".join(f"std::forward<F{i}>(f{i})" for i in self.fold[1:])
-              self.type_args.append(f"SeqMapType<Traits, P, {fs}>")
-              self.instantiate_args.append(
-                  f"SeqMap<Traits>(std::forward<P>(p), {fwd_fs})"
-              )
+        # print(f"// fold={self.fold}", file=f)
+        if len(self.fold) == 1:
+            if self.fold[0] != -1:
+                self.type_args.append(f"F{self.fold[0]}")
+                self.instantiate_args.append(
+                    f"std::forward<F{self.fold[0]}>(f{self.fold[0]})"
+                )
+            else:
+                self.type_args.append("P")
+                self.instantiate_args.append("std::forward<P>(p)")
+        else:
+            if self.fold[0] != -1:
+                fs = ", ".join(f"F{i}" for i in self.fold)
+                fwd_fs = ", ".join(
+                    f"std::forward<F{i}>(f{i})" for i in self.fold
+                )
+                arg = f"typename Types::PromiseResultTraits{self.fold[0]}::UnwrappedType"
+                self.uses_types_alias = True
+                self.type_args.append(f"SeqFactoryMapType<Traits, {arg}, {fs}>")
+                self.instantiate_args.append(
+                    f"SeqFactoryMap<Traits, {arg}>({fwd_fs})"
+                )
+            else:
+                fs = ", ".join(f"F{i}" for i in self.fold[1:])
+                fwd_fs = ", ".join(
+                    f"std::forward<F{i}>(f{i})" for i in self.fold[1:]
+                )
+                self.type_args.append(f"SeqMapType<Traits, P, {fs}>")
+                self.instantiate_args.append(
+                    f"SeqMap<Traits>(std::forward<P>(p), {fwd_fs})"
+                )
 
     def finish(self):
-      #print(f"// final fold={self.fold}", file=f)
-      if self.fold[0] != -1:
-          self.type_args.append(f"F{self.fold[0]}")
-          self.instantiate_args.append(f"std::forward<F{self.fold[0]}>(f{self.fold[0]})")
-      else:
-          self.type_args.append("P")
-          self.instantiate_args.append("std::forward<P>(p)")
-      self.fold = self.fold[1:]
-      if len(self.type_args) == 1:
-          ret = f"{self.instantiate_args[0]}"
-      else:
-          ret = f"SeqState<Traits, {','.join(self.type_args)}>({','.join(self.instantiate_args)}, whence)"
-      if len(self.fold):
-          ret = f"SeqMap<Traits>({ret}, {','.join(f'std::forward<F{i}>(f{i})' for i in self.fold)})"
-      return ret
+        # print(f"// final fold={self.fold}", file=f)
+        if self.fold[0] != -1:
+            self.type_args.append(f"F{self.fold[0]}")
+            self.instantiate_args.append(
+                f"std::forward<F{self.fold[0]}>(f{self.fold[0]})"
+            )
+        else:
+            self.type_args.append("P")
+            self.instantiate_args.append("std::forward<P>(p)")
+        self.fold = self.fold[1:]
+        if len(self.type_args) == 1:
+            ret = f"{self.instantiate_args[0]}"
+        else:
+            ret = f"SeqState<Traits, {','.join(self.type_args)}>({','.join(self.instantiate_args)}, whence)"
+        if len(self.fold):
+            ret = f"SeqMap<Traits>({ret}, {','.join(f'std::forward<F{i}>(f{i})' for i in self.fold)})"
+        return ret
 
 
 def gen_opt_seq_state(n, f):
