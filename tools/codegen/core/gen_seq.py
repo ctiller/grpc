@@ -20,10 +20,17 @@ from mako.lookup import TemplateLookup
 from mako.template import Template
 
 files = {
-  "test/core/promise/opt_seq_test.cc": ("opt_seq_test.mako", {"n":6}),
-  "test/core/promise/opt_try_seq_test.cc": ("opt_try_seq_test.mako", {"n":6}),
-  "src/core/lib/promise/detail/seq_state.h": ("seq_state.mako", {"max_steps":14}),
+    "test/core/promise/opt_seq_test.cc": ("opt_seq_test.mako", {"n": 6}),
+    "test/core/promise/opt_try_seq_test.cc": (
+        "opt_try_seq_test.mako",
+        {"n": 6},
+    ),
+    "src/core/lib/promise/detail/seq_state.h": (
+        "seq_state.mako",
+        {"max_steps": 14},
+    ),
 }
+
 
 def gen_opt_seq_state(n, f):
     typename_fs = ", ".join(f"typename F{i}" for i in range(n - 1))
@@ -170,6 +177,7 @@ def gen_opt_seq_state(n, f):
         file=f,
     )
     print("}", file=f)
+
 
 tmpl_lookup = TemplateLookup(directories=["tools/codegen/core/templates/"])
 for filename, (template_name, args) in files.items():
