@@ -52,7 +52,7 @@ void SimpleRequestBody(CoreEnd2endTest& test,
   EXPECT_FALSE(client_close.was_cancelled());
 }
 
-CORE_END2END_TEST(CoreEnd2endTests, InvokeRegisteredCall) {
+CORE_END2END_TEST(CoreEnd2endTest, InvokeRegisteredCall) {
   SimpleRequestBody(*this, RegisterCallOnClient("/foo", nullptr));
 }
 
