@@ -587,11 +587,12 @@ class CoreEnd2endTest {
 // tests against. Each new name gets a differing set of configurations in
 // end2end_test_main.cc to customize the set of fixtures the tests run against.
 
-#define DECLARE_SUITE(name)                                                    \
-  class name : public ::testing::TestWithParam<const CoreTestConfiguration*> { \
-   public:                                                                     \
-    static std::vector<const CoreTestConfiguration*> AllSuiteConfigs(          \
-        bool fuzzing);                                                         \
+#define DECLARE_SUITE(name)                                             \
+  class(name)                                                           \
+      : public ::testing::TestWithParam<const CoreTestConfiguration*> { \
+   public:                                                              \
+    static std::vector<const CoreTestConfiguration*> AllSuiteConfigs(   \
+        bool fuzzing);                                                  \
   };
 
 // Test suite for tests that should run in all configurations
