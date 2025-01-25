@@ -22,7 +22,7 @@
 
 namespace grpc_core {
 
-CORE_END2END_TEST(CoreEnd2endTests, CancelInAVacuum) {
+CORE_END2END_TEST(CoreEnd2endTest, CancelInAVacuum) {
   NewClientCall("/service/method").Create().Cancel();
 }
 
