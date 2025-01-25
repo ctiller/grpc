@@ -116,7 +116,7 @@ void InvokeRequestWithFlags(CoreEnd2endTest& test,
   grpc_byte_buffer_destroy(request_payload);
 }
 
-CORE_END2END_TEST(CoreEnd2endTests, BadFlagsOnSendInitialMetadata) {
+CORE_END2END_TEST(CoreEnd2endTest, BadFlagsOnSendInitialMetadata) {
   InvokeRequestWithFlags(*this, {{GRPC_OP_SEND_INITIAL_METADATA, 0xdeadbeef}},
                          GRPC_CALL_ERROR_INVALID_FLAGS);
 }

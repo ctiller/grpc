@@ -34,7 +34,7 @@ namespace {
 // server reads and streams responses. The client cancels the RPC to get an
 // error status. (Server sending a non-OK status is not considered an error
 // status.)
-CORE_END2END_TEST(CoreEnd2endTests, StreamingErrorResponse) {
+CORE_END2END_TEST(CoreEnd2endTest, StreamingErrorResponse) {
   SKIP_IF_V3();
   auto c = NewClientCall("/foo").Timeout(Duration::Seconds(5)).Create();
   IncomingMetadata server_initial_metadata;

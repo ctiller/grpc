@@ -128,7 +128,7 @@ void CancelAfterInvoke3(CoreEnd2endTest& test,
               ::testing::AnyOf(mode->ExpectedStatus(), GRPC_STATUS_INTERNAL));
 }
 
-CORE_END2END_TEST(CoreEnd2endTests, CancelAfterInvoke6) {
+CORE_END2END_TEST(CoreEnd2endTest, CancelAfterInvoke6) {
   CancelAfterInvoke6(*this, std::make_unique<CancelCancellationMode>(),
                      kCancelTimeout);
 }
