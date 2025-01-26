@@ -30,7 +30,7 @@
 namespace grpc_core {
 namespace {
 
-CORE_END2END_TEST(CoreEnd2endTests, CancelWithStatus1) {
+CORE_END2END_TEST(CoreEnd2endTest, CancelWithStatus1) {
   auto c = NewClientCall("/foo").Timeout(Duration::Minutes(1)).Create();
   IncomingStatusOnClient server_status;
   c.NewBatch(1).RecvStatusOnClient(server_status);

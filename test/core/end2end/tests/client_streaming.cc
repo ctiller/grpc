@@ -76,7 +76,7 @@ void ClientStreaming(CoreEnd2endTest& test, int messages) {
   EXPECT_EQ(server_status.message(), "xyz");
 }
 
-CORE_END2END_TEST(CoreEnd2endTests, ClientStreaming0) {
+CORE_END2END_TEST(CoreEnd2endTest, ClientStreaming0) {
   ClientStreaming(*this, 0);
 }
 CORE_END2END_TEST(CoreEnd2endTests, ClientStreaming1) {
