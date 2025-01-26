@@ -132,7 +132,7 @@ void TestMaxMessageLengthOnServerOnResponse(CoreEnd2endTest& test) {
             "SERVER: Sent message larger than max (11 vs. 5)");
 }
 
-CORE_END2END_TEST(CoreEnd2endTests,
+CORE_END2END_TEST(CoreEnd2endTest,
                   MaxMessageLengthOnClientOnRequestViaChannelArg) {
   SKIP_IF_MINSTACK();
   InitServer(ChannelArgs());
