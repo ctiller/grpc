@@ -117,7 +117,7 @@ class InitWithTempFile {
   grpc_authorization_policy_provider* provider_;
 };
 
-CORE_END2END_TEST(SecureEnd2endTests, StaticInitAllowAuthorizedRequest) {
+CORE_END2END_TEST(CoreEnd2endTest, StaticInitAllowAuthorizedRequest) {
   InitWithStaticData(*this,
                      "{"
                      "  \"name\": \"authz\","
