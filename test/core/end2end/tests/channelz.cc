@@ -63,7 +63,7 @@ void RunOneRequest(CoreEnd2endTest& test, bool request_is_success) {
   EXPECT_EQ(s.method(), "/foo");
 }
 
-CORE_END2END_TEST(CoreEnd2endTests, Channelz) {
+CORE_END2END_TEST(CoreEnd2endTest, Channelz) {
   SKIP_IF_V3();
   auto args = ChannelArgs()
                   .Set(GRPC_ARG_MAX_CHANNEL_TRACE_EVENT_MEMORY_PER_NODE, 0)

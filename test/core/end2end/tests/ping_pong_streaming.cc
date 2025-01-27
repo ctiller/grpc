@@ -62,7 +62,7 @@ void PingPongStreaming(CoreEnd2endTest& test, int num_messages) {
   test.Step();
 }
 
-CORE_END2END_TEST(CoreEnd2endTests, PingPongStreaming1) {
+CORE_END2END_TEST(CoreEnd2endTest, PingPongStreaming1) {
   PingPongStreaming(*this, 1);
 }
 
