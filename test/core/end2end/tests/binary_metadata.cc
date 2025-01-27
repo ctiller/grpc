@@ -101,7 +101,7 @@ static void BinaryMetadata(CoreEnd2endTest& test, bool server_true_binary,
             key6_payload.as_string_view());
 }
 
-CORE_END2END_TEST(CoreEnd2endTests,
+CORE_END2END_TEST(CoreEnd2endTest,
                   BinaryMetadataServerTrueBinaryClientHttp2Fallback) {
   BinaryMetadata(*this, true, false);
 }

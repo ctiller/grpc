@@ -69,7 +69,7 @@ void CancelAfterRoundTrip(CoreEnd2endTest& test,
   EXPECT_TRUE(client_close.was_cancelled());
 }
 
-CORE_END2END_TEST(CoreEnd2endTests, CancelAfterRoundTrip) {
+CORE_END2END_TEST(CoreEnd2endTest, CancelAfterRoundTrip) {
   CancelAfterRoundTrip(*this, std::make_unique<CancelCancellationMode>(),
                        Duration::Seconds(5));
 }
