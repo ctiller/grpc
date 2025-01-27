@@ -25,7 +25,7 @@
 
 namespace grpc_core {
 
-CORE_END2END_TEST(CoreEnd2endTests, CancelBeforeInvoke6) {
+CORE_END2END_TEST(CoreEnd2endTest, CancelBeforeInvoke6) {
   auto c = NewClientCall("/service/method").Create();
   c.Cancel();
   IncomingStatusOnClient server_status;
