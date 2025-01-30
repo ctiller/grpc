@@ -227,7 +227,7 @@ FUZZ_TEST(HpackSyncFuzzer, FuzzOneInput);
 
 auto ParseTestProto(const std::string& proto) {
   hpack_sync_fuzzer::Msg msg;
-  CHECK(proto2::TextFormat::ParseFromString(proto, &msg));
+  CHECK(google::protobuf::TextFormat::ParseFromString(proto, &msg));
   return msg;
 }
 
