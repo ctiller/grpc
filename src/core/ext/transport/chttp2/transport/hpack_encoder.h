@@ -389,7 +389,7 @@ class HPackCompressor {
   bool advertise_table_size_change_ = false;
   HPackEncoderTable table_;
 
-  grpc_metadata_batch::StatefulCompressor<hpack_encoder_detail::Compressor>
+  metadata_detail::StatefulCompressor<hpack_encoder_detail::Compressor>
       compression_state_;
 };
 
