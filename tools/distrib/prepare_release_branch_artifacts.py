@@ -35,4 +35,3 @@ with open(".gitignore") as f:
             lines.append(line)
 with open(".gitignore", "w") as f:
     f.write("".join(lines))
-
