@@ -110,7 +110,7 @@ auto ChaoticGoodServerTransport::StreamDispatch::SendCallBody(
     uint32_t stream_id, CallInitiator call_initiator) {
   // Continuously send client frame with client to server messages.
   return ForEach(MessagesFrom(call_initiator),
-                 [this, stream_id](MessageHandle message) mutable {
+                 [stream_id](MessageHandle message) mutable {
                    return message_chunker_.Send(std::move(message), stream_id,
                                                 outgoing_frames_);
                  });
@@ -273,9 +273,9 @@ event_engine_, config.MakeTransportOptions(), false);
 
 void ChaoticGoodServerTransport::SetCallDestination(
     RefCountedPtr<UnstartedCallDestination> call_destination) {
-  CHECK(call_destination_ == nullptr);
+  CHECK(call_destination == nullptr);
   CHECK(call_destination != nullptr);
-  call_destination_ = call_destination;
+  call_destination = call_destination;
   got_acceptor_.Set();
 }
 
@@ -296,7 +296,7 @@ void ChaoticGoodServerTransport::AbortWithError() {
   ReleasableMutexLock lock(&mu_);
   aborted_with_error_ = true;
   StreamMap stream_map = std::move(stream_map_);
-  stream_map_.clear();
+  stream_map.clear();
   state_tracker_.SetState(GRPC_CHANNEL_SHUTDOWN,
                           absl::UnavailableError("transport closed"),
                           "transport closed");
