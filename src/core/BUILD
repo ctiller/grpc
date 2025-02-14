@@ -8041,10 +8041,10 @@ grpc_cc_library(
         "chaotic_good_pending_connection",
         "event_engine_tcp_socket_utils",
         "if",
-        "loop",
-        "seq",
-        "race",
         "inter_activity_latch",
+        "loop",
+        "race",
+        "seq",
         "try_seq",
     ],
 )
