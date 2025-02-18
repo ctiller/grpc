@@ -28,8 +28,24 @@ ABSL_FLAG(std::string, templates_dir, "", "Directory containing templates");
 ABSL_FLAG(std::string, output_dir, "", "Directory to write rendered templates");
 
 namespace {
+void SetupEnvironment(const std::string& filename, inja::Environment& env) {
+  env.set_include_callback(
+      [root_filename = filename](const std::string& path,
+                                 const std::string& template_name) {
+        auto last_slash = root_filename.rfind('/');
+        auto root = root_filename.substr(0, last_slash + 1);
+        LOG(INFO) << "root=" << root << "; path=" << path
+                  << "; template_name=" << template_name;
+        inja::Environment env_inc;
+        auto filename = root + path;
+        SetupEnvironment(filename, env_inc);
+        return env_inc.parse(LoadString(root + path));
+      });
+}
+
 void RenderTemplate(const std::string& filename, nlohmann::json build_yaml) {
   inja::Environment env;
+  SetupEnvironment(filename, env);
   std::string rendered = env.render(
       LoadString(absl::GetFlag(FLAGS_templates_dir) + "/" + filename),
       build_yaml);
