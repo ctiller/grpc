@@ -1436,6 +1436,7 @@ Gem::Specification.new do |s|
   s.files += %w( src/core/lib/promise/status_flag.h )
   s.files += %w( src/core/lib/promise/try_join.h )
   s.files += %w( src/core/lib/promise/try_seq.h )
+  s.files += %w( src/core/lib/promise/wait_set.h )
   s.files += %w( src/core/lib/resource_quota/api.cc )
   s.files += %w( src/core/lib/resource_quota/api.h )
   s.files += %w( src/core/lib/resource_quota/arena.cc )
