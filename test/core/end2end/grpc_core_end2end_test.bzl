@@ -211,7 +211,7 @@ def grpc_core_end2end_test_suite(name, shard_count = 50, enable_fuzzing = True, 
                 "fuzztest",
                 "fuzztest_main",
             ],
-        shard_count = shard_count,
+            shard_count = shard_count,
             deps = _DEPS + ["end2end_test_lib_fuzztest_no_gtest"],
             data = _DATA,
         )
