@@ -12951,6 +12951,7 @@ if(_gRPC_PLATFORM_LINUX OR _gRPC_PLATFORM_MAC OR _gRPC_PLATFORM_POSIX)
     src/core/ext/transport/chaotic_good/frame_header.cc
     src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
     src/core/ext/transport/chaotic_good/server_transport.cc
+    src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
     src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
     src/core/ext/transport/chaotic_good_legacy/client_transport.cc
     src/core/ext/transport/chaotic_good_legacy/control_endpoint.cc
@@ -12959,6 +12960,7 @@ if(_gRPC_PLATFORM_LINUX OR _gRPC_PLATFORM_MAC OR _gRPC_PLATFORM_POSIX)
     src/core/ext/transport/chaotic_good_legacy/frame_header.cc
     src/core/ext/transport/chaotic_good_legacy/server/chaotic_good_server.cc
     src/core/ext/transport/chaotic_good_legacy/server_transport.cc
+    src/core/lib/promise/wait_set.cc
     src/core/lib/transport/promise_endpoint.cc
     test/core/call/batch_builder.cc
     test/core/end2end/cq_verifier.cc
@@ -13230,6 +13232,7 @@ add_executable(end2end_http2_no_logging_test
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   src/core/ext/transport/chaotic_good/server_transport.cc
+  src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   src/core/ext/transport/chaotic_good_legacy/control_endpoint.cc
@@ -13238,6 +13241,7 @@ add_executable(end2end_http2_no_logging_test
   src/core/ext/transport/chaotic_good_legacy/frame_header.cc
   src/core/ext/transport/chaotic_good_legacy/server/chaotic_good_server.cc
   src/core/ext/transport/chaotic_good_legacy/server_transport.cc
+  src/core/lib/promise/wait_set.cc
   src/core/lib/transport/promise_endpoint.cc
   test/core/call/batch_builder.cc
   test/core/end2end/cq_verifier.cc
@@ -13323,6 +13327,7 @@ add_executable(end2end_http2_security_no_logging_test
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   src/core/ext/transport/chaotic_good/server_transport.cc
+  src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   src/core/ext/transport/chaotic_good_legacy/control_endpoint.cc
@@ -13331,6 +13336,7 @@ add_executable(end2end_http2_security_no_logging_test
   src/core/ext/transport/chaotic_good_legacy/frame_header.cc
   src/core/ext/transport/chaotic_good_legacy/server/chaotic_good_server.cc
   src/core/ext/transport/chaotic_good_legacy/server_transport.cc
+  src/core/lib/promise/wait_set.cc
   src/core/lib/transport/promise_endpoint.cc
   test/core/call/batch_builder.cc
   test/core/end2end/cq_verifier.cc
@@ -13782,6 +13788,7 @@ add_executable(end2end_inproc_no_logging_test
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   src/core/ext/transport/chaotic_good/server_transport.cc
+  src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   src/core/ext/transport/chaotic_good_legacy/control_endpoint.cc
@@ -13790,6 +13797,7 @@ add_executable(end2end_inproc_no_logging_test
   src/core/ext/transport/chaotic_good_legacy/frame_header.cc
   src/core/ext/transport/chaotic_good_legacy/server/chaotic_good_server.cc
   src/core/ext/transport/chaotic_good_legacy/server_transport.cc
+  src/core/lib/promise/wait_set.cc
   src/core/lib/transport/promise_endpoint.cc
   test/core/call/batch_builder.cc
   test/core/end2end/cq_verifier.cc
@@ -14058,6 +14066,7 @@ add_executable(end2end_posix_no_logging_test
   src/core/ext/transport/chaotic_good/frame_header.cc
   src/core/ext/transport/chaotic_good/server/chaotic_good_server.cc
   src/core/ext/transport/chaotic_good/server_transport.cc
+  src/core/ext/transport/chaotic_good/tcp_frame_transport.cc
   src/core/ext/transport/chaotic_good_legacy/client/chaotic_good_connector.cc
   src/core/ext/transport/chaotic_good_legacy/client_transport.cc
   src/core/ext/transport/chaotic_good_legacy/control_endpoint.cc
@@ -14066,6 +14075,7 @@ add_executable(end2end_posix_no_logging_test
   src/core/ext/transport/chaotic_good_legacy/frame_header.cc
   src/core/ext/transport/chaotic_good_legacy/server/chaotic_good_server.cc
   src/core/ext/transport/chaotic_good_legacy/server_transport.cc
+  src/core/lib/promise/wait_set.cc
   src/core/lib/transport/promise_endpoint.cc
   test/core/call/batch_builder.cc
   test/core/end2end/cq_verifier.cc
@@ -18723,6 +18733,7 @@ if(_gRPC_PLATFORM_LINUX OR _gRPC_PLATFORM_MAC OR _gRPC_PLATFORM_POSIX)
     ${_gRPC_PROTO_GENS_DIR}/test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.grpc.pb.h
     src/core/ext/transport/chttp2/transport/http2_client_transport.cc
     src/core/ext/transport/chttp2/transport/http2_transport.cc
+    src/core/lib/promise/wait_set.cc
     src/core/lib/transport/promise_endpoint.cc
     test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.cc
     test/core/test_util/cmdline.cc
@@ -18784,6 +18795,7 @@ if(_gRPC_PLATFORM_LINUX OR _gRPC_PLATFORM_MAC OR _gRPC_PLATFORM_POSIX)
     ${_gRPC_PROTO_GENS_DIR}/test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.pb.h
     ${_gRPC_PROTO_GENS_DIR}/test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.grpc.pb.h
     src/core/ext/transport/chttp2/transport/http2_server_transport.cc
+    src/core/lib/promise/wait_set.cc
     src/core/lib/transport/promise_endpoint.cc
     test/core/event_engine/fuzzing_event_engine/fuzzing_event_engine.cc
     test/core/test_util/cmdline.cc
