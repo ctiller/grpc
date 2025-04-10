@@ -234,7 +234,7 @@ struct grpc_chttp2_transport final : public grpc_core::FilterStackTransport,
   class ChannelzDataSource final : public grpc_core::channelz::DataSource {
    public:
     using grpc_core::channelz::DataSource::DataSource;
-    ChannelzDataSource(grpc_chttp2_transport* transport);
+    explicit ChannelzDataSource(grpc_chttp2_transport* transport);
 
     void AddJson(grpc_core::Json::Object& output) override;
     std::unique_ptr<grpc_core::channelz::ZTrace> GetZTrace(
