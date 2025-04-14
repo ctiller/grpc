@@ -212,10 +212,12 @@ DATA_ENDPOINTS_TEST(CanMultiWrite) {
   WaitForAllPendingWork();
   auto expected = [](uint64_t payload_tag, std::string payload) {
     SliceBuffer buffer;
-    chaotic_good::data_endpoints_detail::DataFrameHeader;
-    {payload_tag, 1, static_cast<uint32_t>(payload.length())}.Serialize(
-        buffer.AddTiny(chaotic_good::data_endpoints_detail::DataFrameHeader::
-                           kFrameHeaderSize));
+    DataFrameHeader;
+    {
+      payload_tag, 1, static_cast<uint32_t>(payload.length());
+    }
+    .Serialize(buffer.AddTiny(chaotic_good::data_endpoints_detail::
+                                  DataFrameHeader::kFrameHeaderSize));
     buffer.Append(Slice::FromCopiedBuffer(payload));
     return buffer.JoinIntoString();
   };
