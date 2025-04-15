@@ -15829,10 +15829,12 @@ add_executable(flow_control_test
   src/core/lib/transport/status_conversion.cc
   src/core/util/dump_args.cc
   src/core/util/glob.cc
+  src/core/util/json/json_object_loader.cc
   src/core/util/latent_see.cc
   src/core/util/per_cpu.cc
   src/core/util/status_helper.cc
   src/core/util/time.cc
+  src/core/util/validation_errors.cc
   test/core/transport/chttp2/flow_control_test.cc
 )
 if(WIN32 AND MSVC)
