@@ -303,7 +303,7 @@ class TransportFlowControl final {
 
     std::string ToString() const;
 
-    static const JsonLoaderInterface* JsonLoader(const grpc_core::JsonArgs&) {
+    static const JsonLoaderInterface* JsonLoader(const JsonArgs&) {
       static const auto* loader =
           JsonObjectLoader<Stats>()
               .Field("targetWindow", &Stats::target_window)

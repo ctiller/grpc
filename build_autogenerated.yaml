@@ -10885,6 +10885,8 @@ targets:
   - src/core/util/dump_args.h
   - src/core/util/glob.h
   - src/core/util/json/json.h
+  - src/core/util/json/json_args.h
+  - src/core/util/json/json_object_loader.h
   - src/core/util/latent_see.h
   - src/core/util/manual_constructor.h
   - src/core/util/orphanable.h
@@ -10895,6 +10897,7 @@ targets:
   - src/core/util/spinlock.h
   - src/core/util/status_helper.h
   - src/core/util/time.h
+  - src/core/util/validation_errors.h
   - third_party/upb/upb/generated_code_support.h
   src:
   - src/core/ext/transport/chttp2/transport/flow_control.cc
@@ -10925,10 +10928,12 @@ targets:
   - src/core/lib/transport/status_conversion.cc
   - src/core/util/dump_args.cc
   - src/core/util/glob.cc
+  - src/core/util/json/json_object_loader.cc
   - src/core/util/latent_see.cc
   - src/core/util/per_cpu.cc
   - src/core/util/status_helper.cc
   - src/core/util/time.cc
+  - src/core/util/validation_errors.cc
   - test/core/transport/chttp2/flow_control_test.cc
   deps:
   - gtest

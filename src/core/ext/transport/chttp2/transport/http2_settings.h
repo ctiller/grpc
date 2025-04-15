@@ -134,7 +134,7 @@ class Http2Settings {
 
   bool operator!=(const Http2Settings& rhs) const { return !operator==(rhs); }
 
-  static const JsonLoaderInterface* JsonLoader(const grpc_core::JsonArgs&) {
+  static const JsonLoaderInterface* JsonLoader(const JsonArgs&) {
     static const auto* loader =
         JsonObjectLoader<Http2Settings>()
             .Field("headerTableSize", &Http2Settings::header_table_size_)
@@ -173,7 +173,7 @@ class Http2SettingsManager {
   Http2Settings& mutable_peer() { return peer_; }
   const Http2Settings& peer() const { return peer_; }
 
-  static const JsonLoaderInterface* JsonLoader(const grpc_core::JsonArgs&) {
+  static const JsonLoaderInterface* JsonLoader(const JsonArgs&) {
     static const auto* loader =
         JsonObjectLoader<Http2SettingsManager>()
             .Field("local", &Http2SettingsManager::local_)
