@@ -65,7 +65,7 @@ class ZTraceCollector : public ztrace_collector_detail::StubImpl {};
 namespace ztrace_collector_detail {
 
 template <typename T>
-using Collection = std::deque<std::pair<gpr_cycle_counter, T>>;
+using Collection = std::deque<std::pair<gpr_cycle_counter, T> >;
 
 template <typename T>
 void AppendResults(const Collection<T>& data, Json::Array& results) {
@@ -159,7 +159,7 @@ class ZTraceCollector {
     void Append(std::pair<gpr_cycle_counter, T> value) {
       memory_used_ += value.second.MemoryUsage();
       while (memory_used_ > memory_cap_) RemoveMostRecent();
-      std::get<Collection<T>>(data).push_back(std::move(value));
+      std::get<Collection<T> >(data).push_back(std::move(value));
     }
     void RemoveMostRecent() {
       RemoveMostRecentState state;
@@ -169,12 +169,12 @@ class ZTraceCollector {
     }
     template <typename T>
     void UpdateRemoveMostRecentState(RemoveMostRecentState* state) {
-      auto& collection = std::get<Collection<T>>(data);
+      auto& collection = std::get<Collection<T> >(data);
       if (collection.empty()) return;
       if (state->enact == nullptr ||
           collection.front().first > state->most_recent) {
         state->enact = +[](Instance* instance) {
-          auto& collection = std::get<Collection<T>>(instance->data);
+          auto& collection = std::get<Collection<T> >(instance->data);
           const size_t ent_usage = collection.front().second.MemoryUsage();
           CHECK_GE(instance->memory_used_, ent_usage);
           instance->memory_used_ -= ent_usage;
@@ -189,7 +189,7 @@ class ZTraceCollector {
                          memory_used = memory_used_]() mutable {
         Json::Array entries;
         (ztrace_collector_detail::AppendResults(
-             std::get<Collection<Data>>(data), entries),
+             std::get<Collection<Data> >(data), entries),
          ...);
         Json::Object result;
         result["entries"] = Json::FromArray(entries);
@@ -211,7 +211,7 @@ class ZTraceCollector {
   };
   struct Impl : public RefCounted<Impl> {
     Mutex mu;
-    absl::flat_hash_set<RefCountedPtr<Instance>> instances ABSL_GUARDED_BY(mu);
+    absl::flat_hash_set<RefCountedPtr<Instance> > instances ABSL_GUARDED_BY(mu);
   };
   class ZTraceImpl final : public ZTrace {
    public:
@@ -276,7 +276,7 @@ class ZTraceCollector {
           }
         } break;
         default: {
-          std::vector<RefCountedPtr<Instance>> finished;
+          std::vector<RefCountedPtr<Instance> > finished;
           for (auto& instance : impl->instances) {
             const bool finishes = instance->config.Finishes(value.second);
             instance->Append(value);
