@@ -87,8 +87,12 @@ void AddCApis(nlohmann::json& config) {
 auto MakePhpConfig(const nlohmann::json& config,
                    std::initializer_list<std::string> remove_libs) {
   std::set<std::string> srcs;
+  std::set<std::string> headers;
   for (const auto& src : config["php_config_m4"]["src"]) {
     srcs.insert(src);
+  }
+  for (const auto& hdr : config["php_config_m4"]["headers"]) {
+    headers.insert(hdr);
   }
   std::map<std::string, const nlohmann::json*> lib_maps;
   for (const auto& lib : config["libs"]) {
@@ -114,19 +118,27 @@ auto MakePhpConfig(const nlohmann::json& config,
       const nlohmann::json* lib = it->second;
       std::vector<std::string> src = (*lib)["src"];
       srcs.insert(src.begin(), src.end());
+      std::vector<std::string> hdr = (*lib)["headers"];
+      headers.insert(hdr.begin(), hdr.end());
+      if (lib->count("public_headers") > 0) {
+        std::vector<std::string> pubhdr = (*lib)["public_headers"];
+        headers.insert(pubhdr.begin(), pubhdr.end());
+      }
     }
   }
   std::set<std::string> dirs;
   for (const auto& src : srcs) {
     dirs.insert(src.substr(0, src.rfind('/')));
   }
-  return std::pair(std::move(srcs), std::move(dirs));
+  return std::tuple(std::move(headers), std::move(srcs), std::move(dirs));
 }
 
 void AddPhpConfig(nlohmann::json& config) {
-  auto [srcs, dirs] = MakePhpConfig(config, {"z", "cares", "@zlib//:zlib"});
-  auto [w32_srcs, w32_dirs] = MakePhpConfig(config, {"cares"});
+  auto [hdrs, srcs, dirs] =
+      MakePhpConfig(config, {"z", "cares", "@zlib//:zlib"});
+  auto [w32_hdrs, w32_srcs, w32_dirs] = MakePhpConfig(config, {"cares"});
 
+  config["php_config_m4"]["hdrs"] = hdrs;
   config["php_config_m4"]["srcs"] = srcs;
   config["php_config_m4"]["dirs"] = dirs;
 
