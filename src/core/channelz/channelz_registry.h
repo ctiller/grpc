@@ -168,7 +168,7 @@ class ChannelzRegistry final {
       BaseNode* numbered ABSL_GUARDED_BY(mu) = nullptr;
     };
 
-    static size_t NodeShardIndex(BaseNode* node) ;
+    static size_t NodeShardIndex(BaseNode* node);
     static void AddNodeToHead(BaseNode* node, BaseNode*& head);
     static void RemoveNodeFromHead(BaseNode* node, BaseNode*& head);
     void NumberNurseryNodes() ABSL_EXCLUSIVE_LOCKS_REQUIRED(index_mu_);
