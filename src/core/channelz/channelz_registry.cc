@@ -237,7 +237,8 @@ void ChannelzRegistry::ShardedNodeMap::RemoveNodeFromHead(BaseNode* node,
   }
 }
 
-bool ChannelzRegistry::ShardedNodeMap::NumberNurseryNodes(size_t nursery_index) {
+bool ChannelzRegistry::ShardedNodeMap::NumberNurseryNodes(
+    size_t nursery_index) {
   static constexpr size_t kBatchSize = 64;
   BaseNodeList& node_shard = node_list_[nursery_index];
   MutexLock lock(&node_shard.mu);
