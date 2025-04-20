@@ -236,7 +236,8 @@ void ChannelzRegistry::ShardedNodeMap::RemoveNodeFromHead(BaseNode* node,
   }
 }
 
-void ChannelzRegistry::ShardedNodeMap::NumberNurseryNodes(size_t nursery_index) {
+void ChannelzRegistry::ShardedNodeMap::NumberNurseryNodes(
+    size_t nursery_index) {
   BaseNodeList& node_shard = node_list_[nursery_index];
   MutexLock lock(&node_shard.mu);
   BaseNode* nursery = std::exchange(node_shard.nursery, nullptr);
