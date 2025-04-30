@@ -64,4 +64,4 @@ auto SecureEndpointTransportClientChannelFactory() {
 
 }  // namespace grpc_core
 
-#endif
+#endif  // GRPC_SRC_CORE_TRANSPORT_SECURE_ENDPOINT_TRANSPORT_H
