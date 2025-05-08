@@ -1063,7 +1063,6 @@ RefCountedPtr<channelz::ServerNode> CreateChannelzNode(
     channelz_node->AddTraceEvent(
         channelz::ChannelTrace::Severity::Info,
         grpc_slice_from_static_string("Server created"));
-    channelz_node->SetChannelArgs(args);
   }
   return channelz_node;
 }
