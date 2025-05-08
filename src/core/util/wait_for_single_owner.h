@@ -18,6 +18,7 @@
 #include <memory>
 
 #include "absl/log/log.h"
+#include "src/core/channelz/channelz_registry.h"
 #include "src/core/util/crash.h"
 #include "src/core/util/time.h"
 
@@ -40,18 +41,28 @@ void WaitForSingleOwner(std::shared_ptr<T> obj) {
 // Usage: WaitForSingleOwnerWithTimeout(std::move(obj), Duration::Seconds(30));
 template <typename T>
 void WaitForSingleOwnerWithTimeout(std::shared_ptr<T> obj, Duration timeout) {
-  auto start = Timestamp::Now();
+  absl::Duration absl_timeout = absl::Milliseconds(timeout.millis());
+  auto start = absl::Now();
+  bool printed_channelz = false;
   while (obj.use_count() > 1) {
-    auto elapsed = Timestamp::Now() - start;
-    auto remaining = timeout - elapsed;
-    if (remaining < Duration::Zero()) {
+    auto elapsed = absl::Now() - start;
+    auto remaining = absl_timeout - elapsed;
+    if (remaining < absl::ZeroDuration()) {
       Crash("Timed out waiting for a single shared_ptr owner");
     }
     // To avoid log spam, wait a few seconds to begin logging the wait time.
-    if (elapsed >= Duration::Seconds(2)) {
+    if (elapsed >= absl::Seconds(2)) {
       LOG_EVERY_N_SEC(INFO, 2)
-          << "obj.use_count() = " << obj.use_count() << " timeout_remaining = "
-          << absl::FormatDuration(absl::Milliseconds(remaining.millis()));
+          << "obj.use_count() = " << obj.use_count()
+          << " timeout_remaining = " << absl::FormatDuration(remaining);
+    }
+    if (elapsed > absl::Seconds(10) && !printed_channelz) {
+      printed_channelz = true;
+      for (const auto& node : channelz::ChannelzRegistry::GetAllEntities()) {
+        LOG(INFO) << "  🔴 [" << node->uuid() << " " << node.get() << ":"
+                  << channelz::BaseNode::EntityTypeString(node->type())
+                  << "]: " << node->RenderJsonString();
+      }
     }
     absl::SleepFor(absl::Milliseconds(100));
   }
