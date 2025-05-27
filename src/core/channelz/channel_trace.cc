@@ -51,7 +51,7 @@ Json ChannelTrace::RenderJson() const {
             {"severity", Json::FromString("CT_INFO")},
             {"timestamp", Json::FromString(gpr_format_timespec(timestamp))},
             {"description",
-             Json::FromString(absl::StrCat(std::string(' ', indent), line))},
+             Json::FromString(absl::StrCat(std::string(indent, ' '), line))},
         };
         array.push_back(Json::FromObject(std::move(object)));
       },

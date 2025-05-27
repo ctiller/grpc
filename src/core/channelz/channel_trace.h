@@ -203,7 +203,7 @@ class ChannelTrace {
         [callback](gpr_timespec timestamp, int indent, absl::string_view line) {
           CHECK_GE(indent, 0);
           callback(timestamp, Severity::Info,
-                   absl::StrCat(std::string(' ', indent), line), nullptr);
+                   absl::StrCat(std::string(indent, ' '), line), nullptr);
         },
         -1);
   }
