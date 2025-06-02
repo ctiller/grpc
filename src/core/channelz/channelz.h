@@ -38,7 +38,9 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/container/inlined_vector.h"
 #include "absl/strings/string_view.h"
+#include "google/protobuf/any.upb.h"
 #include "src/core/channelz/channel_trace.h"
+#include "src/core/channelz/property_list.h"
 #include "src/core/lib/channel/channel_args.h"
 #include "src/core/util/dual_ref_counted.h"
 #include "src/core/util/json/json.h"
@@ -50,6 +52,7 @@
 #include "src/core/util/time.h"
 #include "src/core/util/time_precise.h"
 #include "src/core/util/useful.h"
+#include "src/proto/grpc/channelz/v2/channelz.upb.h"
 
 // Channel arg key for channelz node.
 #define GRPC_ARG_CHANNELZ_CHANNEL_NODE \
@@ -173,6 +176,8 @@ class BaseNode : public DualRefCounted<BaseNode> {
                  absl::AnyInvocable<void(Json output)> callback);
   Json::Object AdditionalInfo();
 
+  grpc_channelz_v2_Entity* MakeChannelzEntity(upb_Arena* arena);
+
  protected:
   void PopulateJsonFromDataSources(Json::Object& json);
 
@@ -188,7 +193,7 @@ class BaseNode : public DualRefCounted<BaseNode> {
   intptr_t UuidSlow();
 
   const EntityType type_;
-  uint64_t orphaned_index_ = 0;  // updated by registry
+  std::atomic<uint64_t> orphaned_index_ = 0;  // updated by registry
   std::atomic<intptr_t> uuid_;
   std::string name_;
   Mutex data_sources_mu_;
@@ -215,18 +220,32 @@ class ZTrace {
 // We form a shared_ptr<> around this class during collection.
 // In DataSink we use a weak_ptr<> to allow rapid resource reclamation once
 // the collection is complete (or has timed out).
-class DataSinkImplementation {
+class DataSinkImplementation final {
  public:
-  void AddAdditionalInfo(absl::string_view name, Json::Object additional_info);
-  void AddChildObjects(std::vector<RefCountedPtr<BaseNode>> child_objects);
-  Json::Object Finalize(bool timed_out);
+  DataSinkImplementation(grpc_channelz_v2_Entity* entity, upb_Arena* arena,
+                         absl::AnyInvocable<void()> on_destroyed)
+      : entity_(entity),
+        arena_(arena),
+        on_destroyed_(std::move(on_destroyed)) {}
+  ~DataSinkImplementation() { on_destroyed_(); }
+
+  grpc_channelz_v2_Entity* Finalize(bool timed_out);
+
+  void AddData(absl::string_view type_url, const upb_Message* object,
+               const upb_MiniTable* object_minitable);
+
+  void AddComponent(absl::string_view name,
+                    absl::FunctionRef<void(PropertyList&)> fill_fn);
 
  private:
-  void MergeChildObjectsIntoAdditionalInfo() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_);
+  void AddDataLocked(absl::string_view type_url, const upb_Message* object,
+                     const upb_MiniTable* object_minitable)
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_);
 
   Mutex mu_;
-  std::map<std::string, Json::Object> additional_info_ ABSL_GUARDED_BY(mu_);
-  std::vector<RefCountedPtr<BaseNode>> child_objects_ ABSL_GUARDED_BY(mu_);
+  grpc_channelz_v2_Entity* entity_ ABSL_GUARDED_BY(mu_);
+  upb_Arena* const arena_;
+  absl::AnyInvocable<void()> on_destroyed_;
 };
 
 // Wrapper around absl::AnyInvocable<void()> that is used to notify when the
@@ -249,15 +268,22 @@ class DataSink {
            std::shared_ptr<DataSinkCompletionNotification> notification)
       : impl_(impl), notification_(std::move(notification)) {}
 
-  void AddAdditionalInfo(absl::string_view name, Json::Object additional_info) {
+  void AddData(absl::string_view type_url, const upb_Message* object,
+               const upb_MiniTable* object_minitable) {
     auto impl = impl_.lock();
-    if (impl == nullptr) return;
-    impl->AddAdditionalInfo(name, std::move(additional_info));
+    if (!impl) {
+      return;
+    }
+    impl->AddData(type_url, object, object_minitable);
   }
-  void AddChildObjects(std::vector<RefCountedPtr<BaseNode>> children) {
+
+  void AddComponent(absl::string_view name,
+                    absl::FunctionRef<void(PropertyList&)> fill_fn) {
     auto impl = impl_.lock();
-    if (impl == nullptr) return;
-    impl->AddChildObjects(std::move(children));
+    if (!impl) {
+      return;
+    }
+    impl->AddComponent(name, fill_fn);
   }
 
  private:

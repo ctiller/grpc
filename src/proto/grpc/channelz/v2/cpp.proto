@@ -1,0 +1,54 @@
+// Copyright 2025 gRPC authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package grpc.channelz.v2;
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
+import "google/protobuf/struct.proto";
+
+message QueryTimedOut {}
+
+message PropertyList {
+  map<string, PropertyValue> values = 2;
+}
+
+message PropertyTable {
+  message Row {
+    string label = 1;
+    repeated PropertyValue values = 2;
+  }
+  repeated string columns = 1;
+  repeated Row rows = 2;
+}
+
+message ComponentProperties {
+  string name = 1;
+  PropertyList properties = 2;
+}
+
+message PropertyValue {
+  oneof type {
+    google.protobuf.Any any = 1;
+    uint64 unsigned_int = 2;
+    int64 signed_int = 3;
+    double number = 4;
+    string string = 5;
+    google.protobuf.Duration duration = 6;
+    google.protobuf.Timestamp timestamp = 7;
+    bool boolean = 8;
+  }
+}

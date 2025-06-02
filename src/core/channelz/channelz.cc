@@ -35,6 +35,7 @@
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/strip.h"
+#include "google/protobuf/any.upb.h"
 #include "src/core/channelz/channelz_registry.h"
 #include "src/core/lib/address_utils/parse_address.h"
 #include "src/core/lib/address_utils/sockaddr_utils.h"
@@ -45,8 +46,11 @@
 #include "src/core/util/notification.h"
 #include "src/core/util/string.h"
 #include "src/core/util/time.h"
+#include "src/core/util/upb_utils.h"
 #include "src/core/util/uri.h"
 #include "src/core/util/useful.h"
+#include "src/proto/grpc/channelz/v2/channelz.upb.h"
+#include "src/proto/grpc/channelz/v2/cpp.upb.h"
 
 namespace grpc_core {
 namespace channelz {
@@ -55,67 +59,55 @@ namespace channelz {
 // DataSink
 //
 
-void DataSinkImplementation::AddAdditionalInfo(absl::string_view name,
-                                               Json::Object additional_info) {
+void DataSinkImplementation::AddData(absl::string_view type_url,
+                                     const upb_Message* object,
+                                     const upb_MiniTable* object_minitable) {
   MutexLock lock(&mu_);
-  additional_info_.emplace(std::string(name), std::move(additional_info));
+  AddDataLocked(type_url, object, object_minitable);
 }
 
-void DataSinkImplementation::AddChildObjects(
-    std::vector<RefCountedPtr<BaseNode>> child_objects) {
+void DataSinkImplementation::AddComponent(
+    absl::string_view name, absl::FunctionRef<void(PropertyList&)> fill_fn) {
   MutexLock lock(&mu_);
-  for (auto& node : child_objects) {
-    child_objects_.push_back(std::move(node));
+  PropertyList properties(arena_);
+  fill_fn(properties);
+  grpc_channelz_v2_ComponentProperties* component_properties =
+      grpc_channelz_v2_ComponentProperties_new(arena_);
+  grpc_channelz_v2_ComponentProperties_set_name(component_properties,
+                                                StdStringToUpbString(name));
+  grpc_channelz_v2_ComponentProperties_set_properties(component_properties,
+                                                      properties.upb());
+  AddDataLocked("type.googleapis.com/grpc.channelz.v2.ComponentProperties",
+                (upb_Message*)component_properties,
+                &grpc__channelz__v2__ComponentProperties_msg_init);
+}
+
+void DataSinkImplementation::AddDataLocked(
+    absl::string_view type_url, const upb_Message* object,
+    const upb_MiniTable* object_minitable) {
+  auto* any = grpc_channelz_v2_Entity_add_data(entity_, arena_);
+  google_protobuf_Any_set_type_url(any, StdStringToUpbString(type_url));
+  size_t serialized_len;
+  char* serialized_bytes;
+  if (kUpb_EncodeStatus_Ok != upb_Encode(object, object_minitable, 0, arena_,
+                                         &serialized_bytes, &serialized_len)) {
+    size_t data_count;
+    grpc_channelz_v2_Entity_data(entity_, &data_count);
+    grpc_channelz_v2_Entity_resize_data(entity_, data_count - 1, arena_);
+    return;
   }
+  google_protobuf_Any_set_value(
+      any, upb_StringView_FromDataAndSize(serialized_bytes, serialized_len));
 }
 
-Json::Object DataSinkImplementation::Finalize(bool timed_out) {
+grpc_channelz_v2_Entity* DataSinkImplementation::Finalize(bool timed_out) {
   if (timed_out) {
-    AddAdditionalInfo("channelzState", {{"timedOut", Json::FromBool(true)}});
+    AddData("type.googleapis.com/grpc.channelz.v2.QueryTimedOut",
+            (upb_Message*)grpc_channelz_v2_QueryTimedOut_new(arena_),
+            &grpc__channelz__v2__QueryTimedOut_msg_init);
   }
   MutexLock lock(&mu_);
-  MergeChildObjectsIntoAdditionalInfo();
-  Json::Object out;
-  for (auto& [name, additional_info] : additional_info_) {
-    out[name] = Json::FromObject(std::move(additional_info));
-  }
-  return out;
-}
-
-void DataSinkImplementation::MergeChildObjectsIntoAdditionalInfo() {
-  if (child_objects_.empty()) return;
-  Json::Object subobjects;
-  std::map<BaseNode::EntityType, std::set<int64_t>> child_objects_by_type;
-  for (auto& node : child_objects_) {
-    child_objects_by_type[node->type()].insert(node->uuid());
-  }
-  for (const auto& [type, child_objects] : child_objects_by_type) {
-    std::string key;
-    switch (type) {
-      case BaseNode::EntityType::kTopLevelChannel:
-      case BaseNode::EntityType::kSubchannel:
-      case BaseNode::EntityType::kListenSocket:
-      case BaseNode::EntityType::kServer:
-      case BaseNode::EntityType::kInternalChannel: {
-        LOG(ERROR) << "Nodes of type " << BaseNode::EntityTypeString(type)
-                   << " not supported for child object collection in DataSink";
-        continue;
-      }
-      case BaseNode::EntityType::kSocket:
-        key = "subSockets";
-        break;
-      case BaseNode::EntityType::kCall:
-        key = "calls";
-        break;
-    }
-    Json::Array uuids;
-    uuids.reserve(child_objects.size());
-    for (int64_t uuid : child_objects) {
-      uuids.push_back(Json::FromNumber(uuid));
-    }
-    subobjects[key] = Json::FromArray(std::move(uuids));
-  }
-  additional_info_.emplace("childObjects", std::move(subobjects));
+  return entity_;
 }
 
 //
@@ -141,22 +133,6 @@ void BaseNode::PopulateJsonFromDataSources(Json::Object& json) {
   auto info = AdditionalInfo();
   if (info.empty()) return;
   json["additionalInfo"] = Json::FromObject(std::move(info));
-}
-
-Json::Object BaseNode::AdditionalInfo() {
-  auto done = std::make_shared<Notification>();
-  auto sink_impl = std::make_shared<DataSinkImplementation>();
-  {
-    MutexLock lock(&data_sources_mu_);
-    auto done_notifier = std::make_shared<DataSinkCompletionNotification>(
-        [done]() { done->Notify(); });
-    for (DataSource* data_source : data_sources_) {
-      data_source->AddData(DataSink(sink_impl, done_notifier));
-    }
-  }
-  bool completed =
-      done->WaitForNotificationWithTimeout(absl::Milliseconds(100));
-  return sink_impl->Finalize(!completed);
 }
 
 void BaseNode::RunZTrace(
@@ -196,6 +172,39 @@ void BaseNode::RunZTrace(
     return;
   }
   ztrace->Run(deadline, std::move(args), event_engine, std::move(callback));
+}
+
+grpc_channelz_v2_Entity* BaseNode::MakeChannelzEntity(upb_Arena* arena) {
+  grpc_channelz_v2_Entity* entity = grpc_channelz_v2_Entity_new(arena);
+  grpc_channelz_v2_Entity_set_id(entity, uuid());
+  grpc_channelz_v2_Entity_set_kind(
+      entity, StdStringToUpbString(EntityTypeString(type())));
+  {
+    MutexLock lock(&parent_mu_);
+    grpc_channelz_v2_Entity_resize_parents(entity, parents_.size(), arena);
+    auto* out = grpc_channelz_v2_Entity_mutable_parents(entity, nullptr);
+    for (const auto& parent : parents_) ++*out = parent->uuid();
+  }
+  grpc_channelz_v2_Entity_set_orphaned(
+      entity, orphaned_index_.load(std::memory_order_relaxed) != 0);
+  auto done = std::make_shared<Notification>();
+  Notification destroyed;
+  auto sink_impl = std::make_shared<DataSinkImplementation>(
+      entity, arena, [&destroyed]() { destroyed.Notify(); });
+  {
+    MutexLock lock(&data_sources_mu_);
+    auto done_notifier = std::make_shared<DataSinkCompletionNotification>(
+        [done]() { done->Notify(); });
+    for (DataSource* data_source : data_sources_) {
+      data_source->AddData(DataSink(sink_impl, done_notifier));
+    }
+  }
+  bool completed =
+      done->WaitForNotificationWithTimeout(absl::Milliseconds(100));
+  sink_impl->Finalize(!completed);
+  sink_impl.reset();
+  destroyed.WaitForNotification();
+  return entity;
 }
 
 //

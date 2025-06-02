@@ -141,7 +141,7 @@ void ChannelzRegistry::InternalUnregister(BaseNode* node) {
   const size_t node_shard_index = NodeShardIndex(node);
   NodeShard& node_shard = node_shards_[node_shard_index];
   node_shard.mu.Lock();
-  CHECK_EQ(node->orphaned_index_, 0u);
+  CHECK_EQ(node->orphaned_index_.load(std::memory_order_relaxed), 0u);
   intptr_t uuid = node->uuid_.load(std::memory_order_relaxed);
   NodeList& remove_list = uuid == -1 ? node_shard.nursery : node_shard.numbered;
   remove_list.Remove(node);
@@ -160,8 +160,9 @@ void ChannelzRegistry::InternalUnregister(BaseNode* node) {
   // Ref counting: once a node becomes orphaned we add a single weak ref to it.
   // We hold that ref until it gets garbage collected later.
   node->WeakRef().release();
-  node->orphaned_index_ = node_shard.next_orphan_index;
-  CHECK_GT(node->orphaned_index_, 0u);
+  node->orphaned_index_.store(node_shard.next_orphan_index,
+                              std::memory_order_relaxed);
+  CHECK_GT(node->orphaned_index_.load(std::memory_order_relaxed), 0u);
   ++node_shard.next_orphan_index;
   add_list.AddToHead(node);
   if (node_shard.TotalOrphaned() <= max_orphaned_per_shard_) {
@@ -177,14 +178,16 @@ void ChannelzRegistry::InternalUnregister(BaseNode* node) {
     gc_list = &node_shard.orphaned_numbered;
   } else if (node_shard.orphaned_numbered.tail == nullptr) {
     gc_list = &node_shard.orphaned;
-  } else if (node_shard.orphaned.tail->orphaned_index_ <
-             node_shard.orphaned_numbered.tail->orphaned_index_) {
+  } else if (node_shard.orphaned.tail->orphaned_index_.load(
+                 std::memory_order_relaxed) <
+             node_shard.orphaned_numbered.tail->orphaned_index_.load(
+                 std::memory_order_relaxed)) {
     gc_list = &node_shard.orphaned;
   } else {
     gc_list = &node_shard.orphaned_numbered;
   }
   auto* n = gc_list->tail;
-  CHECK_GT(n->orphaned_index_, 0u);
+  CHECK_GT(n->orphaned_index_.load(std::memory_order_relaxed), 0u);
   gc_list->Remove(n);
   // Note: we capture the reference to n previously added here, and release
   // it when this smart pointer is destroyed, outside of any locks.
@@ -298,7 +301,7 @@ intptr_t ChannelzRegistry::InternalNumberNode(BaseNode* node) {
   uuid = uuid_generator_;
   ++uuid_generator_;
   node->uuid_ = uuid;
-  if (node->orphaned_index_ > 0) {
+  if (node->orphaned_index_.load(std::memory_order_relaxed) > 0) {
     node_shard.orphaned.Remove(node);
     node_shard.orphaned_numbered.AddToHead(node);
   } else {

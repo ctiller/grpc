@@ -590,72 +590,49 @@ void grpc_chttp2_transport::ChannelzDataSource::AddData(
         grpc_core::NewClosure([t, sink = std::move(sink)](
                                   grpc_error_handle) mutable {
           Json::Object http2_info;
-          http2_info["flowControl"] =
-              Json::FromObject(t->flow_control.stats().ToJsonObject());
-          Json::Object misc;
-          misc["maxRequestsPerRead"] =
-              Json::FromNumber(static_cast<int64_t>(t->max_requests_per_read));
-          misc["nextStreamId"] = Json::FromNumber(t->next_stream_id);
-          misc["lastNewStreamId"] = Json::FromNumber(t->last_new_stream_id);
-          misc["numIncomingStreamsBeforeSettingsAck"] =
-              Json::FromNumber(t->num_incoming_streams_before_settings_ack);
-          misc["pingAckCount"] =
-              Json::FromNumber(static_cast<int64_t>(t->ping_ack_count));
-          misc["allowTarpit"] = Json::FromBool(t->allow_tarpit);
-          if (t->allow_tarpit) {
-            misc["minTarpitDurationMs"] =
-                Json::FromNumber(t->min_tarpit_duration_ms);
-            misc["maxTarpitDurationMs"] =
-                Json::FromNumber(t->max_tarpit_duration_ms);
-          }
-          misc["keepaliveTime"] =
-              Json::FromString(t->keepalive_time.ToJsonString());
-          misc["nextAdjustedKeepaliveTimestamp"] =
-              Json::FromString((t->next_adjusted_keepalive_timestamp -
-                                grpc_core::Timestamp::Now())
-                                   .ToJsonString());
-          misc["numMessagesInNextWrite"] =
-              Json::FromNumber(t->num_messages_in_next_write);
-          misc["numPendingInducedFrames"] =
-              Json::FromNumber(t->num_pending_induced_frames);
-          misc["writeBufferSize"] = Json::FromNumber(t->write_buffer_size);
-          misc["readingPausedOnPendingInducedFrames"] =
-              Json::FromBool(t->reading_paused_on_pending_induced_frames);
-          misc["enablePreferredRxCryptoFrameAdvertisement"] =
-              Json::FromBool(t->enable_preferred_rx_crypto_frame_advertisement);
-          misc["keepalivePermitWithoutCalls"] =
-              Json::FromBool(t->keepalive_permit_without_calls);
-          misc["bdpPingBlocked"] = Json::FromBool(t->bdp_ping_blocked);
-          misc["bdpPingStarted"] = Json::FromBool(t->bdp_ping_started);
-          misc["ackPings"] = Json::FromBool(t->ack_pings);
-          misc["keepaliveIncomingDataWanted"] =
-              Json::FromBool(t->keepalive_incoming_data_wanted);
-          misc["maxConcurrentStreamsOverloadProtection"] =
-              Json::FromBool(t->max_concurrent_streams_overload_protection);
-          misc["maxConcurrentStreamsRejectOnClient"] =
-              Json::FromBool(t->max_concurrent_streams_reject_on_client);
-          misc["pingOnRstStreamPercent"] =
-              Json::FromNumber(t->ping_on_rst_stream_percent);
-          misc["lastWindowUpdateAge"] = Json::FromString(
-              (grpc_core::Timestamp::Now() - t->last_window_update_time)
-                  .ToJsonString());
-          http2_info["misc"] = Json::FromObject(std::move(misc));
-          http2_info["settings"] = Json::FromObject(t->settings.ToJsonObject());
-          sink.AddAdditionalInfo("http2", std::move(http2_info));
-          std::vector<grpc_core::RefCountedPtr<grpc_core::channelz::BaseNode>>
-              children;
-          children.reserve(t->stream_map.size());
-          for (auto [id, stream] : t->stream_map) {
-            if (stream->channelz_call_node == nullptr) {
-              stream->channelz_call_node =
-                  grpc_core::MakeRefCounted<grpc_core::channelz::CallNode>(
-                      absl::StrCat("chttp2 ",
-                                   t->is_client ? "client" : "server",
-                                   " stream ", stream->id));
-            }
-            children.push_back(stream->channelz_call_node);
-          }
-          sink.AddChildObjects(std::move(children));
+          t->flow_control.stats().AddComponentTo(sink);
+          sink.AddComponent(
+              "chttp2", [t](grpc_core::channelz::PropertyList& p) {
+                p.Add("max_requests_per_read", t->max_requests_per_read);
+                p.Add("next_stream_id", t->next_stream_id);
+                p.Add("last_new_stream_id", t->last_new_stream_id);
+                p.Add("num_incoming_streams_before_settings_ack",
+                      t->num_incoming_streams_before_settings_ack);
+                p.Add("ping_ack_count", t->ping_ack_count);
+                p.Add("allow_tarpit", t->allow_tarpit);
+                if (t->allow_tarpit) {
+                  p.Add("min_tarpit_duration_ms", t->min_tarpit_duration_ms);
+                  p.Add("max_tarpit_duration_ms", t->max_tarpit_duration_ms);
+                }
+                p.Add("keepalive_time", t->keepalive_time);
+                p.Add("next_adjusted_keepalive_timestamp",
+                      t->next_adjusted_keepalive_timestamp);
+                p.Add("num_messages_in_next_write",
+                      t->num_messages_in_next_write);
+                p.Add("num_pending_induced_frames",
+                      t->num_pending_induced_frames);
+                p.Add("write_buffer_size", t->write_buffer_size);
+                p.Add("reading_paused_on_pending_induced_frames",
+                      t->reading_paused_on_pending_induced_frames);
+                p.Add("enable_preferred_rx_crypto_frame_advertisement",
+                      t->enable_preferred_rx_crypto_frame_advertisement);
+                p.Add("keepalive_permit_without_calls",
+                      t->keepalive_permit_without_calls);
+                p.Add("bdp_ping_blocked", t->bdp_ping_blocked);
+                p.Add("bdp_ping_started", t->bdp_ping_started);
+                p.Add("ack_pings", t->ack_pings);
+                p.Add("keepalive_incoming_data_wanted",
+                      t->keepalive_incoming_data_wanted);
+                p.Add("max_concurrent_streams_overload_protection",
+                      t->max_concurrent_streams_overload_protection);
+                p.Add("max_concurrent_streams_reject_on_client",
+                      t->max_concurrent_streams_reject_on_client);
+                p.Add("ping_on_rst_stream_percent",
+                      t->ping_on_rst_stream_percent);
+                p.Add("last_window_update", t->last_window_update_time);
+                auto settings_table = p.AddTable("settings");
+                t->settings.FillTable(settings_table);
+              });
         }),
         absl::OkStatus());
   });

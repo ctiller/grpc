@@ -91,18 +91,17 @@ class ChannelCompression {
       bool is_client, MessageHandle message, DecompressArgs args,
       CallTracerInterface* call_tracer) const;
 
-  Json::Object ToJsonObject() const {
-    Json::Object object;
+  void FillProperties(channelz::PropertyList& properties) {
     if (max_recv_size_.has_value()) {
-      object["maxRecvSize"] = Json::FromNumber(*max_recv_size_);
+      properties.Add("max_recv_size", *max_recv_size_);
     }
-    object["defaultCompressionAlgorithm"] = Json::FromString(
+    properties.Add(
+        "default_compression_algorithm",
         CompressionAlgorithmAsString(default_compression_algorithm_));
-    object["enabledCompressionAlgorithms"] = Json::FromString(
-        std::string(enabled_compression_algorithms_.ToString()));
-    object["enableCompression"] = Json::FromBool(enable_compression_);
-    object["enableDecompression"] = Json::FromBool(enable_decompression_);
-    return object;
+    properties.Add("enabled_compression_algorithms",
+                   std::string(enabled_compression_algorithms_.ToString()));
+    properties.Add("enable_compression", enable_compression_);
+    properties.Add("enable_decompression", enable_decompression_);
   }
 
  private:
@@ -136,8 +135,10 @@ class ClientCompressionFilter final
   ~ClientCompressionFilter() override { ResetDataSource(); }
 
   void AddData(channelz::DataSink sink) override {
-    sink.AddAdditionalInfo("clientCompressionFilter",
-                           compression_engine_.ToJsonObject());
+    sink.AddComponent("client_compression_filter",
+                      [this](channelz::PropertyList& properties) {
+                        compression_engine_.FillProperties(properties);
+                      });
   }
 
   // Construct a promise for one call.
@@ -186,8 +187,10 @@ class ServerCompressionFilter final
   ~ServerCompressionFilter() override { ResetDataSource(); }
 
   void AddData(channelz::DataSink sink) override {
-    sink.AddAdditionalInfo("serverCompressionFilter",
-                           compression_engine_.ToJsonObject());
+    sink.AddComponent("server_compression_filter",
+                      [this](channelz::PropertyList& p) {
+                        compression_engine_.FillProperties(p);
+                      });
   }
 
   // Construct a promise for one call.

@@ -307,23 +307,23 @@ class TransportFlowControl final {
     double bdp_bw_est;
 
     std::string ToString() const;
-    Json::Object ToJsonObject() {
-      Json::Object object;
-      object["targetWindow"] = Json::FromNumber(target_window);
-      object["targetFrameSize"] = Json::FromNumber(target_frame_size);
-      object["targetPreferredRxCryptoFrameSize"] =
-          Json::FromNumber(target_preferred_rx_crypto_frame_size);
-      object["ackedInitWindow"] = Json::FromNumber(acked_init_window);
-      object["queuedInitWindow"] = Json::FromNumber(queued_init_window);
-      object["sentInitWindow"] = Json::FromNumber(sent_init_window);
-      object["remoteWindow"] = Json::FromNumber(remote_window);
-      object["announcedWindow"] = Json::FromNumber(announced_window);
-      object["announcedStreamTotalOverIncomingWindow"] =
-          Json::FromNumber(announced_stream_total_over_incoming_window);
-      object["bdpAccumulator"] = Json::FromNumber(bdp_accumulator);
-      object["bdpEstimate"] = Json::FromNumber(bdp_estimate);
-      object["bdpBwEst"] = Json::FromNumber(bdp_bw_est);
-      return object;
+    void AddComponentTo(channelz::DataSink sink) {
+      sink.AddComponent("flow_control", [this](channelz::PropertyList& p) {
+        p.Add("target_window", target_window);
+        p.Add("target_frame_size", target_frame_size);
+        p.Add("target_preferred_rx_crypto_frame_size",
+              target_preferred_rx_crypto_frame_size);
+        p.Add("acked_init_window", acked_init_window);
+        p.Add("queued_init_window", queued_init_window);
+        p.Add("sent_init_window", sent_init_window);
+        p.Add("remote_window", remote_window);
+        p.Add("announced_window", announced_window);
+        p.Add("announced_stream_total_over_incoming_window",
+              announced_stream_total_over_incoming_window);
+        p.Add("bdp_accumulator", bdp_accumulator);
+        p.Add("bdp_estimate", bdp_estimate);
+        p.Add("bdp_bw_est", bdp_bw_est);
+      });
     }
   };
 
