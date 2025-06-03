@@ -108,7 +108,9 @@ class Seq {
     return state_.PollOnce();
   }
 
-  Json ToJson() const { return state_.ToJson("Seq"); }
+  void ToProto(grpc_channelz_v2_Promise* proto, upb_Arena* arena) const {
+    state_.ToProto("Seq", proto, arena);
+  }
 
  private:
   SeqState<SeqTraits, P, Fs...> state_;

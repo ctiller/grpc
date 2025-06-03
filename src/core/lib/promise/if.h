@@ -26,6 +26,7 @@
 #include "src/core/lib/promise/detail/promise_like.h"
 #include "src/core/lib/promise/poll.h"
 #include "src/core/util/construct_destruct.h"
+#include "src/proto/grpc/channelz/v2/cpp.upb.h"
 
 namespace grpc_core {
 
@@ -219,17 +220,22 @@ class If<bool, T, F> {
     }
   }
 
-  Json ToJson() const {
-    Json::Object json;
-    json["condition"] = Json::FromBool(condition_);
-    json["true"] = Json::FromString(std::string(TypeName<TruePromise>()));
-    json["false"] = Json::FromString(std::string(TypeName<FalsePromise>()));
+  void ToProto(grpc_channelz_v2_Promise* proto, upb_Arena* arena) const {
+    grpc_channelz_v2_Promise_If* if_promise =
+        grpc_channelz_v2_Promise_If_new(arena);
+    grpc_channelz_v2_Promise_If_set_condition(if_promise, condition_);
+    grpc_channelz_v2_Promise_If_set_true_factory(
+        if_promise, StdStringToUpbString(TypeName<TrueFactory>()));
+    grpc_channelz_v2_Promise_If_set_false_factory(
+        if_promise, StdStringToUpbString(TypeName<FalseFactory>()));
     if (condition_) {
-      json["promise"] = if_true_.ToJson();
+      grpc_channelz_v2_Promise_If_set_promise(if_promise,
+                                              PromiseAsProto(if_true_, arena));
     } else {
-      json["promise"] = if_false_.ToJson();
+      grpc_channelz_v2_Promise_If_set_promise(if_promise,
+                                              PromiseAsProto(if_false_, arena));
     }
-    return Json::FromObject(std::move(json));
+    grpc_channelz_v2_Promise_set_if_promise(proto, if_promise);
   }
 
  private:

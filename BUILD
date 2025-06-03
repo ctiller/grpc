@@ -1284,7 +1284,11 @@ grpc_cc_library(
         "//src/core:sync",
         "//src/core:time",
         "//src/core:time_precise",
+        "//src/core:upb_utils",
         "//src/core:useful",
+        "//src/core:channelz_v2_upb",
+        "//src/core:channelz_v2_cpp_upb",
+        "//src/core:protobuf_any_upb",
     ],
 )
 

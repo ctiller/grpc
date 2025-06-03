@@ -18,7 +18,6 @@ package grpc.channelz.v2;
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/any.proto";
-import "google/protobuf/struct.proto";
 
 message QueryTimedOut {}
 
@@ -41,6 +40,10 @@ message ComponentProperties {
 }
 
 message PropertyValue {
+  message Array {
+    repeated PropertyValue values = 1;
+  }
+
   oneof type {
     google.protobuf.Any any = 1;
     uint64 unsigned_int = 2;
@@ -50,5 +53,49 @@ message PropertyValue {
     google.protobuf.Duration duration = 6;
     google.protobuf.Timestamp timestamp = 7;
     bool boolean = 8;
+    Array array = 9;
+    PropertyList property_list = 10;
+  }
+}
+
+message Promise {
+  message If {
+    bool condition = 1;
+    string true_factory = 2;
+    string false_factory = 3;
+    Promise promise = 4;
+  }
+
+  message Loop {
+    string factory = 1;
+    Promise promise = 2;
+  }
+
+  message Map {
+    Promise promise = 1;
+    string map_fn = 2;
+  }
+
+  message Race {
+    repeated Promise promises = 1;
+  }
+
+  message SeqStep {
+    string type = 1;
+    Promise polling_promise = 2;
+  }
+
+  message Seq {
+    string kind = 1;
+    repeated SeqStep steps = 2;
+  }
+  
+  oneof type {
+    string unknown = 1;
+    If if_promise = 2;
+    Loop loop_promise = 3;
+    Map map_promise = 4;
+    Race race_promise = 5;
+    Seq seq_promise = 6;
   }
 }

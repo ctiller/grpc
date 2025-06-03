@@ -156,11 +156,12 @@ class Map {
     return Pending();
   }
 
-  Json ToJson() const {
-    Json::Object obj;
-    obj["promise"] = PromiseAsJson(promise_);
-    obj["map_fn"] = Json::FromString(std::string(TypeName<Fn>()));
-    return Json::FromObject(std::move(obj));
+  void ToProto(grpc_channelz_v2_Promise* proto, upb_Arena* arena) const {
+    grpc_channelz_v2_Promise_Map* map = grpc_channelz_v2_Promise_Map_new(arena);
+    grpc_channelz_v2_Promise_Map_set_promise(map, PromiseAsProto(map, arena));
+    grpc_channelz_v2_Promise_Map_set_map_fn(
+        map, StdStringToUpbString(TypeName<Fn>()));
+    grpc_channelz_v2_Promise_set_map_promise(proto, map);
   }
 
  private:
@@ -202,11 +203,12 @@ class Map<Map<Promise, Fn0>, Fn1> {
     return Pending();
   }
 
-  Json ToJson() const {
-    Json::Object obj;
-    obj["promise"] = PromiseAsJson(promise_);
-    obj["map_fn"] = Json::FromString(std::string(TypeName<FusedFn>()));
-    return Json::FromObject(std::move(obj));
+  void ToProto(grpc_channelz_v2_Promise* proto, upb_Arena* arena) const {
+    grpc_channelz_v2_Promise_Map* map = grpc_channelz_v2_Promise_Map_new(arena);
+    grpc_channelz_v2_Promise_Map_set_promise(map, PromiseAsProto(map, arena));
+    grpc_channelz_v2_Promise_Map_set_map_fn(
+        map, StdStringToUpbString(TypeName<FusedFn>()));
+    grpc_channelz_v2_Promise_set_map_promise(proto, map);
   }
 
  private:

@@ -80,4 +80,13 @@ PropertyTable PropertyList::AddTable(absl::string_view key) {
   return PropertyTable(t, arena_);
 }
 
+PropertyList PropertyArray::AddPropertyList() {
+  grpc_channelz_v2_PropertyValue* value =
+      grpc_channelz_v2_PropertyValue_new(arena_);
+  auto* list =
+      grpc_channelz_v2_PropertyValue_mutable_property_list(value, arena_);
+  grpc_channelz_v2_PropertyList_values_set(
+      property_list_, StdStringToUpbString(key), value, arena_);
+  return PropertyList(list, arena_);
+}
 }  // namespace grpc_core::channelz

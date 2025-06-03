@@ -22,10 +22,12 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "detail/promise_like.h"
 #include "src/core/lib/debug/trace.h"
 #include "src/core/lib/promise/detail/promise_factory.h"
 #include "src/core/lib/promise/poll.h"
 #include "src/core/util/construct_destruct.h"
+#include "src/proto/grpc/channelz/v2/cpp.upb.h"
 
 namespace grpc_core {
 
@@ -185,13 +187,16 @@ class Loop {
     }
   }
 
-  Json ToJson() const {
-    Json::Object obj;
-    obj["loop_factory"] = Json::FromString(std::string(TypeName<Factory>()));
+  void ToProto(grpc_channelz_v2_Promise* proto, upb_Arena* arena) const {
+    grpc_channelz_v2_Promise_Loop* loop =
+        grpc_channelz_v2_Promise_Loop_new(arena);
+    grpc_channelz_v2_Promise_Loop_set_factory(
+        loop, StdStringToUpbString(TypeName<Factory>()));
     if (started_) {
-      obj["promise"] = PromiseAsJson(promise_);
+      grpc_channelz_v2_Promise_Loop_set_promise(
+          loop, PromiseAsProto(promise_, arena));
     }
-    return Json::FromObject(std::move(obj));
+    grpc_channelz_v2_Promise_set_loop_promise(proto, loop);
   }
 
  private:

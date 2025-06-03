@@ -19,7 +19,9 @@
 
 #include <utility>
 
+#include "detail/promise_like.h"
 #include "src/core/util/json/json.h"
+#include "src/proto/grpc/channelz/v2/cpp.upb.h"
 
 namespace grpc_core {
 
@@ -49,17 +51,18 @@ class Race<Promise, Promises...> {
     return std::move(r.value());
   }
 
-  Json ToJson() const {
-    Json::Object obj;
-    Json::Array array;
-    AddJson(array);
-    obj["race"] = Json::FromArray(std::move(array));
-    return Json::FromObject(std::move(obj));
+  void ToProto(grpc_channelz_v2_Promise* proto, upb_Arena* arena) const {
+    grpc_channelz_v2_Promise_Race* race =
+        grpc_channelz_v2_Promise_Race_new(arena);
+    AddToProto(race, arena);
+    grpc_channelz_v2_Promise_set_race_promise(proto, race);
   }
 
-  void AddJson(Json::Array& array) const {
-    array.emplace_back(PromiseAsJson(promise_));
-    next_.AddJson(array);
+  void AddToProto(grpc_channelz_v2_Promise_Race* race, upb_Arena* arena) const {
+    PromiseAsProto(promise_,
+                   grpc_channelz_v2_Promise_Race_add_promises(race, arena),
+                   arena);
+    next_.AddToProto(race, arena);
   }
 
  private:
@@ -79,10 +82,14 @@ class Race<Promise> {
     return promise_();
   }
 
-  Json ToJson() const { return PromiseAsJson(promise_); }
+  void ToProto(grpc_channelz_v2_Promise* proto, upb_Arena* arena) const {
+    PromiseAsProto(promise_, proto, arena);
+  }
 
-  void AddJson(Json::Array& array) const {
-    array.emplace_back(PromiseAsJson(promise_));
+  void AddToProto(grpc_channelz_v2_Promise_Race* race, upb_Arena* arena) const {
+    PromiseAsProto(promise_,
+                   grpc_channelz_v2_Promise_Race_add_promises(race, arena),
+                   arena);
   }
 
  private:

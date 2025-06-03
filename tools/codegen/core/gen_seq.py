@@ -121,30 +121,27 @@ tail${i}:
 % endfor
   }
   GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION SeqState& operator=(SeqState&& other) = delete;
-  Json ToJson(absl::string_view type_name) const {
-    Json::Object obj;
-#ifndef NDEBUG
-    obj["source_location"] = Json::FromString(absl::StrCat(whence.file(), ":", whence.line()));
-#endif
-    obj["seq_type"] = Json::FromString(std::string(type_name));
-    Json::Array steps;
-    steps.reserve(${n});
-    Json::Object step0;
-    step0["type"] = Json::FromString(std::string(TypeName<P>()));
+  void ToProto(absl::string_view kind, grpc_channelz_v2_Promise* proto, upb_Arena* arena) const {
+    grpc_channelz_v2_Promise_Seq* seq = grpc_channelz_v2_Promise_Seq_new(arena);
+    grpc_channelz_v2_Promise_Seq_set_kind(seq, StdStringToUpbString(kind));
+    grpc_channelz_v2_Promise_SeqStep* step = grpc_channelz_v2_Promise_Seq_add_steps(seq, arena);
+    grpc_channelz_v2_Promise_SeqStep_set_type(step, StdStringToUpbString(TypeName<P>()));
     if (state == State::kState0) {
-      step0["polling_state"] = PromiseAsJson(${"prior."*(n-1)}current_promise);
+      PromiseAsProto(
+          ${"prior."*(n-1)}current_promise, 
+          grpc_channelz_v2_Promise_SeqStep_mutable_promise(step, arena), 
+          arena);
     }
-    steps.emplace_back(Json::FromObject(step0));
 % for i in range(1,n):
-    Json::Object step${i};
-    step${i}["type"] = Json::FromString(std::string(TypeName<F${i-1}>()));
+    step = grpc_channelz_v2_Promise_Seq_add_steps(seq, arena);
+    grpc_channelz_v2_Promise_SeqStep_set_type(step, StdStringToUpbString(TypeName<F${i-1}>()));
     if (state == State::kState${i}) {
-      step${i}["polling_state"] = PromiseAsJson(${"prior."*(n-1-i)}current_promise);
+      PromiseAsProto(${"prior."*(n-1-i)}current_promise,
+      grpc_channelz_v2_Promise_SeqStep_mutable_promise(step, arena),
+      arena);
     }
-    steps.emplace_back(Json::FromObject(step${i}));
 % endfor
-    obj["steps"] = Json::FromArray(steps);
-    return Json::FromObject(obj);
+    grpc_channelz_v2_Promise_set_seq_promise(proto, seq);
   }
   GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION Poll<Result> PollOnce() {
     switch (state) {

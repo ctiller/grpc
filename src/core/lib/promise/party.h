@@ -168,8 +168,8 @@ class Party : public Activity, private Wakeable {
     // Destroy the participant before finishing.
     virtual void Destroy() = 0;
 
-    // Return a Json description of this participant.
-    virtual Json::Object ToJson() = 0;
+    // Publish debug data
+    virtual void PublishDebug(channelz::PropertyList& properties) = 0;
 
     // Return a Handle instance for this participant.
     Wakeable* MakeNonOwningWakeable(Party* party);
@@ -285,17 +285,16 @@ class Party : public Activity, private Wakeable {
           party_->state_.load(std::memory_order_relaxed), wakeup_mask_);
     }
 
-    Json::Object ToJson() override {
-      Json::Object obj;
+    void PublishDebug(channelz::PropertyList& properties) override {
       if (active_ != nullptr) {
-        obj["active"] = Json::FromObject(active_->ToJson());
+        auto active_properties = properties.AddPropertyList("active");
+        active_->PublishDebug(active_properties);
       }
-      Json::Array queued;
+      auto queued = properties.AddArray("queued");
       next_.ForEach([&](Participant* p) {
-        queued.emplace_back(Json::FromObject(p->ToJson()));
+        auto queued_properties = queued.AddPropertyList();
+        p->PublishDebug(queued_properties);
       });
-      obj["queued"] = Json::FromArray(std::move(queued));
-      return obj;
     }
 
    private:
@@ -384,10 +383,8 @@ class Party : public Activity, private Wakeable {
     return serializer;
   }
 
-  // Convert the party to a JSON object for visualization.
-  // This is an async operation because the party cannot be locked
-  // synchronously.
-  void ToJson(absl::AnyInvocable<void(Json::Object)>);
+  // Convert the party to a debug proto.
+  void AddComponent(std::string component_name, channelz::DataSink sink);
 
  protected:
   friend class Arena;
@@ -444,17 +441,14 @@ class Party : public Activity, private Wakeable {
       return false;
     }
 
-    Json::Object ToJson() override {
-      Json::Object obj;
-      obj["on_complete"] =
-          Json::FromString(std::string(TypeName<OnComplete>()));
+    void PublishDebug(channelz::PropertyList& properties) override {
+      properties.Add("on_complete", TypeName<OnComplete>());
       if (!started_) {
-        obj["factory"] = Json::FromString(
-            std::string(TypeName<typename Factory::UnderlyingFactory>()));
+        properties.Add("factory",
+                       TypeName<typename Factory::UnderlyingFactory>());
       } else {
-        obj["promise"] = PromiseAsJson(promise_);
+        properties.AddPromise("promise", promise_);
       }
-      return obj;
     }
 
     void Destroy() override { delete this; }
