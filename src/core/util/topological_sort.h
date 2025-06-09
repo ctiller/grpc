@@ -17,8 +17,8 @@
 
 #include <cstddef>
 
-#include "manual_constructor.h"
 #include "src/core/util/bitset.h"
+#include "src/core/util/manual_constructor.h"
 
 namespace grpc_core {
 
@@ -68,4 +68,4 @@ class TopologicalSort {
 
 }  // namespace grpc_core
 
-#endif
+#endif  // GRPC_SRC_CORE_UTIL_TOPOLOGICAL_SORT_H

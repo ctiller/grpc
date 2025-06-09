@@ -2000,6 +2000,7 @@ let package = Package(
         "src/core/util/time_util.cc",
         "src/core/util/time_util.h",
         "src/core/util/tmpfile.h",
+        "src/core/util/topological_sort.h",
         "src/core/util/type_list.h",
         "src/core/util/unique_ptr_with_bitset.h",
         "src/core/util/unique_type_name.h",
