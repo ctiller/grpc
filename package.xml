@@ -1984,6 +1984,7 @@
     <file baseinstalldir="/" name="src/core/util/time_util.cc" role="src" />
     <file baseinstalldir="/" name="src/core/util/time_util.h" role="src" />
     <file baseinstalldir="/" name="src/core/util/tmpfile.h" role="src" />
+    <file baseinstalldir="/" name="src/core/util/topological_sort.h" role="src" />
     <file baseinstalldir="/" name="src/core/util/type_list.h" role="src" />
     <file baseinstalldir="/" name="src/core/util/unique_ptr_with_bitset.h" role="src" />
     <file baseinstalldir="/" name="src/core/util/unique_type_name.h" role="src" />

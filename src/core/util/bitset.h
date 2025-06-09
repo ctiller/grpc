@@ -100,18 +100,18 @@ class BitSet {
   GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION constexpr BitSet() : units_{} {}
 
   // Set bit i to true
- GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION constexpr void set(int i) {
-   units_[unit_for(i)] |= mask_for(i);
- }
+  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION constexpr void set(int i) {
+    units_[unit_for(i)] |= mask_for(i);
+  }
 
   // Set bit i to is_set
- GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION constexpr void set(int i, bool is_set) {
-   if (is_set) {
-     set(i);
-   } else {
-     clear(i);
-   }
- }
+  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION constexpr void set(int i, bool is_set) {
+    if (is_set) {
+      set(i);
+    } else {
+      clear(i);
+    }
+  }
 
   // Set bit i to false
   GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION constexpr void clear(int i) {
@@ -119,9 +119,9 @@ class BitSet {
   }
 
   // Return true if bit i is set
- GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION constexpr bool is_set(int i) const {
-   return (units_[unit_for(i)] & mask_for(i)) != 0;
- }
+  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION constexpr bool is_set(int i) const {
+    return (units_[unit_for(i)] & mask_for(i)) != 0;
+  }
 
   // Return true if all bits are set
   GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION bool all() const {
@@ -155,13 +155,13 @@ class BitSet {
   GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION bool any() const { return !none(); }
 
   // Return a count of how many bits are set.
-GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION uint32_t count() const {
-  uint32_t count = 0;
-  for (size_t i = 0; i < kUnits; i++) {
-    count += absl::popcount(units_[i]);
+  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION uint32_t count() const {
+    uint32_t count = 0;
+    for (size_t i = 0; i < kUnits; i++) {
+      count += absl::popcount(units_[i]);
+    }
+    return count;
   }
-  return count;
-}
 
   GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION bool operator==(
       const BitSet& other) const {

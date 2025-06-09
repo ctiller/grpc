@@ -2002,6 +2002,7 @@ Gem::Specification.new do |s|
   s.files += %w( src/core/util/time_util.cc )
   s.files += %w( src/core/util/time_util.h )
   s.files += %w( src/core/util/tmpfile.h )
+  s.files += %w( src/core/util/topological_sort.h )
   s.files += %w( src/core/util/type_list.h )
   s.files += %w( src/core/util/unique_ptr_with_bitset.h )
   s.files += %w( src/core/util/unique_type_name.h )

@@ -1215,6 +1215,7 @@ libs:
   - src/core/util/table.h
   - src/core/util/time.h
   - src/core/util/time_averaged_stats.h
+  - src/core/util/topological_sort.h
   - src/core/util/type_list.h
   - src/core/util/unique_ptr_with_bitset.h
   - src/core/util/unique_type_name.h
@@ -2774,6 +2775,7 @@ libs:
   - src/core/util/table.h
   - src/core/util/time.h
   - src/core/util/time_averaged_stats.h
+  - src/core/util/topological_sort.h
   - src/core/util/type_list.h
   - src/core/util/unique_ptr_with_bitset.h
   - src/core/util/unique_type_name.h
@@ -4721,6 +4723,7 @@ libs:
   - src/core/util/table.h
   - src/core/util/time.h
   - src/core/util/time_averaged_stats.h
+  - src/core/util/topological_sort.h
   - src/core/util/type_list.h
   - src/core/util/unique_type_name.h
   - src/core/util/uri.h
@@ -6565,6 +6568,7 @@ targets:
   - src/core/util/table.h
   - src/core/util/time.h
   - src/core/util/time_averaged_stats.h
+  - src/core/util/topological_sort.h
   - src/core/util/type_list.h
   - src/core/util/unique_type_name.h
   - src/core/util/uri.h
@@ -10681,6 +10685,7 @@ targets:
   - src/core/util/table.h
   - src/core/util/time.h
   - src/core/util/time_averaged_stats.h
+  - src/core/util/topological_sort.h
   - src/core/util/type_list.h
   - src/core/util/unique_type_name.h
   - src/core/util/uri.h
@@ -12347,6 +12352,7 @@ targets:
   - src/core/util/table.h
   - src/core/util/time.h
   - src/core/util/time_averaged_stats.h
+  - src/core/util/topological_sort.h
   - src/core/util/type_list.h
   - src/core/util/unique_ptr_with_bitset.h
   - src/core/util/unique_type_name.h

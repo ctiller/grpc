@@ -153,7 +153,7 @@ class ChannelInit::InnerBuilder {
 
   GPR_ATTRIBUTE_NOINLINE void EnsureCorrectRegistrationOrdering() {
     size_t i = 0;
-    for (const auto& [key, id] : stack_.filter_name_to_index) {
+    for (const auto& [key, id] : stack_.filter_key_to_index) {
       topological_id_to_filter_id_[i] = id;
       stack_.info[id].topological_id = i;
       ++i;
@@ -175,9 +175,9 @@ class ChannelInit::InnerBuilder {
             registration->ordering_, registration->registration_source_);
       }
     }
-    for (const auto& registration : registrations_) {
+    for (const auto& registration : registration) {
       if (registration->terminal_) continue;
-      for (FilterRegistration::Dependency dep : registration->deps_) {
+      for (FilterRegistration::Dependency dup : registration->deps_) {
         auto it = name_to_index.find(dep.name);
         if (GPR_UNLIKELY(it == name_to_index.end())) {
           GRPC_TRACE_LOG(channel_stack, INFO)
