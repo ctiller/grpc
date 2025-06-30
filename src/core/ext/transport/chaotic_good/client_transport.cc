@@ -245,20 +245,30 @@ ChaoticGoodClientTransport::ChaoticGoodClientTransport(
 
 ChaoticGoodClientTransport::~ChaoticGoodClientTransport() {
   SourceDestructing();
-  party_.reset();
 }
 
 void ChaoticGoodClientTransport::Orphan() {
   stream_dispatch_->OnFrameTransportClosed(
       absl::UnavailableError("Transport closed"));
-  party_.reset();
+  RefCountedPtr<Party> party;
+  {
+    MutexLock lock(&party_mu_);
+    party = std::move(party_);
+  }
   frame_transport_.reset();
   Unref();
 }
 
 void ChaoticGoodClientTransport::AddData(channelz::DataSink sink) {
   // TODO(ctiller): add calls in stream dispatch
-  party_->ExportToChannelz("transport_party", sink);
+  RefCountedPtr<Party> party;
+  {
+    MutexLock lock(&party_mu_);
+    party = party_;
+  }
+  if (party != nullptr) {
+    party->ExportToChannelz("transport_party", sink);
+  }
 }
 
 auto ChaoticGoodClientTransport::CallOutboundLoop(uint32_t stream_id,

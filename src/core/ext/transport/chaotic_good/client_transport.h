@@ -151,7 +151,8 @@ class ChaoticGoodClientTransport final : public ClientTransport,
   grpc_event_engine::experimental::MemoryAllocator allocator_;
   RefCountedPtr<StreamDispatch> stream_dispatch_;
   MpscSender<OutgoingFrame> outgoing_frames_;
-  RefCountedPtr<Party> party_;
+  Mutex party_mu_;
+  RefCountedPtr<Party> party_ ABSL_GUARDED_BY(party_mu_);
   MessageChunker message_chunker_;
   OrphanablePtr<FrameTransport> frame_transport_;
 };
