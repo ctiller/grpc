@@ -327,10 +327,10 @@ class DataSink {
       explicit DataImpl(T value) : value_(std::move(value)) {}
       Json::Object ToJson() override { return value_.ToJsonObject(); }
       void FillProto(google_protobuf_Any* any, upb_Arena* arena) override {
-        google_protobuf_Any_set_type_url(any,
-                                         CopyStdStringToUpbString(value_.ProtobufTypeUrl(), arena));
-        google_protobuf_Any_set_value(any,
-                                      CopyStdStringToUpbString(value_.SerializeProtobuf(), arena));
+        google_protobuf_Any_set_type_url(
+            any, CopyStdStringToUpbString(value_.ProtobufTypeUrl(), arena));
+        google_protobuf_Any_set_value(
+            any, CopyStdStringToUpbString(value_.SerializeProtobuf(), arena));
       }
 
      private:
@@ -340,7 +340,8 @@ class DataSink {
   }
 
  private:
-  void AddDataImpl(absl::string_view name, std::unique_ptr<DataSinkImplementation::Data> data) {
+  void AddDataImpl(absl::string_view name,
+                   std::unique_ptr<DataSinkImplementation::Data> data) {
     auto impl = impl_.lock();
     if (impl == nullptr) return;
     impl->AddData(name, std::move(data));

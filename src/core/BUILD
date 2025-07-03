@@ -881,9 +881,14 @@ grpc_cc_library(
         "absl/meta:type_traits",
         "absl/strings",
         "@com_google_protobuf//upb/reflection",
+        "@com_google_protobuf//upb/mem",
+        "@com_google_protobuf//upb/text",
     ],
-    public_hdrs = [
+    hdrs = [
         "lib/promise/detail/promise_like.h",
+    ],
+    srcs = [
+        "lib/promise/detail/promise_like.cc",
     ],
     deps = [
         "channelz_property_list",
@@ -892,6 +897,7 @@ grpc_cc_library(
         "//:gpr_platform",
         "//:promise_upb",
         "//:promise_upbdefs",
+        "//:channelz_property_list_upb",
         "//src/core:function_signature",
         "//src/core:json",
     ],
