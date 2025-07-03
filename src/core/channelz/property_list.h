@@ -26,6 +26,12 @@
 
 namespace grpc_core::channelz {
 
+// TODO(ctiller): once we eliminate JSON encoding from channelz we can go ahead
+// and remove this interface. Instead, we can create an object protocol that
+// says that classes that provide ProtobufTypeUrl() and SerializeProtobuf()
+// methods can be added to a PropertyList, and PropertyList can just store those
+// values directly. For the moment, because we need to deal with both JSON and
+// Protobuf, it's convenient to keep this interface around.
 class OtherPropertyValue {
  public:
   virtual ~OtherPropertyValue() = default;

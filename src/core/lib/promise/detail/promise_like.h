@@ -59,33 +59,38 @@ template <typename Promise, typename = void>
 constexpr bool kHasToProtoMethod = false;
 
 template <typename Promise>
-constexpr bool kHasToProtoMethod<Promise, std::void_t<decltype(std::declval<Promise>().ToProto(
-                                              static_cast<grpc_channelz_v2_Promise*>(nullptr),
-                                              static_cast<upb_Arena*>(nullptr)))>> = true;
+constexpr bool kHasToProtoMethod<
+    Promise, std::void_t<decltype(std::declval<Promise>().ToProto(
+                 static_cast<grpc_channelz_v2_Promise*>(nullptr),
+                 static_cast<upb_Arena*>(nullptr)))>> = true;
 
 template <typename Promise, typename = void>
 constexpr bool kHasChannelzPropertiesMethod = false;
 
 template <typename Promise>
 constexpr bool kHasChannelzPropertiesMethod<
-    Promise, std::void_t<decltype(std::declval<Promise>().ChannelzProperties())>> = true;
+    Promise,
+    std::void_t<decltype(std::declval<Promise>().ChannelzProperties())>> = true;
 
-void SetCustomPromise(absl::string_view type_name, channelz::PropertyList properties,
-                      grpc_channelz_v2_Promise* promise_proto, upb_Arena* arena);
+void SetCustomPromise(absl::string_view type_name,
+                      channelz::PropertyList properties,
+                      grpc_channelz_v2_Promise* promise_proto,
+                      upb_Arena* arena);
 
 }  // namespace promise_detail
 
 template <typename Promise>
-void PromiseAsProto(const Promise& promise, grpc_channelz_v2_Promise* promise_proto,
-                    upb_Arena* arena) {
+void PromiseAsProto(const Promise& promise,
+                    grpc_channelz_v2_Promise* promise_proto, upb_Arena* arena) {
   if constexpr (promise_detail::kHasToProtoMethod<Promise>) {
     promise.ToProto(promise_proto, arena);
   } else if constexpr (promise_detail::kHasChannelzPropertiesMethod<Promise>) {
-    promise_detail::SetCustomPromise(TypeName<Promise>(), promise.ChannelzProperties(),
+    promise_detail::SetCustomPromise(TypeName<Promise>(),
+                                     promise.ChannelzProperties(),
                                      promise_proto, arena);
   } else {
-    grpc_channelz_v2_Promise_set_unknown_promise(promise_proto,
-                                                 StdStringToUpbString(TypeName<Promise>()));
+    grpc_channelz_v2_Promise_set_unknown_promise(
+        promise_proto, StdStringToUpbString(TypeName<Promise>()));
   }
 }
 
@@ -155,7 +160,8 @@ class PromisePropertyValue final : public channelz::OtherPropertyValue {
 
  private:
   upb_Arena* arena_ = upb_Arena_New();
-  grpc_channelz_v2_Promise* promise_proto_ = grpc_channelz_v2_Promise_new(arena_);
+  grpc_channelz_v2_Promise* promise_proto_ =
+      grpc_channelz_v2_Promise_new(arena_);
 };
 
 }  // namespace promise_detail
@@ -165,7 +171,8 @@ namespace channelz::property_list_detail {
 template <typename T>
 struct Wrapper<PromiseProperty<T>> {
   static std::optional<PropertyValue> Wrap(PromiseProperty<T> value) {
-    return PropertyValue(std::make_shared<promise_detail::PromisePropertyValue>(value.TakeValue()));
+    return PropertyValue(std::make_shared<promise_detail::PromisePropertyValue>(
+        value.TakeValue()));
   }
 };
 
@@ -204,7 +211,8 @@ template <>
 class PromiseLike<void>;
 
 template <typename F>
-class PromiseLike<F, absl::enable_if_t<!std::is_void<std::invoke_result_t<F>>::value>> {
+class PromiseLike<
+    F, absl::enable_if_t<!std::is_void<std::invoke_result_t<F>>::value>> {
  private:
   GPR_NO_UNIQUE_ADDRESS RemoveCVRef<F> f_;
   using OriginalResult = decltype(f_());
@@ -212,9 +220,13 @@ class PromiseLike<F, absl::enable_if_t<!std::is_void<std::invoke_result_t<F>>::v
 
  public:
   // NOLINTNEXTLINE - internal detail that drastically simplifies calling code.
-  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION PromiseLike(F&& f) : f_(std::forward<F>(f)) {}
-  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION WrappedResult operator()() { return WrapInPoll(f_()); }
-  void ToProto(grpc_channelz_v2_Promise* promise_proto, upb_Arena* arena) const {
+  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION PromiseLike(F&& f)
+      : f_(std::forward<F>(f)) {}
+  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION WrappedResult operator()() {
+    return WrapInPoll(f_());
+  }
+  void ToProto(grpc_channelz_v2_Promise* promise_proto,
+               upb_Arena* arena) const {
     PromiseAsProto(f_, promise_proto, arena);
   }
   PromiseLike(const PromiseLike&) = default;
@@ -225,18 +237,21 @@ class PromiseLike<F, absl::enable_if_t<!std::is_void<std::invoke_result_t<F>>::v
 };
 
 template <typename F>
-class PromiseLike<F, absl::enable_if_t<std::is_void<std::invoke_result_t<F>>::value>> {
+class PromiseLike<
+    F, absl::enable_if_t<std::is_void<std::invoke_result_t<F>>::value>> {
  private:
   GPR_NO_UNIQUE_ADDRESS RemoveCVRef<F> f_;
 
  public:
   // NOLINTNEXTLINE - internal detail that drastically simplifies calling code.
-  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION PromiseLike(F&& f) : f_(std::forward<F>(f)) {}
+  GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION PromiseLike(F&& f)
+      : f_(std::forward<F>(f)) {}
   GPR_ATTRIBUTE_ALWAYS_INLINE_FUNCTION Poll<Empty> operator()() {
     f_();
     return Empty{};
   }
-  void ToProto(grpc_channelz_v2_Promise* promise_proto, upb_Arena* arena) const {
+  void ToProto(grpc_channelz_v2_Promise* promise_proto,
+               upb_Arena* arena) const {
     PromiseAsProto(f_, promise_proto, arena);
   }
   PromiseLike(const PromiseLike&) = default;
