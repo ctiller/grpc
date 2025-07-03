@@ -194,7 +194,7 @@ void Party::ToJson(absl::AnyInvocable<void(Json::Object)> f) {
       "get-json",
       [f = std::move(f), self = Ref()]() mutable {
         return [f = std::move(f), self]() mutable {
-          f(self->ChannelzPropertiesLocked().TakeJsonObject());
+          f(self->ChannelzPropertiesLocked().ToJsonObject());
           return absl::OkStatus();
         };
       },

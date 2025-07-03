@@ -39,6 +39,7 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/container/inlined_vector.h"
 #include "absl/strings/string_view.h"
+#include "google/protobuf/any.upb.h"
 #include "src/core/channelz/channel_trace.h"
 #include "src/core/lib/channel/channel_args.h"
 #include "src/core/util/dual_ref_counted.h"
@@ -50,6 +51,7 @@
 #include "src/core/util/sync.h"
 #include "src/core/util/time.h"
 #include "src/core/util/time_precise.h"
+#include "src/core/util/upb_utils.h"
 #include "src/core/util/useful.h"
 #include "src/proto/grpc/channelz/v2/channelz.upb.h"
 
@@ -319,25 +321,26 @@ class DataSink {
       : impl_(impl), notification_(std::move(notification)) {}
 
   template <typename T>
-  std::void_t<decltype(std::declval<T>().TakeJsonObject())> AddData(
-      absl::string_view name, T value) {
+  void AddData(absl::string_view name, T value) {
     class DataImpl final : public DataSinkImplementation::Data {
      public:
       explicit DataImpl(T value) : value_(std::move(value)) {}
-      Json::Object ToJson() override { return value_.TakeJsonObject(); }
+      Json::Object ToJson() override { return value_.ToJsonObject(); }
       void FillProto(google_protobuf_Any* any, upb_Arena* arena) override {
-        value_.FillAny(any, arena);
+        google_protobuf_Any_set_type_url(any,
+                                         CopyStdStringToUpbString(value_.ProtobufTypeUrl(), arena));
+        google_protobuf_Any_set_value(any,
+                                      CopyStdStringToUpbString(value_.SerializeProtobuf(), arena));
       }
 
      private:
       T value_;
     };
-    AddData(name, std::make_unique<DataImpl>(std::move(value)));
+    AddDataImpl(name, std::make_unique<DataImpl>(std::move(value)));
   }
 
  private:
-  void AddData(absl::string_view name,
-               std::unique_ptr<DataSinkImplementation::Data> data) {
+  void AddDataImpl(absl::string_view name, std::unique_ptr<DataSinkImplementation::Data> data) {
     auto impl = impl_.lock();
     if (impl == nullptr) return;
     impl->AddData(name, std::move(data));

@@ -27,6 +27,7 @@
 #include "src/core/util/upb_utils.h"
 #include "src/proto/grpc/channelz/v2/promise.upb.h"
 #include "src/proto/grpc/channelz/v2/promise.upbdefs.h"
+#include "src/proto/grpc/channelz/v2/property_list.upb.h"
 #include "upb/reflection/def.hpp"
 
 // A Promise is a callable object that returns Poll<T> for some T.
@@ -84,10 +85,10 @@ void PromiseAsProto(const Promise& promise,
         grpc_channelz_v2_Promise_mutable_custom_promise(promise_proto, arena);
     grpc_channelz_v2_Promise_Custom_set_type(
         custom_promise, StdStringToUpbString(TypeName<Promise>()));
-    promise.ChannelzProperties().FillUpbProto(
-        grpc_channelz_v2_Promise_Custom_mutable_properties(custom_promise,
-                                                           arena),
-        arena);
+    std::string serialized = promise.ChannelzProperties().SerializeProtobuf();
+    grpc_channelz_v2_Promise_Custom_set_properties(
+        custom_promise,
+        grpc_channelz_v2_PropertyList_parse(serialized.data(), serialized.size(), arena));
   } else {
     grpc_channelz_v2_Promise_set_unknown_promise(
         promise_proto, StdStringToUpbString(TypeName<Promise>()));
@@ -128,6 +129,11 @@ class PromisePropertyValue final : public OtherPropertyValue {
 
   ~PromisePropertyValue() override { upb_Arena_Free(arena_); }
 
+  std::string ProtobufTypeUrl() override;
+  std::string SerializeProtobuf() override;
+  Json::Object ToJsonObject() override;
+
+#if 0
   void FillAny(google_protobuf_Any* any, upb_Arena* arena) override {
     size_t length;
     upb_Arena_Fuse(arena_, arena);
@@ -151,6 +157,7 @@ class PromisePropertyValue final : public OtherPropertyValue {
                    def_pool.ptr(), 0, str.get(), length);
     return {{"promise", Json::FromString(std::string(str.get()))}};
   }
+#endif
 
  private:
   upb_Arena* arena_ = upb_Arena_New();
