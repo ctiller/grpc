@@ -13,13 +13,13 @@
 # limitations under the License.
 
 COPTS = select({
-        "@bazel_tools//src/conditions:windows": [
-            "/std:c++17",
-        ],
-        "//conditions:default": [
-            "-std=c++17",
-        ],
-    })
+    "@bazel_tools//src/conditions:windows": [
+        "/std:c++17",
+    ],
+    "//conditions:default": [
+        "-std=c++17",
+    ],
+})
 
 cc_library(
     name = "extract_metadata_from_bazel_xml",
