@@ -13127,12 +13127,14 @@ targets:
   - src/core/channelz/channelz_registry.h
   - src/core/channelz/property_list.h
   - src/core/channelz/text_encode.h
+  - src/core/channelz/ztrace_collector.h
   - src/core/ext/transport/chttp2/transport/flow_control.h
   - src/core/ext/transport/chttp2/transport/flow_control_manager.h
   - src/core/ext/transport/chttp2/transport/frame.h
   - src/core/ext/transport/chttp2/transport/http2_settings.h
   - src/core/ext/transport/chttp2/transport/http2_settings_manager.h
   - src/core/ext/transport/chttp2/transport/http2_status.h
+  - src/core/ext/transport/chttp2/transport/http2_ztrace_collector.h
   - src/core/ext/upb-gen/google/protobuf/any.upb.h
   - src/core/ext/upb-gen/google/protobuf/any.upb_minitable.h
   - src/core/ext/upb-gen/google/protobuf/duration.upb.h
@@ -13346,11 +13348,13 @@ targets:
   - src/core/channelz/channelz_registry.h
   - src/core/channelz/property_list.h
   - src/core/channelz/text_encode.h
+  - src/core/channelz/ztrace_collector.h
   - src/core/ext/transport/chttp2/transport/flow_control.h
   - src/core/ext/transport/chttp2/transport/frame.h
   - src/core/ext/transport/chttp2/transport/http2_settings.h
   - src/core/ext/transport/chttp2/transport/http2_settings_manager.h
   - src/core/ext/transport/chttp2/transport/http2_status.h
+  - src/core/ext/transport/chttp2/transport/http2_ztrace_collector.h
   - src/core/ext/upb-gen/google/protobuf/any.upb.h
   - src/core/ext/upb-gen/google/protobuf/any.upb_minitable.h
   - src/core/ext/upb-gen/google/protobuf/duration.upb.h
