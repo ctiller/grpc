@@ -245,6 +245,7 @@ libs:
   - src/core/client_channel/subchannel_interface_internal.h
   - src/core/client_channel/subchannel_pool_interface.h
   - src/core/client_channel/subchannel_stream_client.h
+  - src/core/client_channel/subchannel_stream_limiter.h
   - src/core/config/core_configuration.h
   - src/core/credentials/call/call_credentials.h
   - src/core/credentials/call/call_creds_registry.h
@@ -1390,6 +1391,7 @@ libs:
   - src/core/client_channel/subchannel.cc
   - src/core/client_channel/subchannel_pool_interface.cc
   - src/core/client_channel/subchannel_stream_client.cc
+  - src/core/client_channel/subchannel_stream_limiter.cc
   - src/core/config/core_configuration.cc
   - src/core/credentials/call/call_creds_registry_init.cc
   - src/core/credentials/call/call_creds_util.cc
@@ -2456,6 +2458,7 @@ libs:
   - src/core/client_channel/subchannel_interface_internal.h
   - src/core/client_channel/subchannel_pool_interface.h
   - src/core/client_channel/subchannel_stream_client.h
+  - src/core/client_channel/subchannel_stream_limiter.h
   - src/core/config/core_configuration.h
   - src/core/credentials/call/call_credentials.h
   - src/core/credentials/call/call_creds_registry.h
@@ -3014,6 +3017,7 @@ libs:
   - src/core/client_channel/subchannel.cc
   - src/core/client_channel/subchannel_pool_interface.cc
   - src/core/client_channel/subchannel_stream_client.cc
+  - src/core/client_channel/subchannel_stream_limiter.cc
   - src/core/config/core_configuration.cc
   - src/core/credentials/call/call_creds_util.cc
   - src/core/credentials/call/composite/composite_call_credentials.cc
@@ -24583,6 +24587,17 @@ targets:
   headers: []
   src:
   - test/core/client_channel/subchannel_args_test.cc
+  deps:
+  - gtest
+  - grpc_test_util
+  uses_polling: false
+- name: subchannel_stream_limiter_test
+  gtest: true
+  build: test
+  language: c++
+  headers: []
+  src:
+  - test/core/client_channel/subchannel_stream_limiter_test.cc
   deps:
   - gtest
   - grpc_test_util
