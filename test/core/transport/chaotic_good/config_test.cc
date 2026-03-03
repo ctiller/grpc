@@ -122,11 +122,11 @@ void ConfigTest(FuzzerChannelArgs client_args_input,
 }
 FUZZ_TEST(MyTestSuite, ConfigTest);
 
-static void SetExperiments(absl::string_view experiments) {
-  grpc_core::ConfigVars::Overrides overrides;
+void SetExperiments(absl::string_view experiments) {
+  ConfigVars::Overrides overrides;
   overrides.experiments = experiments;
-  grpc_core::ConfigVars::SetOverrides(overrides);
-  grpc_core::TestOnlyReloadExperimentsFromConfigVariables();
+  ConfigVars::SetOverrides(overrides);
+  TestOnlyReloadExperimentsFromConfigVariables();
 }
 
 TEST(ConfigTest, ChunkingDisabledByDefault) {
