@@ -28,7 +28,8 @@ namespace sorted_pack_detail {
 
 // Trait to extract the integer score for a type.
 // By default, it is engineered to keep PackedTable sorted by alignment
-// (descending) and then by size (descending) using a standard ascending radix sort.
+// (descending) and then by size (descending) using a standard ascending radix
+// sort.
 template <typename T, typename = void>
 struct RadixScore {
   // We assume alignment <= 256. Drop sizeof(T) to minimize key size.
@@ -67,8 +68,8 @@ struct MapAndBitOR<T, Ts...> {
   using Rest = MapAndBitOR<Ts...>;
   // Bitwise OR of scores to determine the maximum active bit width.
   static constexpr size_t kMaxScore = RadixScore<T>::kValue | Rest::kMaxScore;
-  using List = typename Rest::List::template PushFront<
-      Node<T, RadixScore<T>::kValue>>;
+  using List =
+      typename Rest::List::template PushFront<Node<T, RadixScore<T>::kValue>>;
 };
 
 template <>
@@ -85,9 +86,8 @@ template <size_t Mask, bool Flag, typename Node, typename... Rest>
 struct FilterList<Mask, Flag, Typelist<Node, Rest...>> {
   using Prev = typename FilterList<Mask, Flag, Typelist<Rest...>>::Result;
   static constexpr bool kMatches = ((Node::kScore & Mask) != 0) == Flag;
-  using Result = typename std::conditional<kMatches,
-                                           typename Prev::template PushFront<Node>,
-                                           Prev>::type;
+  using Result = typename std::conditional<
+      kMatches, typename Prev::template PushFront<Node>, Prev>::type;
 };
 
 template <size_t Mask, bool Flag>
@@ -105,7 +105,8 @@ struct Concat<Typelist<T1s...>, Typelist<T2s...>> {
 };
 
 // Execute a single stable radix sort pass for the given bitmask.
-// Standard stable ascending radix sort: elements with bit=0 come BEFORE elements with bit=1.
+// Standard stable ascending radix sort: elements with bit=0 come BEFORE
+// elements with bit=1.
 template <size_t Mask, typename InputList>
 struct RadixSortPass {
   using Zeroes = typename FilterList<Mask, false, InputList>::Result;
@@ -117,8 +118,7 @@ struct RadixSortPass {
 template <int Bit, int MaxBit, typename InputList>
 struct RadixSortLoop {
   using Next = typename RadixSortPass<1ULL << Bit, InputList>::Result;
-  using Result =
-      typename RadixSortLoop<Bit + 1, MaxBit, Next>::Result;
+  using Result = typename RadixSortLoop<Bit + 1, MaxBit, Next>::Result;
 };
 
 template <int MaxBit, typename InputList>
@@ -146,11 +146,13 @@ struct WithSortedPack {
   static constexpr int kBits = sorted_pack_detail::BitWidth(Phase1::kMaxScore);
 
   // Phase 2: Radix sort across required bits.
-  using Phase2 = typename sorted_pack_detail::RadixSortLoop<
-      0, kBits, typename Phase1::List>::Result;
+  using Phase2 =
+      typename sorted_pack_detail::RadixSortLoop<0, kBits,
+                                                 typename Phase1::List>::Result;
 
   // Phase 3: Unpack the types and instantiate T.
-  using Type = typename sorted_pack_detail::Unpack<Phase2>::Result::template Instantiate<T>;
+  using Type = typename sorted_pack_detail::Unpack<
+      Phase2>::Result::template Instantiate<T>;
 };
 
 }  // namespace grpc_core
